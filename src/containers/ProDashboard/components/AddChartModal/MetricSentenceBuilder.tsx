@@ -10,7 +10,6 @@ import {
 import { matchSorter } from 'match-sorter'
 import type { Ref } from 'react'
 import { useDeferredValue, useId, useMemo, useRef, useState } from 'react'
-import { SelectCheckIcon } from '~/components/Select/SelectCheckIcon'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
@@ -478,7 +477,7 @@ export function MetricSentenceBuilder({
 								>
 									<span className="truncate">{getProDashboardChartTypeConfig(value)?.title || value}</span>
 									<span aria-hidden className={popoverSingleSelectCheckStyles(value === metricType)}>
-										<SelectCheckIcon />
+										<Icon name="check" className="size-3" aria-hidden />
 									</span>
 								</button>
 							))}
@@ -533,7 +532,7 @@ export function MetricSentenceBuilder({
 											<span className="min-w-0 flex-1 truncate">{variable.label}</span>
 											<span className="shrink-0 body-sm text-tertiary">{option.description}</span>
 											<span aria-hidden className={popoverSingleSelectCheckStyles(bound)}>
-												<SelectCheckIcon />
+												<Icon name="check" className="size-3" aria-hidden />
 											</span>
 										</button>
 									)
@@ -577,7 +576,7 @@ export function MetricSentenceBuilder({
 															<span className="truncate">{option.label}</span>
 														</span>
 														<span aria-hidden className={popoverSingleSelectCheckStyles(metricChain === option.value)}>
-															<SelectCheckIcon />
+															<Icon name="check" className="size-3" aria-hidden />
 														</span>
 													</ComboboxItem>
 												</div>
@@ -629,7 +628,7 @@ export function MetricSentenceBuilder({
 														</span>
 													</span>
 													<span aria-hidden className={popoverSingleSelectCheckStyles(metricProtocol === option.value)}>
-														<SelectCheckIcon />
+														<Icon name="check" className="size-3" aria-hidden />
 													</span>
 												</ComboboxItem>
 											</div>
@@ -759,7 +758,7 @@ function DescribedOptionRows<T extends string>({
 						<span className="body-sm text-tertiary">{option.description}</span>
 					</span>
 					<span aria-hidden className={popoverSingleSelectCheckStyles(option.value === selected)}>
-						<SelectCheckIcon />
+						<Icon name="check" className="size-3" aria-hidden />
 					</span>
 				</button>
 			))}

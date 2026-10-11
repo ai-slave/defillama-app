@@ -6,6 +6,7 @@ import { useState, type Dispatch, type ReactNode, type RefObject, type SetStateA
 import { Button } from '~/ui/Button'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
+import { Icon } from '~/ui/Icon'
 import { NestedDrawerHeader, MenuItem, MenuSurface } from '~/ui/PopoverSurface'
 import { Tooltip } from '~/ui/Tooltip'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
@@ -20,7 +21,6 @@ import {
 	type EditorFlags,
 	type MarkButton
 } from './ArticleEditorControls'
-import { Icon } from './ArticleEditorIcon'
 import { sanitizeLinkHref } from './ArticleEditorUtils'
 
 type LinkEditState = { url: string; newTab: boolean } | null
@@ -132,7 +132,7 @@ function LinkEditForm({
 							data-active={linkEdit.newTab}
 							onClick={() => setLinkEdit({ url: linkEdit.url, newTab: !linkEdit.newTab })}
 						>
-							<Icon name="external" className="size-3.5" />
+							<Icon name="external-link" className="size-3.5" />
 							<span>New tab</span>
 						</Button>
 						<span aria-hidden className="mx-0.5 h-4 w-px bg-border-medium" />
@@ -172,7 +172,7 @@ function LinkEditForm({
 									/>
 								}
 							>
-								<Icon name="external" className="size-4" />
+								<Icon name="external-link" className="size-4" />
 							</Tooltip>
 						) : null}
 					</div>
@@ -312,7 +312,7 @@ export function ArticleEditorCanvas({
 											aria-label="Open entity in new tab"
 											onClick={openActiveEntityLink}
 										>
-											<Icon name="external" className="size-3.5" />
+											<Icon name="external-link" className="size-3.5" />
 											<span>Open</span>
 										</Button>
 									) : null}
@@ -433,10 +433,10 @@ export function ArticleEditorCanvas({
 					<div className="article-editor-rail pointer-events-auto inline-flex max-w-full items-stretch gap-1 overflow-x-auto rounded-2xl border border-medium bg-surface-glass p-1.5 shadow-overlay backdrop-blur">
 						<div className="flex shrink-0 items-center gap-1 pl-1">
 							<RailButton label="Undo" disabled={!flags.canUndo} onClick={() => editor.chain().focus().undo().run()}>
-								<Icon name="undo" className="size-4" />
+								<Icon name="undo-2" className="size-4" />
 							</RailButton>
 							<RailButton label="Redo" disabled={!flags.canRedo} onClick={() => editor.chain().focus().redo().run()}>
-								<Icon name="redo" className="size-4" />
+								<Icon name="redo-2" className="size-4" />
 							</RailButton>
 							<RailDivider />
 						</div>
@@ -456,28 +456,28 @@ export function ArticleEditorCanvas({
 								active={flags.h2}
 								onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
 							>
-								<Icon name="h2" className="size-4" />
+								<Icon name="heading-2" className="size-4" />
 							</RailButton>
 							<RailButton
 								label="Heading 3"
 								active={flags.h3}
 								onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
 							>
-								<Icon name="h3" className="size-4" />
+								<Icon name="heading-3" className="size-4" />
 							</RailButton>
 							<RailButton
 								label="Bullet list"
 								active={flags.bulletList}
 								onClick={() => editor.chain().focus().toggleBulletList().run()}
 							>
-								<Icon name="list-ul" className="size-4" />
+								<Icon name="list" className="size-4" />
 							</RailButton>
 							<RailButton
 								label="Numbered list"
 								active={flags.orderedList}
 								onClick={() => editor.chain().focus().toggleOrderedList().run()}
 							>
-								<Icon name="list-ol" className="size-4" />
+								<Icon name="list-ordered" className="size-4" />
 							</RailButton>
 							<RailButton
 								label="Quote"
@@ -491,7 +491,7 @@ export function ArticleEditorCanvas({
 								active={flags.codeBlock}
 								onClick={() => editor.chain().focus().toggleCodeBlock().run()}
 							>
-								<Icon name="code-block" className="size-4" />
+								<Icon name="square-code" className="size-4" />
 							</RailButton>
 							<RailButton label="Link" onClick={handleLinkRail}>
 								<Icon name="link" className="size-4" />
@@ -502,12 +502,12 @@ export function ArticleEditorCanvas({
 
 						<div className="flex shrink-0 items-center gap-1">
 							<Button variant="secondary" size="md" onClick={onOpenChartPicker}>
-								<Icon name="chart" className="size-3.5" />
+								<Icon name="chart-line" className="size-3.5" />
 								Chart
 							</Button>
 							<Ariakit.MenuProvider>
 								<Ariakit.MenuButton render={<Button variant="ghost" size="md" />}>
-									<Icon name="more" className="size-3.5" />
+									<Icon name="ellipsis" className="size-3.5" />
 									Insert
 								</Ariakit.MenuButton>
 								<MenuSurface variant="actions" className="min-w-[200px]">
@@ -523,7 +523,7 @@ export function ArticleEditorCanvas({
 									</MenuItem>
 									<MenuItem onClick={onOpenEmbedPicker} className="justify-between">
 										<span className="flex items-center gap-2">
-											<Icon name="embed" className="size-3.5" />
+											<Icon name="square-play" className="size-3.5" />
 											Embed
 										</span>
 										<span className="mono-sm text-tertiary">URL</span>
@@ -543,20 +543,20 @@ export function ArticleEditorCanvas({
 										className="justify-between border-b border-subtle"
 									>
 										<span className="flex items-center gap-2">
-											<Icon name="people" className="size-3.5" />
+											<Icon name="users" className="size-3.5" />
 											People panel
 										</span>
 										<span className="mono-sm text-tertiary">Bios</span>
 									</MenuItem>
 									<CalloutMenu insertCallout={insertCallout}>
 										<span className="flex items-center gap-2">
-											<Icon name="callout" className="size-3.5" />
+											<Icon name="circle-alert" className="size-3.5" />
 											Callout
 										</span>
 									</CalloutMenu>
 									<MenuItem onClick={insertCitation} className="justify-between">
 										<span className="flex items-center gap-2">
-											<Icon name="cite" className="size-3.5" />
+											<Icon name="text-quote" className="size-3.5" />
 											Citation
 										</span>
 										<span className="mono-sm text-tertiary">[n]</span>

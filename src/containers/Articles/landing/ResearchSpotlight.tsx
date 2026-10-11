@@ -1,11 +1,12 @@
 import clsx from 'clsx'
 import Link from 'next/link'
 import React from 'react'
-import { ResearchIcon } from '~/components/ResearchIcon'
 import { InViewAnalytics, pushResearchAnalyticsEvent } from '~/containers/Articles/landing/Analytics'
 import { TitleLine } from '~/containers/Articles/landing/TitleLine'
 import { articleHref, formatDate } from '~/containers/Articles/landing/utils'
+import { ResearchArt } from '~/containers/Articles/ResearchArt'
 import type { ArticleDocument } from '~/containers/Articles/types'
+import { Icon } from '~/ui/Icon'
 
 function getImageAspectRatio(itemsCount: number) {
 	if (itemsCount === 6) return 'aspect-[167/96]'
@@ -46,7 +47,7 @@ export function ResearchSpotlight({ title, articles }: ResearchSpotlightProps) {
 	return (
 		<div id="spotlight">
 			<div className="mb-6.5 flex items-center gap-x-3.75">
-				<ResearchIcon name="spotlight" width={32} height={32} aria-hidden />
+				<Icon name="sparkles" className="size-8" aria-hidden />
 				<TitleLine title={title} />
 			</div>
 			<div className={clsx('grid grid-cols-1 gap-3 lg:gap-7', getSpotlightGridCols(count))}>
@@ -63,7 +64,7 @@ export function ResearchSpotlight({ title, articles }: ResearchSpotlightProps) {
 								getImageAspectRatio(count)
 							)}
 						>
-							<ResearchIcon
+							<ResearchArt
 								name="spotlight-badge"
 								className="absolute top-[8px] left-[8px] z-[1]"
 								width={43}

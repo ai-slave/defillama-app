@@ -19,27 +19,6 @@ function readSingle(value: string | Array<string> | undefined): string | null {
 	return Array.isArray(value) ? (value[0] ?? null) : null
 }
 
-function SwapIcon() {
-	return (
-		<svg
-			width="15"
-			height="15"
-			viewBox="0 0 16 16"
-			fill="none"
-			stroke="currentColor"
-			strokeWidth="1.5"
-			strokeLinecap="round"
-			strokeLinejoin="round"
-			aria-hidden
-		>
-			<path d="M4 3 L1.5 5.5 L4 8" />
-			<path d="M1.5 5.5 H12" />
-			<path d="M12 13 L14.5 10.5 L12 8" />
-			<path d="M14.5 10.5 H4" />
-		</svg>
-	)
-}
-
 function TokenSearchField({
 	queryKey,
 	label,
@@ -156,7 +135,7 @@ export function BorrowTokenPickers({
 					/>
 				}
 			>
-				<SwapIcon />
+				<Icon name="arrow-left-right" className="size-3.75" aria-hidden />
 			</Tooltip>
 			<TokenSearchField queryKey="borrowToken" label="Borrow" placeholder="Search borrow token" tokens={borrowTokens} />
 		</div>

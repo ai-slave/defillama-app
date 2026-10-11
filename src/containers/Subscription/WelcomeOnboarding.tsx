@@ -4,7 +4,6 @@ import Router, { useRouter } from 'next/router'
 import { useCallback, useEffect, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { subscriptionStatusQueryOptions } from '~/auth/subscriptionStatus'
-import { SelectCheckIcon } from '~/components/Select/SelectCheckIcon'
 import { AI_SERVER } from '~/constants'
 import { PURCHASABLE_PLANS, queryValue, usePlanRecord } from '~/containers/Subscription/purchaseReturn'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
@@ -437,7 +436,7 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 										{option.description ? <span className="label-sm text-tertiary">{option.description}</span> : null}
 									</span>
 									<span className={popoverMultiSelectCheckStyles(isSelected)} aria-hidden>
-										{isSelected ? <SelectCheckIcon /> : null}
+										{isSelected ? <Icon name="check" className="size-3" aria-hidden /> : null}
 									</span>
 								</Ariakit.Checkbox>
 							)

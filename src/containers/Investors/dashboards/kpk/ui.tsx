@@ -2,6 +2,7 @@ import * as React from 'react'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { Card } from '~/ui/Card'
 import { DividedGrid } from '~/ui/DividedGrid'
+import { Icon } from '~/ui/Icon'
 import { Skeleton } from '~/ui/Skeleton'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
@@ -408,20 +409,7 @@ export function InfoTip({ text, className = '' }: { text: string | undefined; cl
 				aria-label={text}
 				className="-m-1.5 cursor-help p-1.5 text-tertiary transition-colors hover:text-primary"
 			>
-				<svg
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					strokeWidth="2"
-					strokeLinecap="round"
-					strokeLinejoin="round"
-					className="size-3"
-					aria-hidden
-				>
-					<circle cx="12" cy="12" r="10" />
-					<path d="M12 16v-4" />
-					<path d="M12 8h.01" />
-				</svg>
+				<Icon name="info" className="size-3" aria-hidden />
 			</Tooltip>
 		</span>
 	)
@@ -469,17 +457,7 @@ export function RowLink({ href, label, size = 'md' }: { href: string | undefined
 				/>
 			}
 		>
-			<svg
-				viewBox="0 0 12 12"
-				fill="none"
-				stroke="currentColor"
-				strokeWidth="1.6"
-				className={isSmall ? 'size-2.5' : 'size-3'}
-				aria-hidden
-			>
-				<path d="M3.6 8.4 8.4 3.6" />
-				<path d="M4.4 3.6H8.4V7.6" />
-			</svg>
+			<Icon name="arrow-up-right" className={isSmall ? 'size-2.5' : 'size-3'} aria-hidden />
 		</Tooltip>
 	)
 }

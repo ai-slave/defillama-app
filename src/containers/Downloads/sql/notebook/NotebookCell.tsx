@@ -147,16 +147,12 @@ export function NotebookCell({
 							// Run and Stop share one slot, so React keeps the same button and its focus when they swap.
 							<Button variant="secondary" size="sm" onClick={onCancel}>
 								<BusyGlyph decorative size={14} />
-								<svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-									<rect x="6" y="6" width="12" height="12" rx="1" />
-								</svg>
+								<Icon name="stop" className="size-3.5 fill-current" aria-hidden />
 								Stop
 							</Button>
 						) : (
 							<Button variant="primary" size="sm" onClick={onRun} disabled={!canRun || !cell.source.trim()}>
-								<svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-									<path d="M8 5v14l11-7z" />
-								</svg>
+								<Icon name="play" className="size-3.5 fill-current" aria-hidden />
 								Run
 								<span aria-hidden className="flex items-center gap-0.5">
 									<Keycap onBrand>⌘</Keycap>

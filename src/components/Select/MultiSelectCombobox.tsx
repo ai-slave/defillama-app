@@ -9,7 +9,6 @@ import { ListLoading } from '~/ui/NoResults'
 import { popoverMultiSelectCheckStyles, popoverRowWithBorderStyles, popoverSeeMoreStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { focusFirstNewItem } from '~/utils/focusFirstNewItem'
-import { SelectCheckIcon } from './SelectCheckIcon'
 import type { MultiSelectOption } from './types'
 
 const DEFAULT_VIEWABLE_MATCHES = 10
@@ -149,7 +148,7 @@ export function MultiSelectCombobox({
 							<Ariakit.ComboboxItemSelected>
 								{(selected) => (
 									<span className={popoverMultiSelectCheckStyles(selected)} aria-hidden>
-										{selected ? <SelectCheckIcon /> : null}
+										{selected ? <Icon name="check" className="size-3" aria-hidden /> : null}
 									</span>
 								)}
 							</Ariakit.ComboboxItemSelected>

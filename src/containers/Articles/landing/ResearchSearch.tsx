@@ -2,7 +2,6 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useId, useState } from 'react'
-import { ResearchIcon } from '~/components/ResearchIcon'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import {
 	listArticles,
@@ -21,6 +20,7 @@ import {
 	getArticleBylineAuthorEntries,
 	readingMinutes
 } from '~/containers/Articles/landing/utils'
+import { ResearchArt } from '~/containers/Articles/ResearchArt'
 import type { ArticleDocument, ArticleSection, ResearchClientSummary } from '~/containers/Articles/types'
 import { Button } from '~/ui/Button'
 import { focusRegionOnLeave } from '~/ui/focus'
@@ -206,7 +206,7 @@ function ResultCard({ article }: { article: ArticleDocument }) {
 					/>
 				) : (
 					<div className="grid size-full place-items-center text-tertiary">
-						<ResearchIcon name="research-placeholder" className="size-6" aria-hidden />
+						<Icon name="image" className="size-6" aria-hidden />
 					</div>
 				)}
 				{sectionLabel ? (
@@ -323,7 +323,7 @@ function EmptyState({ query, tag, section, client }: { query: string; tag: strin
 	return (
 		<div className="grid place-items-center px-4 py-20 text-center">
 			<div className="grid max-w-md gap-3">
-				<ResearchIcon name="research-search-empty" className="mx-auto size-12 text-tertiary" aria-hidden />
+				<ResearchArt name="research-search-empty" className="mx-auto size-12 text-tertiary" aria-hidden />
 				<h2 className="text-[22px] leading-[130%] font-semibold tracking-tight text-research-navy">
 					{hasFilters ? 'Nothing matches that.' : 'No research yet.'}
 				</h2>

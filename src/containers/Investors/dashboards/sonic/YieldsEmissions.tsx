@@ -6,6 +6,7 @@ import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { TablePager } from '~/components/Table/TablePager'
 import { Card } from '~/ui/Card'
 import { CHART_FILL, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
@@ -115,9 +116,7 @@ export default function YieldsEmissions() {
 							className="inline-flex items-center gap-1 label-md text-link transition-colors hover:underline"
 						>
 							View Burn Counter
-							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="size-3">
-								<path d="M7 17L17 7M17 7H7M17 7v10" />
-							</svg>
+							<Icon name="arrow-up-right" className="size-3" />
 						</a>
 					</div>
 					<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">

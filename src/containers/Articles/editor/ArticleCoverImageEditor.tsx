@@ -1,11 +1,11 @@
 import type { RefObject } from 'react'
 import { Button } from '~/ui/Button'
 import { keepFocus } from '~/ui/focus'
+import { Icon } from '~/ui/Icon'
 import { ErrorLine } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { UploadTile } from '~/ui/UploadTile'
 import type { LocalArticleDocument } from '../types'
-import { Icon } from './ArticleEditorIcon'
 import type { ArticleFieldUpdater } from './ArticleEditorTypes'
 
 type ArticleCoverImageEditorProps = {
@@ -91,7 +91,7 @@ export function ArticleCoverImageEditor({
 									/>
 								}
 							>
-								<Icon name="trash" className="size-4" />
+								<Icon name="trash-2" className="size-4" />
 							</Tooltip>
 						</div>
 					</div>

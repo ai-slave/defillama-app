@@ -17,7 +17,6 @@ import { Tooltip } from '~/ui/Tooltip'
 import { ComboboxSelectTrigger } from './ComboboxSelectTrigger'
 import { readSelectionFromQuery, updateQueryFromSelected } from './query'
 import { getSelectAllState, SELECT_ALL_VALUE, SelectAllContent } from './SelectAll'
-import { SelectCheckIcon } from './SelectCheckIcon'
 import { gridRowStyles, onlyItemStyles } from './SelectWithCombobox'
 import type { ExcludeQueryKey, SelectValues, SelectTriggerSize, SelectTriggerVariant } from './types'
 import { selectTriggerStyles } from './types'
@@ -216,7 +215,7 @@ export function Select(props: ISelect) {
 				className={showCheckboxes ? popoverMultiSelectCheckStyles(selected) : popoverSingleSelectCheckStyles(selected)}
 				aria-hidden
 			>
-				{selected ? <SelectCheckIcon /> : null}
+				{selected ? <Icon name="check" className="size-3" aria-hidden /> : null}
 			</span>
 		)
 	}

@@ -1,10 +1,11 @@
 import { useRouter } from 'next/router'
 import { NestedMenuToggle } from '~/components/NestedMenu'
 import { Button } from '~/ui/Button'
+import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import { pushYieldsQuery } from '../queryUpdates.client'
-import { MeasuredLock, SealGlyph } from '../Tables/Measured'
+import { MeasuredLock } from '../Tables/Measured'
 import { useVerifiedAccess } from '../useVerifiedAccess'
 import { ATTRIBUTE_DEFS } from './attributeOptions'
 
@@ -26,7 +27,7 @@ export function VerifiedFilterToggle({ nestedMenu = false }: { nestedMenu?: bool
 	}
 
 	const glyph = unlocked ? (
-		<SealGlyph size={13} className="text-current" />
+		<Icon name="badge-check" className="size-4 shrink-0 text-current" aria-hidden />
 	) : (
 		<MeasuredLock tone="inherit" label="Verified APY is available on a Pro subscription" />
 	)

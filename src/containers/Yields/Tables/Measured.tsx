@@ -23,28 +23,9 @@ export function splitMethod(method: string): { signature: string; annotation: st
 	return { signature: method.slice(0, at).trim(), annotation: method.slice(at + 1).trim() || null }
 }
 
-/** The verified mark: a filled scallop with the check knocked out in the surface color. */
-export function SealGlyph({ size = 15, className = 'text-verified' }: { size?: number; className?: string }) {
-	return (
-		<svg viewBox="0 0 24 24" height={size} width={size} className={`shrink-0 ${className}`} aria-hidden>
-			<polygon
-				fill="currentColor"
-				points="24,12 21.42,15.9 20.49,20.49 15.9,21.42 12,24 8.1,21.42 3.51,20.49 2.58,15.9 0,12 2.58,8.1 3.51,3.51 8.1,2.58 12,0 15.9,2.58 20.49,3.51 21.42,8.1"
-			/>
-			<path
-				d="M7.6 12.3l2.9 2.9 6-6.1"
-				fill="none"
-				stroke="var(--bg-surface)"
-				strokeWidth="2.3"
-				strokeLinecap="round"
-				strokeLinejoin="round"
-			/>
-		</svg>
-	)
-}
-
-/** Blue: the digits beside it ARE the measurement. Muted: the pool is measured, this window isn't. */
-export function MeasuredSeal({ muted = false, size = 13 }: { muted?: boolean; size?: number }) {
+/** Blue: the digits beside it ARE the measurement. Muted: the pool is measured, this window isn't.
+    Seal sizes run one step above the old drawn seal because badge-check's ink spans 20 of its 24 units. */
+export function MeasuredSeal({ muted = false, size = 'size-4' }: { muted?: boolean; size?: `size-${number}` }) {
 	return (
 		<span
 			role="img"
@@ -55,7 +36,11 @@ export function MeasuredSeal({ muted = false, size = 13 }: { muted?: boolean; si
 			}
 			className="flex shrink-0"
 		>
-			<SealGlyph size={size} className={muted ? 'text-tertiary' : 'text-verified'} />
+			<Icon
+				name="badge-check"
+				className={`${size} shrink-0 ${muted ? 'text-tertiary' : 'text-verified'}`}
+				aria-hidden
+			/>
 		</span>
 	)
 }
@@ -109,7 +94,7 @@ export function MeasuredOffer({ onUpgrade, content }: { onUpgrade: () => void; c
 		<span className="flex flex-col gap-2 rounded-lg border border-medium bg-border-subtle px-3 py-2.5">
 			<span className="flex items-center justify-between gap-3">
 				<span className="flex items-center gap-1.5 title-md text-primary">
-					<SealGlyph size={15} />
+					<Icon name="badge-check" className="size-4.5 shrink-0 text-verified" aria-hidden />
 					{content.headline}
 				</span>
 				<PromoBadge>Pro</PromoBadge>
@@ -212,7 +197,7 @@ export function MeasuredColumnHint() {
 							<span className="flex flex-col gap-1 rounded-lg border border-medium bg-border-subtle px-3 py-2.5">
 								<span className="flex items-center justify-between gap-3">
 									<span className="flex items-center gap-1.5 title-md text-primary">
-										<SealGlyph size={15} />
+										<Icon name="badge-check" className="size-4.5 shrink-0 text-verified" aria-hidden />
 										Verified APY
 									</span>
 									{isDenied ? <PromoBadge>Pro</PromoBadge> : null}
@@ -247,7 +232,7 @@ export function MeasuredColumnHint() {
 				    few subscribers is quieter than anything else flashing for the signed-out majority. */}
 					{unlocked ? (
 						<span role="img" aria-label="Verified APYs in this column were measured on-chain" className="flex shrink-0">
-							<SealGlyph size={13} />
+							<Icon name="badge-check" className="size-4 shrink-0 text-verified" aria-hidden />
 						</span>
 					) : (
 						<MeasuredLock
@@ -282,7 +267,7 @@ export function MeasuredExitColumnHint() {
 							<span className="flex flex-col gap-1 rounded-lg border border-medium bg-border-subtle px-3 py-2.5">
 								<span className="flex items-center justify-between gap-3">
 									<span className="flex items-center gap-1.5 title-md text-primary">
-										<SealGlyph size={15} />
+										<Icon name="badge-check" className="size-4.5 shrink-0 text-verified" aria-hidden />
 										Verified Exit Status
 									</span>
 									{isDenied ? <PromoBadge>Pro</PromoBadge> : null}
@@ -314,7 +299,7 @@ export function MeasuredExitColumnHint() {
 							aria-label="Verified exit status in this column is measured on-chain"
 							className="flex shrink-0"
 						>
-							<SealGlyph size={13} />
+							<Icon name="badge-check" className="size-4 shrink-0 text-verified" aria-hidden />
 						</span>
 					) : (
 						<MeasuredLock
@@ -401,7 +386,7 @@ export function MeasuredCard({
 		<span className="flex w-80 max-w-(--popover-available-width) flex-col gap-2">
 			<span className="flex items-center justify-between gap-3">
 				<span className="flex items-center gap-1.5 title-md text-primary">
-					<MeasuredSeal muted={!measured} size={14} />
+					<MeasuredSeal muted={!measured} size="size-4" />
 					{title}
 				</span>
 				{stamp ? (

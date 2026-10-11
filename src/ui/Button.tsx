@@ -335,7 +335,7 @@ export function Button<T extends ElementType = 'button'>(buttonProps: ButtonProp
 				states={[
 					idleContent,
 					<>
-						<Icon name="check" className="size-3.5" aria-hidden />
+						<Icon name="check" className="size-3" aria-hidden />
 						{doneLabel}
 					</>
 				]}

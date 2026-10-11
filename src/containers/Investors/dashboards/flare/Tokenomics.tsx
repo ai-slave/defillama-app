@@ -5,6 +5,7 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { CHART_FILL, ChartPanelExportShellLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelLoadingStatus, PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
@@ -45,15 +46,10 @@ function FaqItem({ q, a }: { q: string; a: React.ReactNode }) {
 		<Card as="details" padding="none" className="group">
 			<summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 label-md text-primary">
 				{q}
-				<svg
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					strokeWidth="2"
+				<Icon
+					name="chevron-down"
 					className="size-4 shrink-0 text-secondary transition-transform group-open:rotate-180"
-				>
-					<path d="M6 9l6 6 6-6" />
-				</svg>
+				/>
 			</summary>
 			<p className="px-4 pb-4 body-md text-secondary">{a}</p>
 		</Card>

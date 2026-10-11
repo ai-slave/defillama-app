@@ -1,17 +1,21 @@
 import Link from 'next/link'
 import React from 'react'
-import { ResearchIcon } from '~/components/ResearchIcon'
 import { ResearchSearchDialog } from '~/components/ResearchSearchDialog'
 import { ReportsCarousel } from '~/containers/Articles/landing/ReportsCarousel'
 import { ResearchPill } from '~/containers/Articles/landing/ResearchPill'
 import { ResearchHeaderWash } from '~/containers/Articles/ResearchHeaderWash'
 import type { ArticleDocument } from '~/containers/Articles/types'
+import { Icon } from '~/ui/Icon'
 
 interface ResearchHeroProps {
 	title: React.ReactNode
 	subtitle: React.ReactNode
 	reports: Array<ArticleDocument>
 }
+
+// The social links are white discs with the logo in banner ink, matching the white pills beside them.
+const socialClassName =
+	'flex size-9 items-center justify-center rounded-full bg-research-white text-research-accent-ink'
 
 export function ResearchHero({ title, subtitle, reports }: ResearchHeroProps) {
 	return (
@@ -43,7 +47,7 @@ export function ResearchHero({ title, subtitle, reports }: ResearchHeroProps) {
 								size="lg"
 							>
 								<span>Subscribe</span>
-								<ResearchIcon name="newsletter-mark" width={20} height={20} aria-hidden />
+								<Icon name="mail" className="size-5" aria-hidden />
 							</ResearchPill>
 							<ResearchPill as="a" href="mailto:research@defillama.com" tone="white" size="lg">
 								Contact us
@@ -57,7 +61,7 @@ export function ResearchHero({ title, subtitle, reports }: ResearchHeroProps) {
 								size="lg"
 							>
 								<span>Book a call</span>
-								<ResearchIcon name="calendly-mark" width={20} height={20} aria-hidden />
+								<Icon name="calendly" className="size-5" aria-hidden />
 							</ResearchPill>
 						</div>
 
@@ -67,27 +71,30 @@ export function ResearchHero({ title, subtitle, reports }: ResearchHeroProps) {
 								aria-label="Follow us on X"
 								rel="noopener noreferrer"
 								target="_blank"
+								className={socialClassName}
 							>
-								<ResearchIcon name="x-social" width={36} height={36} className="text-on-brand" aria-hidden />
+								<Icon name="twitter" className="size-5" aria-hidden />
 							</Link>
 							<Link
 								href="https://t.me/defillama_research"
 								aria-label="Follow us on Telegram"
 								rel="noopener noreferrer"
 								target="_blank"
+								className={socialClassName}
 							>
-								<ResearchIcon name="telegram" width={36} height={36} className="text-on-brand" aria-hidden />
+								<Icon name="telegram-plane" className="size-5" aria-hidden />
 							</Link>
 							<Link
 								href="https://www.linkedin.com/company/defillama/"
 								aria-label="Follow us on LinkedIn"
 								rel="noopener noreferrer"
 								target="_blank"
+								className={socialClassName}
 							>
-								<ResearchIcon name="linkedin" width={36} height={36} className="text-on-brand" aria-hidden />
+								<Icon name="linkedin-in" className="size-5" aria-hidden />
 							</Link>
-							<Link href="/research/feed" aria-label="Subscribe via RSS">
-								<ResearchIcon name="rss" width={36} height={36} aria-hidden />
+							<Link href="/research/feed" aria-label="Subscribe via RSS" className={socialClassName}>
+								<Icon name="rss" className="size-5" aria-hidden />
 							</Link>
 						</div>
 					</div>

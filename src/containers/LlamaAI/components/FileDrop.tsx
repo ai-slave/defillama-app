@@ -9,6 +9,7 @@ import {
 	useState,
 	type ReactNode
 } from 'react'
+import { Icon } from '~/ui/Icon'
 
 interface FileDropTarget {
 	label: string
@@ -42,21 +43,7 @@ export function FileDropOverlay() {
 			role="status"
 			className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-brand bg-brand-tint text-primary backdrop-blur-[2px]"
 		>
-			<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36" fill="none">
-				<path
-					d="M6 18C6 24.6274 11.3726 30 18 30C24.6274 30 30 24.6274 30 18"
-					stroke="currentColor"
-					strokeWidth="2"
-					strokeLinecap="round"
-				/>
-				<path
-					d="M18 6L18 21M18 21L22.5 16.5M18 21L13.5 16.5"
-					stroke="currentColor"
-					strokeWidth="2"
-					strokeLinecap="round"
-					strokeLinejoin="round"
-				/>
-			</svg>
+			<Icon name="download" className="size-9" />
 			<span className="body-md">{label}</span>
 		</div>
 	)

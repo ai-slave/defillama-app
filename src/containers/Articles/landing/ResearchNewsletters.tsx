@@ -2,12 +2,12 @@ import clsx from 'clsx'
 import Link from 'next/link'
 import type { CSSProperties } from 'react'
 import { useRef } from 'react'
-import { ResearchIcon } from '~/components/ResearchIcon'
 import { pushResearchAnalyticsEvent } from '~/containers/Articles/landing/Analytics'
 import { TitleLine } from '~/containers/Articles/landing/TitleLine'
 import { articleHref, formatDate } from '~/containers/Articles/landing/utils'
 import { RESEARCH_NEWSLETTER_ARCHIVE_URL, type ResearchNewsletterItem } from '~/containers/Articles/newsletterFeed'
 import type { ArticleDocument } from '~/containers/Articles/types'
+import { Icon } from '~/ui/Icon'
 
 interface ResearchNewslettersProps {
 	newsletters: Array<ResearchNewsletterItem>
@@ -58,7 +58,7 @@ function NewsletterCard({ item, isLarge }: NewsletterCardProps) {
 					<img src={item.imageUrl} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />
 				) : (
 					<div className="flex h-full items-center justify-center text-link">
-						<ResearchIcon name="newsletter-mark" width={40} height={40} aria-hidden />
+						<Icon name="mail" className="size-10" aria-hidden />
 					</div>
 				)}
 			</div>

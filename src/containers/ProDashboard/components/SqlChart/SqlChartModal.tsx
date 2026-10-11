@@ -31,6 +31,7 @@ import {
 } from '~/ui/Dialog'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
+import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { Keycap } from '~/ui/Keycap'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -342,9 +343,7 @@ export function SqlChartModal({ editItem, placement, isOpen, onClose, onClosed, 
 						{running ? (
 							<BusyGlyph decorative size={14} />
 						) : (
-							<svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-								<path d="M8 5v14l11-7z" />
-							</svg>
+							<Icon name="play" className="size-3.5 fill-current" aria-hidden />
 						)}
 						{controls.run.label}
 						{!running ? (

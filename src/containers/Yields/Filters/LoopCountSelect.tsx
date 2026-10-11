@@ -1,5 +1,6 @@
 import { useRouter } from 'next/router'
 import { Select } from '~/components/Select/Select'
+import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { pushYieldsQuery } from '../queryUpdates.client'
 
@@ -30,28 +31,6 @@ function decodeLoopCount(value: string | Array<string> | undefined): number {
 	return Math.min(Math.max(Math.floor(raw), MIN_LOOP_COUNT), MAX_LOOP_COUNT)
 }
 
-function LoopIcon({ size = 14, className }: { size?: number; className?: string }) {
-	return (
-		<svg
-			width={size}
-			height={size}
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			strokeWidth="2"
-			strokeLinecap="round"
-			strokeLinejoin="round"
-			className={className}
-			aria-hidden
-		>
-			<path d="M17 1l4 4-4 4" />
-			<path d="M3 11V9a4 4 0 0 1 4-4h14" />
-			<path d="M7 23l-4-4 4-4" />
-			<path d="M21 13v2a4 4 0 0 1-4 4H3" />
-		</svg>
-	)
-}
-
 export function LoopCountSelect() {
 	const router = useRouter()
 	const value = decodeLoopCount(router.query.loopCount)
@@ -70,7 +49,7 @@ export function LoopCountSelect() {
 				setSelectedValues={onChange}
 				label={
 					<span className="flex items-center gap-1.5">
-						<LoopIcon size={14} className="shrink-0 text-secondary" />
+						<Icon name="repeat" className="size-3.5 shrink-0 text-secondary" aria-hidden />
 						<span className="text-primary">{value}</span>
 						<span className="text-secondary">loop{value === 1 ? '' : 's'}</span>
 					</span>

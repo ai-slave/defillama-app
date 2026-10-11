@@ -1,7 +1,6 @@
 import { common, createLowlight } from 'lowlight'
 import Link from 'next/link'
 import { createElement, useEffect, useId, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
-import { ResearchIcon } from '~/components/ResearchIcon'
 import { Button } from '~/ui/Button'
 import { useCopy } from '~/ui/Copy'
 import { Icon } from '~/ui/Icon'
@@ -827,7 +826,7 @@ function ShareIcons({ url, title, size = 'md' }: { url: string; title: string; s
 					/>
 				}
 			>
-				<ResearchIcon name="linkedin-square" className={iconDim} aria-hidden="true" />
+				<Icon name="linkedin" className={iconDim} aria-hidden="true" />
 			</Tooltip>
 			<Tooltip
 				content={copied ? 'Copied' : 'Copy link'}

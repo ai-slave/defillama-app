@@ -1,10 +1,11 @@
 // The receipts behind the Verified APY: the method, the confidence and the exact calls.
+import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
 import type { VerifiedBlock, VerifiedConfidence } from '../data/types'
-import { SealGlyph, splitMethod } from '../Tables/Measured'
+import { splitMethod } from '../Tables/Measured'
 import { scrollIntoViewIfHashed } from './anchorScroll'
 
 export const HOW_WE_VERIFY_ID = 'how-we-verify'
@@ -69,7 +70,7 @@ export function VerifiedApyPanel({
 			<div className="flex flex-col gap-2 border-t border-subtle px-4 py-3">
 				<div className="flex flex-wrap items-center gap-x-3 gap-y-2">
 					<h3 className="flex items-center gap-1.5 label-lg text-primary">
-						<SealGlyph size={15} />
+						<Icon name="badge-check" className="size-4.5 shrink-0 text-verified" aria-hidden />
 						How we verify
 					</h3>
 					<span className="body-sm text-secondary">The receipt behind {symbol}'s Verified APY and Exit Status.</span>

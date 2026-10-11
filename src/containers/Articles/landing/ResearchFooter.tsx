@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { type ChangeEvent, type FormEvent, useId, useState } from 'react'
-import { ResearchIcon } from '~/components/ResearchIcon'
 import { ResearchPill } from '~/containers/Articles/landing/ResearchPill'
 import { useMediaKitEmail } from '~/hooks/useNewsletterSubscription'
 import { showFieldErrors } from '~/ui/focus'
@@ -38,14 +37,18 @@ const FOOTER_COLUMNS: Array<FooterColumnDef> = [
 ]
 
 const SOCIAL_LINKS = [
-	{ name: 'x-social' as const, label: 'Follow DefiLlama Research on X', href: 'https://x.com/defillama_res' },
-	{ name: 'telegram' as const, label: 'Join DefiLlama Research on Telegram', href: 'https://t.me/defillama_research' },
+	{ name: 'twitter' as const, label: 'Follow DefiLlama Research on X', href: 'https://x.com/defillama_res' },
 	{
-		name: 'linkedin' as const,
+		name: 'telegram-plane' as const,
+		label: 'Join DefiLlama Research on Telegram',
+		href: 'https://t.me/defillama_research'
+	},
+	{
+		name: 'linkedin-in' as const,
 		label: 'Follow DefiLlama on LinkedIn',
 		href: 'https://www.linkedin.com/company/defillama/'
 	},
-	{ name: 'rss-feed' as const, label: 'Subscribe via RSS', href: '/research/feed' }
+	{ name: 'rss' as const, label: 'Subscribe via RSS', href: '/research/feed' }
 ]
 
 const LEGAL_LINKS: Array<FooterLink> = [
@@ -80,14 +83,16 @@ function FooterLinkItem({ link }: { link: FooterLink }) {
 }
 
 function FooterSocials() {
-	const itemClassName = 'flex text-primary transition-colors hover:text-secondary'
+	// A disc in the text color with the logo cut out in the page color, so hover dims the whole disc.
+	const itemClassName =
+		'flex size-7.5 items-center justify-center rounded-full bg-current text-primary transition-colors hover:text-secondary'
 	return (
 		<ul className="flex items-center gap-3">
 			{SOCIAL_LINKS.map((social) => (
 				<li key={social.name}>
 					{social.href.startsWith('/') ? (
 						<Link href={social.href} aria-label={social.label} className={itemClassName}>
-							<ResearchIcon name={social.name} width={30} height={30} aria-hidden />
+							<Icon name={social.name} className="size-4 text-page" aria-hidden />
 						</Link>
 					) : (
 						<a
@@ -97,7 +102,7 @@ function FooterSocials() {
 							aria-label={social.label}
 							className={itemClassName}
 						>
-							<ResearchIcon name={social.name} width={30} height={30} aria-hidden />
+							<Icon name={social.name} className="size-4 text-page" aria-hidden />
 						</a>
 					)}
 				</li>

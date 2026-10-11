@@ -952,7 +952,7 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 				{
 					name: 'strike',
 					label: 'Strikethrough',
-					icon: 'strike',
+					icon: 'strikethrough',
 					isActive: () => flags.strike,
 					toggle: () => editor.chain().focus().toggleStrike().run()
 				},
@@ -966,7 +966,7 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 				{
 					name: 'highlight',
 					label: 'Highlight',
-					icon: 'highlight',
+					icon: 'highlighter',
 					isActive: () => flags.highlight,
 					toggle: () => editor.chain().focus().toggleHighlight().run()
 				}

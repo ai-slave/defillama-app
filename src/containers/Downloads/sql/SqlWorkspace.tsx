@@ -1219,16 +1219,12 @@ function EditorRunBar({
 			{running ? (
 				<Button variant="secondary" size="md" onClick={onCancel}>
 					<BusyGlyph decorative size={14} />
-					<svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-						<rect x="6" y="6" width="12" height="12" rx="1" />
-					</svg>
+					<Icon name="stop" className="size-3.5 fill-current" aria-hidden />
 					Stop
 				</Button>
 			) : (
 				<Button variant="primary" size="md" onClick={onRun} disabled={!canRun}>
-					<svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-						<path d="M8 5v14l11-7z" />
-					</svg>
+					<Icon name="play" className="size-3.5 fill-current" aria-hidden />
 					Run query
 					<span aria-hidden className="flex items-center gap-0.5">
 						<Keycap onBrand>⌘</Keycap>

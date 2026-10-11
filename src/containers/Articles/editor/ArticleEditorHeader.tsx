@@ -2,7 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import Link from 'next/link'
 import type { Dispatch, SetStateAction } from 'react'
 import { Button } from '~/ui/Button'
-import { Icon as SharedIcon } from '~/ui/Icon'
+import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { Keycap } from '~/ui/Keycap'
 import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
@@ -11,7 +11,6 @@ import { type Status, StatusDot } from '~/ui/StatusBadge'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDateTime, formatRelativeTime } from '~/utils/dateFormat'
 import type { LocalArticleDocument } from '../types'
-import { Icon } from './ArticleEditorIcon'
 import type { SavePillState } from './ArticleEditorTypes'
 import { formatArticleDate } from './ArticleEditorUtils'
 
@@ -263,7 +262,7 @@ export function ArticleEditorHeader({
 							<Button variant="secondary" size="md" square onClick={onOpenHistory} aria-label="Revision history" />
 						}
 					>
-						<SharedIcon name="clock" className="size-4" />
+						<Icon name="clock" className="size-4" />
 					</Tooltip>
 				) : null}
 
@@ -303,10 +302,10 @@ export function ArticleEditorHeader({
 										<Icon name="eye" className="size-3.5" />
 										View live
 									</span>
-									<Icon name="external" className="size-3 text-tertiary" />
+									<Icon name="external-link" className="size-3 text-tertiary" />
 								</MenuItem>
 								<MenuItem onClick={onOpenMeta}>
-									<Icon name="sliders" className="size-3.5" />
+									<Icon name="sliders-horizontal" className="size-3.5" />
 									Edit listing
 								</MenuItem>
 								<MenuItem onClick={onOpenHistory}>
@@ -314,12 +313,12 @@ export function ArticleEditorHeader({
 									Revision history
 								</MenuItem>
 								<MenuItem onClick={handleUnpublish} disabled={isPublishing}>
-									<Icon name="undo" className="size-3.5" />
+									<Icon name="undo-2" className="size-3.5" />
 									Move to drafts
 								</MenuItem>
 								{isOwner ? (
 									<MenuItem destructive onClick={handleDeleteArticle} className="border-t border-subtle">
-										<Icon name="trash" className="size-3.5" />
+										<Icon name="trash-2" className="size-3.5" />
 										Delete
 									</MenuItem>
 								) : null}
@@ -330,7 +329,7 @@ export function ArticleEditorHeader({
 					<>
 						{!article.section ? (
 							<Button variant="secondary" size="md" onClick={onOpenMeta}>
-								<Icon name="sliders" className="size-3.5" />
+								<Icon name="sliders-horizontal" className="size-3.5" />
 								<span>Set section</span>
 							</Button>
 						) : null}
@@ -347,7 +346,7 @@ export function ArticleEditorHeader({
 									/>
 								}
 							>
-								<Icon name="trash" className="size-4" />
+								<Icon name="trash-2" className="size-4" />
 							</Tooltip>
 						) : null}
 						<Button variant="primary" size="md" pendingLabel="Publishing…" pending={isPublishing} onClick={onOpenMeta}>

@@ -7,7 +7,6 @@ import {
 	type PrepareCsv,
 	useCsvDownload
 } from '~/components/CsvDownloadButton'
-import { SelectCheckIcon } from '~/components/Select/SelectCheckIcon'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
@@ -203,7 +202,7 @@ export function TableImageButtons({
 						>
 							<span>Include watermark</span>
 							<span className={popoverMultiSelectCheckStyles(watermarkEnabled)} aria-hidden>
-								{watermarkEnabled ? <SelectCheckIcon /> : null}
+								{watermarkEnabled ? <Icon name="check" className="size-3" aria-hidden /> : null}
 							</span>
 						</Ariakit.MenuItemCheckbox>
 					) : null}

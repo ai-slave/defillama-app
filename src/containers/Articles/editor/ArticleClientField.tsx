@@ -3,8 +3,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { ComboboxSelectTrigger } from '~/components/Select/ComboboxSelectTrigger'
-import { SelectCheckIcon } from '~/components/Select/SelectCheckIcon'
 import { selectTriggerStyles } from '~/components/Select/types'
+import { Icon } from '~/ui/Icon'
 import { ListLoading } from '~/ui/NoResults'
 import { popoverRowWithBorderStyles, popoverSingleSelectCheckStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
@@ -88,7 +88,7 @@ export function ArticleClientField({
 							<Ariakit.ComboboxItem key={option.id} value={option.id} className={popoverRowWithBorderStyles}>
 								<span className="truncate">{option.displayName}</span>
 								<span className={popoverSingleSelectCheckStyles(selected)} aria-hidden>
-									{selected ? <SelectCheckIcon /> : null}
+									{selected ? <Icon name="check" className="size-3" aria-hidden /> : null}
 								</span>
 							</Ariakit.ComboboxItem>
 						)

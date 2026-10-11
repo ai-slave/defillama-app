@@ -1,7 +1,7 @@
 // The Exit status mark. Sprite icons at one stroke weight replace the old text glyphs, which mixed
-// an emoji stopwatch with font-dependent shapes and never sat at the row's size. Two marks are drawn
-// here: a ring whose arc IS the withdrawable share, and a slashed circle for a closed door. The tone
-// colour rides on this icon alone; the text beside it keeps the table's colours.
+// an emoji stopwatch with font-dependent shapes and never sat at the row's size. The ring is drawn
+// here because its arc IS the withdrawable share; a closed door is the sprite's `ban`. The tone
+// color rides on this icon alone; the text beside it keeps the table's colors.
 import { Icon } from '~/ui/Icon'
 import { withdrawableFraction } from '../data/exit'
 import type { VerifiedBlock } from '../data/types'
@@ -50,22 +50,7 @@ export function ExitStatusIcon({ verified, className }: { verified: VerifiedBloc
 		)
 	}
 
-	if (status === 'unavailable') {
-		return (
-			<svg
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				strokeWidth={STROKE}
-				strokeLinecap="round"
-				className={tone}
-				aria-hidden
-			>
-				<circle cx="12" cy="12" r="10" />
-				<path d="m4.9 4.9 14.2 14.2" />
-			</svg>
-		)
-	}
+	if (status === 'unavailable') return <Icon name="ban" className={tone} aria-hidden />
 
 	const name = status === 'instant' ? 'check' : status === 'queued' ? 'clock' : 'circle-x'
 	return <Icon name={name} className={tone} aria-hidden />

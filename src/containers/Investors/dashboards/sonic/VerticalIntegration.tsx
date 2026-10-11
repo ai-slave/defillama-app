@@ -1,4 +1,5 @@
 import { SkeletonTable } from '~/containers/Investors/DashboardTabsContent'
+import { Icon } from '~/ui/Icon'
 
 const PRODUCTS = ['Native Swap', 'Native Perps', 'Lending', 'LST', 'Concentrated Liquidity', 'Vault', 'USSD', 'Perps']
 
@@ -23,9 +24,7 @@ export default function VerticalIntegration() {
 					className="mt-3 inline-flex items-center gap-1 label-md text-link transition-colors hover:underline"
 				>
 					Read more
-					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="size-3">
-						<path d="M7 17L17 7M17 7H7M17 7v10" />
-					</svg>
+					<Icon name="arrow-up-right" className="size-3" />
 				</a>
 			</div>
 

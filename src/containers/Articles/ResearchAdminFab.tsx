@@ -2,8 +2,8 @@ import { useIsFetching } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
-import { ResearchIcon } from '~/components/ResearchIcon'
 import { Button } from '~/ui/Button'
+import { Icon } from '~/ui/Icon'
 import { isResearcher } from './ArticlesAccessGate'
 
 export function ResearchAdminFab() {
@@ -20,7 +20,7 @@ export function ResearchAdminFab() {
 	return (
 		<div className="fixed top-[74px] right-3 z-30 rounded-lg bg-overlay shadow-overlay lg:top-3 lg:right-4">
 			<Button as={BasicLink} href="/research/admin" variant="secondary" size="md" aria-label="Open research admin">
-				<ResearchIcon name="research-admin" className="size-3.5" aria-hidden />
+				<Icon name="shield-check" className="size-3.5" aria-hidden />
 				Admin
 			</Button>
 		</div>

@@ -1,5 +1,5 @@
+import { Icon } from '~/ui/Icon'
 import { popoverMultiSelectCheckStyles } from '~/ui/Popover'
-import { SelectCheckIcon } from './SelectCheckIcon'
 
 /** Value of the row that leads a multi-select list; never part of a selection. */
 export const SELECT_ALL_VALUE = '__select_all__'
@@ -31,7 +31,7 @@ export function SelectAllContent({ label, state }: { label: string; state: Selec
 			</span>
 			<span className={popoverMultiSelectCheckStyles(state !== 'none')} aria-hidden>
 				{state === 'all' ? (
-					<SelectCheckIcon />
+					<Icon name="check" className="size-3" aria-hidden />
 				) : state === 'some' ? (
 					<span className="h-0.5 w-2 rounded-full bg-current" />
 				) : null}

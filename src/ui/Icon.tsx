@@ -3,9 +3,10 @@ import type { SVGProps } from 'react'
 /** Every icon in the sprite, grouped by meaning so the design system page and a reader of this list find one fast.
     The sprite lists its symbols in this order under one `<!-- Group -->` comment each, so a pasted icon lands next to
     its neighbors and a duplicate shows up in review. To add one (design.md → Icons):
-    1. Copy the SVG from lucide.dev (a brand from simpleicons.org) without changing it.
+    1. Copy the SVG from lucide.dev (a brand from simpleicons.org) without changing it. A glyph Lucide lacks is drawn on
+       the same grid: 24px, a 2px round stroke, currentColor.
     2. Paste it into the sprite under its group as `<symbol id="name" …>`, keeping Lucide's root attributes. Star,
-       bookmark and pin drop `fill="none"` so `fill-current` can fill them.
+       bookmark, pin, play and stop drop `fill="none"` so `fill-current` can fill them.
     3. Add the name here in the same position.
     4. Copy the sprite to the next version and point ICON_SPRITE at it, so cached copies of the old one are never used.
     src/ui/__tests__/Icon.test.tsx fails a symbol that breaks the grid, stroke or color rules, or is out of order. */
@@ -27,8 +28,11 @@ export const ICON_GROUPS = [
 			'chevrons-right',
 			'external-link',
 			'repeat',
+			'rotate-ccw',
 			'expand',
-			'shrink'
+			'shrink',
+			'sort-up',
+			'sort-down'
 		]
 	],
 	[
@@ -55,6 +59,8 @@ export const ICON_GROUPS = [
 			'thumbs-up',
 			'thumbs-down',
 			'pause',
+			'play',
+			'stop',
 			'sign-out',
 			'ellipsis',
 			'menu',
@@ -69,6 +75,9 @@ export const ICON_GROUPS = [
 			'alert-triangle',
 			'alert-triangle-filled',
 			'help-circle',
+			'info',
+			'circle-alert',
+			'ban',
 			'badge-check',
 			'shield-check',
 			'lock',
@@ -90,6 +99,8 @@ export const ICON_GROUPS = [
 			'panel-left-open',
 			'panel-left-close',
 			'align-left',
+			'table',
+			'sliders-horizontal',
 			'settings',
 			'sun',
 			'moon',
@@ -101,6 +112,8 @@ export const ICON_GROUPS = [
 		[
 			'bar-chart-2',
 			'pie-chart',
+			'chart-line',
+			'chart-no-axes-column-increasing',
 			'activity',
 			'trending-up',
 			'percent',
@@ -137,6 +150,8 @@ export const ICON_GROUPS = [
 		'Files and content',
 		[
 			'file-text',
+			'newspaper',
+			'quote',
 			'file-plus',
 			'file-lock-2',
 			'folder',
@@ -145,13 +160,17 @@ export const ICON_GROUPS = [
 			'clipboard-check',
 			'paperclip',
 			'image-plus',
+			'image',
+			'square-play',
 			'sheets',
 			'code',
+			'square-code',
 			'cli',
 			'tag',
 			'pencil-ruler',
 			'wrench',
 			'package',
+			'lightbulb',
 			'presentation',
 			'rss'
 		]
@@ -172,9 +191,59 @@ export const ICON_GROUPS = [
 			'headset'
 		]
 	],
-	['Web and places', ['globe', 'map']],
+	[
+		'Text formatting',
+		[
+			'bold',
+			'italic',
+			'underline',
+			'strikethrough',
+			'highlighter',
+			'heading-2',
+			'heading-3',
+			'list',
+			'list-ordered',
+			'text-quote',
+			'undo-2',
+			'redo-2'
+		]
+	],
+	[
+		'Chart types',
+		[
+			'chart-type-line',
+			'chart-type-area',
+			'chart-type-area-stacked',
+			'chart-type-area-percent',
+			'chart-type-bar',
+			'chart-type-hbar',
+			'chart-type-donut',
+			'chart-type-scatter',
+			'chart-type-bubble',
+			'chart-type-histogram',
+			'chart-type-treemap',
+			'chart-type-candlestick'
+		]
+	],
+	['Web and places', ['globe', 'map', 'building-2']],
 	['DefiLlama', ['llamaai', 'research', 'token-rating']],
-	['Brands', ['github', 'google', 'twitter', 'telegram', 'discord', 'linkedin', 'farcaster', 'bluesky', 'mastodon']]
+	[
+		'Brands',
+		[
+			'github',
+			'google',
+			'twitter',
+			'telegram',
+			'telegram-plane',
+			'discord',
+			'linkedin',
+			'linkedin-in',
+			'farcaster',
+			'bluesky',
+			'mastodon',
+			'calendly'
+		]
+	]
 ] as const
 
 export const ICON_NAMES: ReadonlyArray<Name> = ICON_GROUPS.flatMap(([, names]) => names)
@@ -189,8 +258,8 @@ export interface IIcon extends SVGProps<SVGSVGElement> {
 }
 /** A sprite icon. Size it with a `size-*` class: `size-3.5` (14px) beside a label, `size-4` (16px) icon-only
     (design.md → Icons). Never pass `height` or `width`; scripts/policies/check-icon-size.ts fails them.
-    Icons are outlines; `fill-current` fills the ones whose symbol leaves fill open (star, bookmark, pin) to show an
-    on state. */
+    Icons are outlines; `fill-current` fills the ones whose symbol leaves fill open (star, bookmark, pin, play,
+    stop): an on state, or a solid play or stop button. */
 export function Icon({ name, ...props }: IIcon) {
 	return (
 		<svg fill="none" {...props}>

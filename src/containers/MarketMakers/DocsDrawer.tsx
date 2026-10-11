@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { BasicLink } from '~/components/Link'
 import { Button } from '~/ui/Button'
 import { DialogBody, DialogHeader, SideSheet } from '~/ui/Dialog'
+import { Icon } from '~/ui/Icon'
 import { RailItem } from '~/ui/RailItem'
 import { docsAsset, FigureRadar, FigureTable } from './DocsFigures'
 import { GRADE_BANDS } from './gradeBands'
@@ -78,28 +79,6 @@ const INTERPRET = [
 const TH = 'bg-brand px-4 py-2.5 text-center label-sm text-on-brand'
 const TD = 'border-b border-subtle px-4 py-2 body-sm text-secondary'
 
-function DocFileIcon() {
-	return (
-		<svg
-			width="17"
-			height="21"
-			viewBox="0 0 17 21"
-			fill="none"
-			xmlns="http://www.w3.org/2000/svg"
-			className="shrink-0 text-link"
-			aria-hidden
-		>
-			<path
-				d="M15.75 12.75V10.125C15.75 8.26104 14.239 6.75 12.375 6.75H10.875C10.2537 6.75 9.75 6.24632 9.75 5.625V4.125C9.75 2.26104 8.23896 0.75 6.375 0.75H4.5M4.5 13.5H12M4.5 16.5H8.25M6.75 0.75H1.875C1.25368 0.75 0.75 1.25368 0.75 1.875V19.125C0.75 19.7463 1.25368 20.25 1.875 20.25H14.625C15.2463 20.25 15.75 19.7463 15.75 19.125V9.75C15.75 4.77944 11.7206 0.75 6.75 0.75Z"
-				stroke="currentColor"
-				strokeWidth="1.5"
-				strokeLinecap="round"
-				strokeLinejoin="round"
-			/>
-		</svg>
-	)
-}
-
 export function DocsDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
 	const [activeId, setActiveId] = useState(TOC[0].id)
 
@@ -162,7 +141,7 @@ export function DocsDrawer({ open, onClose }: { open: boolean; onClose: () => vo
 						<div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-subtle bg-brand-muted p-2">
 							<div className="flex items-start gap-2 label-md">
 								<span className="flex h-lh shrink-0 items-center">
-									<DocFileIcon />
+									<Icon name="file-text" className="size-5 shrink-0 text-link" aria-hidden />
 								</span>
 								<p className="text-primary">Looking for the full Market Maker Leaderboard documentation?</p>
 							</div>

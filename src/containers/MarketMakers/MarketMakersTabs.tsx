@@ -1,20 +1,17 @@
-import type { ComponentType } from 'react'
 import { useState } from 'react'
 import { BasicLink } from '~/components/Link'
 import { Card } from '~/ui/Card'
+import { Icon, type IIcon } from '~/ui/Icon'
 import { RailItem } from '~/ui/RailItem'
 import { tabTrackStyles, TabLink } from '~/ui/Tabs'
-import { DepthIcon, DocumentationIcon, KpiIcon, PerformanceIndexIcon, SpreadIcon, VolumeIcon } from './TabIcons'
 
-type TabIcon = ComponentType<{ className?: string }>
-
-export const MARKET_MAKER_TABS: Array<{ label: string; to: string; Icon: TabIcon }> = [
-	{ label: 'Performance Index', to: '/market-makers', Icon: PerformanceIndexIcon },
-	{ label: 'Depth', to: '/market-makers/depth', Icon: DepthIcon },
-	{ label: 'Volume', to: '/market-makers/volume', Icon: VolumeIcon },
-	{ label: 'Spread', to: '/market-makers/spread', Icon: SpreadIcon },
-	{ label: 'KPI Adherence', to: '/market-makers/kpi', Icon: KpiIcon },
-	{ label: 'Documentation', to: '/market-makers/documentation', Icon: DocumentationIcon }
+export const MARKET_MAKER_TABS: Array<{ label: string; to: string; icon: IIcon['name'] }> = [
+	{ label: 'Performance Index', to: '/market-makers', icon: 'layers' },
+	{ label: 'Depth', to: '/market-makers/depth', icon: 'chart-no-axes-column-increasing' },
+	{ label: 'Volume', to: '/market-makers/volume', icon: 'presentation' },
+	{ label: 'Spread', to: '/market-makers/spread', icon: 'arrow-left-right' },
+	{ label: 'KPI Adherence', to: '/market-makers/kpi', icon: 'flag' },
+	{ label: 'Documentation', to: '/market-makers/documentation', icon: 'file-text' }
 ]
 
 export function MarketMakersTabs({ active }: { active: string }) {
@@ -31,7 +28,7 @@ export function MarketMakersTabs({ active }: { active: string }) {
 					className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-md px-3 py-2 label-md text-primary"
 				>
 					<span className="flex items-center gap-2">
-						{activeTab ? <activeTab.Icon /> : null}
+						{activeTab ? <Icon name={activeTab.icon} className="size-4 shrink-0" aria-hidden /> : null}
 						{active}
 					</span>
 					<span
@@ -54,7 +51,7 @@ export function MarketMakersTabs({ active }: { active: string }) {
 									active={tab.label === active}
 									aria-current={tab.label === active ? 'page' : undefined}
 								>
-									<tab.Icon className="size-3.5" />
+									<Icon name={tab.icon} className="size-3.5 shrink-0" aria-hidden />
 									{tab.label}
 								</RailItem>
 							))}
@@ -71,7 +68,7 @@ export function MarketMakersTabs({ active }: { active: string }) {
 						aria-current={tab.label === active ? 'page' : undefined}
 						className="flex items-center gap-1.5"
 					>
-						<tab.Icon className="size-3.5" />
+						<Icon name={tab.icon} className="size-3.5 shrink-0" aria-hidden />
 						{tab.label}
 					</TabLink>
 				))}

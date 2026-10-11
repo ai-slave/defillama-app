@@ -6,8 +6,8 @@ import { RESEARCH_FEED_URL } from '~/containers/Articles/researchFeed'
 import { Button } from '~/ui/Button'
 import { useCopy } from '~/ui/Copy'
 import { Icon } from '~/ui/Icon'
+import { ResearchArt } from '../ResearchArt'
 import { feedSchemeUrl } from './readers'
-import { RssMark } from './RssMark'
 
 export type ResearchFeedPreviewItem = {
 	title: string
@@ -97,7 +97,7 @@ export function ResearchFeedLanding({ items }: { items: Array<ResearchFeedPrevie
 
 					<div className="relative z-10">
 						<div className="dl-feed-reveal flex items-center gap-2.5">
-							<RssMark size={18} />
+							<ResearchArt name="rss-mark" width={18} height={18} aria-hidden />
 							<span className="label-xs tracking-[0.22em] text-tertiary uppercase">Web feed</span>
 						</div>
 						<h1
@@ -130,7 +130,7 @@ export function ResearchFeedLanding({ items }: { items: Array<ResearchFeedPrevie
 
 						<div className="dl-feed-reveal mt-8" style={{ animationDelay: '190ms' }}>
 							<Button as="a" href={feedSchemeUrl(RESEARCH_FEED_URL)} variant="secondary" size="lg" className="w-fit">
-								<RssMark size={14} />
+								<ResearchArt name="rss-mark" width={14} height={14} aria-hidden />
 								Open in your RSS app
 							</Button>
 							<p className="mt-4 max-w-xl body-md text-tertiary">

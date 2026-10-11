@@ -3,9 +3,9 @@ import Head from 'next/head'
 import Image from 'next/image'
 import { type ReactNode, type RefObject, useEffect, useId, useRef, useState, useSyncExternalStore } from 'react'
 import { BasicLink } from '~/components/Link'
-import { ResearchIcon } from '~/components/ResearchIcon'
 import { usePrefersReducedMotion } from '~/hooks/usePrefersReducedMotion'
 import { Button } from '~/ui/Button'
+import { Icon } from '~/ui/Icon'
 import { StaleText } from '~/ui/StaleText'
 import { Tooltip } from '~/ui/Tooltip'
 import { COPYRIGHT_YEAR } from '~/utils/copyrightYear'
@@ -149,22 +149,6 @@ const faqs = [
 		a: 'No. Verification covers the sources and metrics listed in the public record. It is not a statutory audit or a guarantee of future solvency.'
 	}
 ]
-
-function CheckIcon({ className }: { className?: string }) {
-	return (
-		<svg
-			viewBox="0 0 24 24"
-			className={className}
-			fill="none"
-			stroke="currentColor"
-			strokeWidth="2.5"
-			strokeLinecap="round"
-			strokeLinejoin="round"
-		>
-			<polyline points="20 6 9 17 4 12" />
-		</svg>
-	)
-}
 
 function VerifiedByDefiLlamaMark() {
 	return (
@@ -345,15 +329,6 @@ function useAnimatedCoverage(active: boolean, run: number) {
 	return active && coverage.run === run ? coverage.value : 100
 }
 
-function ReplayIcon({ className }: { className?: string }) {
-	return (
-		<svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2">
-			<path d="M20 11a8 8 0 1 0-2.34 5.66" />
-			<path d="M20 4v7h-7" />
-		</svg>
-	)
-}
-
 function DemoFrame({
 	stage,
 	replay,
@@ -402,7 +377,7 @@ function DemoFrame({
 							<Button variant="ghost" size="md" square aria-label="Replay example verification" onClick={replay} />
 						}
 					>
-						<ReplayIcon className="size-4" />
+						<Icon name="rotate-ccw" className="size-4" />
 					</Tooltip>
 				</div>
 			</div>
@@ -519,7 +494,7 @@ function LedgerColumn({
 								{isRechecking || isChecking ? (
 									<span className="attn-recheck-spinner size-3 rounded-full" aria-hidden />
 								) : isVerified ? (
-									<CheckIcon className="size-3 text-success" />
+									<Icon name="check" className="size-3 text-success" />
 								) : (
 									<span className="size-1.5 rounded-full bg-border-strong" aria-hidden />
 								)}
@@ -627,7 +602,7 @@ function ReconciliationLedger() {
 							aria-hidden
 						>
 							{reconciliationState === 'matched' ? (
-								<CheckIcon className="size-3.5 text-success" />
+								<Icon name="check" className="size-3.5 text-success" />
 							) : (
 								<span
 									className={`size-1.5 rounded-full ${reconciliationState === 'checking' ? 'bg-brand' : 'bg-border-strong'}`}
@@ -726,7 +701,7 @@ function ReconciliationLedger() {
 						<span className="sr-only">167 percent coverage</span>
 					</div>
 					<p className="flex items-center gap-1.5 label-sm text-success">
-						<CheckIcon className="size-3.5" /> 9 of 9 sources verified
+						<Icon name="check" className="size-3.5" /> 9 of 9 sources verified
 					</p>
 				</div>
 				<div className="attn-result mt-3" data-active={stage >= verificationStages.coveragePublished}>
@@ -799,7 +774,7 @@ function VenueFlow() {
 			<div className="my-3 text-center text-lg text-tertiary">↓</div>
 			<p className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-center">
 				<span className="flex items-center gap-2.5 mono-xl text-primary tabular-nums">
-					<CheckIcon className="size-5 text-success" />
+					<Icon name="check" className="size-5 text-success" />
 					NAV $86,412,904
 				</span>
 				<span className="body-sm text-tertiary">one verified figure, positions stay private</span>
@@ -844,7 +819,7 @@ function PersonaDossier() {
 							<ul className="mt-6 grid gap-x-8 gap-y-3 sm:grid-cols-2">
 								{p.checklist.map((item) => (
 									<li key={item} className="flex items-start gap-2.5 body-md text-secondary">
-										<CheckIcon className="mt-1 size-3.5 shrink-0 text-success" />
+										<Icon name="check" className="mt-1 size-3.5 shrink-0 text-success" />
 										{item}
 									</li>
 								))}
@@ -983,21 +958,6 @@ const proofStateDurations: Record<ProofState, number> = {
 	unverified: 6000
 }
 
-function PlaybackIcon({ isPlaying }: { isPlaying: boolean }) {
-	return (
-		<svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2">
-			{isPlaying ? (
-				<>
-					<path d="M8 5v14" />
-					<path d="M16 5v14" />
-				</>
-			) : (
-				<path d="m8 5 11 7-11 7V5Z" />
-			)}
-		</svg>
-	)
-}
-
 function RegisterStatus({ state, label }: { state: ProofStateConfig; label: string }) {
 	return (
 		<span className={`flex min-w-0 items-center gap-2 label-sm whitespace-nowrap ${state.textTone}`}>
@@ -1045,7 +1005,7 @@ function SourceRegister({
 							content={playbackLabel}
 							render={<Button variant="ghost" size="sm" square aria-label={playbackLabel} onClick={onTogglePlayback} />}
 						>
-							<PlaybackIcon isPlaying={isPlaying} />
+							<Icon name={isPlaying ? 'pause' : 'play'} className="size-4" />
 						</Tooltip>
 					)}
 				</div>
@@ -1348,7 +1308,7 @@ export default function VerifiedLanding() {
 										<ul className="mt-8 flex flex-wrap gap-x-6 gap-y-3 body-sm text-secondary">
 											{['Read-only access', 'Private by default', 'Public on DefiLlama'].map((promise) => (
 												<li key={promise} className="flex items-center gap-2">
-													<CheckIcon className="size-3.5 text-success" /> {promise}
+													<Icon name="check" className="size-3.5 text-success" /> {promise}
 												</li>
 											))}
 										</ul>
@@ -1434,7 +1394,7 @@ export default function VerifiedLanding() {
 										size="lg"
 									>
 										<span>Book a call</span>
-										<ResearchIcon name="calendly-mark" className="size-3.5 shrink-0" aria-hidden />
+										<Icon name="calendly" className="size-3.5 shrink-0" aria-hidden />
 									</Button>
 								</div>
 							</div>

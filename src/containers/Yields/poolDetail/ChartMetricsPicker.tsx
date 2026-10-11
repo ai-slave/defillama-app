@@ -1,7 +1,7 @@
 // "Add Metrics" picker: the shared metrics dialog, and the selected series as removable chips beside it.
 import { ChartMetricsDialog, type ChartMetricOption as SharedChartMetricOption } from '~/components/ChartMetricsDialog'
+import { Icon } from '~/ui/Icon'
 import { MetricChip } from '~/ui/MetricChip'
-import { SealGlyph } from '../Tables/Measured'
 
 export interface ChartMetricOption extends SharedChartMetricOption {
 	/** The series default, so removing a metric clears the URL override instead of pinning one. */
@@ -36,7 +36,9 @@ export function ChartMetricsPicker({
 					label: group.label,
 					options: group.options.map((option) => ({
 						...option,
-						leading: option.verified ? <SealGlyph size={12} /> : null
+						leading: option.verified ? (
+							<Icon name="badge-check" className="size-3.5 shrink-0 text-verified" aria-hidden />
+						) : null
 					}))
 				}))}
 				onToggle={onToggle}
@@ -49,7 +51,11 @@ export function ChartMetricsPicker({
 					label={option.label}
 					color={option.color}
 					onRemove={() => onToggle(option)}
-					prefix={option.verified ? <SealGlyph size={14} className="mr-1 text-verified" /> : null}
+					prefix={
+						option.verified ? (
+							<Icon name="badge-check" className="mr-1 size-4 shrink-0 text-verified" aria-hidden />
+						) : null
+					}
 				/>
 			))}
 		</>

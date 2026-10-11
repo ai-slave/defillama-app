@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Card } from '~/ui/Card'
+import { Icon } from '~/ui/Icon'
 import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
 import { StatusDot } from '~/ui/StatusBadge'
 import { StatTile } from '~/ui/SummaryStats'
@@ -312,16 +313,7 @@ export default function NetworkStats() {
 					<span className="label-md text-primary">Network Uptime</span>
 					<span className="ml-2 body-sm text-secondary">uptime.soniclabs.com</span>
 				</div>
-				<svg
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					strokeWidth="2"
-					aria-hidden="true"
-					className="size-4 text-secondary"
-				>
-					<path d="M7 17L17 7M17 7H7M17 7v10" />
-				</svg>
+				<Icon name="arrow-up-right" className="size-4 text-secondary" aria-hidden="true" />
 			</Card>
 		</div>
 	)

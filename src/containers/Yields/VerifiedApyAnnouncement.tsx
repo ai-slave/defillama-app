@@ -1,5 +1,5 @@
 import { Announcement, announcementCtaStyles, type AnnouncementTracking } from '~/components/Announcement'
-import { SealGlyph } from './Tables/Measured'
+import { Icon } from '~/ui/Icon'
 import { useSubscribeProModal } from './useSubscribeProModal'
 import { useVerifiedAccess } from './useVerifiedAccess'
 
@@ -40,7 +40,7 @@ export function VerifiedApyAnnouncement({
 				dismissLabel="Dismiss"
 				dismissTracking={track?.dismiss}
 			>
-				<SealGlyph size={16} className="text-verified-announcement-seal" />
+				<Icon name="badge-check" className="size-5 shrink-0 text-verified-announcement-seal" aria-hidden />
 				<span className="flex-1 sm:min-w-48">
 					<strong className="font-semibold">Verified APY</strong>: what you would actually have earned.
 					<span className="hidden lg:inline">

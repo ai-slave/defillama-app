@@ -5,27 +5,7 @@ import { setSignupSource } from '~/auth/signupSource'
 import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-
-function CheckIcon() {
-	return (
-		// Centred on the first line of the bullet beside it, whose type sets the line height.
-		<span className="flex h-lh shrink-0 items-center">
-			<span className="flex size-5 items-center justify-center rounded-full bg-brand-tint text-link">
-				<svg
-					viewBox="0 0 24 24"
-					className="size-3"
-					fill="none"
-					stroke="currentColor"
-					strokeWidth="2.5"
-					strokeLinecap="round"
-					strokeLinejoin="round"
-				>
-					<polyline points="20 6 9 17 4 12" />
-				</svg>
-			</span>
-		</span>
-	)
-}
+import { Icon } from '~/ui/Icon'
 
 const highlightFormula = (formula: string) => {
 	const parts = formula.split(/(=\w+|"[^"]*"|[(),])/).filter(Boolean)
@@ -184,57 +164,31 @@ const templates = [
 		title: 'Stablecoin Yield Finder',
 		desc: 'Find the best stablecoin yields across lending protocols and chains.',
 		href: 'https://docs.llama.fi/spreadsheet-functions/templates#stablecoin-yield-finder',
-		icon: (
-			<svg viewBox="0 0 24 24">
-				<circle cx="12" cy="12" r="10" />
-				<line x1="12" y1="8" x2="12" y2="12" />
-				<line x1="12" y1="16" x2="12.01" y2="16" />
-			</svg>
-		)
+		icon: 'circle-alert' as const
 	},
 	{
 		title: 'Multi-Chain Yield Finder',
 		desc: 'Track and compare yield opportunities across multiple chains with earnings calculator.',
 		href: 'https://docs.llama.fi/spreadsheet-functions/templates#multi-chain-yield-finder-with-earnings-calculator',
-		icon: (
-			<svg viewBox="0 0 24 24">
-				<polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-			</svg>
-		)
+		icon: 'activity' as const
 	},
 	{
 		title: 'Protocol Comparison',
 		desc: 'Side-by-side TVL, fees, revenue, and key metrics for any set of protocols.',
 		href: 'https://docs.llama.fi/spreadsheet-functions/templates#protocol-comparison-table',
-		icon: (
-			<svg viewBox="0 0 24 24">
-				<rect x="3" y="3" width="18" height="18" rx="2" />
-				<line x1="9" y1="3" x2="9" y2="21" />
-				<line x1="3" y1="9" x2="21" y2="9" />
-			</svg>
-		)
+		icon: 'table' as const
 	},
 	{
 		title: 'Chain Comparison',
 		desc: 'Side-by-side metrics for multiple chains including TVL, fees, and users.',
 		href: 'https://docs.llama.fi/spreadsheet-functions/templates#chain-comparison-table',
-		icon: (
-			<svg viewBox="0 0 24 24">
-				<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-			</svg>
-		)
+		icon: 'package' as const
 	},
 	{
 		title: 'Advanced Revenue Table',
 		desc: 'Comprehensive financial metrics for revenue-generating protocols.',
 		href: 'https://docs.llama.fi/spreadsheet-functions/templates#advanced-revenue-table',
-		icon: (
-			<svg viewBox="0 0 24 24">
-				<line x1="18" y1="20" x2="18" y2="10" />
-				<line x1="12" y1="20" x2="12" y2="4" />
-				<line x1="6" y1="20" x2="6" y2="14" />
-			</svg>
-		)
+		icon: 'bar-chart-2' as const
 	}
 ]
 
@@ -310,7 +264,12 @@ function ShowcaseSection({
 					<ul className="flex flex-col gap-3">
 						{bullets.map((bullet) => (
 							<li key={bullet} className="flex items-start gap-2.5 body-md text-secondary">
-								<CheckIcon />
+								{/* Centered on the first line of the bullet beside it, whose type sets the line height. */}
+								<span className="flex h-lh shrink-0 items-center">
+									<span className="flex size-5 items-center justify-center rounded-full bg-brand-tint text-link">
+										<Icon name="check" className="size-3" />
+									</span>
+								</span>
 								{bullet}
 							</li>
 						))}
@@ -441,8 +400,8 @@ function TemplatesSection() {
 						data-umami-event-template={tpl.title}
 						className="hover-wash-card flex flex-col gap-2.5"
 					>
-						<div className="flex size-10 items-center justify-center rounded-lg bg-brand-tint [&>svg]:size-5 [&>svg]:fill-none [&>svg]:stroke-link [&>svg]:[stroke-width:1.8] [&>svg]:[stroke-linecap:round] [&>svg]:[stroke-linejoin:round]">
-							{tpl.icon}
+						<div className="flex size-10 items-center justify-center rounded-lg bg-brand-tint text-link">
+							<Icon name={tpl.icon} className="size-5" />
 						</div>
 						<h3 className="title-md">{tpl.title}</h3>
 						<p className="body-md text-tertiary">{tpl.desc}</p>

@@ -266,7 +266,7 @@ export function DoDont({
 		<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 			<Card padding="base" className="flex flex-col gap-3">
 				<span className="flex items-center gap-1 label-sm text-success">
-					<Icon name="check" className="size-3.5" aria-hidden />
+					<Icon name="check" className="size-3" aria-hidden />
 					Do
 				</span>
 				{good}

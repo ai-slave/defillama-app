@@ -2,7 +2,6 @@ import * as Ariakit from '@ariakit/react'
 import { useDeferredValue, useState } from 'react'
 import { useProtocolsFilterState } from '~/components/Filters/useProtocolFilterState'
 import { ComboboxSelectTrigger } from '~/components/Select/ComboboxSelectTrigger'
-import { SelectCheckIcon } from '~/components/Select/SelectCheckIcon'
 import { DARK_MODE, useDarkModeManager } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
@@ -47,7 +46,7 @@ export function Settings({ tvlOptions = EMPTY_FILTERS }: { tvlOptions?: Array<{ 
 								<Ariakit.ComboboxItemSelected>
 									{(selected) => (
 										<span className={popoverMultiSelectCheckStyles(selected)} aria-hidden>
-											{selected ? <SelectCheckIcon /> : null}
+											{selected ? <Icon name="check" className="size-3" aria-hidden /> : null}
 										</span>
 									)}
 								</Ariakit.ComboboxItemSelected>
@@ -61,7 +60,7 @@ export function Settings({ tvlOptions = EMPTY_FILTERS }: { tvlOptions?: Array<{ 
 						>
 							Dark Mode
 							<span className={popoverMultiSelectCheckStyles(darkMode)} aria-hidden>
-								{darkMode ? <SelectCheckIcon /> : null}
+								{darkMode ? <Icon name="check" className="size-3" aria-hidden /> : null}
 							</span>
 						</Ariakit.ComboboxItem>
 					</>

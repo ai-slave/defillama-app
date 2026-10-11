@@ -94,9 +94,7 @@ function InvestorsShell({
 								/>
 							}
 						>
-							<svg className="size-4" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-								<path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-							</svg>
+							<Icon name="menu" className="size-4" aria-hidden="true" />
 						</Tooltip>
 						<Logo size="sm" href="/" />
 					</div>
@@ -143,20 +141,11 @@ function InvestorsShell({
 													}
 												}}
 											>
-												<svg
-													viewBox="0 0 12 12"
-													fill="none"
+												<Icon
+													name="chevron-right"
 													aria-hidden="true"
 													className={`size-3.5 shrink-0 text-tertiary transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
-												>
-													<path
-														d="M4.5 2.5L8 6L4.5 9.5"
-														stroke="currentColor"
-														strokeWidth="1.5"
-														strokeLinecap="round"
-														strokeLinejoin="round"
-													/>
-												</svg>
+												/>
 												{project.name}
 											</RailItem>
 										)}
@@ -232,27 +221,7 @@ function InvestorsShell({
 									/>
 								}
 							>
-								{isDark ? (
-									<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-										<circle cx="8" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.5" />
-										<path
-											d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"
-											stroke="currentColor"
-											strokeWidth="1.5"
-											strokeLinecap="round"
-										/>
-									</svg>
-								) : (
-									<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-										<path
-											d="M14 9.68A6.5 6.5 0 0 1 6.32 2 6.5 6.5 0 1 0 14 9.68Z"
-											stroke="currentColor"
-											strokeWidth="1.5"
-											strokeLinecap="round"
-											strokeLinejoin="round"
-										/>
-									</svg>
-								)}
+								{isDark ? <Icon name="sun" className="size-4" /> : <Icon name="moon" className="size-4" />}
 							</Tooltip>
 						</div>
 					</aside>

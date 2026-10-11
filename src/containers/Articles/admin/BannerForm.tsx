@@ -6,7 +6,6 @@ import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { ComboboxSelectTrigger } from '~/components/Select/ComboboxSelectTrigger'
 import { MultiSelectCombobox } from '~/components/Select/MultiSelectCombobox'
-import { SelectCheckIcon } from '~/components/Select/SelectCheckIcon'
 import { ArticleMultiPicker } from '~/containers/Articles/admin/ArticleMultiPicker'
 import { ArticlePicker } from '~/containers/Articles/admin/ArticlePicker'
 import {
@@ -45,6 +44,7 @@ import { Button } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { Field, FieldGroup } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
+import { Icon } from '~/ui/Icon'
 import { Input, Textarea } from '~/ui/Input'
 import { popoverRowWithBorderStyles, popoverSingleSelectCheckStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
@@ -308,7 +308,7 @@ export function BannerForm({ banner }: Props) {
 											<Ariakit.ComboboxItem key={section} value={section} className={popoverRowWithBorderStyles}>
 												<span className="truncate">{ARTICLE_SECTION_LABELS[section]}</span>
 												<span className={popoverSingleSelectCheckStyles(state.section === section)} aria-hidden>
-													{state.section === section ? <SelectCheckIcon /> : null}
+													{state.section === section ? <Icon name="check" className="size-3" aria-hidden /> : null}
 												</span>
 											</Ariakit.ComboboxItem>
 										))}

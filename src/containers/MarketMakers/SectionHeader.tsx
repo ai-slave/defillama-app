@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { Icon } from '~/ui/Icon'
 import { AccentBadge } from './badges'
-import { ArrowRightIcon } from './icons'
 import { forgdPrimaryLinkStyles } from './styles'
 
 export function RfqButton() {
@@ -15,7 +15,7 @@ export function RfqButton() {
 		>
 			<span className="hidden min-[713px]:inline">Conduct a Market Maker RFQ</span>
 			<span className="min-[713px]:hidden">Conduct an RFQ</span>
-			<ArrowRightIcon />
+			<Icon name="arrow-right" className="size-3.5 shrink-0" aria-hidden />
 		</a>
 	)
 }
@@ -24,7 +24,7 @@ export function DocsActionButton({ onClick }: { onClick: () => void }) {
 	return (
 		<Button type="button" onClick={onClick} size="md">
 			Documentation
-			<ArrowRightIcon />
+			<Icon name="arrow-right" className="size-3.5 shrink-0" aria-hidden />
 		</Button>
 	)
 }
@@ -34,7 +34,7 @@ export function AboutButton({ onClick }: { onClick: () => void }) {
 		<Button type="button" onClick={onClick} size="md">
 			<span className="hidden min-[713px]:inline">About this Leaderboard</span>
 			<span className="min-[713px]:hidden">About</span>
-			<ArrowRightIcon />
+			<Icon name="arrow-right" className="size-3.5 shrink-0" aria-hidden />
 		</Button>
 	)
 }

@@ -1,6 +1,5 @@
 import * as Ariakit from '@ariakit/react'
 import { useId, type ReactNode } from 'react'
-import { SelectCheckIcon } from '~/components/Select/SelectCheckIcon'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import {
@@ -86,7 +85,7 @@ export function NestedMenuToggle({
 		>
 			<span className="flex min-w-0 items-center gap-2">{children}</span>
 			<span className={popoverMultiSelectCheckStyles(checked)} aria-hidden>
-				{checked ? <SelectCheckIcon /> : null}
+				{checked ? <Icon name="check" className="size-3" aria-hidden /> : null}
 			</span>
 		</Ariakit.MenuItemCheckbox>
 	)

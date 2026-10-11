@@ -4,7 +4,6 @@ import { useMemo, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { BasicLink } from '~/components/Link'
-import { ResearchIcon } from '~/components/ResearchIcon'
 import { getAuthorBySlug, type ArticleAuthorResponse } from '~/containers/Articles/api'
 import { ArticleProxyAuthProvider } from '~/containers/Articles/ArticleProxyAuthProvider'
 import { isResearcher } from '~/containers/Articles/ArticlesAccessGate'
@@ -144,7 +143,7 @@ function BrandHero() {
 						size="lg"
 					>
 						<span>Book a call</span>
-						<ResearchIcon name="calendly-mark" className="size-5 shrink-0" />
+						<Icon name="calendly" className="size-5 shrink-0" aria-hidden />
 					</ResearchPill>
 				</div>
 			</div>

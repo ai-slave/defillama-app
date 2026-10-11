@@ -292,9 +292,7 @@ export function NotebookView({
 						pendingLabel="Running…"
 						pending={runningAny}
 					>
-						<svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-							<path d="M8 5v14l11-7z" />
-						</svg>
+						<Icon name="play" className="size-3.5 fill-current" aria-hidden />
 						{promoteRunAll ? 'Run notebook' : 'Run all'}
 					</Button>
 				</div>

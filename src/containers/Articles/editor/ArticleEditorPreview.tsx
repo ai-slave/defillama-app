@@ -1,10 +1,10 @@
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { Button } from '~/ui/Button'
+import { Icon } from '~/ui/Icon'
 import { formatNumber } from '~/utils/numberFormat'
 import { ArticleRenderer } from '../renderer/ArticleRenderer'
 import type { LocalArticleDocument } from '../types'
 import { ARTICLE_SECTION_SLUGS } from '../types'
-import { Icon } from './ArticleEditorIcon'
 
 type ArticleEditorPreviewProps = {
 	article: LocalArticleDocument

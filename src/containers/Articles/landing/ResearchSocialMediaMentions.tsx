@@ -1,9 +1,9 @@
 import Link from 'next/link'
 import React, { useEffect, useRef, useState } from 'react'
-import { ResearchIcon } from '~/components/ResearchIcon'
 import { TweetEmbed } from '~/containers/Articles/renderer/ArticleEmbedBlock'
 import type { ArticleEmbedConfig, SocialMention } from '~/containers/Articles/types'
 import { useMedia } from '~/hooks/useMedia'
+import { Icon } from '~/ui/Icon'
 import { chunkMentions } from './utils'
 
 export interface MentionQuote {
@@ -104,11 +104,12 @@ export function QuoteBlock({ quote, variant = 'primary', size = 'large', mobile 
 			{quote.quote && (
 				<blockquote className={`relative font-semibold ${textStyles} ${textColor}`}>
 					<div className={`absolute top-0 left-0 ${textColor}`}>
-						<ResearchIcon name="quote" width={27} height={20} aria-hidden />
+						{/* The sprite quote is a closing mark; turned, it opens the quote. */}
+						<Icon name="quote" className="size-6 rotate-180" aria-hidden />
 					</div>
 					<div className="line-clamp-5">{quote.quote}</div>
 					<div className={`absolute right-0 bottom-0 ${textColor}`}>
-						<ResearchIcon name="quote" width={27} height={20} className="rotate-180" aria-hidden />
+						<Icon name="quote" className="size-6" aria-hidden />
 					</div>
 				</blockquote>
 			)}

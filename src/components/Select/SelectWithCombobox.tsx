@@ -25,7 +25,6 @@ import { ComboboxSelectTrigger } from './ComboboxSelectTrigger'
 import { readSelectionFromQuery, updateQueryFromSelected } from './query'
 import { isSearchable } from './searchThreshold'
 import { getSelectAllState, SELECT_ALL_VALUE, SelectAllContent } from './SelectAll'
-import { SelectCheckIcon } from './SelectCheckIcon'
 import type { ExcludeQueryKey, SelectOption, SelectTriggerSize, SelectTriggerVariant, SelectValues } from './types'
 import { selectTriggerStyles } from './types'
 
@@ -313,7 +312,7 @@ export function SelectWithCombobox({
 						}
 						aria-hidden
 					>
-						{selected ? <SelectCheckIcon /> : null}
+						{selected ? <Icon name="check" className="size-3" aria-hidden /> : null}
 					</span>
 				)}
 			</Ariakit.ComboboxItemSelected>

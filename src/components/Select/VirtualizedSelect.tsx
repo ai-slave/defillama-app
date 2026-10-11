@@ -18,7 +18,6 @@ import { BusyGlyph, InlineLoading } from '~/ui/Status'
 import { ComboboxSelectTrigger } from './ComboboxSelectTrigger'
 import { isSearchable } from './searchThreshold'
 import { getSelectAllState, SELECT_ALL_VALUE, SelectAllContent } from './SelectAll'
-import { SelectCheckIcon } from './SelectCheckIcon'
 import { selectTriggerStyles } from './types'
 
 /* ----------------------------------------------------------------------------
@@ -286,7 +285,7 @@ function OptionList({
 													multiple ? popoverMultiSelectCheckStyles(selected) : popoverSingleSelectCheckStyles(selected)
 												}
 											>
-												{selected ? <SelectCheckIcon /> : null}
+												{selected ? <Icon name="check" className="size-3" aria-hidden /> : null}
 											</span>
 										)}
 									</Ariakit.ComboboxItemSelected>

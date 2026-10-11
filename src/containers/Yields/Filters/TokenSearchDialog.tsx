@@ -1,6 +1,5 @@
 import { matchSorter } from 'match-sorter'
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type Ref } from 'react'
-import { SelectCheckIcon } from '~/components/Select/SelectCheckIcon'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useMedia } from '~/hooks/useMedia'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
@@ -228,7 +227,7 @@ function TokenOptionRow({
 				aria-hidden
 				className={multiple ? popoverMultiSelectCheckStyles(selected) : popoverSingleSelectCheckStyles(selected)}
 			>
-				<SelectCheckIcon />
+				<Icon name="check" className="size-3" aria-hidden />
 			</span>
 		</ListRow>
 	)

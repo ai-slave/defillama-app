@@ -9,8 +9,8 @@ import {
 	useTableImageWatermark
 } from '~/components/TableImage/TableImageButtons'
 import { Button } from '~/ui/Button'
+import { Icon, type IIcon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
-import { Icon } from './ArticleEditorIcon'
 import { useArticleEditable } from './useArticleEditable'
 
 export function RailButton({
@@ -181,7 +181,7 @@ function TableToolbar({ editor, target }: { editor: Editor; target: HTMLElement 
 						/>
 					}
 				>
-					<Icon name="trash" className="size-4" />
+					<Icon name="trash-2" className="size-4" />
 				</Tooltip>
 			</div>
 		</Ariakit.Popover>
@@ -299,7 +299,7 @@ export function useActiveEntityLink(editor: Editor | null): ActiveEntityLink | n
 export type MarkButton = {
 	name: string
 	label: string
-	icon: string
+	icon: IIcon['name']
 	isActive: () => boolean
 	toggle: () => void
 }

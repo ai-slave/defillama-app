@@ -85,7 +85,7 @@ export const chips: Family = {
 					color={CHART_COLORS[0]}
 					onRemove={() => {}}
 					loading={values.state === 'loading'}
-					prefix={values.prefix ? <Icon name="check" className="size-3.5" aria-hidden /> : undefined}
+					prefix={values.prefix ? <Icon name="check" className="size-3" aria-hidden /> : undefined}
 				/>
 			),
 			states: () => (

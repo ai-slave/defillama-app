@@ -33,8 +33,9 @@ const OWN_ART = new Set<string>(['DefiLlama', 'Brands'])
 // Two status marks are solid so they read at a glance: the verified seal, and the warning triangle, whose knockout
 // mark is white because the triangle is only ever drawn in a status color.
 const STYLE_EXCEPTIONS = new Set(['badge-check', 'alert-triangle-filled'])
-// These leave fill off the symbol so `fill-current` on the Icon can show an on state; a fill on the symbol would win.
-const FILLABLE = new Set(['star', 'bookmark', 'pin'])
+// These leave fill off the symbol so `fill-current` on the Icon can fill them (an on state, a solid play or stop
+// button); a fill on the symbol would win.
+const FILLABLE = new Set(['star', 'bookmark', 'pin', 'play', 'stop'])
 
 test('interface icons follow the Lucide grid, stroke and color rules', () => {
 	const ownArt = new Set<string>(ICON_GROUPS.flatMap(([label, names]) => (OWN_ART.has(label) ? names : [])))

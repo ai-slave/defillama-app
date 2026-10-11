@@ -1,4 +1,5 @@
 import { Card } from '~/ui/Card'
+import { Icon } from '~/ui/Icon'
 import { NearIcon } from './NearIcon'
 
 function ExternalLink({ href, children }: { href: string; children: React.ReactNode }) {
@@ -10,9 +11,7 @@ function ExternalLink({ href, children }: { href: string; children: React.ReactN
 			className="inline-flex items-center gap-1 label-md text-link hover:underline"
 		>
 			{children}
-			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="size-3">
-				<path d="M7 17L17 7M17 7H7M17 7v10" />
-			</svg>
+			<Icon name="arrow-up-right" className="size-3" />
 		</a>
 	)
 }

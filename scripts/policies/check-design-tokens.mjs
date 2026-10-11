@@ -312,7 +312,8 @@ function matchConflictingNamedTypography(content) {
 
 // Tailwind drops a class it does not know without a warning, so a type name off the scale
 // (`heading-md`, `label-2xl`) renders as unstyled body text.
-const TYPOGRAPHY_FAMILY_TOKEN = /^(?:heading|title|label|body|mono)-[a-z0-9-]+$/
+// A type size always has a letter (`xs`, `2xl`, `md-bold`); a bare number is an icon name such as heading-2.
+const TYPOGRAPHY_FAMILY_TOKEN = /^(?:heading|title|label|body|mono)-(?=[a-z0-9-]*[a-z])[a-z0-9-]+$/
 function matchUnknownNamedTypography(content) {
 	const found = []
 	const source = content.replace(/\/\*[\s\S]*?\*\//g, '')

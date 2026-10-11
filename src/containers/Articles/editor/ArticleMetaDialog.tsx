@@ -8,6 +8,7 @@ import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { DialogBody, DialogCancelButton, DialogFooter, DialogHeader, SideSheet, useOpeningKey } from '~/ui/Dialog'
 import { Field } from '~/ui/Field'
 import { focusNeighbourOnLeave, showFieldErrors } from '~/ui/focus'
+import { Icon } from '~/ui/Icon'
 import { Input, Textarea } from '~/ui/Input'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { InlineLoading, InlineStatus } from '~/ui/Status'
@@ -26,7 +27,6 @@ import { ARTICLE_SECTIONS, ARTICLE_SECTION_LABELS, ARTICLE_SECTION_SLUGS } from 
 import { ImageUploadButton } from '../upload/ImageUploadButton'
 import { PdfUploadButton } from '../upload/PdfUploadButton'
 import { ArticleClientField } from './ArticleClientField'
-import { Icon } from './ArticleEditorIcon'
 import type { ArticleFieldUpdater, PublishResult } from './ArticleEditorTypes'
 import { formatArticleDate, fromDateTimeLocal, slugFromTitle, toDateTimeLocal } from './ArticleEditorUtils'
 import { MetaSection, MetaSwitch } from './ArticleMetaFields'
@@ -51,7 +51,7 @@ const GUEST_AUTHOR_TYPE_OPTIONS: ReadonlyArray<SegmentedControlOption<ArticleGue
 		value: 'Organization',
 		label: (
 			<>
-				<Icon name="building" className="size-3.5" />
+				<Icon name="building-2" className="size-3.5" />
 				Organization
 			</>
 		)

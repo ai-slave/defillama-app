@@ -2,12 +2,12 @@ import type { ReactNode } from 'react'
 import { BasicLink } from '~/components/Link'
 import { Card } from '~/ui/Card'
 import { DividedGrid } from '~/ui/DividedGrid'
+import { Icon } from '~/ui/Icon'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { StatusBadge } from '~/ui/StatusBadge'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatCompactNumber, formatPercent, formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { hasPart } from '../domain/apyPresentation'
-import { SealGlyph } from '../Tables/Measured'
 import { stabilityStatus, YIELD_PERCENT_OPTIONS } from './format'
 import type { ApyBreakdown, PoolSide, StabilityInfo } from './PoolDetailView'
 import type { DetailHolders } from './types'
@@ -197,7 +197,11 @@ export function AnswerStrip({
 						<Stat
 							label={
 								<span className="flex items-center gap-1.5 text-primary">
-									<SealGlyph size={15} className={snapshot.current ? 'text-verified' : 'text-tertiary'} />
+									<Icon
+										name="badge-check"
+										className={`size-4.5 shrink-0 ${snapshot.current ? 'text-verified' : 'text-tertiary'}`}
+										aria-hidden
+									/>
 									{(borrow ? 'Verified Supply APY' : 'Verified APY') + NOW_SUFFIX}
 								</span>
 							}

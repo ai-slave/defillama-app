@@ -1,4 +1,5 @@
 import { Card } from '~/ui/Card'
+import { Icon } from '~/ui/Icon'
 
 const REPORTS = [
 	{
@@ -104,16 +105,7 @@ function ReportCard({ source, title, url, color }: { source: string; title: stri
 				<span className="label-md text-primary group-hover:text-link">{title}</span>
 			</div>
 			<span className="flex h-lh shrink-0 items-center title-sm">
-				<svg
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					strokeWidth="2"
-					aria-hidden="true"
-					className="size-4 text-tertiary group-hover:text-link"
-				>
-					<path d="M7 17L17 7M17 7H7M17 7v10" />
-				</svg>
+				<Icon name="arrow-up-right" className="size-4 text-tertiary group-hover:text-link" aria-hidden="true" />
 			</span>
 		</Card>
 	)
@@ -147,16 +139,7 @@ function PaperCard({
 				<span className="body-sm text-secondary">{description}</span>
 			</div>
 			<span className="flex h-lh shrink-0 items-center title-md">
-				<svg
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					strokeWidth="2"
-					aria-hidden="true"
-					className="size-4 text-tertiary group-hover:text-link"
-				>
-					<path d="M7 17L17 7M17 7H7M17 7v10" />
-				</svg>
+				<Icon name="arrow-up-right" className="size-4 text-tertiary group-hover:text-link" aria-hidden="true" />
 			</span>
 		</Card>
 	)
@@ -173,16 +156,7 @@ function LinkItem({ title, url }: { title: string; url: string }) {
 			className="hover-wash-card group flex items-center justify-between gap-4"
 		>
 			<span className="label-md text-primary group-hover:text-link">{title}</span>
-			<svg
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				strokeWidth="2"
-				aria-hidden="true"
-				className="size-4 shrink-0 text-tertiary group-hover:text-link"
-			>
-				<path d="M7 17L17 7M17 7H7M17 7v10" />
-			</svg>
+			<Icon name="arrow-up-right" className="size-4 shrink-0 text-tertiary group-hover:text-link" aria-hidden="true" />
 		</Card>
 	)
 }

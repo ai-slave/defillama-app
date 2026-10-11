@@ -8,6 +8,7 @@ import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/componen
 import { displayTableFeatures } from '~/components/Table/features/display'
 import { Card } from '~/ui/Card'
 import { CHART_FILL, ChartPanelExportShellLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelLoadingStatus, PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
@@ -141,14 +142,10 @@ export default function Revenue() {
 			<Card as="details" padding="none" className="group">
 				<summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5 label-lg text-primary">
 					<span>Quick Investment Thesis</span>
-					<svg
+					<Icon
+						name="chevron-down"
 						className="size-5 shrink-0 text-secondary transition-transform duration-200 group-open:rotate-180"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-					>
-						<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-					</svg>
+					/>
 				</summary>
 				<div className="flex flex-col gap-4 border-t border-subtle px-5 pt-4 pb-5 body-md text-secondary">
 					<p>
@@ -411,15 +408,11 @@ export default function Revenue() {
 										<span>{item.question}</span>
 									</span>
 									<span className="flex h-lh shrink-0 items-center">
-										<svg
+										<Icon
+											name="chevron-down"
 											className="size-5 text-secondary transition-transform duration-200 group-open:rotate-180"
-											fill="none"
-											stroke="currentColor"
-											viewBox="0 0 24 24"
 											aria-hidden="true"
-										>
-											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-										</svg>
+										/>
 									</span>
 								</summary>
 								<div className="border-t border-subtle bg-hover-row px-5 pt-4 pb-5">
