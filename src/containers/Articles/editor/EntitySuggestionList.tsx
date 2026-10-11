@@ -2,6 +2,7 @@ import type { Ref } from 'react'
 import { useId, useImperativeHandle, useMemo, useState } from 'react'
 import { Button } from '~/ui/Button'
 import { Change } from '~/ui/Change'
+import { Keycap } from '~/ui/Keycap'
 import { ListLoading, NoResults } from '~/ui/NoResults'
 import { formatUsd } from '~/utils/numberFormat'
 import type { ArticleEntitySuggestionItem } from '../entitySuggestions'
@@ -266,13 +267,10 @@ export function EntitySuggestionList({
 			</div>
 			<div className="flex shrink-0 items-center justify-between gap-2 border-t border-medium px-3 py-1.5 body-xs text-tertiary">
 				<span>
-					<kbd className="rounded-sm border border-medium px-1">↑</kbd>{' '}
-					<kbd className="rounded-sm border border-medium px-1">↓</kbd> nav{' '}
-					<kbd className="ml-1 rounded-sm border border-medium px-1">alt ← →</kbd> filter
+					<Keycap>↑</Keycap> <Keycap>↓</Keycap> nav <Keycap>alt ← →</Keycap> filter
 				</span>
 				<span>
-					<kbd className="rounded-sm border border-medium px-1">↵</kbd> insert{' '}
-					<kbd className="ml-1 rounded-sm border border-medium px-1">esc</kbd> dismiss
+					<Keycap>↵</Keycap> insert <Keycap>esc</Keycap> dismiss
 				</span>
 			</div>
 		</div>

@@ -13,6 +13,7 @@ import { keepFocus, neighbourRowControl, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, Textarea } from '~/ui/Input'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { StatusDot } from '~/ui/StatusBadge'
 import { Tooltip } from '~/ui/Tooltip'
 import { httpErrorMessage } from '~/utils/async'
 import { formatMonthYear } from '~/utils/dateFormat'
@@ -386,7 +387,7 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 					hint={
 						slugChanged && !shownSlugError ? (
 							<span className="inline-flex items-center gap-1.5 text-warning">
-								<span aria-hidden className="size-1.5 rounded-full bg-warning" />
+								<StatusDot status="caution" />
 								Old links to <span className="mono-sm">/research/authors/{initial.slug}</span> will 404.
 							</span>
 						) : null
@@ -539,10 +540,7 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 			<div className="sticky bottom-0 -mx-1 mt-2 border-t border-medium bg-page-glass px-2 py-3 backdrop-blur">
 				<div className="flex items-center justify-between gap-3">
 					<span className="inline-flex items-center gap-2 body-sm text-tertiary">
-						<span
-							aria-hidden
-							className={`size-1.5 rounded-full transition-colors ${dirty ? 'bg-warning' : 'bg-success'}`}
-						/>
+						<StatusDot status={dirty ? 'caution' : 'good'} />
 						{dirty ? 'Unsaved changes' : 'All changes saved'}
 					</span>
 					<div className="flex items-center gap-2">

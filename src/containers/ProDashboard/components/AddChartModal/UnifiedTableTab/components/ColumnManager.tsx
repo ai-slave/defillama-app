@@ -43,6 +43,7 @@ import type { CustomColumnDefinition, UnifiedRowHeaderType } from '~/containers/
 import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
 import { Button } from '~/ui/Button'
 import { Checkbox } from '~/ui/Checkbox'
+import { CountBadge } from '~/ui/CountBadge'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
@@ -583,7 +584,7 @@ export function ColumnManager({
 				<div className="mb-2 flex items-center justify-between label-sm">
 					<div className="flex items-center gap-2">
 						<h4 className="title-sm text-primary">Selected</h4>
-						<span className="rounded-sm bg-brand-tint px-1.5 py-0.5 text-link">{selectedColumns.length}</span>
+						<CountBadge count={selectedColumns.length} />
 					</div>
 					{selectedColumns.length > 0 ? (
 						<Button variant="link" onClick={handleClearAll}>
@@ -711,11 +712,7 @@ export function ColumnManager({
 							{editingId ? 'Edit custom column' : 'Custom column'}
 							{!hasActiveSubscription ? <span className="ml-1 body-sm text-tertiary">(Pro)</span> : null}
 						</span>
-						{customColumns.length > 0 ? (
-							<span className="rounded-sm bg-pro-ai-tint px-1.5 py-0.5 label-sm text-pro-ai-text">
-								{customColumns.length}
-							</span>
-						) : null}
+						{customColumns.length > 0 ? <CountBadge count={customColumns.length} /> : null}
 					</div>
 					<Icon
 						name="chevron-down"

@@ -24,6 +24,7 @@ import { RelativeTime } from '~/ui/RelativeTime'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Skeleton } from '~/ui/Skeleton'
 import { InlineStatus } from '~/ui/Status'
+import { StatusDot } from '~/ui/StatusBadge'
 import { Tooltip } from '~/ui/Tooltip'
 import { httpErrorMessage } from '~/utils/async'
 import { formatNumber } from '~/utils/numberFormat'
@@ -52,16 +53,6 @@ function wordCount(text: string | undefined): number {
 	if (!text) return 0
 	const trimmed = text.trim()
 	return trimmed ? trimmed.split(/\s+/).length : 0
-}
-
-function StatusDot({ status }: { status: ArticleDocument['status'] }) {
-	const isPublished = status === 'published'
-	return (
-		<span
-			aria-hidden
-			className={`inline-block size-1.5 shrink-0 rounded-full ${isPublished ? 'bg-success' : 'bg-warning'}`}
-		/>
-	)
 }
 
 function MyArticlesContent() {
@@ -355,7 +346,10 @@ function MyArticlesContent() {
 									/>
 									<Link href={`/research/edit/${article.id}`} className="grid min-w-0 gap-1">
 										<div className="flex min-w-0 flex-wrap items-center gap-2">
-											<StatusDot status={article.status} />
+											<StatusDot
+												status={article.status === 'published' ? 'good' : 'caution'}
+												label={article.status === 'published' ? 'Published' : 'Draft'}
+											/>
 											<h3 className="truncate title-lg tracking-tight text-primary group-hover:text-link">
 												{article.title || 'Untitled'}
 											</h3>

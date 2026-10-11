@@ -8,6 +8,8 @@ import type { ComponentPropsWithoutRef } from 'react'
  *
  * TagButton is the same label when a click acts on that value (a dashboard
  * card's tag that filters by it): one look in a row of tags, plus a hover wash.
+ * TagLink is that label when it opens what the value names (a reference, a
+ * source); an icon-only link is a square Button, never a Tag.
  *
  * Not a filter chip and not a selection pill — those are Button `filter`/`toggle`
  * and `MetricChip`, which own their brand active states. A state coloured by
@@ -19,6 +21,16 @@ const TAG_CLASSES =
 
 export function Tag({ className, ...props }: ComponentPropsWithoutRef<'span'>) {
 	return <span className={`${TAG_CLASSES} ${className ?? ''}`.trim()} {...props} />
+}
+
+export function TagLink({ className, ...props }: ComponentPropsWithoutRef<'a'>) {
+	// The dotted underline says it opens something, where a plain Tag beside it does not; a hover wash alone never shows on touch or to keyboard readers.
+	return (
+		<a
+			className={`${TAG_CLASSES} hover-wash underline decoration-dotted underline-offset-2 ${className ?? ''}`.trim()}
+			{...props}
+		/>
+	)
 }
 
 export function TagButton({ className, ...props }: ComponentPropsWithoutRef<'button'>) {

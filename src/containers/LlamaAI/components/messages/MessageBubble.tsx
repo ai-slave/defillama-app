@@ -32,12 +32,10 @@ import { Button } from '~/ui/Button'
 import { ChartPanel, ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { Keycap } from '~/ui/Keycap'
 import { Skeleton } from '~/ui/Skeleton'
 import { Tooltip } from '~/ui/Tooltip'
 import { ArtifactCard } from './ArtifactCard'
-
-// Keyboard hints under the edit box.
-const KBD = 'rounded-sm border border-medium bg-surface-elevated-1 px-1 py-px mono-sm text-secondary'
 
 // Every state of a chart takes the finished chart's box (its card and 360px body), so nothing jumps when it lands.
 function StreamingChartPlaceholder() {
@@ -590,16 +588,16 @@ function MessageBubbleContent({
 							<span className="hidden sm:inline">
 								{' · '}
 								{enterToSend ? (
-									<kbd className={KBD}>Enter</kbd>
+									<Keycap>Enter</Keycap>
 								) : (
 									<>
-										<kbd className={KBD}>Shift</kbd>
+										<Keycap>Shift</Keycap>
 										<span className="mx-0.5">+</span>
-										<kbd className={KBD}>Enter</kbd>
+										<Keycap>Enter</Keycap>
 									</>
 								)}
 								<span className="mx-1">save</span>
-								<kbd className={KBD}>esc</kbd>
+								<Keycap>esc</Keycap>
 								<span className="ml-1">cancel</span>
 							</span>
 						</p>

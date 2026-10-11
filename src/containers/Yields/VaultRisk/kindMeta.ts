@@ -74,17 +74,17 @@ export interface ToneClasses {
 
 const TONE_CLASSES: Record<Tone, ToneClasses> = {
 	danger: {
-		text: 'text-(--yield-negative-text)',
+		text: 'text-error',
 		chip: 'border border-error-muted bg-error-tint text-primary',
 		bar: 'bg-error'
 	},
 	warning: {
-		text: 'text-(--yield-warning-text)',
+		text: 'text-warning',
 		chip: 'border border-warning-muted bg-warning-tint text-primary',
 		bar: 'bg-warning'
 	},
 	good: {
-		text: 'text-(--yield-positive-text)',
+		text: 'text-success',
 		chip: 'border border-success-muted bg-success-tint text-primary',
 		bar: 'bg-success'
 	},

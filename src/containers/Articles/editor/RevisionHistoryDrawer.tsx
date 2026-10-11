@@ -7,10 +7,10 @@ import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { DialogBackButton, DialogBody, DialogHeader, SideSheet } from '~/ui/Dialog'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { Keycap } from '~/ui/Keycap'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { StatusBadge } from '~/ui/StatusBadge'
-import { tw } from '~/ui/tw'
 import { queryReadFailed } from '~/utils/query'
 import {
 	deleteArticleRevision,
@@ -107,8 +107,6 @@ const BASE_OPTIONS: Array<{ value: BaseMode; label: string }> = [
 	{ value: 'live', label: 'Live' },
 	{ value: 'pending', label: 'Pending' }
 ]
-
-const KBD_STYLES = tw`rounded-sm border border-medium px-1 body-sm text-secondary`
 
 const FILTER_MATCH: Record<FilterKey, (e: ArticleRevisionEventType) => boolean> = {
 	all: () => true,
@@ -502,8 +500,7 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, sav
 							{/* Keyboard hints mean nothing on a touch screen. */}
 							<span className="max-sm:hidden pointer-coarse:hidden">
 								<span aria-hidden> · </span>
-								<kbd className={KBD_STYLES}>J</kbd> <kbd className={KBD_STYLES}>K</kbd> move,{' '}
-								<kbd className={KBD_STYLES}>R</kbd> restore, <kbd className={KBD_STYLES}>Esc</kbd> close
+								<Keycap>J</Keycap> <Keycap>K</Keycap> move, <Keycap>R</Keycap> restore, <Keycap>Esc</Keycap> close
 							</span>
 						</>
 					) : null

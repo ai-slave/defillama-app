@@ -13,7 +13,6 @@ import { Editor, type EditorHandle } from '~/containers/Downloads/sql/Editor'
 import type { ExampleQuery } from '~/containers/Downloads/sql/examples'
 import { runSql, type ExecutorCtx } from '~/containers/Downloads/sql/executor'
 import type { QueryResult } from '~/containers/Downloads/sql/exportResults'
-import { Keycap } from '~/containers/Downloads/sql/primitives'
 import { ResultsPanel } from '~/containers/Downloads/sql/ResultsPanel'
 import { useDuckDB } from '~/containers/Downloads/sql/useDuckDB'
 import { useTableRegistry, type RegisteredTable, type TableSource } from '~/containers/Downloads/sql/useTableRegistry'
@@ -33,6 +32,7 @@ import {
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Input } from '~/ui/Input'
+import { Keycap } from '~/ui/Keycap'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { ErrorLine, InlineStatus } from '~/ui/Status'
@@ -350,8 +350,8 @@ export function SqlChartModal({ editItem, placement, isOpen, onClose, onClosed, 
 						{controls.run.label}
 						{!running ? (
 							<span aria-hidden className="flex items-center gap-0.5 pointer-coarse:hidden">
-								<Keycap muted>⌘</Keycap>
-								<Keycap muted>↵</Keycap>
+								<Keycap onBrand>⌘</Keycap>
+								<Keycap onBrand>↵</Keycap>
 							</span>
 						) : null}
 					</Button>

@@ -12,6 +12,7 @@ import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import { fetchProtocolExpenses } from '~/containers/ProtocolOverview/api'
 import { buildProtocolExpenseRows } from '~/containers/ProtocolOverview/expenses'
 import Layout from '~/layout'
+import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
@@ -128,10 +129,20 @@ const columns = columnHelper.columns([
 			return source ? (
 				<Tooltip
 					content={source}
-					render={<a href={source} target="_blank" rel="noopener noreferrer" aria-label="View source" />}
-					className="flex shrink-0 items-center justify-center rounded-md bg-brand-tint px-2.5 py-1 label-sm whitespace-nowrap text-link hover:bg-brand-tint-strong focus-visible:bg-brand-tint-strong"
+					render={
+						<Button
+							as="a"
+							href={source}
+							target="_blank"
+							rel="noopener noreferrer"
+							aria-label="View source"
+							size="sm"
+							square
+							className="w-fit"
+						/>
+					}
 				>
-					<Icon name="arrow-up-right" className="size-3.5 shrink-0" />
+					<Icon name="arrow-up-right" className="size-4" />
 				</Tooltip>
 			) : null
 		},

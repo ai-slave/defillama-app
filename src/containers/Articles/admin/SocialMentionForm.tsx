@@ -15,6 +15,7 @@ import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Input, Textarea } from '~/ui/Input'
 import { EmptyState, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { StatusDot } from '~/ui/StatusBadge'
 import { httpErrorMessage } from '~/utils/async'
 import { queryReadFailed } from '~/utils/query'
 
@@ -267,10 +268,7 @@ export function SocialMentionForm({ mentionId }: Props) {
 				{conflict ? <SavedChangedNotice noun="mention" onLoadSaved={loadSaved} /> : null}
 				<div className="flex items-center justify-between gap-3">
 					<span className="inline-flex items-center gap-2 body-sm text-tertiary">
-						<span
-							aria-hidden
-							className={`size-1.5 rounded-full transition-colors ${dirty ? 'bg-warning' : 'bg-success'}`}
-						/>
+						<StatusDot status={dirty ? 'caution' : 'good'} />
 						{dirty ? 'Unsaved changes' : mention ? 'All changes saved' : 'New mention'}
 					</span>
 					{/* Disabled only with nothing to save, which the status beside it says. Focusable while disabled: a save

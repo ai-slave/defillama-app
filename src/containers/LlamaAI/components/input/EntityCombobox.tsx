@@ -5,6 +5,7 @@ import { getAnchorRect } from '~/containers/LlamaAI/utils/entitySuggestions'
 import { popoverMenuItemStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { LoadingIndicator } from '~/ui/Status'
+import { Tag } from '~/ui/Tag'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 interface EntityMatch {
@@ -67,7 +68,7 @@ export function EntityComboboxPopover({
 						{logo ? <TokenLogo src={logo} alt={`Logo of ${name}`} size={20} /> : null}
 						<span className="flex items-center gap-1.5">
 							<span className="font-medium">{name}</span>
-							<EntityTypeBadge type={type} />
+							<Tag>{type}</Tag>
 						</span>
 					</Ariakit.ComboboxItem>
 				))
@@ -78,15 +79,4 @@ export function EntityComboboxPopover({
 			)}
 		</ComboboxSurface>
 	)
-}
-
-function EntityTypeBadge({ type }: { type: string }) {
-	const colorClass =
-		type === 'Chain'
-			? 'bg-brand-tint text-link'
-			: type === 'Protocol'
-				? 'bg-ai-violet-tint text-ai-violet'
-				: 'bg-success-tint text-success'
-
-	return <span className={`rounded-sm px-1.5 py-0.5 label-xs ${colorClass}`}>{type}</span>
 }

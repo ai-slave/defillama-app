@@ -5,9 +5,12 @@ import { setSignupSource } from '~/auth/signupSource'
 import { BasicLink } from '~/components/Link'
 import { Button } from '~/ui/Button'
 import { Icon, type IIcon } from '~/ui/Icon'
+import { Keycap } from '~/ui/Keycap'
+import { StatusDot } from '~/ui/StatusBadge'
+import { Tag } from '~/ui/Tag'
 import { formatNumber, formatCompactNumber, formatUsd } from '~/utils/numberFormat'
 import type { FineKind } from './columnKind'
-import { Keycap, TypeBadge } from './primitives'
+import { TypeBadge } from './primitives'
 
 interface UpsellGateProps {
 	isAuthenticated: boolean
@@ -323,7 +326,7 @@ function TabStrip({ id }: { id: string }) {
 					className="group -mb-px flex h-8 max-w-[220px] min-w-[148px] shrink-0 items-center gap-2 rounded-t-md border border-b-0 border-transparent px-2.5 text-secondary transition-colors hover:bg-hover-row hover:text-primary aria-selected:border-subtle aria-selected:bg-surface aria-selected:text-primary"
 				>
 					<span className="flex size-3 shrink-0 items-center justify-center" aria-hidden>
-						{tab.dirty ? <span className="size-1.5 rounded-full bg-warning" /> : null}
+						{tab.dirty ? <StatusDot status="caution" /> : null}
 					</span>
 					<Icon
 						name={tab.kind === 'notebook' ? 'layers' : 'file-text'}
@@ -433,8 +436,8 @@ function SqlNotebookCell() {
 							Run
 						</span>
 						<span className="hidden items-center gap-1 sm:inline-flex">
-							<Keycap muted>⌘</Keycap>
-							<Keycap muted>↵</Keycap>
+							<Keycap>⌘</Keycap>
+							<Keycap>↵</Keycap>
 						</span>
 						<Icon name="ellipsis" className="size-3.5 text-tertiary" />
 					</>
@@ -465,7 +468,7 @@ function SqlNotebookCell() {
 				<div className="mt-2.5 flex items-center justify-between gap-2 body-xs">
 					<span className="text-tertiary">7 rows · 5 cols · 412ms</span>
 					<span className="flex items-center gap-1.5 text-success">
-						<span aria-hidden className="inline-block size-1.5 rounded-full bg-success" />
+						<StatusDot status="good" />
 						<span className="tracking-[0.12em] uppercase">cached</span>
 					</span>
 				</div>
@@ -528,24 +531,9 @@ function CellHeader({ name, badge, action }: { name: string; badge: 'sql' | 'md'
 		<div className="flex items-center gap-2 px-3 pt-2 pb-1.5">
 			<Icon name="menu" className="size-3 shrink-0 text-tertiary" />
 			<span className="mono-sm text-tertiary">{name}</span>
-			<CellTypeBadge kind={badge} />
+			<Tag>{badge === 'sql' ? 'SQL' : badge === 'md' ? 'MD' : 'Chart'}</Tag>
 			{action ? <div className="ml-auto flex items-center gap-1.5">{action}</div> : null}
 		</div>
-	)
-}
-
-function CellTypeBadge({ kind }: { kind: 'sql' | 'md' | 'chart' }) {
-	const map = {
-		sql: { label: 'SQL', cls: 'bg-brand-tint text-link' },
-		md: { label: 'MD', cls: 'bg-pro-ai-tint text-pro-ai-text' },
-		chart: { label: 'CHART', cls: 'bg-warning-tint text-warning' }
-	}[kind]
-	return (
-		<span
-			className={`inline-flex h-[14px] items-center rounded-[3px] px-1 label-xs tracking-wider uppercase ${map.cls}`}
-		>
-			{map.label}
-		</span>
 	)
 }
 
@@ -581,7 +569,7 @@ function QueryBody() {
 					<span className="truncate mono-sm text-secondary">fees-vs-revenue.sql</span>
 				</div>
 				<span className="flex shrink-0 items-center gap-2 body-sm">
-					<span aria-hidden className="inline-block size-1.5 rounded-full bg-success" />
+					<StatusDot status="good" />
 					<span className="label-xs tracking-[0.12em] text-success uppercase">ready</span>
 					<span aria-hidden className="text-tertiary">
 						·
@@ -648,7 +636,7 @@ function AltQueryBody() {
 				<div className="flex items-center gap-2 truncate">
 					<Icon name="file-text" className="size-3.5 shrink-0 text-tertiary" />
 					<span className="truncate mono-sm text-secondary">chains-tvl.sql</span>
-					<span aria-hidden className="ml-1 inline-block size-1.5 rounded-full bg-warning" />
+					<StatusDot status="caution" />
 					<span className="label-xs tracking-[0.12em] text-warning uppercase">unsaved</span>
 				</div>
 				<span className="flex shrink-0 items-center gap-2 body-sm">

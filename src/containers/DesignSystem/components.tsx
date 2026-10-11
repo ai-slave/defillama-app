@@ -14,6 +14,7 @@ import { Field, FieldGroup } from '~/ui/Field'
 import { FileButton } from '~/ui/FileButton'
 import { Icon } from '~/ui/Icon'
 import { Input, Textarea } from '~/ui/Input'
+import { Keycap } from '~/ui/Keycap'
 import { ListRow } from '~/ui/ListRow'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
@@ -36,6 +37,7 @@ import {
 	SurfaceBodyLoadingStatus,
 	SurfaceBodyStatus
 } from '~/ui/Status'
+import { StatusDot } from '~/ui/StatusBadge'
 import { InlineStatStrip, StatItem, StatTile, SummaryChange } from '~/ui/SummaryStats'
 import { Switch } from '~/ui/Switch'
 import { Tabs } from '~/ui/Tabs'
@@ -787,6 +789,47 @@ export function ChipsGroup() {
 				<span className="flex items-center gap-1 label-sm text-primary">
 					Chains <CountBadge count={3} />
 				</span>
+			</Example>
+			<Example
+				name="StatusDot"
+				prop="status / label / pulse"
+				note="A state as a dot on a quiet line; label names it when no text beside it does."
+			>
+				<Row>
+					<span className="flex items-center gap-1.5 body-sm text-tertiary">
+						<StatusDot status="good" />
+						All changes saved
+					</span>
+					<span className="flex items-center gap-1.5 body-sm text-tertiary">
+						<StatusDot status="caution" />
+						Unsaved changes
+					</span>
+					<span className="flex items-center gap-1.5 body-sm text-tertiary">
+						<StatusDot status="bad" />
+						Disconnected
+					</span>
+					<span className="flex items-center gap-1.5 body-sm text-tertiary">
+						<StatusDot status="neutral" pulse />
+						Saving
+					</span>
+					<StatusDot status="good" label="Published" />
+				</Row>
+			</Example>
+			<Example name="Keycap" prop="onBrand" note="A key in a keyboard hint; onBrand inside a brand-filled button.">
+				<Row>
+					<span className="flex items-center gap-1 body-sm text-tertiary">
+						<Keycap>⌘</Keycap>
+						<Keycap>↵</Keycap>
+						run
+					</span>
+					<Button variant="primary" size="sm">
+						Run
+						<span aria-hidden className="flex items-center gap-0.5">
+							<Keycap onBrand>⌘</Keycap>
+							<Keycap onBrand>↵</Keycap>
+						</span>
+					</Button>
+				</Row>
 			</Example>
 			<Example name="QuestionHelper / Tooltip" note="A definition beside a label; short hover text.">
 				<Row>

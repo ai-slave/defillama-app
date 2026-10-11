@@ -4,8 +4,10 @@ import type { Dispatch, SetStateAction } from 'react'
 import { Button } from '~/ui/Button'
 import { Icon as SharedIcon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
+import { Keycap } from '~/ui/Keycap'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
+import { type Status, StatusDot } from '~/ui/StatusBadge'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDateTime, formatRelativeTime } from '~/utils/dateFormat'
 import type { LocalArticleDocument } from '../types'
@@ -38,12 +40,12 @@ const EDITOR_VIEW_OPTIONS: ReadonlyArray<SegmentedControlOption<ArticleEditorVie
 	}
 ]
 
-const PILL_DOT: Record<SavePillState, string> = {
-	saving: 'bg-status-dot animate-pulse',
-	saved: 'bg-success',
-	unsaved: 'bg-warning',
-	error: 'bg-error',
-	idle: 'bg-border-strong'
+const PILL_STATUS: Record<SavePillState, Status> = {
+	saving: 'neutral',
+	saved: 'good',
+	unsaved: 'caution',
+	error: 'bad',
+	idle: 'neutral'
 }
 
 type ArticleEditorHeaderProps = {
@@ -234,18 +236,15 @@ export function ArticleEditorHeader({
 						/>
 					}
 				>
-					<span aria-hidden className={`size-1.5 shrink-0 rounded-full ${PILL_DOT[pillState]}`} />
+					<StatusDot status={PILL_STATUS[pillState]} pulse={pillState === 'saving'} />
 					{/* Narrow headers keep only the dot, so the save state stays visible without crowding the actions. */}
 					<span className={`tabular-nums ${hasPendingEdits ? 'max-lg:sr-only' : 'max-sm:sr-only'}`}>
 						{pillText[pillState]}
 					</span>
 					{pillState === 'unsaved' || pillState === 'error' ? (
-						<kbd
-							aria-hidden
-							className={`hidden rounded-sm border px-1 py-px label-xs tracking-wider lg:inline ${pillState === 'error' ? 'border-error-muted' : 'border-warning-muted'}`}
-						>
-							⌘S
-						</kbd>
+						<span aria-hidden className="hidden lg:inline-flex">
+							<Keycap>⌘S</Keycap>
+						</span>
 					) : null}
 				</Tooltip>
 
@@ -289,10 +288,7 @@ export function ArticleEditorHeader({
 						) : null}
 						<Ariakit.MenuProvider>
 							<Ariakit.MenuButton render={<Button variant="secondary" size="md" />}>
-								<span
-									aria-hidden
-									className={`size-1.5 rounded-full ${hasPendingEdits ? 'animate-pulse bg-warning' : 'bg-success'}`}
-								/>
+								<StatusDot status={hasPendingEdits ? 'caution' : 'good'} pulse={hasPendingEdits} />
 								<span>{hasPendingEdits ? 'Live · Pending' : 'Live'}</span>
 								<span aria-hidden className="text-tertiary">
 									▾

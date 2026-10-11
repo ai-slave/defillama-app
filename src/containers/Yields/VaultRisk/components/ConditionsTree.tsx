@@ -1,3 +1,4 @@
+import { Tag, TagLink } from '~/ui/Tag'
 import { resolveRef } from '../derive'
 import type { ConditionNode, ProtocolRiskFixture } from '../types'
 
@@ -5,27 +6,21 @@ import type { ConditionNode, ProtocolRiskFixture } from '../types'
 // resolveRef into a link (external dependency) or an in-page anchor (oracle config).
 function RefBadge({ refValue, protocol }: { refValue: string; protocol: ProtocolRiskFixture | null }) {
 	const r = resolveRef(refValue, protocol)
-	const base = 'ml-1 inline-flex items-center rounded-sm bg-surface px-1 py-0.5 mono-sm text-secondary'
 	if (r.url) {
 		return (
-			<a
-				href={r.url}
-				target="_blank"
-				rel="noreferrer"
-				className={`${base} underline decoration-dotted hover:text-primary`}
-			>
+			<TagLink href={r.url} target="_blank" rel="noreferrer" className="ml-1">
 				{r.label}
-			</a>
+			</TagLink>
 		)
 	}
 	if (r.anchor) {
 		return (
-			<a href="#vault-risk-collateral" className={`${base} underline decoration-dotted hover:text-primary`}>
+			<TagLink href="#vault-risk-collateral" className="ml-1">
 				{r.label}
-			</a>
+			</TagLink>
 		)
 	}
-	return <span className={base}>{r.label}</span>
+	return <Tag className="ml-1">{r.label}</Tag>
 }
 
 function Node({ node, protocol }: { node: ConditionNode; protocol: ProtocolRiskFixture | null }) {

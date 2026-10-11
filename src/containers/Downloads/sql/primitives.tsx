@@ -1,39 +1,6 @@
 import type { ReactNode } from 'react'
+import { Tag } from '~/ui/Tag'
 import type { FineKind } from './columnKind'
-
-type StatusTone = 'ready' | 'busy' | 'error' | 'muted'
-
-const TONE_CLASS: Record<StatusTone, string> = {
-	ready: 'bg-success',
-	busy: 'bg-warning',
-	error: 'bg-error',
-	muted: 'bg-(--text-tertiary)'
-}
-
-export function StatusDot({ tone, blink = false }: { tone: StatusTone; blink?: boolean }) {
-	return (
-		<span
-			aria-hidden="true"
-			className={`relative inline-flex size-1.5 shrink-0 rounded-full ${TONE_CLASS[tone]} ${
-				blink ? 'animate-pulse' : ''
-			}`}
-		/>
-	)
-}
-
-export function Keycap({ children, muted = false }: { children: ReactNode; muted?: boolean }) {
-	return (
-		<kbd
-			className={`inline-flex h-[15px] min-w-[15px] items-center justify-center rounded-[3px] border px-0.75 mono-sm tabular-nums ${
-				muted
-					? 'border-(--border-on-brand-seam) text-on-brand'
-					: 'border-medium bg-page text-secondary shadow-inset-divider'
-			}`}
-		>
-			{children}
-		</kbd>
-	)
-}
 
 export function SectionLabel({ label, count, action }: { label: string; count?: string | number; action?: ReactNode }) {
 	return (
@@ -57,23 +24,10 @@ const KIND_LABEL: Record<FineKind, string> = {
 	other: '—'
 }
 
-const KIND_TONE: Record<FineKind, string> = {
-	date: 'text-warning',
-	int: 'text-link',
-	float: 'text-link',
-	text: 'text-success',
-	bool: 'text-pro-ai-text',
-	list: 'text-pro-ai-text',
-	other: 'text-tertiary'
-}
-
 export function TypeBadge({ kind }: { kind: FineKind }) {
 	return (
-		<span
-			aria-label={`${kind} column`}
-			className={`inline-flex h-[14px] shrink-0 items-center rounded-[3px] bg-surface-elevated-1 px-1 mono-sm tracking-tight ${KIND_TONE[kind]}`}
-		>
+		<Tag aria-label={`${kind} column`} className="shrink-0">
 			{KIND_LABEL[kind]}
-		</span>
+		</Tag>
 	)
 }

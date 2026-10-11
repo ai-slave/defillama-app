@@ -8,8 +8,10 @@ import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
 import { getStorageJSON, setStorageJSON } from '~/contexts/localStorageStore'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { Keycap } from '~/ui/Keycap'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { EmptyState, PanelLoadingStatus, InlineStatus } from '~/ui/Status'
+import { StatusDot } from '~/ui/StatusBadge'
 import { Tabs, TabPanel } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber } from '~/utils/numberFormat'
@@ -34,7 +36,6 @@ import { ExamplesPanel } from './ExamplesPanel'
 import { runSql } from './executor'
 import { formatSqlDuration } from './format'
 import { NotebookView } from './notebook/NotebookView'
-import { Keycap, StatusDot } from './primitives'
 import { QueryTabBar } from './QueryTabBar'
 import { ResultsPanel } from './ResultsPanel'
 import { SchemaDrawer } from './SchemaDrawer'
@@ -1127,14 +1128,14 @@ function StatusStrip({
 	loadingStage: string | null
 	error: boolean
 }) {
-	const envTone = duckdbStatus === 'ready' ? 'ready' : duckdbStatus === 'error' ? 'error' : 'busy'
+	const envStatus = duckdbStatus === 'ready' ? 'good' : duckdbStatus === 'error' ? 'bad' : 'caution'
 	const busy = running || !!loadingStage
-	const runTone = error ? 'error' : busy ? 'busy' : lastRun ? 'ready' : 'muted'
+	const runStatus = error ? 'bad' : busy ? 'caution' : lastRun ? 'good' : 'neutral'
 
 	return (
 		<div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-md border border-subtle bg-surface px-3 py-2 body-sm text-secondary">
 			<span className="flex items-center gap-1.5">
-				<StatusDot tone={envTone} />
+				<StatusDot status={envStatus} />
 				<span className="text-tertiary">LlamaSQL</span>
 				<span
 					className={
@@ -1148,7 +1149,7 @@ function StatusStrip({
 			<Divider />
 
 			<span className="flex items-center gap-1.5">
-				<StatusDot tone={runTone} blink={busy} />
+				<StatusDot status={runStatus} pulse={busy} />
 				<span className="text-tertiary">Last run</span>
 				{loadingStage ? (
 					<span className="text-warning">{loadingStage}…</span>
@@ -1231,8 +1232,8 @@ function EditorRunBar({
 					</svg>
 					Run query
 					<span aria-hidden className="flex items-center gap-0.5">
-						<Keycap muted>⌘</Keycap>
-						<Keycap muted>↵</Keycap>
+						<Keycap onBrand>⌘</Keycap>
+						<Keycap onBrand>↵</Keycap>
 					</span>
 				</Button>
 			)}

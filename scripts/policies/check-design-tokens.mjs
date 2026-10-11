@@ -1127,9 +1127,7 @@ const RULES = [
 			'src/containers/Yields/Tables/YieldsCells.tsx': 'a signed APY is a rate that can go negative, not a movement',
 			'src/containers/Yields/poolDetail/ExitReliabilityPanel.tsx':
 				'the no-interruptions note, set in the positive hue of the measured-on-chain well',
-			'src/containers/Yields/poolDetail/PoolGrowthChart.tsx': 'an unrecovered drawdown, a status beside the figures',
-			'src/containers/Yields/VaultRisk/kindMeta.ts':
-				'the good and danger text tones of the risk report (no bad debt, none appointed), statuses'
+			'src/containers/Yields/poolDetail/PoolGrowthChart.tsx': 'an unrecovered drawdown, a status beside the figures'
 		},
 		description:
 			'a movement coloured by hand with text-data-up/down — render Change from src/ui/Change.tsx (unit percent, usd, count or pp), or pass `change` data to SummaryChange, StatTile, InlineStatStrip or SmolStatCard; Change owns the sign, the format and the zero colour',
@@ -1150,15 +1148,12 @@ const RULES = [
 			'src/containers/Downloads/sql/ErrorBanner.tsx': "a failed query's message box and the code it names",
 			'src/containers/Downloads/sql/TableChipRail.tsx':
 				'a table still loading into the console: dashed until it registers, red if it failed',
-			'src/containers/Downloads/sql/UpsellGate.tsx': "a notebook cell's kind, tinted by kind",
-			'src/containers/Downloads/sql/notebook/NotebookCell.tsx': "a notebook cell's kind, tinted by kind",
 			'src/containers/Downloads/sql/notebook/NotebookView.tsx': 'a warning message box above the notebook',
 			'src/containers/Exchanges/ExchangeRegionalInformation.tsx': 'an icon tile beside the not-available heading',
 			'src/containers/LlamaAI/components/AlertArtifact.tsx': "an alert's icon tile",
 			'src/containers/LlamaAI/components/FeedbackForm.tsx': 'the picked thumbs-up or thumbs-down button',
 			'src/containers/LlamaAI/components/alerts/EmptyAlertsState.tsx': 'the empty state icon tile',
-			'src/containers/LlamaAI/components/alerts/ui.tsx': "an alert's icon tile",
-			'src/containers/LlamaAI/components/input/EntityCombobox.tsx': "an entity's type, tinted by type"
+			'src/containers/LlamaAI/components/alerts/ui.tsx': "an alert's icon tile"
 		},
 		description:
 			'a status coloured by hand with a success, warning or error tint and its text colour — render StatusBadge from src/ui/StatusBadge.tsx with status good, caution, bad or neutral; map the product value to a status, never to classes',
@@ -1172,6 +1167,42 @@ const RULES = [
 			}
 			return found.length > 0 ? found : null
 		},
+		uiOwned: true,
+		skipTests: true
+	},
+	{
+		id: 'hand-built-status-dot',
+		exceptions: {
+			'src/components/Nav/shared.tsx':
+				'the attention marker on a nav link, which draws the eye rather than naming a state',
+			'src/containers/Articles/editor/RevisionHistoryDrawer.tsx':
+				"the revision timeline's event glyphs, told apart by shape as well as colour",
+			'src/containers/AttestationLanding/index.tsx':
+				"the attestation demo's animated verification lights, with a brand recheck state, sized to the illustration",
+			'src/containers/Yields/VaultRisk/primitives/MofNPips.tsx': 'an m-of-n signer threshold, one pip per signer',
+			'src/pages/token-rights.tsx': 'a token right on or off, a filled or hollow dot in one hue'
+		},
+		description:
+			'a status dot coloured by hand: a small round bg-success, bg-warning or bg-error mark — render StatusDot from src/ui/StatusBadge.tsx with status good, caution, bad or neutral, and `label` when no text beside it names the state',
+		// One class string with a 4–8px round box and a solid status fill is a status dot drawn by hand. A dot doing
+		// another job (a marker, a pip, a glyph told apart by shape) is a listed exception.
+		match: (content) => {
+			const found = []
+			for (const [literal] of withoutComments(content).matchAll(STRING_LITERAL)) {
+				const has = (token) => new RegExp(`(?<![\\w:-])${token}(?![\\w-])`).test(literal)
+				if (has('rounded-full') && has('size-(?:1\\.5|1|2)(?!\\.)') && has('bg-(?:success|warning|error)'))
+					found.push(literal.slice(0, 80))
+			}
+			return found.length > 0 ? found : null
+		},
+		uiOwned: true,
+		skipTests: true
+	},
+	{
+		id: 'raw-kbd',
+		description:
+			'a keyboard hint drawn as a raw <kbd> — render Keycap from src/ui/Keycap.tsx, `onBrand` inside a brand-filled button',
+		match: (content) => withoutComments(content).match(/<kbd\b/g),
 		uiOwned: true,
 		skipTests: true
 	},

@@ -19,6 +19,18 @@ import { tw } from './tw'
 
    Not a movement (Change, ./Change.tsx), not a value from a set (Tag), not a
    promo (PromoBadge) and not a grade on a product's own scale.
+
+   StatusDot is the same status as a 6px dot, for a line too quiet for a pill:
+   a save state, a connection, a feed's freshness.
+
+   <StatusDot status={dirty ? 'caution' : 'good'} /> {dirty ? 'Unsaved changes' : 'All changes saved'}
+   <StatusDot status="good" label="Published" />
+
+   Beside text that names the state, the dot only repeats it in colour and is
+   hidden from assistive tech. With no such text, `label` names the state.
+   `pulse` marks work in progress or a live feed. Never draw a status dot by
+   hand (hand-built-status-dot in check-design-tokens.mjs). Not a series or
+   category swatch, a kind colour, a timeline marker or an unread marker.
 ---------------------------------------------------------------------------- */
 
 export type Status = 'good' | 'caution' | 'bad' | 'neutral'
@@ -55,5 +67,23 @@ export function StatusBadge({
 		</Tooltip>
 	) : (
 		<span className={`inline-flex ${statusBadgeStyles(status)}`}>{children}</span>
+	)
+}
+
+const DOT_CLASSES: Record<Status, string> = {
+	good: tw`bg-success`,
+	caution: tw`bg-warning`,
+	bad: tw`bg-error`,
+	neutral: tw`bg-status-dot`
+}
+
+export function StatusDot({ status, label, pulse = false }: { status: Status; label?: string; pulse?: boolean }) {
+	return (
+		<span
+			role={label ? 'img' : undefined}
+			aria-label={label}
+			aria-hidden={label ? undefined : true}
+			className={`inline-block size-1.5 shrink-0 rounded-full ${DOT_CLASSES[status]} ${pulse ? 'motion-safe:animate-pulse' : ''}`}
+		/>
 	)
 }

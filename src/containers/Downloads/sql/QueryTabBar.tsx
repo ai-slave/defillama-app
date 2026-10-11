@@ -5,6 +5,7 @@ import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
+import { StatusDot } from '~/ui/StatusBadge'
 import { Tab, tabIds } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
 import type { QueryTab } from './useSqlTabs'
@@ -346,11 +347,13 @@ function TabPill({
 				}}
 				className="flex h-full min-w-0 flex-1 items-center gap-1.5 rounded-tl-md px-2.5 text-left font-medium"
 			>
-				<span aria-hidden className="flex size-3 shrink-0 items-center justify-center">
+				<span className="flex size-3 shrink-0 items-center justify-center">
 					{running ? (
-						<LoadingSpinner size={10} />
+						<span aria-hidden className="flex">
+							<LoadingSpinner size={10} />
+						</span>
 					) : dirty ? (
-						<span className="size-1.5 rounded-full bg-warning" />
+						<StatusDot status="caution" label="Unsaved changes" />
 					) : null}
 				</span>
 				{isNotebook ? (

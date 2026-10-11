@@ -4,6 +4,7 @@ import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter, DialogSearchHeader } from '~/ui/Dialog'
 import { Icon, type IIcon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
+import { Keycap } from '~/ui/Keycap'
 import { LoadingIndicator } from '~/ui/Status'
 import { Tag } from '~/ui/Tag'
 import { tw } from '~/ui/tw'
@@ -60,8 +61,6 @@ const GROUP_LABELS: Record<QuickAddSuggestionGroup, string> = {
 const GROUP_ORDER: ReadonlyArray<QuickAddSuggestionGroup> = ['suggested', 'recent', 'start']
 
 const QUICK_ADD_PLACEHOLDER = 'Search charts, protocols, chains…'
-
-const KBD_STYLES = tw`rounded-sm border border-medium px-1 body-sm text-secondary`
 
 const ROW_STYLES = tw`group flex w-full cursor-pointer scroll-my-1 items-center gap-3 rounded-md px-2 py-2 text-left data-active-item:bg-hover-row`
 
@@ -137,11 +136,13 @@ function QuickAddRow({ suggestion, index, onSelect, onCustomize }: QuickAddRowPr
 					}}
 				>
 					Customize
-					<kbd className={KBD_STYLES}>Tab</kbd>
+					<Keycap>Tab</Keycap>
 				</Button>
 			) : null}
 			<Tag className="max-sm:hidden">{KIND_LABELS[suggestion.kind]}</Tag>
-			<kbd className={`hidden ${KBD_STYLES} md:group-data-active-item:inline`}>↵</kbd>
+			<span className="hidden md:group-data-active-item:inline-flex">
+				<Keycap>↵</Keycap>
+			</span>
 		</Ariakit.ComboboxItem>
 	)
 }
@@ -365,16 +366,16 @@ export function QuickAddPalette({ open, onClose, onClosed, placement, onOpenFull
 				<DialogFooter
 					leading={
 						<span className="hidden items-center gap-1.5 body-sm text-tertiary md:flex">
-							<kbd className={KBD_STYLES}>↵</kbd>
+							<Keycap>↵</Keycap>
 							add
 							<span aria-hidden="true">·</span>
-							<kbd className={KBD_STYLES}>⇧↵</kbd>
+							<Keycap>⇧↵</Keycap>
 							add &amp; close
 							<span aria-hidden="true">·</span>
-							<kbd className={KBD_STYLES}>Tab</kbd>
+							<Keycap>Tab</Keycap>
 							customize
 							<span aria-hidden="true">·</span>
-							<kbd className={KBD_STYLES}>Esc</kbd>
+							<Keycap>Esc</Keycap>
 							close
 						</span>
 					}

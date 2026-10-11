@@ -1,5 +1,6 @@
 import { Icon } from '~/ui/Icon'
 import { RelativeTime } from '~/ui/RelativeTime'
+import { StatusDot } from '~/ui/StatusBadge'
 import { formatVerified } from '../format'
 import { RiskCallout } from '../primitives/RiskCallout'
 import type { DriftEntry, Freshness } from '../types'
@@ -98,12 +99,7 @@ export function FreshnessFooter({
 			) : null}
 			<div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
 				<span className="flex items-center gap-1.5">
-					<span aria-hidden className="relative flex size-2">
-						{healthy ? (
-							<span className="absolute inset-0 animate-ping rounded-full bg-success opacity-40 motion-reduce:hidden" />
-						) : null}
-						<span className={`relative size-2 rounded-full ${healthy ? 'bg-success' : 'bg-warning'}`} />
-					</span>
+					<StatusDot status={healthy ? 'good' : 'caution'} pulse={healthy} />
 					{updatedLabel}
 				</span>
 				{sources.length > 0 ? (

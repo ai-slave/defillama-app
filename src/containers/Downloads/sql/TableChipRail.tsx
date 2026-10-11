@@ -4,6 +4,7 @@ import { Button } from '~/ui/Button'
 import { keepFocus, neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { StatusDot } from '~/ui/StatusBadge'
 import { Tooltip } from '~/ui/Tooltip'
 import { inferFineKindFromArrowType } from './columnKind'
 import { formatDownloadRowCount } from './format'
@@ -161,7 +162,7 @@ function PendingChip({ table }: { table: PendingTable }) {
 				) : loading ? (
 					<LoadingSpinner size={10} />
 				) : (
-					<span className="size-1.5 rounded-full bg-(--text-tertiary)" />
+					<StatusDot status="neutral" />
 				)}
 			</span>
 			<span className="max-w-[180px] truncate mono-sm">{table.name}</span>

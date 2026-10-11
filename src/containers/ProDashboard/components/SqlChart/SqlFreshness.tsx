@@ -1,16 +1,17 @@
 import { useNowSeconds } from '~/hooks/useNowSeconds'
+import { type Status, StatusDot } from '~/ui/StatusBadge'
 import { formatDateTime } from '~/utils/dateFormat'
 
 const FRESHNESS_YELLOW_MS = 24 * 60 * 60 * 1000
 const FRESHNESS_RED_MS = 48 * 60 * 60 * 1000
 
-function freshness(iso: string, now: number): { dot: string; label: string } {
+function freshness(iso: string, now: number): { status: Status; label: string } {
 	const computed = new Date(iso).getTime()
-	if (!Number.isFinite(computed)) return { dot: 'bg-error', label: 'Unknown data age' }
+	if (!Number.isFinite(computed)) return { status: 'bad', label: 'Unknown data age' }
 	const age = now - computed
-	if (age < FRESHNESS_YELLOW_MS) return { dot: 'bg-success', label: 'Data is fresh (updated within 24h)' }
-	if (age < FRESHNESS_RED_MS) return { dot: 'bg-warning', label: 'Data is older than 24h' }
-	return { dot: 'bg-error', label: 'Data is older than 48h' }
+	if (age < FRESHNESS_YELLOW_MS) return { status: 'good', label: 'Data is fresh (updated within 24h)' }
+	if (age < FRESHNESS_RED_MS) return { status: 'caution', label: 'Data is older than 24h' }
+	return { status: 'bad', label: 'Data is older than 48h' }
 }
 
 function timeAgo(iso: string, now: number): string {
@@ -34,7 +35,7 @@ export function SqlFreshness({ computedAt }: { computedAt: string }) {
 	const status = nowSeconds === 0 ? null : freshness(computedAt, nowSeconds * 1000)
 	return (
 		<span className="flex items-center gap-1.5 body-sm text-tertiary" title={status?.label}>
-			{status ? <span aria-hidden className={`inline-block size-1.5 shrink-0 rounded-full ${status.dot}`} /> : null}
+			{status ? <StatusDot status={status.status} label={status.label} /> : null}
 			Updated{' '}
 			{nowSeconds === 0
 				? (formatDateTime(computedAt, { timeZone: 'UTC' }) ?? '-')

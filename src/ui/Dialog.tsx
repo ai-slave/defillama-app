@@ -61,7 +61,7 @@ const dialogSurfaceBaseStyles =
 export const dialogSurfaceStyles = `${dialogSurfaceBaseStyles} bg-overlay`
 
 /** Below sm, keep the full sheet height, for content that changes height in use. */
-export const dialogFullSheetSurfaceStyles = `${dialogSurfaceStyles} max-sm:h-(--sheet-height)`
+const dialogFullSheetSurfaceStyles = `${dialogSurfaceStyles} max-sm:h-(--sheet-height)`
 
 /** Canvas dialogs only: hosts bg-surface cards on an elevated-1 backdrop. */
 const dialogCanvasSurfaceStyles = `${dialogSurfaceBaseStyles} bg-surface-elevated-1`

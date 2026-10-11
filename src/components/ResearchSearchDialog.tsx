@@ -16,6 +16,7 @@ import { ListRow } from '~/ui/ListRow'
 import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { EmptyState, InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { Tag } from '~/ui/Tag'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber } from '~/utils/numberFormat'
 import { queryReadFailed, type QueryRetry } from '~/utils/query'
@@ -193,7 +194,7 @@ function ResultMetadata({ item, compact = false }: { item: ResearchSearchItem; c
 
 	return (
 		<span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-			<span className="rounded-md bg-brand-faint px-1.5 py-0.5 label-xs text-link">{item.typeLabel}</span>
+			<Tag>{item.typeLabel}</Tag>
 			{publishedLabel ? (
 				<time dateTime={item.publishedAt ?? undefined} className="body-sm text-tertiary">
 					{publishedLabel}

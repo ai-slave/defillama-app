@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Card } from '~/ui/Card'
 import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
+import { StatusDot } from '~/ui/StatusBadge'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatNumber, formatCompactNumber, formatUsd } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
@@ -193,7 +194,7 @@ export default function NetworkStats() {
 							<span className="title-sm tracking-wider text-secondary uppercase">Total S Burned</span>
 							{stream.connected && (
 								<span className="flex items-center gap-1.5 body-sm text-success">
-									<span className="inline-block size-1.5 rounded-full bg-success motion-safe:animate-pulse" />
+									<StatusDot status="good" pulse />
 									Live
 								</span>
 							)}

@@ -2,6 +2,7 @@ import { matchSorter } from 'match-sorter'
 import { Fragment, useDeferredValue, useMemo, useState } from 'react'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { Keycap } from '~/ui/Keycap'
 import { Tooltip } from '~/ui/Tooltip'
 import { CopyTextButton } from './CopyTextButton'
 import {
@@ -15,7 +16,6 @@ import {
 	type CookbookTag,
 	type TechniqueName
 } from './dialectDocs'
-import { Keycap } from './primitives'
 import { SearchField } from './SchemaBrowser'
 
 // ─── Cookbook tab ───────────────────────────────────────────────────────────

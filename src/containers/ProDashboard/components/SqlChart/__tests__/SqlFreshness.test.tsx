@@ -3,6 +3,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { renderToString } from 'react-dom/server'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { SqlFreshness } from '../SqlFreshness'
 
 const computedAt = '2026-09-12T00:00:00Z'
@@ -32,6 +33,8 @@ async function tickAt(value: string) {
 function expectFreshness(text: string, title: string) {
 	expect(container.textContent).toBe(`Updated ${text}`)
 	expect(container.firstElementChild?.getAttribute('title')).toBe(title)
+	// The dot names the same state for a screen reader, which the hover title never reaches.
+	expect(accessibleName(container.querySelector('[role="img"]')!)).toBe(title)
 }
 
 test('updates an idle badge at minute, 24-hour, and 48-hour boundaries', async () => {

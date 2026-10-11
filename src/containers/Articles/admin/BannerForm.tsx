@@ -48,6 +48,7 @@ import { showFieldErrors } from '~/ui/focus'
 import { Input, Textarea } from '~/ui/Input'
 import { popoverRowWithBorderStyles, popoverSingleSelectCheckStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
+import { StatusDot } from '~/ui/StatusBadge'
 import { httpErrorMessage } from '~/utils/async'
 
 function imageUploadConfig(state: BannerFormState): { scope: UploadScope; helperText: string } {
@@ -710,10 +711,7 @@ export function BannerForm({ banner }: Props) {
 				{conflict ? <SavedChangedNotice noun="banner" onLoadSaved={loadSaved} /> : null}
 				<div className="flex items-center justify-between gap-3">
 					<span className="inline-flex items-center gap-2 body-sm text-tertiary">
-						<span
-							aria-hidden
-							className={`size-1.5 rounded-full transition-colors ${dirty ? 'bg-warning' : 'bg-success'}`}
-						/>
+						<StatusDot status={dirty ? 'caution' : 'good'} />
 						{dirty ? 'Unsaved changes' : banner ? 'All changes saved' : 'New banner'}
 					</span>
 					<div className="flex items-center gap-2">

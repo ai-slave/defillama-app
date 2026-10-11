@@ -16,6 +16,7 @@ import { Dialog, dialogScrollableBodyStyles, DialogSearchHeader } from '~/ui/Dia
 import { takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
+import { Keycap } from '~/ui/Keycap'
 import { LoadingDots } from '~/ui/Loaders'
 import { NoResults } from '~/ui/NoResults'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
@@ -317,8 +318,8 @@ export function DesktopSearch({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boo
 						onFocus={() => void queryClient.prefetchQuery(defaultSearchListQuery)}
 						render={<Input className="w-full pr-14 pl-9" />}
 					/>
-					<span className="absolute top-0 right-1.5 bottom-0 my-auto flex h-5 items-center justify-center rounded-md bg-brand-muted px-1.5 label-xs text-link">
-						⌘K
+					<span className="absolute top-0 right-1.5 bottom-0 my-auto flex h-5 items-center">
+						<Keycap>⌘K</Keycap>
 					</span>
 				</span>
 				<ComboboxSurface

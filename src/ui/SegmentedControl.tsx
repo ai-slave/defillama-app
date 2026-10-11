@@ -125,8 +125,6 @@ export const TAG_GROUP_BUTTON_SIZES: Record<TagGroupVariant, Record<keyof typeof
 	'solid-responsive': { sm: '', md: '' }
 }
 
-export const chartSegmentedControlGroupStyles = `${TAG_GROUP_VARIANTS.default.container} ${TAG_GROUP_SIZES.md}`
-
 export type TagGroupSize = keyof typeof TAG_GROUP_SIZES
 
 /* An option with a tooltip sits inside the tooltip's anchor span, which becomes the row's flex item, so the span takes

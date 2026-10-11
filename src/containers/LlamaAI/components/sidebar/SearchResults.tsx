@@ -1,21 +1,11 @@
 import { memo } from 'react'
-import type { SearchMatch, SearchResult } from '~/containers/LlamaAI/types'
+import type { SearchResult } from '~/containers/LlamaAI/types'
 import { Button } from '~/ui/Button'
 import { ListRow } from '~/ui/ListRow'
 import { NoResults } from '~/ui/NoResults'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
-
-function SourceBadge({ type }: { type: SearchMatch['source_type'] }) {
-	const label = type === 'user_message' ? 'You' : type === 'session_title' ? 'Title' : 'AI'
-	const colorClass =
-		type === 'user_message'
-			? 'bg-brand-muted text-link'
-			: type === 'session_title'
-				? 'bg-ai-violet-tint text-ai-violet'
-				: 'bg-surface-elevated-2 text-secondary'
-	return <span className={`shrink-0 rounded-sm px-1 py-0.5 label-xs ${colorClass}`}>{label}</span>
-}
+import { Tag } from '~/ui/Tag'
 
 export const SearchResults = memo(function SearchResults({
 	results,
@@ -83,7 +73,13 @@ export const SearchResults = memo(function SearchResults({
 									onClick={() => match.message_id && onMatchClick(result.session_id, match.message_id)}
 									className="items-start gap-1.5"
 								>
-									<SourceBadge type={match.source_type} />
+									<Tag className="shrink-0">
+										{match.source_type === 'user_message'
+											? 'You'
+											: match.source_type === 'session_title'
+												? 'Title'
+												: 'AI'}
+									</Tag>
 									<span className="line-clamp-2 min-w-0 text-secondary">{match.content_preview}</span>
 								</ListRow>
 							))}

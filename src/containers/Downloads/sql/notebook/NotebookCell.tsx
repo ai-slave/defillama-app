@@ -3,11 +3,12 @@ import type { Ref } from 'react'
 import { useCallback, useRef, useState } from 'react'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { Keycap } from '~/ui/Keycap'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
+import { Tag } from '~/ui/Tag'
 import { Tooltip } from '~/ui/Tooltip'
 import type { ChartConfig } from '../chartConfig'
-import { Keycap } from '../primitives'
 import type { NotebookCell as NotebookCellType, NotebookCellType as CellType, ResultsView } from '../useSqlTabs'
 import type { RegisteredTable } from '../useTableRegistry'
 import { ChartCell, type ChartSourceOption } from './ChartCell'
@@ -126,7 +127,7 @@ export function NotebookCell({
 				) : null}
 				<span className="inline-flex items-center gap-1.5 mono-sm text-tertiary">
 					<span className="text-secondary">{cellName}</span>
-					<CellTypeBadge type={cell.type} />
+					<Tag>{cell.type === 'sql' ? 'SQL' : cell.type === 'markdown' ? 'MD' : 'Chart'}</Tag>
 				</span>
 				{cell.running && cell.loadingStage ? (
 					<span className="inline-flex items-center gap-1 label-sm text-warning">
@@ -158,8 +159,8 @@ export function NotebookCell({
 								</svg>
 								Run
 								<span aria-hidden className="flex items-center gap-0.5">
-									<Keycap muted>⌘</Keycap>
-									<Keycap muted>↵</Keycap>
+									<Keycap onBrand>⌘</Keycap>
+									<Keycap onBrand>↵</Keycap>
 								</span>
 							</Button>
 						)
@@ -204,17 +205,6 @@ export function NotebookCell({
 			)}
 		</div>
 	)
-}
-
-function CellTypeBadge({ type }: { type: CellType }) {
-	const label = type === 'sql' ? 'SQL' : type === 'markdown' ? 'MD' : 'CHART'
-	const tone =
-		type === 'sql'
-			? 'bg-brand-tint-strong text-link'
-			: type === 'markdown'
-				? 'bg-pro-ai-tint text-pro-ai-text'
-				: 'bg-warning-tint text-warning'
-	return <span className={`inline-flex h-[14px] items-center rounded-[3px] px-1 mono-sm ${tone}`}>{label}</span>
 }
 
 function CellMenu({

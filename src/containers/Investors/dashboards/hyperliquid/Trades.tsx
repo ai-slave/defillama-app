@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Select } from '~/components/Select/Select'
 import { VirtualizedSelect } from '~/components/Select/VirtualizedSelect'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { StatusDot } from '~/ui/StatusBadge'
 import { formatUsd, formatCompactNumber, formatNumber, formatPercent } from '~/utils/numberFormat'
 import {
 	pushBounded,
@@ -379,7 +380,7 @@ export default function Trades() {
 				/>
 
 				<div className="ml-auto flex items-center gap-1.5">
-					<div className={`size-2 rounded-full ${isConnected ? 'bg-success' : 'bg-error'}`} />
+					<StatusDot status={isConnected ? 'good' : 'bad'} />
 					<span className="body-sm text-secondary">{isConnected ? 'Connected' : 'Reconnecting…'}</span>
 				</div>
 			</div>

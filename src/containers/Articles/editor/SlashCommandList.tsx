@@ -1,5 +1,6 @@
 import type { Ref } from 'react'
 import { useId, useImperativeHandle, useState } from 'react'
+import { Keycap } from '~/ui/Keycap'
 import type { SlashCommandItem } from './slashCommand'
 import { SuggestionPopover, useSuggestionAccessibility, type SuggestionAnchor } from './SuggestionPopover'
 
@@ -104,12 +105,10 @@ export function SlashCommandList({ items, command, ref }: Props & { ref?: Ref<Sl
 			</div>
 			<div className="flex shrink-0 items-center justify-between gap-2 border-t border-medium px-3 py-1.5 body-xs text-tertiary">
 				<span>
-					<kbd className="rounded-sm border border-medium px-1">↑</kbd>{' '}
-					<kbd className="rounded-sm border border-medium px-1">↓</kbd> nav
+					<Keycap>↑</Keycap> <Keycap>↓</Keycap> nav
 				</span>
 				<span>
-					<kbd className="rounded-sm border border-medium px-1">↵</kbd> insert{' '}
-					<kbd className="ml-1 rounded-sm border border-medium px-1">esc</kbd> dismiss
+					<Keycap>↵</Keycap> insert <Keycap>esc</Keycap> dismiss
 				</span>
 			</div>
 		</div>

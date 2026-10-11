@@ -1,4 +1,5 @@
 import { Icon } from '~/ui/Icon'
+import { Keycap } from '~/ui/Keycap'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { EmptyState, PanelLoadingStatus } from '~/ui/Status'
 import { Tabs, TabPanel } from '~/ui/Tabs'
@@ -49,14 +50,8 @@ export function ResultsPanel({
 	if (!result && !busy) {
 		return (
 			<EmptyState size="md" icon="bar-chart-2" title="Run a query to see results here" framed>
-				Press{' '}
-				<kbd className="inline-flex h-[17px] items-center rounded-[3px] border border-subtle bg-page px-1 mono-sm text-secondary">
-					⌘
-				</kbd>{' '}
-				<kbd className="inline-flex h-[17px] items-center rounded-[3px] border border-subtle bg-page px-1 mono-sm text-secondary">
-					↵
-				</kbd>{' '}
-				or click <span className="font-medium text-primary">Run query</span>.
+				Press <Keycap>⌘</Keycap> <Keycap>↵</Keycap> or click <span className="font-medium text-primary">Run query</span>
+				.
 			</EmptyState>
 		)
 	}
