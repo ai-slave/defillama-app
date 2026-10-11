@@ -1228,7 +1228,8 @@ const RULES = [
 			'src/containers/ProDashboard/components/AddChartModal/UnifiedTableTab/index.tsx':
 				'the one-line note that stands in for the data-view list when every view is shown, 8px by 12px',
 			'src/components/RowLinksWithDropdown/index.tsx': 'a segmented row of links, a control rather than a card',
-			'src/containers/DesignSystem/foundations.tsx': 'a specimen swatch on the dev-only design system page',
+			'src/containers/DesignSystem/components/surfaces.tsx': "the design system page's don't example",
+			'src/containers/DesignSystem/foundations/color.tsx': 'a specimen swatch on the dev-only design system page',
 			'src/containers/DesignSystem/shared.tsx': 'the specimen frame on the dev-only design system page',
 			'src/containers/Exchanges/MicaCells.tsx': 'a 28px icon tile in a table cell',
 			'src/containers/Investors/dashboards/flare/ui.tsx':

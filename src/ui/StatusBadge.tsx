@@ -46,7 +46,9 @@ export function statusBadgeStyles(status: Status) {
 	return `shrink-0 items-center rounded-md border px-2 py-px label-sm whitespace-nowrap ${STATUS_CLASSES[status]}`
 }
 
-/** `tooltip` explains the state on hover and focus, with a dotted underline that marks the label as explained. */
+/** `tooltip` explains the state on hover and focus. The badge is the anchor and carries no underline: the pill already
+    reads as something to point at, and an underline inside a tinted pill looks like misspelled text. A column whose
+    every row would explain the same thing puts one QuestionHelper in its header instead. */
 export function StatusBadge({
 	status,
 	tooltip,
@@ -61,7 +63,7 @@ export function StatusBadge({
 			content={tooltip}
 			render={<span />}
 			tabIndex={0}
-			className={`inline-flex cursor-help underline decoration-dotted underline-offset-4 ${statusBadgeStyles(status)}`}
+			className={`inline-flex cursor-help ${statusBadgeStyles(status)}`}
 		>
 			{children}
 		</Tooltip>

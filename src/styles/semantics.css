@@ -52,6 +52,8 @@
 	--text-tertiary: var(--neutral-11);
 	--text-disabled: var(--neutral-8);
 	--text-link: var(--blue-11);
+	/* A link's resting underline: the ramp's subtle-border step, so the underline marks the link without outweighing its text. */
+	--text-link-underline: var(--blue-7);
 	--text-on-brand: #ffffff;
 	--text-data-up: var(--emerald-11);
 	--text-data-down: var(--crimson-11);
@@ -269,6 +271,7 @@ html.dark,
 	--color-secondary: var(--text-secondary);
 	--color-tertiary: var(--text-tertiary);
 	--color-link: var(--text-link);
+	--color-link-underline: var(--text-link-underline);
 	--color-data-up: var(--text-data-up);
 	--color-data-down: var(--text-data-down);
 	--color-verified: var(--text-verified);

@@ -1,65 +1,89 @@
 import { useState } from 'react'
+import { BasicLink } from '~/components/Link'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
+import { RailItem } from '~/ui/RailItem'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import {
-	ActionsGroup,
-	ChipsGroup,
-	FeedbackGroup,
-	FieldsGroup,
-	NavigationGroup,
-	OverlaysGroup,
-	SelectionGroup,
-	SurfacesGroup
-} from './components'
+import { buttons } from './components/buttons'
+import { charts } from './components/charts'
+import { chips } from './components/chips'
+import { definitions } from './components/definitions'
+import { dialogs } from './components/dialogs'
+import { fields } from './components/fields'
+import { menus } from './components/menus'
+import { navigation } from './components/navigation'
+import { pickers } from './components/pickers'
+import { selection } from './components/selection'
+import { stats } from './components/stats'
+import { status } from './components/status'
+import { surfaces } from './components/surfaces'
+import { tables } from './components/tables'
+import { time } from './components/time'
+import type { ComponentRow } from './componentTable'
+import { FamilyPage } from './FamilyPage'
 import { mountForcedStates } from './forcedStates'
-import {
-	ChartPaletteGroup,
-	ColourGroup,
-	ElevationGroup,
-	IconsGroup,
-	RampsGroup,
-	ShapeGroup,
-	TypeGroup
-} from './foundations'
-import { SplitContext } from './shared'
+import { chartPalette, color, colorRamps } from './foundations/color'
+import { elevation } from './foundations/elevation'
+import { icons } from './foundations/icons'
+import { interactionStates } from './foundations/interaction'
+import { shape } from './foundations/shape'
+import { spacing } from './foundations/spacing'
+import { typography } from './foundations/type'
+import { ExampleLevel, type Family, type Foundation, SplitContext } from './shared'
 
 /* ----------------------------------------------------------------------------
    The design system page (/dev/design-system, development only): the tokens
-   (foundations) and every src/ui control in every variant and state, in light,
-   dark or both side by side, so a review is one page and drift shows up next
-   to the reference. Component groups follow the job (design.md "Which
-   component for which job"); every demo is an Example that names what it
-   shows. Hover, focus and pressed are forced by ./forcedStates.ts. A new
-   token, variant, size or state adds its Example here in the same change.
+   (foundations) and every finished src/ui part, plus the src/components parts
+   design.md's "Which component for which job" table names, in every variant
+   and state, in light, dark or both side by side, so drift shows up next to
+   the reference.
+
+   The rail lists each foundation and each family of parts (buttons, pickers,
+   dialogs…); each is its own path (/dev/design-system/pickers), so the server
+   renders the page the URL names, and a part is a plain anchor on it
+   (#virtualized-select). /dev/design-system itself stacks every page ("All"). A family page (./FamilyPage.tsx) opens with the design.md rows
+   that pick between its parts, read from design.md by getStaticProps, then
+   gives each part a playground, its state matrices and its DoDont pairs. A
+   family is a Family entry (./shared.tsx) in its file under ./components; a
+   foundation is a Foundation in ./foundations. Demos never restate the rules.
+   Hover, focus and pressed are forced by ./forcedStates.ts; Show anatomy
+   outlines the regions a demo marks (./anatomy.tsx). A state only a phone
+   shows (sheet rows, phone drawers) gets a one-line note, not a phone frame.
+   ./__tests__/coverage.test.ts fails when a part is missing from the page,
+   names a file that does not exist, or is named by no design.md row.
 ---------------------------------------------------------------------------- */
 
-const CONTENTS = [
-	{
-		title: 'Foundations',
-		links: [
-			['colour', 'Colour'],
-			['ramps', 'Colour ramps'],
-			['chart-palette', 'Chart palette'],
-			['type', 'Type'],
-			['shape', 'Shape'],
-			['elevation', 'Elevation'],
-			['icons', 'Icons']
-		]
-	},
-	{
-		title: 'Components',
-		links: [
-			['actions', 'Actions'],
-			['navigation', 'Navigation and choice'],
-			['fields', 'Fields'],
-			['selection', 'Selection'],
-			['chips', 'Chips and badges'],
-			['feedback', 'Feedback'],
-			['surfaces', 'Surfaces'],
-			['overlays', 'Overlays']
-		]
-	}
-] as const
+const FOUNDATIONS: ReadonlyArray<Foundation> = [
+	color,
+	colorRamps,
+	chartPalette,
+	typography,
+	spacing,
+	shape,
+	elevation,
+	interactionStates,
+	icons
+]
+
+const FAMILIES: ReadonlyArray<Family> = [
+	buttons,
+	selection,
+	pickers,
+	fields,
+	navigation,
+	menus,
+	dialogs,
+	definitions,
+	chips,
+	surfaces,
+	tables,
+	charts,
+	stats,
+	status,
+	time
+]
+
+/** Every path under /dev/design-system: a foundation's or a family's id. */
+export const DESIGN_SYSTEM_PAGES = [...FOUNDATIONS, ...FAMILIES].map((item) => item.id)
 
 type ThemeView = 'light' | 'dark' | 'both'
 const THEME_VIEWS = [
@@ -68,15 +92,52 @@ const THEME_VIEWS = [
 	{ value: 'both', label: 'Side by side' }
 ] as const
 
-export function DesignSystem() {
+function FoundationView({ foundation }: { foundation: Foundation }) {
+	const Overview = foundation.overview
+	return (
+		<article className="flex flex-col gap-6">
+			<header className="flex flex-col gap-1">
+				<h2 className="heading-lg text-primary">{foundation.name}</h2>
+				<p className="mono-sm text-tertiary">{foundation.source}</p>
+			</header>
+			<ExampleLevel value="h3">
+				<div className="grid grid-cols-1 gap-x-6 gap-y-10 xl:grid-cols-2">
+					<Overview />
+				</div>
+			</ExampleLevel>
+		</article>
+	)
+}
+
+function railLink(path: string, label: string, active: boolean) {
+	return (
+		<RailItem
+			key={path}
+			as={BasicLink}
+			href={`/dev/design-system${path}`}
+			active={active}
+			aria-current={active ? 'page' : undefined}
+		>
+			{label}
+		</RailItem>
+	)
+}
+
+/** `page` is a path from DESIGN_SYSTEM_PAGES, or null for All. */
+export function DesignSystem({ page, rows }: { page: string | null; rows: ReadonlyArray<ComponentRow> }) {
 	const [isDarkMode, toggleDarkMode] = useDarkModeManager()
 	const [split, setSplit] = useState(false)
+	const current =
+		page === null ? null : (FOUNDATIONS.find((item) => item.id === page) ?? FAMILIES.find((item) => item.id === page))
 	const view: ThemeView = split ? 'both' : isDarkMode ? 'dark' : 'light'
 	// Light and Side by side render the page in light; Dark switches the app's own theme, as its toggle does.
 	const setView = (next: ThemeView) => {
 		setSplit(next === 'both')
 		if ((next === 'dark') !== isDarkMode) toggleDarkMode()
 	}
+	// The token readouts measure on mount, so a theme change remounts the foundations to measure again. Families keep
+	// their knob values and scroll position.
+	const foundationView = (item: Foundation) => <FoundationView key={`${item.id}-${view}`} foundation={item} />
 	return (
 		<div ref={mountForcedStates} className="col-span-full min-h-screen bg-page text-primary">
 			<header className="sticky top-[env(safe-area-inset-top,0px)] z-30 border-b border-subtle bg-page-glass backdrop-blur">
@@ -95,44 +156,36 @@ export function DesignSystem() {
 					/>
 				</div>
 			</header>
-			<div className="mx-auto flex max-w-[1760px] gap-10 px-6">
+			<div className="mx-auto flex max-w-[1760px] flex-col gap-x-10 px-6 lg:flex-row">
+				{/* Below lg the rail sits above the page as a short scrolling list. */}
 				<nav
-					aria-label="Contents"
-					className="sticky top-14 hidden h-[calc(100dvh-3.5rem)] w-52 shrink-0 flex-col gap-6 overflow-y-auto py-8 lg:flex"
+					aria-label="Pages"
+					className="flex shrink-0 flex-col gap-6 overflow-y-auto border-subtle py-6 max-lg:max-h-64 max-lg:border-b lg:sticky lg:top-14 lg:h-[calc(100dvh-3.5rem)] lg:w-52 lg:py-8"
 				>
-					{CONTENTS.map((group) => (
-						<div key={group.title} className="flex flex-col gap-1">
-							<span className="px-2 pb-1 label-xs tracking-wide text-tertiary uppercase">{group.title}</span>
-							{group.links.map(([id, label]) => (
-								<a
-									key={id}
-									href={`#${id}`}
-									className="rounded-md px-2 py-1 label-sm text-secondary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary"
-								>
-									{label}
-								</a>
-							))}
-						</div>
-					))}
+					{railLink('', 'All', current === null)}
+					<div className="flex flex-col gap-0.5">
+						<span className="px-3 pb-1 label-xs tracking-wide text-tertiary uppercase">Foundations</span>
+						{FOUNDATIONS.map((item) => railLink(`/${item.id}`, item.name, item === current))}
+					</div>
+					<div className="flex flex-col gap-0.5">
+						<span className="px-3 pb-1 label-xs tracking-wide text-tertiary uppercase">Components</span>
+						{FAMILIES.map((item) => railLink(`/${item.id}`, item.title, item === current))}
+					</div>
 				</nav>
 				<SplitContext value={split}>
-					{/* Keyed by the view: the token readouts measure on mount, so a theme change measures again. */}
-					<main key={view} className="flex min-w-0 flex-1 flex-col gap-16 pt-8 pb-24">
-						<ColourGroup />
-						<RampsGroup />
-						<ChartPaletteGroup />
-						<TypeGroup />
-						<ShapeGroup />
-						<ElevationGroup />
-						<IconsGroup />
-						<ActionsGroup />
-						<NavigationGroup />
-						<FieldsGroup />
-						<SelectionGroup />
-						<ChipsGroup />
-						<FeedbackGroup />
-						<SurfacesGroup />
-						<OverlaysGroup />
+					<main className="flex min-w-0 flex-1 flex-col gap-24 pt-8 pb-24">
+						{current === null ? (
+							<>
+								{FOUNDATIONS.map(foundationView)}
+								{FAMILIES.map((item) => (
+									<FamilyPage key={item.id} family={item} rows={rows} />
+								))}
+							</>
+						) : 'overview' in current ? (
+							foundationView(current)
+						) : (
+							<FamilyPage key={current.id} family={current} rows={rows} />
+						)}
 					</main>
 				</SplitContext>
 			</div>

@@ -58,6 +58,10 @@ import { LoadingSpinner } from './internal/Loaders'
                   sentence is a link; ghost is a quiet button among other
                   buttons. Never pull a text action into line with a
                   negative margin; that is what the link's missing padding is for.
+                  It is always underlined, softly at rest and solid on hover
+                  and focus: the link blue is too close to body text for
+                  color alone to mark it in a sentence. A disabled link's
+                  underline is solid, in the disabled color.
    Pick a pill by its job: a removable active filter or a filter picker is
    `filter`; a pill that turns a list filter on or off is `toggle` (whether
    its value lives in the URL or in state is in docs/url-state.md); a pill
@@ -225,7 +229,7 @@ const DISABLED_CLASSES: Record<ButtonVariant, string> = {
 }
 
 const LINK_CLASSES =
-	'touch-target inline-flex cursor-pointer items-center gap-1 text-link [text-transform:inherit] underline-offset-2 not-disabled:not-aria-disabled:hover:underline focus-visible:underline disabled:not-aria-busy:cursor-not-allowed disabled:not-aria-busy:text-disabled aria-disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:text-disabled aria-busy:cursor-progress'
+	'touch-target inline-flex cursor-pointer items-center gap-1 text-link [text-transform:inherit] underline decoration-link-underline underline-offset-2 not-disabled:not-aria-disabled:hover:decoration-current focus-visible:decoration-current disabled:not-aria-busy:decoration-current aria-disabled:not-aria-busy:decoration-current disabled:not-aria-busy:cursor-not-allowed disabled:not-aria-busy:text-disabled aria-disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:text-disabled aria-busy:cursor-progress'
 
 /* min-h pins the control heights (sm 24, md 32) so rows of
    mixed content (16px icons vs 16px text lines) stay exactly level; padding

@@ -12,11 +12,20 @@ interface HeroMetricProps {
 	/** Per-chain breakdown; when present the hero expands to show it. */
 	byChain?: Array<[string, ReactNode]>
 	byChainTitle?: string
+	/** The by-chain list's heading level, h2 by default: lower it where the hero sits under a deeper heading. */
+	headingAs?: 'h1' | 'h2' | 'h3' | 'h4' | undefined
 }
 
-/** Headline stat at the top of a summary card: big value, optionally expanding to per-chain rows. Without rows it is
-    the StatItem headline. */
-export function HeroMetric({ label, tooltip, value, byChain, byChainTitle }: HeroMetricProps) {
+/** Headline stat at the top of a summary card: big value, optionally expanding to per-chain rows under an h2 (or
+    `headingAs`) "… by chain" heading. Without rows it is the StatItem headline. */
+export function HeroMetric({
+	label,
+	tooltip,
+	value,
+	byChain,
+	byChainTitle,
+	headingAs: Heading = 'h2'
+}: HeroMetricProps) {
 	if (!byChain || byChain.length === 0) {
 		return <StatItem label={label} tooltip={tooltip} value={<StaleText>{value}</StaleText>} />
 	}
@@ -36,7 +45,7 @@ export function HeroMetric({ label, tooltip, value, byChain, byChainTitle }: Her
 				</span>
 			</Tooltip>
 			<div className="my-3 flex max-h-[50dvh] flex-col overflow-auto">
-				<h2 className="font-semibold">{byChainTitle ?? `${label} by chain`}</h2>
+				<Heading className="font-semibold">{byChainTitle ?? `${label} by chain`}</Heading>
 				{byChain.map(([chain, chainValue]) => (
 					<p
 						key={chain}
