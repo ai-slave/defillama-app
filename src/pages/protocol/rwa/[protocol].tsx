@@ -105,12 +105,14 @@ export default function ProtocolRWA(props: InferGetStaticPropsType<typeof getSta
 			seoDescription={props.seoDescription}
 		>
 			{props.perpsOnly && props.rwaOverview.perpsVenueHref ? (
-				<Card padding="sm" className="body-md">
-					{props.name} lists RWA perpetual markets, not spot assets.{' '}
-					<BasicLink href={props.rwaOverview.perpsVenueHref} className="text-link hover:underline">
-						See its markets on the venue page
-					</BasicLink>
-					.
+				<Card padding="sm">
+					<p className="body-md">
+						{props.name} lists RWA perpetual markets, not spot assets.{' '}
+						<BasicLink href={props.rwaOverview.perpsVenueHref} className="text-link hover:underline">
+							See its markets on the venue page
+						</BasicLink>
+						.
+					</p>
 				</Card>
 			) : (
 				<RWAOverview {...props.rwaOverview} pageKind="platform" hideEntityNav />

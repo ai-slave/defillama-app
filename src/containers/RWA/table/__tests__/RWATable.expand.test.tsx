@@ -15,7 +15,9 @@ const router = vi.hoisted(() => ({
 	query: {} as Record<string, string>,
 	pathname: '/rwa',
 	asPath: '/rwa',
-	push: vi.fn(() => Promise.resolve(true))
+	push: vi.fn((_url: { pathname: string; query: Record<string, string> }, _as?: string, _options?: object) =>
+		Promise.resolve(true)
+	)
 }))
 vi.mock('next/router', () => ({ useRouter: () => router }))
 // The Assets table asks for the flow summary; the fixture answers with no windows, so the flow cells stay empty.
@@ -157,6 +159,10 @@ describe('RWATable expansion', () => {
 		})
 	const rows = () => container.querySelectorAll('tbody tr:not([aria-hidden="true"])')
 	const chevron = () => container.querySelector<HTMLButtonElement>('tbody button[aria-expanded]')!
+	const segment = (name: string) =>
+		[...container.querySelectorAll<HTMLInputElement>('input[type="radio"]')].find(
+			(radio) => radio.labels?.[0].textContent === name
+		)!
 
 	test('opens a platform group from its chevron and keeps it open when the period switches', async () => {
 		await render('7d')
@@ -174,10 +180,6 @@ describe('RWATable expansion', () => {
 
 	test('opens Compliance from a shared view=compliance link and writes the table key when the reader switches', async () => {
 		const headers = () => [...container.querySelectorAll('thead th')].map((header) => header.textContent?.trim())
-		const segment = (name: string) =>
-			[...container.querySelectorAll<HTMLInputElement>('input[type="radio"]')].find(
-				(radio) => radio.labels?.[0].textContent === name
-			)!
 		router.query = { view: 'compliance' }
 		await render('7d', 'none')
 		expect(segment('Compliance').checked).toBe(true)
@@ -201,7 +203,9 @@ describe('RWATable expansion', () => {
 		})
 		expect(rows()).toHaveLength(2)
 		expect(periodSwitch()).not.toBeNull()
-		router.query = { table: 'compliance' }
+		await act(async () => segment('Compliance').click())
+		// The router hands the pushed address back to the page, as a shallow navigation does.
+		router.query = router.push.mock.calls[0][0].query
 		await render('7d')
 		expect(chevron().getAttribute('aria-expanded')).toBe('true')
 		expect(rows()).toHaveLength(2)

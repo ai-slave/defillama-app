@@ -10,29 +10,19 @@ import { getRwaPerpsChartUrl, useRwaPerpsChartQuery, type RwaPerpsChartScope } f
 /* The per-market history of a Perps page folded in the browser: what a chart or a card draws once a filter narrows
    the markets, since the server splits only know the scope. Pure up to the hook: the hook loads, the fold sums. */
 
-/** The Group by a fold sums by; the server split names venue what the table calls platform. */
-export type RwaPerpsHistoryGroupBy = 'venue' | 'assetGroup' | 'assetClass' | 'baseAsset'
-
-const TABLE_GROUP_BY: Record<RwaPerpsHistoryGroupBy, RWAGroupBy> = {
-	venue: 'platform',
-	assetGroup: 'assetGroup',
-	assetClass: 'assetClass',
-	baseAsset: 'asset'
-}
-
-/** Each perps row's group, named as the table labels it; without a Group by each market is its own series. */
+/** Each perps row's group under the table's Group by, as the table labels it; under None each market is its own. */
 export function getRwaPerpsMarketGroups(
 	rows: ReadonlyArray<RWAOverviewDisplayRow>,
-	groupBy: RwaPerpsHistoryGroupBy | null
+	groupBy: RWAGroupBy
 ): Map<string, string> {
 	const perps = rows.filter((row) => row.kind === 'perps')
 	const groups = new Map<string, string>()
-	if (groupBy == null) {
+	if (groupBy === 'none') {
 		for (const row of perps) groups.set(row.id, row.id)
 		return groups
 	}
 	for (const leaf of buildRwaLeafRows(perps, { includeBridgeTvl: true })) {
-		const [membership] = getRwaGroupMemberships(leaf, TABLE_GROUP_BY[groupBy])
+		const [membership] = getRwaGroupMemberships(leaf, groupBy)
 		if (membership) groups.set(leaf.asset.id, membership.label)
 	}
 	return groups
@@ -46,7 +36,7 @@ export function getRwaPerpsMarketGroups(
 export function foldRwaPerpsMarketHistory(
 	history: RWAChartDataset,
 	rows: ReadonlyArray<RWAOverviewDisplayRow>,
-	groupBy: RwaPerpsHistoryGroupBy | null,
+	groupBy: RWAGroupBy,
 	marketIds: ReadonlyArray<string> | null
 ): RWAChartDataset {
 	const groups = getRwaPerpsMarketGroups(rows, groupBy)
@@ -55,7 +45,9 @@ export function foldRwaPerpsMarketHistory(
 	for (const series of history.dimensions) {
 		const group = groups.get(series)
 		if (series === 'timestamp' || group == null || (wanted && !wanted.has(series))) continue
-		members.set(group, [...(members.get(group) ?? []), series])
+		const names = members.get(group)
+		if (names) names.push(series)
+		else members.set(group, [series])
 	}
 	const source = history.source.map((row) => {
 		const next: RWAChartRow = { timestamp: row.timestamp }
@@ -97,7 +89,7 @@ export function toRwaPerpsHistorySeries(dataset: RWAChartDataset): Record<string
 type RwaPerpsHistoryRequest = {
 	scope: RwaPerpsChartScope
 	metric: RWAPerpsChartMetric
-	groupBy: RwaPerpsHistoryGroupBy | null
+	groupBy: RWAGroupBy
 	/** The `id` of the page's filtered perps rows; null means unfiltered. */
 	marketIds: ReadonlyArray<string> | null
 	/** The page's rows, which name each market's group; the route carries market ids only. */
@@ -131,14 +123,4 @@ export function useRwaPerpsHistoryDataset({
 		isLoading: enabled && query.isLoading,
 		failedRead: enabled && queryReadFailed(query) ? query : null
 	}
-}
-
-/** Every market's history folded by venue, one series per venue, for a card that reads a venue's change over time. */
-export function useRwaPerpsHistoryFold(
-	req: Omit<RwaPerpsHistoryRequest, 'scope' | 'metric' | 'groupBy'> & {
-		metric: Extract<RWAPerpsChartMetric, 'openInterest' | 'volume'>
-	}
-): Record<string, Array<[number, number]>> | null {
-	const { dataset } = useRwaPerpsHistoryDataset({ ...req, scope: { kind: 'all' }, groupBy: 'venue' })
-	return useMemo(() => (dataset ? toRwaPerpsHistorySeries(dataset) : null), [dataset])
 }

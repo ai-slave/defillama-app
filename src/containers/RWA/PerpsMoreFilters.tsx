@@ -10,12 +10,15 @@ import {
 	NoActiveFilters
 } from '~/components/FilterBuilderDialog'
 import { describeSelection, SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { useMedia } from '~/hooks/useMedia'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { clearRwaFilterQueryKeys } from './filterState'
+import { getRwaPerpsPickerOptions } from './inlineOptions'
 import {
 	countRwaPerpsFilters,
 	createRwaPerpsFilterDraft,
+	getRwaPerpsDialogFilters,
 	getRwaPerpsFilterPills,
 	serializeRwaPerpsFilterDraft,
 	type RWAPerpsFilterDefinition,
@@ -42,10 +45,11 @@ function formatRange({ min, max }: { min: number | null; max: number | null }, u
 	return `${bound(min, 'no min')} - ${bound(max, 'no max')}`
 }
 
-/** The strip's pills for the set Perps filters; each clears its own keys. */
+/** The strip's pills for the set filters More filters holds (below sm the inline ones too); each clears its own keys. */
 export function useRwaPerpsFilterPills(definitions: ReadonlyArray<RWAPerpsFilterDefinition>): Array<ActiveFilterPill> {
 	const router = useRouter()
-	return getRwaPerpsFilterPills(router.query, definitions).map((pill) => ({
+	const isPhone = useMedia('(max-width: 639px)')
+	return getRwaPerpsFilterPills(router.query, getRwaPerpsDialogFilters(definitions, isPhone)).map((pill) => ({
 		id: pill.definition.id,
 		label: `${pill.definition.label}: ${
 			pill.definition.kind === 'select'
@@ -58,8 +62,10 @@ export function useRwaPerpsFilterPills(definitions: ReadonlyArray<RWAPerpsFilter
 	}))
 }
 
-/** The trigger and the dialog over the filters it is given (the page's non-inline ones); `label` is "More filters"
-    beside inline pickers and "Filters" on the venue page. */
+/** The trigger and the dialog over the page's filters but Venue Type and, from sm, the inline ones. Below sm the strip
+    hides the inline pickers (FilterStrip.tsx), so the dialog holds them and is the page's Filters. useMedia reads
+    false on the server and the first client render, so the trigger hydrates with the desktop count. `label` is "More
+    filters" beside inline pickers and "Filters" on the venue page. */
 export function RWAPerpsMoreFilters({
 	definitions,
 	label = 'More filters'
@@ -68,9 +74,15 @@ export function RWAPerpsMoreFilters({
 	label?: string
 }) {
 	const router = useRouter()
+	const isPhone = useMedia('(max-width: 639px)')
+	const dialogFilters = getRwaPerpsDialogFilters(definitions, isPhone)
 	return (
-		<FilterBuilderDialog appliedCount={countRwaPerpsFilters(router.query, definitions)} label={label} labelType="smol">
-			<RWAPerpsFiltersSession definitions={definitions} />
+		<FilterBuilderDialog
+			appliedCount={countRwaPerpsFilters(router.query, dialogFilters)}
+			label={isPhone ? 'Filters' : label}
+			labelType="smol"
+		>
+			<RWAPerpsFiltersSession definitions={dialogFilters} />
 		</FilterBuilderDialog>
 	)
 }
@@ -145,7 +157,7 @@ function SelectEditor({
 }) {
 	return (
 		<SelectWithCombobox
-			allValues={definition.values}
+			allValues={getRwaPerpsPickerOptions(definition.values, definition.counts)}
 			selectedValues={draft.selectValues[definition.id]}
 			setSelectedValues={(values) =>
 				setDraft((current) => ({ ...current, selectValues: { ...current.selectValues, [definition.id]: values } }))

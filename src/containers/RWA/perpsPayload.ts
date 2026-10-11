@@ -21,7 +21,6 @@ const DERIVED_KEYS = new Set(['kind', 'detailHref', 'type', 'trueRWA'])
 
 /** Six significant digits; from 100,000 up that is the whole number, so dollars are never cut. */
 function roundForPayload(value: number): number {
-	if (!Number.isFinite(value)) return value
 	return Math.abs(value) >= 1e5 ? Math.round(value) : Number(value.toPrecision(6))
 }
 

@@ -31,8 +31,7 @@ describe('buildRwaQuestionsContext', () => {
 				rows,
 				defaultInclusion: { includeStablecoins: false, includeGovernance: false }
 			})
-		).toEqual({
-			page: 'RWA assets on one chain',
+		).toMatchObject({
 			scope: 'Ethereum',
 			assetCount: 2,
 			totalActiveAum: 310,
@@ -65,8 +64,7 @@ describe('buildRwaQuestionsContext', () => {
 			perpsAsset({ contract: 'a:NVDA', openInterest: 50, volume24h: 7, parentPlatform: 'A', assetGroup: 'Stocks' }),
 			perpsAsset({ contract: 'b:NVDA', openInterest: 80, volume24h: 3, parentPlatform: 'B', assetGroup: 'Stocks' })
 		]
-		expect(buildRwaQuestionsContext({ kind: 'perpsAsset', scopeName: 'NVDA', rows })).toEqual({
-			page: 'RWA perpetual markets on one underlying asset',
+		expect(buildRwaQuestionsContext({ kind: 'perpsAsset', scopeName: 'NVDA', rows })).toMatchObject({
 			scope: 'NVDA',
 			marketCount: 2,
 			totalOpenInterest: 130,

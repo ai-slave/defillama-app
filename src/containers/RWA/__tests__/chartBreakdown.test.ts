@@ -2,12 +2,9 @@ import { describe, expect, test } from 'vitest'
 import {
 	getRwaChartViewOptions,
 	getRwaFlowSplitBy,
-	getRwaPerpsChartMetricOptions,
 	getRwaPerpsChartMetricQueryValue,
-	getRwaPerpsChartMetricSpec,
 	getRwaPerpsChartPlan,
 	getRwaPerpsChartSource,
-	getRwaPerpsGroupLabels,
 	getRwaSpotChartSource,
 	getRwaTreemapParentGrouping,
 	parseRwaPerpsChartMetric,
@@ -47,29 +44,10 @@ describe('the perps chart plan', () => {
 	test('folds the per-market history when a filter narrows the markets, or when an underlying page groups its markets', () => {
 		const all = { kind: 'all' } as const
 		const gold = { kind: 'baseAsset', slug: 'Gold' } as const
-		expect(getRwaPerpsChartPlan({ scope: all, groupBy: 'platform', isFiltered: false })).toEqual({
-			kind: 'split',
-			groupBy: 'venue'
-		})
-		expect(getRwaPerpsChartPlan({ scope: all, groupBy: 'asset', isFiltered: true })).toEqual({
-			kind: 'fold',
-			groupBy: 'baseAsset'
-		})
-		expect(getRwaPerpsChartPlan({ scope: gold, groupBy: 'platform', isFiltered: false })).toEqual({
-			kind: 'fold',
-			groupBy: 'venue'
-		})
-		expect(getRwaPerpsChartPlan({ scope: gold, groupBy: 'none', isFiltered: false })).toEqual({
-			kind: 'split',
-			groupBy: null
-		})
-	})
-
-	test('names the members as the perps table does: Venue, never Platform, and Market under None', () => {
-		expect(getRwaPerpsGroupLabels('venue')).toEqual({ one: 'Venue', many: 'Venues' })
-		expect(getRwaPerpsGroupLabels('assetClass')).toEqual({ one: 'Asset Class', many: 'Asset Classes' })
-		expect(getRwaPerpsGroupLabels('baseAsset')).toEqual({ one: 'Asset', many: 'Assets' })
-		expect(getRwaPerpsGroupLabels(null)).toEqual({ one: 'Market', many: 'Markets' })
+		expect(getRwaPerpsChartPlan({ scope: all, groupBy: 'platform', isFiltered: false })).toBe('split')
+		expect(getRwaPerpsChartPlan({ scope: all, groupBy: 'asset', isFiltered: true })).toBe('fold')
+		expect(getRwaPerpsChartPlan({ scope: gold, groupBy: 'platform', isFiltered: false })).toBe('fold')
+		expect(getRwaPerpsChartPlan({ scope: gold, groupBy: 'none', isFiltered: false })).toBe('split')
 	})
 })
 
@@ -110,12 +88,7 @@ describe('getRwaPerpsChartSource', () => {
 })
 
 describe('perps chart metric', () => {
-	test('offers open interest, volume and markets, defaults to open interest and omits it from the url', () => {
-		expect(getRwaPerpsChartMetricOptions().map((option) => option.label)).toEqual([
-			'Open Interest',
-			'Volume',
-			'Markets'
-		])
+	test('defaults to open interest and omits it from the url', () => {
 		expect(parseRwaPerpsChartMetric(undefined)).toBe('openInterest')
 		expect(parseRwaPerpsChartMetric('activeMcap')).toBe('openInterest')
 		expect(parseRwaPerpsChartMetric('volume')).toBe('volume')
@@ -123,17 +96,6 @@ describe('perps chart metric', () => {
 		expect(getRwaPerpsChartMetricQueryValue('openInterest')).toBeUndefined()
 		expect(getRwaPerpsChartMetricQueryValue('volume')).toBe('volume')
 		expect(getRwaPerpsChartMetricQueryValue('markets')).toBe('markets')
-	})
-
-	test('markets is a count: no dollar sign and a Total Markets line', () => {
-		expect(getRwaPerpsChartMetricSpec('markets')).toEqual({
-			valueSymbol: '',
-			totalLabel: 'Total Markets'
-		})
-		expect(getRwaPerpsChartMetricSpec('openInterest')).toEqual({
-			valueSymbol: '$',
-			totalLabel: 'Total Open Interest'
-		})
 	})
 })
 

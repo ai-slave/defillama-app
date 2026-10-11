@@ -1,8 +1,10 @@
 import type { ReactElement, ReactNode } from 'react'
 import { Card } from '~/ui/Card'
 import { Change, type ChangeData } from '~/ui/Change'
+import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { Watermark } from '~/ui/Watermark'
+import type { QueryRetry } from '~/utils/query'
 
 interface SmolStatCardProps {
 	title: string
@@ -11,6 +13,12 @@ interface SmolStatCardProps {
 	link?: ReactElement
 	/** The headline; null reads "Unavailable". */
 	value: string | null
+	/** The card's data is still loading: the state takes the value line and the chart, so a pending card never reads
+	    "Unavailable". */
+	isLoading?: boolean
+	/** The read behind the card failed: its error and Try again take the value line and the chart, so a failed card
+	    never reads like one with no data. */
+	failedRead?: QueryRetry | null
 	/** The window the value covers, such as "24h" or "next 14 days". */
 	qualifier?: string
 	/** The value's movement and its window, such as "over 7d" or "vs 24h ago". */
@@ -26,13 +34,16 @@ interface SmolStatCardProps {
 /** A small chart-forward stat card: a title-md title with its definition and the DefiLlama mark, one value line, then
     the chart. The line reads value → qualifier → change → comparison: the value is text-secondary, the signed change
     a body-sm Change, and qualifiers bare tertiary spans one tier below what they qualify, with no parentheses. A
-    missing value reads a tertiary "Unavailable". The line wraps only between its two groups (value + qualifier,
+    missing value reads a tertiary "Unavailable"; a pending or failed request takes the value line and the chart with
+    the Status copy instead. The line wraps only between its two groups (value + qualifier,
     change + comparison) and never truncates the value. */
 export function SmolStatCard({
 	title,
 	tooltip,
 	link,
 	value,
+	isLoading,
+	failedRead,
 	qualifier,
 	change,
 	layout = 'stack',
@@ -51,6 +62,14 @@ export function SmolStatCard({
 			<Watermark className={layout === 'split' ? 'shrink-0 xl:hidden' : 'shrink-0'} />
 		</div>
 	)
+	// min-h-0 drops the parts' 360px panel floor: the grid sets the card's height.
+	const body = failedRead ? (
+		<SurfaceBodyStatus variant="error" retry={failedRead} className="min-h-0">
+			Couldn&apos;t load card data.
+		</SurfaceBodyStatus>
+	) : isLoading ? (
+		<SurfaceBodyLoadingStatus className="min-h-0" />
+	) : null
 	const valueLine =
 		value == null ? (
 			<p className="text-tertiary">Unavailable</p>
@@ -78,9 +97,9 @@ export function SmolStatCard({
 			>
 				<div className="flex flex-col gap-1">
 					{titleRow}
-					{valueLine}
+					{body ? null : valueLine}
 				</div>
-				{children}
+				{body ?? children}
 			</Card>
 		)
 	}
@@ -88,8 +107,12 @@ export function SmolStatCard({
 	return (
 		<Card padding="sm" className={`col-span-1 flex flex-col gap-1 ${className ?? ''}`.trim()}>
 			{titleRow}
-			{valueLine}
-			{children}
+			{body ?? (
+				<>
+					{valueLine}
+					{children}
+				</>
+			)}
 		</Card>
 	)
 }

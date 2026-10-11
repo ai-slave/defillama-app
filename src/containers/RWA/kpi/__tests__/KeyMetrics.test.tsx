@@ -63,7 +63,11 @@ describe('RWAKeyMetrics', () => {
 		expect(Array.from(page.querySelectorAll('h1'), (heading) => heading.textContent)).toEqual([
 			'Ethereum RWA Active AUM'
 		])
-		expect(render().querySelectorAll('h1')).toHaveLength(0)
+		const embedded = render()
+		expect(embedded.querySelectorAll('h1')).toHaveLength(0)
+		expect(Array.from(embedded.querySelectorAll('h2'), (heading) => heading.textContent)).toContain(
+			'Total RWA Active AUM'
+		)
 	})
 
 	test('opens with every section collapsed, like the home page', () => {
@@ -84,7 +88,7 @@ describe('RWAKeyMetrics', () => {
 		expect(markup).toContain('N/A')
 	})
 
-	test('writes every panel row to the csv, raw values', () => {
+	test('lists every panel row and sub row as a csv line, raw values, in panel order', () => {
 		const { metrics, perps, largestProtocol } = props()
 		const { rows } = buildRwaKpiCsv({
 			filename: 'key-metrics.csv',
@@ -108,7 +112,6 @@ describe('RWAKeyMetrics', () => {
 			['DEX share %', 100],
 			['Perps volume (24h)', 1000]
 		]
-		expect(rows).toEqual(expect.arrayContaining(expected))
-		expect(rows).toHaveLength(expected.length)
+		expect(rows).toEqual(expected)
 	})
 })

@@ -3,6 +3,7 @@ import { matchSorter } from 'match-sorter'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { NestedMenu } from '~/components/NestedMenu'
+import { CountBadge } from '~/ui/CountBadge'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import {
@@ -379,11 +380,11 @@ export function SelectWithCombobox({
 										<span>{option}</span>
 									) : option.help ? (
 										<Tooltip content={option.help}>
-											<span className="mr-1">{option.name}</span>
+											<span className={option.muted ? 'mr-1 text-secondary' : 'mr-1'}>{option.name}</span>
 											<Icon name="help-circle" className="size-3.5" />
 										</Tooltip>
 									) : (
-										<span className="inline-flex items-center gap-1.5">
+										<span className={`inline-flex items-center gap-1.5${option.muted ? ' text-secondary' : ''}`}>
 											{option.name}
 											{option.icon}
 										</span>
@@ -427,9 +428,7 @@ export function SelectWithCombobox({
 			>
 				{labelType === 'smol' ? (
 					<span className="flex items-center gap-1">
-						<span className="flex min-w-4 items-center justify-center rounded-full border border-medium px-1 py-0.25 label-xs">
-							{selectedLabels.length}
-						</span>
+						<CountBadge count={selectedLabels.length} />
 						<span>{label}</span>
 					</span>
 				) : labelType === 'regular' && (urlSelectionText || selectedLabels.length > 0) ? (
@@ -480,11 +479,11 @@ export function SelectWithCombobox({
 										<span>{option}</span>
 									) : option.help ? (
 										<span className="inline-flex items-center">
-											<span className="mr-1">{option.name}</span>
+											<span className={option.muted ? 'mr-1 text-secondary' : 'mr-1'}>{option.name}</span>
 											<Icon name="help-circle" className="size-3.5" />
 										</span>
 									) : (
-										<span className="inline-flex items-center gap-1.5">
+										<span className={`inline-flex items-center gap-1.5${option.muted ? ' text-secondary' : ''}`}>
 											{option.name}
 											{option.icon}
 										</span>

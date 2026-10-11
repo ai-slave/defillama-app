@@ -1,5 +1,6 @@
 import { useQueries } from '@tanstack/react-query'
 import { useMemo } from 'react'
+import type { QueryRetry } from '~/utils/query'
 import type { IRWAAssetsOverview, RWAAssetChartTarget } from '../api.types'
 import { rankRwaChains, type RWAChainHistory } from '../chainFold'
 import type { RWAChartRow } from '../chartDataset'
@@ -11,9 +12,17 @@ import { foldRwaChainHistories } from './chainChangeCard'
 const METRIC = 'activeMcap'
 const STALE_TIME = 60 * 60 * 1000
 
+export type RwaChainChangeRows = {
+	/** Null until every history has settled, or when every one failed. */
+	rows: Array<RWAChartRow> | null
+	isLoading: boolean
+	failedRead: QueryRetry | null
+}
+
 /**
  * Change by Chain under a filter: the per-chain histories the chart loads under Group by Chain (the same queries, so
- * they load once), summed over the page's filtered assets. Null until every history settled; a failed chain stays out.
+ * they load once), summed over the page's filtered assets. Loading until every history settled; a failed chain stays
+ * out, and the card errors only when every chain failed, as the chart does.
  */
 export function useRwaChainChangeRows({
 	assets,
@@ -27,9 +36,9 @@ export function useRwaChainChangeRows({
 	includeGovernance: boolean
 	includeBridgeTvl: boolean
 	enabled: boolean
-}): { rows: Array<RWAChartRow> | null; isLoading: boolean } {
+}): RwaChainChangeRows {
 	const chains = useMemo(() => (enabled ? rankRwaChains(assets, METRIC) : []), [assets, enabled])
-	const queries = useQueries({
+	const histories = useQueries({
 		queries: chains.map((chain) => {
 			const target: RWAAssetChartTarget = { kind: 'chain', slug: rwaSlug(chain) }
 			return {
@@ -44,13 +53,16 @@ export function useRwaChainChangeRows({
 		}),
 		combine: combineChainQueries
 	})
-	return useMemo(() => {
-		if (!enabled || !queries.settled) return { rows: null, isLoading: enabled && queries.isLoading }
-		const histories: Array<RWAChainHistory> = []
-		for (const [index, chain] of chains.entries()) {
-			const rows = queries.rows[index]
-			if (rows !== undefined) histories.push({ chain, rows })
+	return useMemo((): RwaChainChangeRows => {
+		if (histories.failedRead && histories.failed === chains.length) {
+			return { rows: null, isLoading: false, failedRead: histories.failedRead }
 		}
-		return { rows: foldRwaChainHistories(histories, assets), isLoading: false }
-	}, [assets, chains, enabled, queries])
+		if (!histories.settled) return { rows: null, isLoading: true, failedRead: null }
+		const found: Array<RWAChainHistory> = []
+		for (const [index, chain] of chains.entries()) {
+			const rows = histories.rows[index]
+			if (rows !== undefined) found.push({ chain, rows })
+		}
+		return { rows: foldRwaChainHistories(found, assets), isLoading: false, failedRead: null }
+	}, [assets, chains, histories])
 }

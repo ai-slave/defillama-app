@@ -5,8 +5,8 @@ import { getRwaSeriesPickQuery } from './seriesPick'
 
 /**
  * The series picker of a perps breakdown chart, the /dexs chain chart's Protocols picker: the members of the Group by,
- * largest first, the picks drawn on their own and the rest in Others. The panel resolves the pick from the URL
- * (seriesPick.ts) so the checks show exactly what the chart draws.
+ * largest first. An unpicked member leaves the chart. The panel resolves the pick from the URL (seriesPick.ts) so the
+ * checks show exactly what the chart draws.
  */
 export function RWASeriesPicker({
 	label,

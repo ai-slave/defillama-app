@@ -76,7 +76,7 @@ export function UsdBreakdownCell({
 	)
 }
 
-/** A value with its definition in a tooltip. */
+/** A value with its definition in a tooltip; without one, the tooltip holds the value a narrow column truncates. */
 export function DefinedValueCell({
 	value,
 	definition,
@@ -87,17 +87,13 @@ export function DefinedValueCell({
 	className?: string
 }) {
 	if (!value) return null
-	if (definition) {
-		return (
-			<Tooltip content={definition} render={<span className={`inline-block max-w-full truncate ${className ?? ''}`} />}>
-				{value}
-			</Tooltip>
-		)
-	}
 	return (
-		<span className={`inline-block max-w-full truncate ${className ?? ''}`} title={value}>
+		<Tooltip
+			content={definition || value}
+			render={<span className={`inline-block max-w-full truncate ${className ?? ''}`} />}
+		>
 			{value}
-		</span>
+		</Tooltip>
 	)
 }
 
@@ -193,9 +189,9 @@ export function createDistinctTextColumn({
 				return render ? (
 					render(value)
 				) : (
-					<span className="truncate" title={value}>
+					<Tooltip content={value} render={<span className="truncate" />}>
 						{value}
-					</span>
+					</Tooltip>
 				)
 			},
 			meta

@@ -46,9 +46,11 @@ export function RWAOverviewCards({
 		includeBridgeTvl,
 		enabled: filtered
 	})
-	const chainBars = filtered
-		? rankRwaChainChanges(chainHistory.rows ?? [], { days: RWA_CARD_CHANGE_DAYS, each: RWA_CARD_CHAIN_EACH })
-		: cards.chainChange.bars
+	const chainBars = !filtered
+		? cards.chainChange.bars
+		: chainHistory.rows
+			? rankRwaChainChanges(chainHistory.rows, { days: RWA_CARD_CHANGE_DAYS, each: RWA_CARD_CHAIN_EACH })
+			: []
 	const chain = foldRwaChainChangeCard(assets, chainBars)
 	/* An Assets page reads the perps totals with CEX venues in; the line and its change are the server's daily split. */
 	const perps = cards.perpsOpenInterest
@@ -72,6 +74,8 @@ export function RWAOverviewCards({
 				tooltip="Active AUM now against 30 days ago, in total and per chain."
 				card={chain}
 				logo="chain"
+				isLoading={chainHistory.isLoading}
+				failedRead={chainHistory.failedRead}
 			/>
 			<SmolStatCard
 				title="RWA Perps Open Interest"

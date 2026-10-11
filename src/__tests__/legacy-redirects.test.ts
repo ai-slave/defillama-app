@@ -1,4 +1,6 @@
 import { describe, expect, test } from 'vitest'
+import { filterRwaPerpsRows, getRwaPerpsFilterDefinitions } from '~/containers/RWA/perpsFilters'
+import { perpsAsset } from '~/containers/RWA/table/__tests__/fixtures'
 import { parseRwaGroupBy } from '~/containers/RWA/table/groupBy'
 import { getServerSideProps as getDexRedirectServerSideProps } from '~/pages/dexs/[item]'
 import { legacyRedirects } from '~/server/routeRegistry/legacyRedirects'
@@ -34,22 +36,25 @@ describe('legacy redirect table', () => {
 })
 
 describe('the perps mini-site redirects', () => {
-	const destinationOf = (source: string) => legacyRedirects.find((redirect) => redirect.source === source)?.destination
+	const destinationOf = (source: string) => {
+		const destination = legacyRedirects.find((redirect) => redirect.source === source)!.destination
+		return new URL(destination, 'https://defillama.com').searchParams
+	}
 
-	test('the three list pages open the Perps overview with their Group by', () => {
-		// Venue is the platform Group by on perps rows and the Perps overview's default, so the URL carries none.
-		expect(destinationOf('/rwa/perps/venues')).toBe('/rwa/perps')
-		expect(destinationOf('/rwa/perps/assets')).toBe('/rwa/perps?groupBy=asset')
-		expect(destinationOf('/rwa/perps/asset-groups')).toBe('/rwa/perps?groupBy=assetGroup')
+	test('the asset and asset group list pages open the Perps overview under a Group by it reads', () => {
 		for (const source of ['/rwa/perps/assets', '/rwa/perps/asset-groups']) {
-			const groupBy = new URL(destinationOf(source)!, 'https://defillama.com').searchParams.get('groupBy')
+			const groupBy = destinationOf(source).get('groupBy')
 			expect(parseRwaGroupBy(groupBy ?? undefined, 'perpsOverview')).toBe(groupBy)
 		}
 	})
 
-	test('the forex page opens the Perps overview filtered to the forex asset class', () => {
-		const destination = new URL(destinationOf('/rwa/perps/forex')!, 'https://defillama.com')
-		expect(destination.pathname).toBe('/rwa/perps')
-		expect(destination.searchParams.getAll('assetClasses')).toEqual(['Forex Perps'])
+	test('the forex page opens the Perps overview narrowed to its forex markets', () => {
+		const query = Object.fromEntries(destinationOf('/rwa/perps/forex'))
+		const rows = [
+			perpsAsset({ id: 'eur-usd', assetClass: ['Forex Perps'] }),
+			perpsAsset({ id: 'gold', assetClass: ['Commodity Perp'] })
+		]
+		const definitions = getRwaPerpsFilterDefinitions(rows, 'perpsOverview', query)
+		expect(filterRwaPerpsRows(rows, query, definitions).map((row) => row.id)).toEqual(['eur-usd'])
 	})
 })

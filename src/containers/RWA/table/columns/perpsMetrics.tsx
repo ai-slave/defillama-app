@@ -107,8 +107,8 @@ const priceChange24hColumn = columnHelper.accessor((row) => row.metrics.priceCha
 })
 
 /** Premiums sit in hundredths of a percent, so three decimals. */
-function formatPremium(value: number | null | undefined): string | null {
-	if (value == null || !Number.isFinite(value)) return null
+function formatPremium(value: number | null): string | null {
+	if (value == null) return null
 	const formatted = formatPercent(value, { input: 'percent', maximumFractionDigits: 3 })
 	return value > 0 ? `+${formatted}` : formatted
 }

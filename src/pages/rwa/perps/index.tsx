@@ -37,7 +37,7 @@ const meta = getRwaPageMeta('perpsOverview', null)
 export default function RWAPerpsPage(props: InferGetStaticPropsType<typeof getStaticProps>) {
 	return (
 		<Layout title={meta.title} description={meta.description} pageName={pageName} canonicalUrl={meta.canonicalUrl}>
-			<RWAPerpsTreePage {...props} pageKind="perpsOverview" />
+			<RWAPerpsTreePage {...props} pageKind="perpsOverview" perpsAsset={null} />
 		</Layout>
 	)
 }

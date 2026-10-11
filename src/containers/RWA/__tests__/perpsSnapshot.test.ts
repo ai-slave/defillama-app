@@ -91,7 +91,12 @@ describe('buildRwaPerpsRowSnapshot', () => {
 
 	test('sums the open interest of the page rows by the Group by, largest first, CEX markets only when counted', () => {
 		expect(
-			buildRwaPerpsRowSnapshot(rows, { metric: 'openInterest', period: 'daily', groupBy: 'venue', includeCex: false })
+			buildRwaPerpsRowSnapshot(rows, {
+				metric: 'openInterest',
+				period: 'daily',
+				groupBy: 'platform',
+				includeCex: false
+			})
 		).toEqual([
 			{ name: 'Ostium', value: 50 },
 			{ name: 'trade[XYZ]', value: 40 }
@@ -100,7 +105,7 @@ describe('buildRwaPerpsRowSnapshot', () => {
 
 	test('reads the volume window the rows carry: 24h, 7 and 30 days, all time; one slice per market under None', () => {
 		const volume = (period: 'daily' | 'weekly' | 'monthly' | 'cumulative') =>
-			buildRwaPerpsRowSnapshot(rows, { metric: 'volume', period, groupBy: null, includeCex: true })
+			buildRwaPerpsRowSnapshot(rows, { metric: 'volume', period, groupBy: 'none', includeCex: true })
 		expect(volume('daily')).toEqual([
 			{ name: 'binance:XAU', value: 50 },
 			{ name: 'xyz:GOLD', value: 3 },
@@ -115,7 +120,7 @@ describe('buildRwaPerpsRowSnapshot', () => {
 	})
 
 	test('a window the rows do not carry (quarter, year, markets) reads the history instead', () => {
-		const options = { groupBy: null, includeCex: true } as const
+		const options = { groupBy: 'none', includeCex: true } as const
 		expect(buildRwaPerpsRowSnapshot(rows, { ...options, metric: 'volume', period: 'quarterly' })).toBeNull()
 		expect(buildRwaPerpsRowSnapshot(rows, { ...options, metric: 'volume', period: 'yearly' })).toBeNull()
 		expect(buildRwaPerpsRowSnapshot(rows, { ...options, metric: 'markets', period: 'daily' })).toBeNull()

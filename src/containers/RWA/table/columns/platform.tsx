@@ -1,9 +1,10 @@
 import { BasicLink } from '~/components/Link'
+import { Tag } from '~/ui/Tag'
 import { Tooltip } from '~/ui/Tooltip'
 import { getRwaPlatforms, UNKNOWN_PLATFORM } from '../../grouping'
 import { perpsDefinitions } from '../../Perps/definitions'
 import { getRwaPlatformHref } from '../classificationHrefs'
-import { getPerpsMarket, VenueTypeTag } from './perps'
+import { getPerpsMarket } from './perps'
 import { columnHelper, DistinctListCell, textColumnMeta } from './shared'
 
 const PLATFORM_HELP = 'Platform associated with issuance, custody, trading, or management of the asset.'
@@ -49,7 +50,7 @@ function createPlatformColumn(kind: 'spot' | 'perps') {
 								{name}
 							</BasicLink>
 						)}
-						{venueType ? <VenueTypeTag type={venueType} /> : null}
+						{venueType ? <Tag className="shrink-0">{venueType}</Tag> : null}
 					</span>
 				)
 			},

@@ -13,6 +13,7 @@ import {
 import { getQueryUpdatesFromSelected } from '~/components/Select/query'
 import { describeSelection, SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { ExcludeQueryKey, SelectValues } from '~/components/Select/types'
+import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
 import { Checkbox } from '~/ui/Checkbox'
 import { formatPercent } from '~/utils/numberFormat'
@@ -138,7 +139,7 @@ export type RWAOverviewFiltersProps = {
 	options: RWAFilterOptions
 	selections: RWAFilterSelections
 	actions: RWAFilterActions
-	/** The page's inline filters (layout/inlineFilters.ts); More filters holds the rest. */
+	/** The page's inline filters (layout/inlineFilters.ts); More filters holds the rest, and below sm these too. */
 	inlineFilters: ReadonlyArray<RWAAssetsInlineFilterKey>
 	/** Include in TVL reads spot rows only, so the Perps tree leaves it out. */
 	showIncludeInTvl: boolean
@@ -542,23 +543,31 @@ function RWAIncludeDraftSection({
 	)
 }
 
-/** The Assets tree's More filters: every filter but the page's inline ones, and the Include group. */
+/** The Assets tree's More filters: every filter but the page's inline ones, and the Include group. Below sm the strip
+    hides the inline pickers (FilterStrip.tsx), so this is the page's Filters and holds their filters too. useMedia
+    reads false on the server and the first client render, so the trigger hydrates with the desktop count. */
 export function RWAAssetsMoreFilters(props: RWAOverviewFiltersProps) {
+	const isPhone = useMedia('(max-width: 639px)')
+	const dialogProps = isPhone ? { ...props, inlineFilters: [] } : props
 	return (
 		<FilterBuilderDialog
-			appliedCount={createRwaFilterDraft(props).activeIds.length + countRwaInclusionOverrides(props)}
-			label="More filters"
+			appliedCount={createRwaFilterDraft(dialogProps).activeIds.length + countRwaInclusionOverrides(dialogProps)}
+			label={isPhone ? 'Filters' : 'More filters'}
 			labelType="smol"
 		>
-			<RWAFiltersSession {...props} />
+			<RWAFiltersSession {...dialogProps} />
 		</FilterBuilderDialog>
 	)
 }
 
-/** The strip's pills for the set More filters filters and the Include in TVL overrides. */
+/** The strip's pills for the set More filters filters and the Include in TVL overrides; below sm, where the inline
+    pickers hide, the inline filters too. */
 export function RWAAssetsFilterPills(props: RWAOverviewFiltersProps) {
 	const router = useRouter()
-	return <ActiveFilterPills pills={getRwaActiveFilterPills(props, router)} />
+	const isPhone = useMedia('(max-width: 639px)')
+	return (
+		<ActiveFilterPills pills={getRwaActiveFilterPills(isPhone ? { ...props, inlineFilters: [] } : props, router)} />
+	)
 }
 
 function RWAFiltersSession(props: RWAOverviewFiltersProps) {

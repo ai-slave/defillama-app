@@ -8,6 +8,7 @@ import { NestedMenu } from '~/components/NestedMenu'
 import { useYieldFilters } from '~/contexts/LocalStorage'
 import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
+import { CountBadge } from '~/ui/CountBadge'
 import { Field } from '~/ui/Field'
 import { focusNeighbourOnLeave, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
@@ -83,7 +84,7 @@ export function SaveViewButton({
 			<Ariakit.PopoverDisclosure render={<Button type="button" variant="toggle" size="md" data-active={dirty} />}>
 				<Icon name="plus" className="size-3.5" />
 				Save view
-				{count > 0 ? <span className="rounded-full bg-surface-elevated-1 px-1.5 label-xs">{count}</span> : null}
+				{count > 0 ? <CountBadge count={count} /> : null}
 			</Ariakit.PopoverDisclosure>
 			<PopoverSurface variant="list" heading="Saved views" overflowPadding={16} className="w-72">
 				<div className="border-b border-subtle p-2">
@@ -256,9 +257,7 @@ export function YieldFilters({
 				label={
 					<span className="flex items-center gap-1.5">
 						Filters
-						{activeFilterCount > 0 ? (
-							<span className="rounded-full bg-brand-muted px-1.5 label-xs text-link">{activeFilterCount}</span>
-						) : null}
+						{activeFilterCount > 0 ? <CountBadge count={activeFilterCount} /> : null}
 					</span>
 				}
 			>

@@ -1,8 +1,8 @@
 import { TokenLogo } from '~/components/TokenLogo'
+import { Tag } from '~/ui/Tag'
 import { RWAKpiCard } from '../kpi/KpiCard'
 import { getRwaKpiCsvName } from '../kpi/kpiRows'
 import { getRwaPerpsKpiHeadline, getRwaVenueKpiRows } from '../kpi/perpsKpiRows'
-import { VenueTypeTag } from '../table/columns/perps'
 import type { RwaPerpsVenueType } from './venueData'
 import type { RwaVenueKpi } from './venueKpi'
 
@@ -30,7 +30,7 @@ export function RWAVenueKeyMetrics({ venue, logo, venueSlug, kpi, venueType, tak
 						{logo ? <TokenLogo src={logo} size={24} alt={`${venue} logo`} /> : null}
 						<span>{venue}</span>
 					</h1>
-					{venueType ? <VenueTypeTag type={venueType} /> : null}
+					{venueType ? <Tag>{venueType}</Tag> : null}
 				</div>
 			}
 			headline={getRwaPerpsKpiHeadline(kpi)}

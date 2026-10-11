@@ -59,7 +59,10 @@ export function RWAVenuePage({
 	const groupBy = parseRwaGroupBy(router.query[RWA_GROUP_BY_QUERY_KEY], PAGE_KIND)
 
 	/* The filters narrow the Markets view: its card, table and chart. The Information view describes the whole venue. */
-	const filterDefinitions = useMemo(() => getRwaPerpsFilterDefinitions(markets, PAGE_KIND), [markets])
+	const filterDefinitions = useMemo(
+		() => getRwaPerpsFilterDefinitions(markets, PAGE_KIND, router.query),
+		[markets, router.query]
+	)
 	const filteredMarkets = useMemo(
 		() => filterRwaPerpsRows(markets, router.query, filterDefinitions),
 		[markets, router.query, filterDefinitions]
@@ -90,19 +93,20 @@ export function RWAVenuePage({
 					entityName={getRwaQuestionsEntityName(PAGE_KIND, venue)}
 				/>
 			) : null}
-			{view === 'list' ? (
-				<Card padding="sm" className="flex flex-wrap items-center gap-2">
-					<RWATableGroupBySelect pageKind={PAGE_KIND} value={groupBy} onChange={onGroupByChange} />
-					<div className="flex flex-wrap items-center gap-2 sm:ml-auto">
-						<RWAResetAllFilters active={activeFilterCount > 0} keys={resetKeys} />
-						<RWAPerpsFilterPills filters={filterDefinitions} />
-						<RWAPerpsMoreFilters definitions={filterDefinitions} label="Filters" />
-						<RWAListYourAssetsButton />
-					</div>
-				</Card>
-			) : null}
-			{/* Everything below reads the address query: it waits for the router when the address carries one. */}
+			{/* Everything below reads the address query, the strip included: it waits for the router when the address
+			    carries one. */}
 			<div {...RWA_QUERY_ZONE} className="contents">
+				{view === 'list' ? (
+					<Card padding="sm" className="flex flex-wrap items-center gap-2">
+						<RWATableGroupBySelect pageKind={PAGE_KIND} value={groupBy} onChange={onGroupByChange} />
+						<div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+							<RWAResetAllFilters active={activeFilterCount > 0} keys={resetKeys} />
+							<RWAPerpsFilterPills filters={filterDefinitions} />
+							<RWAPerpsMoreFilters definitions={filterDefinitions} label="Filters" />
+							<RWAListYourAssetsButton />
+						</div>
+					</Card>
+				) : null}
 				<SummaryCardGrid>
 					<RWAVenueKeyMetrics
 						venue={venue}

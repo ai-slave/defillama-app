@@ -73,7 +73,7 @@ describe('RWAPlatformKeyMetrics', () => {
 		expect(plain).not.toContain('Suspicious')
 	})
 
-	test('writes every panel row to the csv, raw values', () => {
+	test('lists every panel row and sub row as a csv line, raw values, in panel order', () => {
 		const { rows } = buildRwaKpiCsv({
 			filename: 'key-metrics.csv',
 			headline: getRwaAssetsKpiHeadline(kpi.metrics, RWA_PLATFORM_KPI_LABEL),
@@ -102,7 +102,6 @@ describe('RWAPlatformKeyMetrics', () => {
 			['Est. Annual Revenue', 4_200_000],
 			['Revenue confidence', 'Issuer-Disclosed']
 		]
-		expect(rows).toEqual(expect.arrayContaining(expected))
-		expect(rows).toHaveLength(expected.length)
+		expect(rows).toEqual(expected)
 	})
 })

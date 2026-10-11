@@ -211,7 +211,7 @@ describe('groupRwaRows', () => {
 		if (venue.kind !== 'group') throw new Error('expected a group row')
 		expect(venue.metrics.protocolFees30d).toBe(100)
 		expect(venue.metrics.volumeAllTime).toBe(1500)
-		expect(venue.metrics.makerFeeRate).toBeCloseTo((0.0002 * 9000 + 0.001 * 1000) / 10_000)
+		expect(venue.metrics.makerFeeRate).toBeCloseTo(0.00028, 10)
 		expect(venue.metrics.oraclePrice).toBeNull()
 		expect(venue.distinct.pair).toEqual(['USDY/USDC', 'USDY/USDT'])
 		expect(venue.distinct.marginAsset).toEqual(['USDC'])

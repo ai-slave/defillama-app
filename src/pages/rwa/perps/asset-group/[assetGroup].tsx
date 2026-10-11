@@ -79,7 +79,7 @@ export default function RWAPerpsAssetGroupPage({
 	const meta = getRwaPageMeta('perpsAssetGroup', { name: assetGroup, slug: rwaSlug(assetGroup) })
 	return (
 		<Layout title={meta.title} description={meta.description} pageName={pageName} canonicalUrl={meta.canonicalUrl}>
-			<RWAPerpsTreePage {...props} pageKind="perpsAssetGroup" />
+			<RWAPerpsTreePage {...props} pageKind="perpsAssetGroup" perpsAsset={null} />
 		</Layout>
 	)
 }

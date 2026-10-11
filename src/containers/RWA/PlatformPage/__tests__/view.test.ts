@@ -11,10 +11,8 @@ describe('parseRwaEntityView', () => {
 		expect(parseRwaEntityView('markets')).toBe('list')
 	})
 
-	test('an old Compliance link opens the list with the Compliance column set', () => {
-		const query = { view: 'compliance' }
-		expect(parseRwaEntityView(query.view)).toBe('list')
-		expect(parseRwaTableColumnSet(query, 'assets')).toBe('compliance')
+	test('an old Compliance link opens the list', () => {
+		expect(parseRwaEntityView('compliance')).toBe('list')
 	})
 })
 

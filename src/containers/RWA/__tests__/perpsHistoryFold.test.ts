@@ -33,7 +33,7 @@ const history = {
 
 describe('foldRwaPerpsMarketHistory', () => {
 	test('sums the markets of the page by venue, largest group first; a day with no member value stays unknown', () => {
-		expect(foldRwaPerpsMarketHistory(history, rows, 'venue', null)).toEqual({
+		expect(foldRwaPerpsMarketHistory(history, rows, 'platform', null)).toEqual({
 			dimensions: ['timestamp', 'trade[XYZ]', 'Ostium'],
 			source: [
 				{ timestamp: 1000, 'trade[XYZ]': 5, Ostium: 2 },
@@ -44,7 +44,7 @@ describe('foldRwaPerpsMarketHistory', () => {
 	})
 
 	test('keeps only the filtered markets and names each group as the table does', () => {
-		const folded = foldRwaPerpsMarketHistory(history, rows, 'baseAsset', ['xyz:GOLD', 'ost:GOLD'])
+		const folded = foldRwaPerpsMarketHistory(history, rows, 'asset', ['xyz:GOLD', 'ost:GOLD'])
 		expect(folded.dimensions).toEqual(['timestamp', 'Gold'])
 		expect(folded.source.map((row) => row.Gold)).toEqual([2, 7, null])
 		expect(foldRwaPerpsMarketHistory(history, rows, 'assetGroup', ['xyz:TSLA']).dimensions).toEqual([
@@ -53,8 +53,8 @@ describe('foldRwaPerpsMarketHistory', () => {
 		])
 	})
 
-	test('without a Group by keeps one series per filtered market', () => {
-		expect(foldRwaPerpsMarketHistory(history, rows, null, ['ost:GOLD', 'xyz:TSLA']).dimensions).toEqual([
+	test('under None keeps one series per filtered market', () => {
+		expect(foldRwaPerpsMarketHistory(history, rows, 'none', ['ost:GOLD', 'xyz:TSLA']).dimensions).toEqual([
 			'timestamp',
 			'xyz:TSLA',
 			'ost:GOLD'
@@ -64,7 +64,7 @@ describe('foldRwaPerpsMarketHistory', () => {
 
 describe('toRwaPerpsHistorySeries', () => {
 	test('maps each group to its known points, oldest first', () => {
-		expect(toRwaPerpsHistorySeries(foldRwaPerpsMarketHistory(history, rows, 'venue', ['ost:GOLD']))).toEqual({
+		expect(toRwaPerpsHistorySeries(foldRwaPerpsMarketHistory(history, rows, 'platform', ['ost:GOLD']))).toEqual({
 			Ostium: [
 				[1000, 2],
 				[2000, 4]

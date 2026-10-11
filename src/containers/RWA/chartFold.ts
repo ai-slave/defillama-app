@@ -26,9 +26,7 @@ function getRankedColumns(dataset: RWAPositionalChartDataset): {
 }
 
 function latestValue(dataset: RWAPositionalChartDataset, index: number): number {
-	const lastRow = dataset.source[dataset.source.length - 1]
-	const value = lastRow?.[index]
-	return typeof value === 'number' && Number.isFinite(value) ? value : 0
+	return dataset.source[dataset.source.length - 1]?.[index] ?? 0
 }
 
 function rankByLatest(dataset: RWAPositionalChartDataset, columns: Array<SeriesColumn>): Array<SeriesColumn> {
@@ -43,34 +41,30 @@ export function getRwaRankedSeriesNames(dataset: RWAPositionalChartDataset): Arr
 }
 
 /**
- * Keeps the `max` largest series by their latest value, or the `picked` ones when given, ordered largest first, and
- * folds the rest into one Others series; an Others series already in the dataset joins that fold and stays last.
- * Total lines keep their place and stay out of the ranking. An Others cell stays null when every folded cell of
- * that row is null.
+ * What a split's absolute chart draws (docs/charts.md): the `picked` members, or every member without a pick,
+ * largest first by their latest value. The first `max` picks draw their own series and the other picks fold into one
+ * Others; an unpicked member leaves the chart. An Others already in the dataset joins the fold only while every member
+ * is picked, so a pick never draws a remainder it left out. Total lines keep their place and stay out of the ranking,
+ * and nothing picked draws nothing, the Total included. An Others cell stays null when every folded cell of that row
+ * is null.
  */
 export function foldRwaTopSeries(
 	dataset: RWAPositionalChartDataset,
-	{
-		max = RWA_MAX_CHART_SERIES,
-		othersLabel = RWA_OTHERS_SERIES_LABEL,
-		picked
-	}: { max?: number; othersLabel?: string; picked?: ReadonlyArray<string> }
+	{ max = RWA_MAX_CHART_SERIES, picked }: { max?: number; picked?: ReadonlyArray<string> }
 ): RWAPositionalChartDataset {
 	if (dataset.source.length === 0) return dataset
 	const { ranked, reserved, others } = getRankedColumns(dataset)
 	if (ranked.length === 0) return dataset
-	const ordered = rankByLatest(dataset, ranked)
 	const pickedSet = picked ? new Set(picked) : null
-	const kept = pickedSet ? ordered.filter((column) => pickedSet.has(column.name)) : ordered.slice(0, max)
-	const folded = [
-		...(pickedSet ? ordered.filter((column) => !pickedSet.has(column.name)) : ordered.slice(max)),
-		...(others ? [others] : [])
-	]
-	const columns = [...reserved, ...kept]
+	const ordered = rankByLatest(dataset, pickedSet ? ranked.filter((column) => pickedSet.has(column.name)) : ranked)
+	if (ordered.length === 0) return { dimensions: ['timestamp'], source: [] }
+	const folded = ordered.slice(max)
+	if (others && ordered.length === ranked.length) folded.push(others)
+	const columns = [...reserved, ...ordered.slice(0, max)]
 	const dimensions: RWAPositionalChartDataset['dimensions'] = [
 		'timestamp',
 		...columns.map((column) => column.name),
-		...(folded.length > 0 ? [othersLabel] : [])
+		...(folded.length > 0 ? [RWA_OTHERS_SERIES_LABEL] : [])
 	]
 	const source = dataset.source.map((row) => {
 		const next: RWAPositionalChartDataset['source'][number] = [row[0], ...columns.map((column) => row[column.index])]
@@ -88,30 +82,6 @@ export function foldRwaTopSeries(
 		return next
 	})
 	return { ...dataset, dimensions, source }
-}
-
-/**
- * Draws every row as percent of that row's total across the ranked series and Others. The Total line leaves
- * the dataset. A row whose total is zero or missing stays null.
- */
-export function toRwaShareDataset(dataset: RWAPositionalChartDataset): RWAPositionalChartDataset {
-	const { ranked, others } = getRankedColumns(dataset)
-	const columns = others ? [...ranked, others] : ranked
-	const dimensions: RWAPositionalChartDataset['dimensions'] = ['timestamp', ...columns.map((column) => column.name)]
-	const source = dataset.source.map((row) => {
-		let total = 0
-		for (const column of columns) {
-			const value = row[column.index]
-			if (value != null) total += value
-		}
-		const next: RWAPositionalChartDataset['source'][number] = [row[0]]
-		for (const column of columns) {
-			const value = row[column.index]
-			next.push(value == null || total === 0 ? null : (value / total) * 100)
-		}
-		return next
-	})
-	return { dimensions, source }
 }
 
 /** Adds a Total line over the series and Others, first after the timestamp, when the dataset has none. A row with no values stays null. */

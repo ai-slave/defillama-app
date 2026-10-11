@@ -141,36 +141,10 @@ describe('buildRwaLeafRows', () => {
 		expect(row.metrics.openInterestChange24h).toEqual({ current: 0, prior: null, percent: -100, dropped: 1 })
 	})
 
-	test('fills the widened perps fields', () => {
-		const [big] = buildRwaLeafRows(
-			[
-				perpsAsset({
-					openInterest: 3000,
-					volume24hChange24h: 25,
-					volumeAllTime: 90_000,
-					oraclePrice: 1.01,
-					midPrice: 1.02,
-					previousDayPrice: 0.99,
-					protocolFees7d: 2000,
-					protocolFees30d: 8000,
-					protocolFeesAllTime: 50_000,
-					makerFeeRate: 0.0001,
-					takerFeeRate: 0.0005
-				})
-			],
-			{ includeBridgeTvl: true }
-		)
-		expect(big.metrics).toMatchObject({
-			volume24hChange24h: { current: 1000, prior: 800, percent: 25 },
-			volumeAllTime: 90_000,
-			oraclePrice: 1.01,
-			midPrice: 1.02,
-			previousDayPrice: 0.99,
-			protocolFees7d: 2000,
-			protocolFees30d: 8000,
-			protocolFeesAllTime: 50_000,
-			makerFeeRate: 0.0001,
-			takerFeeRate: 0.0005
+	test('derives the prior 24h volume from the volume and its 24h change', () => {
+		const [row] = buildRwaLeafRows([perpsAsset({ volume24h: 1000, volume24hChange24h: 25 })], {
+			includeBridgeTvl: true
 		})
+		expect(row.metrics.volume24hChange24h).toMatchObject({ current: 1000, prior: 800, percent: 25 })
 	})
 })

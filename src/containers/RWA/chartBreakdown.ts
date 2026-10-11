@@ -9,7 +9,6 @@ import {
 	type RwaTreemapParentGrouping
 } from './chartState'
 import type { RWAPerpsChartMetricKey } from './Perps/types'
-import type { RwaPerpsHistoryGroupBy } from './perpsHistoryFold'
 import type { RWAGroupBy } from './table/groupBy'
 import type { RwaPerpsChartScope } from './usePerpsChartDataset'
 
@@ -108,16 +107,10 @@ export function getRwaPerpsChartSource(groupBy: RWAGroupBy): RWAPerpsChartSource
 	}
 }
 
-/** The fold's Group by for a perps table Group by; None keeps one series per market. */
-function getRwaPerpsHistoryGroupBy(groupBy: RWAGroupBy): RwaPerpsHistoryGroupBy | null {
-	const source = getRwaPerpsChartSource(groupBy)
-	return source.kind === 'split' ? source.breakdown : null
-}
-
 /**
- * Where the perps chart reads: the server split of the scope, or the per-market history folded in the browser when
- * a filter other than Venue Type narrows the markets, or when an underlying's page groups its markets, which the
- * split routes do not serve. `groupBy` names the members either way.
+ * Where the perps chart reads: the server split of the scope, or the per-market history folded in the browser by the
+ * table's Group by when a filter other than Venue Type narrows the markets, or when an underlying's page groups its
+ * markets, which the split routes do not serve.
  */
 export function getRwaPerpsChartPlan({
 	scope,
@@ -127,23 +120,29 @@ export function getRwaPerpsChartPlan({
 	scope: RwaPerpsChartScope
 	groupBy: RWAGroupBy
 	isFiltered: boolean
-}): { kind: 'split' | 'fold'; groupBy: RwaPerpsHistoryGroupBy | null } {
-	const historyGroupBy = getRwaPerpsHistoryGroupBy(groupBy)
-	const isFolded = isFiltered || (scope.kind === 'baseAsset' && historyGroupBy != null)
-	return { kind: isFolded ? 'fold' : 'split', groupBy: historyGroupBy }
+}): 'split' | 'fold' {
+	return isFiltered || (scope.kind === 'baseAsset' && groupBy !== 'none') ? 'fold' : 'split'
 }
 
-const PERPS_GROUP_LABELS: Record<RwaPerpsHistoryGroupBy | 'market', { one: string; many: string }> = {
-	venue: { one: 'Venue', many: 'Venues' },
-	assetGroup: { one: 'Asset Group', many: 'Asset Groups' },
-	assetClass: { one: 'Asset Class', many: 'Asset Classes' },
-	baseAsset: { one: 'Asset', many: 'Assets' },
-	market: { one: 'Market', many: 'Markets' }
-}
-
-/** What one member of a perps chart is, for the series picker, the treemap and the csv header. */
-export function getRwaPerpsGroupLabels(groupBy: RwaPerpsHistoryGroupBy | null): { one: string; many: string } {
-	return PERPS_GROUP_LABELS[groupBy ?? 'market']
+/** What one member of a perps chart is, for the series picker, the treemap and the csv header. Perps pages offer no
+    chain or category, and their split reads venue as `getRwaPerpsChartSource` does. */
+export function getRwaPerpsGroupLabels(groupBy: RWAGroupBy): { one: string; many: string } {
+	switch (groupBy) {
+		case 'platform':
+		case 'chain':
+		case 'category':
+			return { one: 'Venue', many: 'Venues' }
+		case 'assetGroup':
+			return { one: 'Asset Group', many: 'Asset Groups' }
+		case 'assetClass':
+			return { one: 'Asset Class', many: 'Asset Classes' }
+		case 'asset':
+			return { one: 'Asset', many: 'Assets' }
+		case 'none':
+			return { one: 'Market', many: 'Markets' }
+		default:
+			return assertNever(groupBy)
+	}
 }
 
 const PERPS_CHART_METRIC_OPTIONS: ReadonlyArray<{

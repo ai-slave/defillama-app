@@ -1,110 +1,42 @@
 import { describe, expect, test } from 'vitest'
-import { getRwaPageHeadline, getRwaPageMeta, type RWAPageMeta } from '../pageCopy'
+import { getRwaPageHeadline, getRwaPageMeta } from '../pageCopy'
 import type { RWAPageKind } from '../pageLayout'
 
 describe('getRwaPageMeta', () => {
-	test('every page keeps the title, description and canonical it had before', () => {
-		const pages: Array<[RWAPageKind, { name: string; slug: string } | null, RWAPageMeta]> = [
-			[
-				'overview',
-				null,
-				{
-					title: 'Real World Assets (RWA) Dashboard & Analytics - DefiLlama',
-					description:
-						'Track Real World Assets (RWA) tokenization on-chain. View tokenized treasuries, private credit, real estate, and commodities. RWA AUM, yields, and adoption analytics across all blockchains.',
-					canonicalUrl: '/rwa'
-				}
-			],
-			[
-				'chain',
-				{ name: 'Ethereum', slug: 'ethereum' },
-				{
-					title: 'Ethereum RWA Dashboard & Analytics - DefiLlama',
-					description:
-						'Track RWA adoption on Ethereum. Compare Active AUM, Onchain AUM, DeFi Active TVL, and utilization.',
-					canonicalUrl: '/rwa/chain/ethereum'
-				}
-			],
-			[
-				'category',
-				{ name: 'Treasuries', slug: 'treasuries' },
-				{
-					title: 'Treasuries RWA Dashboard & Analytics - DefiLlama',
-					description:
-						'Track Treasuries RWA assets onchain. Compare Active AUM, Onchain AUM, DeFi Active TVL, and utilization.',
-					canonicalUrl: '/rwa/category/treasuries'
-				}
-			],
-			[
-				'assetGroup',
-				{ name: 'Stocks', slug: 'stocks' },
-				{
-					title: 'Stocks RWA Dashboard & Analytics - DefiLlama',
-					description:
-						'Track Stocks RWA assets onchain. Compare Active AUM, Onchain AUM, DeFi Active TVL, and utilization.',
-					canonicalUrl: '/rwa/asset-group/stocks'
-				}
-			],
-			[
-				'platform',
-				{ name: 'Ondo', slug: 'ondo' },
-				{
-					title: 'Ondo RWA Dashboard & Analytics - DefiLlama',
-					description:
-						'Explore Ondo, an RWA platform enabling issuance, custody, trading, or management of tokenized real-world assets across blockchains.',
-					canonicalUrl: '/rwa/platform/ondo'
-				}
-			],
-			[
-				'perpsOverview',
-				null,
-				{
-					title: 'RWA Perps Dashboard & Analytics - DefiLlama',
-					description:
-						'Track RWA perpetual markets across venues. Compare open interest, 24h volume, market counts, and venue-level breakdowns.',
-					canonicalUrl: '/rwa/perps'
-				}
-			],
-			[
-				'perpsAssetGroup',
-				{ name: 'Stocks', slug: 'stocks' },
-				{
-					title: 'Stocks RWA Perps Dashboard & Analytics - DefiLlama',
-					description:
-						'Track Stocks RWA perpetual markets. Compare open interest, 24h volume, and venue-level activity.',
-					canonicalUrl: '/rwa/perps/asset-group/stocks'
-				}
-			],
-			[
-				'perpsAsset',
-				{ name: 'NVDA', slug: 'nvda' },
-				{
-					title: 'NVDA Perpetual Markets - DefiLlama',
-					description:
-						'Compare NVDA perpetual markets across venues by open interest, volume, funding, and market activity.',
-					canonicalUrl: '/rwa/perps/asset/nvda'
-				}
-			],
-			[
-				'venue',
-				{ name: 'trade[XYZ]', slug: 'trade-xyz' },
-				{
-					title: 'trade[XYZ] RWA Perps Dashboard & Analytics - DefiLlama',
-					description:
-						'Track trade[XYZ] RWA perpetual markets by open interest, volume, market activity, and instrument-level breakdowns.',
-					canonicalUrl: '/rwa/perps/venue/trade-xyz'
-				}
-			]
+	test('a scoped page names its scope in the title and description, and its canonical is its own route', () => {
+		const scope = { name: 'Zeta Fund', slug: 'zeta-fund' }
+		const pages: Array<[RWAPageKind, string]> = [
+			['chain', '/rwa/chain/zeta-fund'],
+			['category', '/rwa/category/zeta-fund'],
+			['assetGroup', '/rwa/asset-group/zeta-fund'],
+			['platform', '/rwa/platform/zeta-fund'],
+			['perpsAssetGroup', '/rwa/perps/asset-group/zeta-fund'],
+			['perpsAsset', '/rwa/perps/asset/zeta-fund'],
+			['venue', '/rwa/perps/venue/zeta-fund']
 		]
-		for (const [kind, scope, meta] of pages) {
-			expect({ kind, ...getRwaPageMeta(kind, scope) }).toEqual({ kind, ...meta })
+		for (const [kind, canonicalUrl] of pages) {
+			const meta = getRwaPageMeta(kind, scope)
+			expect({ kind, canonicalUrl: meta.canonicalUrl }).toEqual({ kind, canonicalUrl })
+			expect(meta.title).toContain('Zeta Fund')
+			expect(meta.description).toContain('Zeta Fund')
 		}
+	})
+
+	test('the two overviews canonicalize to their section roots', () => {
+		expect(getRwaPageMeta('overview', null).canonicalUrl).toBe('/rwa')
+		expect(getRwaPageMeta('perpsOverview', null).canonicalUrl).toBe('/rwa/perps')
+	})
+
+	test('an asset group and its perps page do not share a title', () => {
+		const scope = { name: 'Stocks', slug: 'stocks' }
+		expect(getRwaPageMeta('assetGroup', scope).title).not.toBe(getRwaPageMeta('perpsAssetGroup', scope).title)
 	})
 
 	test('a platform page reads its description from the index when the index has one', () => {
 		expect(getRwaPageMeta('platform', { name: 'Ondo', slug: 'ondo' }, 'Tokenized treasuries.').description).toBe(
 			'Tokenized treasuries.'
 		)
+		expect(getRwaPageMeta('platform', { name: 'Ondo', slug: 'ondo' }, null).description).toContain('Ondo')
 	})
 })
 

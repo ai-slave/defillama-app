@@ -2,6 +2,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { formatChange } from '~/ui/Change'
 import { SmolStatCard } from '~/ui/SmolStatCard'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
+import type { QueryRetry } from '~/utils/query'
 import { RWA_CARD_CHANGE_DAYS, type RwaChangeBar, type RwaChangeCard, type RwaNamedBar } from './cardData'
 
 /** Whole dollars under a million, as the table prints them; one decimal on the compact values above. */
@@ -94,17 +95,25 @@ export function RWAChangeCard({
 	title,
 	tooltip,
 	card,
-	logo
+	logo,
+	isLoading,
+	failedRead
 }: {
 	title: string
 	tooltip: string
 	card: RwaChangeCard
 	logo: RwaBarRow['logo']
+	/** The history behind the card is loading. */
+	isLoading: boolean
+	/** The history behind the card failed, with its Try again. */
+	failedRead: QueryRetry | null
 }) {
 	return (
 		<SmolStatCard
 			title={title}
 			tooltip={tooltip}
+			isLoading={isLoading}
+			failedRead={failedRead}
 			value={card.changeUsd == null ? null : formatChange(card.changeUsd, 'usd')}
 			change={
 				card.changePct == null ? undefined : { value: card.changePct, comparison: `over ${RWA_CARD_CHANGE_DAYS}d` }

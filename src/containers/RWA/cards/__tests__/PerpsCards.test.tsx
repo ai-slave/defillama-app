@@ -1,5 +1,14 @@
+// @vitest-environment happy-dom
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { act } from 'react'
+import { createRoot } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, test } from 'vitest'
+import { afterEach, describe, expect, test } from 'vitest'
+import { accessibleName } from '~/utils/testing/accessibleName'
+import { alertTexts } from '~/utils/testing/fieldErrors'
+import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { waitForUi } from '~/utils/testing/waitForUi'
+import type { RWAChartDataset } from '../../chartDataset'
 import { foldRwaPerpsKpi } from '../../kpi/perpsKpi'
 import { perpsAsset } from '../../table/__tests__/fixtures'
 import type { RwaChangeCard } from '../cardData'
@@ -38,18 +47,61 @@ const markets = [
 function render(props: Partial<RWAPerpsCardsProps> = {}) {
 	const includeCex = props.includeCex ?? true
 	const html = renderToStaticMarkup(
-		<RWAPerpsCards
-			cards={cards}
-			markets={markets}
-			kpi={foldRwaPerpsKpi(markets, includeCex)}
-			filtered={false}
-			venueHistory={null}
-			volumeHistory={null}
-			includeCex={includeCex}
-			{...props}
-		/>
+		<QueryClientProvider client={new QueryClient()}>
+			<RWAPerpsCards
+				cards={cards}
+				markets={markets}
+				kpi={foldRwaPerpsKpi(markets, includeCex)}
+				filtered={false}
+				includeCex={includeCex}
+				{...props}
+			/>
+		</QueryClientProvider>
 	)
 	return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ')
+}
+
+const DAY = 24 * 60 * 60 * 1000
+const CONTRACT_BREAKDOWN = '/api/public/rwa/perps/contract-breakdown'
+/** Market a, on Hyperliquid, from 100 to 130 over 31 days: open interest and volume alike. */
+const history: RWAChartDataset = {
+	dimensions: ['timestamp', 'a'],
+	source: [
+		{ timestamp: 0, a: 100 },
+		{ timestamp: 31 * DAY, a: 130 }
+	]
+}
+
+const http = installFixtureFetch()
+const unmounts: Array<() => void> = []
+
+afterEach(async () => {
+	for (const unmount of unmounts.splice(0)) await act(async () => unmount())
+})
+
+/** A filtered page: Change by Venue and the Volume card load the per-market history. */
+async function mountFiltered() {
+	const container = document.createElement('div')
+	document.body.appendChild(container)
+	const root = createRoot(container)
+	// The history query retries once; no delay keeps the failure inside the test's time.
+	const client = new QueryClient({ defaultOptions: { queries: { retryDelay: 0 } } })
+	await act(async () =>
+		root.render(
+			<QueryClientProvider client={client}>
+				<RWAPerpsCards cards={cards} markets={markets} kpi={foldRwaPerpsKpi(markets, true)} filtered includeCex />
+			</QueryClientProvider>
+		)
+	)
+	unmounts.push(() => {
+		root.unmount()
+		container.remove()
+	})
+	return {
+		// The cards are the grid's children, each opening with its title.
+		card: (title: string) =>
+			[...container.firstElementChild!.children].find((node) => node.textContent.startsWith(title))!
+	}
 }
 
 describe('RWAPerpsCards', () => {
@@ -71,32 +123,48 @@ describe('RWAPerpsCards', () => {
 		expect(text).toMatch(/Volume, 7 day average \$3\.5m a day/)
 	})
 
-	test('reads the folded per-market history for Change by Venue once a filter is set', () => {
-		const text = render({
-			filtered: true,
-			venueHistory: {
-				Hyperliquid: [
-					[0, 100],
-					[31 * 24 * 60 * 60 * 1000, 130]
-				]
+	test('under a filter, Change by Venue shows loading until the per-market history lands, then folds it', async () => {
+		let release!: () => void
+		const held = new Promise<void>((resolve) => {
+			release = resolve
+		})
+		http.serve({
+			[CONTRACT_BREAKDOWN]: async () => {
+				await held
+				return history
 			}
 		})
-		expect(text).toContain('Change by Venue +$30 +30.00%')
-		expect(text).not.toContain('Binance +$50')
+		const { card } = await mountFiltered()
+		await waitForUi(() => expect(http.requests).toHaveLength(2))
+		expect(card('Change by Venue').querySelector('[role="status"]')).not.toBeNull()
+		expect(card('Volume, 7 day average').querySelector('[role="status"]')).not.toBeNull()
+
+		await act(async () => release())
+		await waitForUi(() => expect(card('Change by Venue').textContent).toContain('Hyperliquid+$30 (+30%)'))
+	})
+
+	test('under a filter, a failed history load reads as an error on both history cards, each with its Try again', async () => {
+		http.serve({ [CONTRACT_BREAKDOWN]: fixtureStatus(404) })
+		const { card } = await mountFiltered()
+		await waitForUi(() => expect(alertTexts(card('Change by Venue'))).toHaveLength(1))
+		expect(alertTexts(card('Volume, 7 day average'))).toHaveLength(1)
+		expect(card('Open Interest by Asset Group').textContent).toContain('$5m')
+
+		http.serve({ [CONTRACT_BREAKDOWN]: () => history })
+		const retry = [...card('Change by Venue').querySelectorAll('button')].find(
+			(button) => accessibleName(button) === 'Try again'
+		)!
+		await act(async () => retry.click())
+		await waitForUi(() => expect(card('Change by Venue').textContent).toContain('Hyperliquid+$30 (+30%)'))
+		expect(alertTexts(card('Change by Venue'))).toEqual([])
 	})
 
 	test('reads Unavailable, never $0, when the markets have no open interest', () => {
 		const empty = [perpsAsset({ openInterest: null })]
 		const html = renderToStaticMarkup(
-			<RWAPerpsCards
-				cards={cards}
-				markets={empty}
-				kpi={foldRwaPerpsKpi(empty, true)}
-				filtered={false}
-				venueHistory={null}
-				volumeHistory={null}
-				includeCex
-			/>
+			<QueryClientProvider client={new QueryClient()}>
+				<RWAPerpsCards cards={cards} markets={empty} kpi={foldRwaPerpsKpi(empty, true)} filtered={false} includeCex />
+			</QueryClientProvider>
 		)
 		expect(html).toContain('Unavailable')
 		expect(html).not.toContain('$0<')

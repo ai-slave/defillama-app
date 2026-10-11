@@ -21,7 +21,9 @@ function render(props: Partial<RWAOverviewBreakdownPanelProps> = {}) {
 		assets: [spotAsset(), spotAsset({ id: 'gold', canonicalMarketId: 'paxos/paxg', assetGroup: 'Precious Metals' })],
 		selectedCategories: [],
 		includeBridgeTvl: true,
-		toolbarStart: <span>toolbar-start</span>,
+		leading: null,
+		viewSwitch: null,
+		addToDashboard: null,
 		...props
 	}
 	return { markup: renderToStaticMarkup(<RWAOverviewBreakdownPanel {...full} />) }

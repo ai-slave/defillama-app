@@ -31,11 +31,11 @@ import {
 	dropRwaRedundantTotal,
 	ensureRwaTotalSeries,
 	foldRwaTopSeries,
-	RWA_MAX_CHART_SERIES,
-	toRwaShareDataset
+	getRwaRankedSeriesNames,
+	RWA_MAX_CHART_SERIES
 } from './chartFold'
 import { getRwaOverviewChartMetricOptions, resolveRwaChartQueryState, type RwaChartQueryState } from './chartQueryState'
-import { buildRwaTimeSeriesCharts } from './chartSeries'
+import { buildRwaShareChart, buildRwaTimeSeriesCharts } from './chartSeries'
 import {
 	getChartMetricLabel,
 	getChartMetricQueryValue,
@@ -351,25 +351,30 @@ export function RWAOverviewChartPanel({
 				: undefined,
 		[aggregateAssets, flowAssetRows, flowGroupBy, flowOnChainMcapAssetRows, flowVisibleRange, isFlowVsPrice]
 	)
-	const selectedTimeSeriesDataset = useMemo(() => {
-		if (isFlowMetric || !isTimeSeriesView) return groupedChartDataset
+	// One deferred snapshot, so the chart never pairs old rows with new series or share mode.
+	const timeSeriesChart = useMemo(() => {
+		const isShare = chartView === 'share'
+		if (isFlowMetric || !isTimeSeriesView) return { dataset: groupedChartDataset, charts: [], isShare }
+		if (isShare) {
+			/* No picker here: every group is picked, the ten largest draw their own share and the rest is Others. */
+			return {
+				...buildRwaShareChart({
+					dataset: groupedChartDataset,
+					picked: getRwaRankedSeriesNames(groupedChartDataset),
+					groupBy: 'daily',
+					buildCharts: buildRwaTimeSeriesCharts
+				}),
+				isShare
+			}
+		}
 		/* One member equal to the Total is one line: a one-asset platform, or a scope with one group. The ten
 		   largest draw their own series and the rest fold into Others. */
 		const folded = foldRwaTopSeries(
 			dropRwaRedundantTotal(ensureRwaTotalSeries(groupedChartDataset, chartTotalLabel)),
 			{}
 		)
-		return chartView === 'share' ? toRwaShareDataset(folded) : folded
+		return { dataset: folded, charts: buildRwaTimeSeriesCharts(folded), isShare }
 	}, [chartTotalLabel, chartView, groupedChartDataset, isFlowMetric, isTimeSeriesView])
-	const timeSeriesCharts = useMemo(
-		() => (isTimeSeriesView ? buildRwaTimeSeriesCharts(selectedTimeSeriesDataset) : []),
-		[isTimeSeriesView, selectedTimeSeriesDataset]
-	)
-	// One deferred snapshot, so the chart never pairs old rows with new series or share mode.
-	const timeSeriesChart = useMemo(
-		() => ({ dataset: selectedTimeSeriesDataset, charts: timeSeriesCharts, isShare: chartView === 'share' }),
-		[chartView, selectedTimeSeriesDataset, timeSeriesCharts]
-	)
 	const deferredTimeSeriesChart = useDeferredValue(timeSeriesChart)
 
 	const chartTypeSwitch = (
@@ -404,15 +409,9 @@ export function RWAOverviewChartPanel({
 			label="Chart type"
 			variant="default"
 			size="md"
-			className="mr-auto max-w-full overflow-x-auto"
+			className="max-w-full overflow-x-auto"
 		/>
 	)
-	/* The chart sits in two thirds of the summary grid on platform pages, where
-	   the full toolbar no longer fits one line. Rather than let it wrap raggedly,
-	   splitting the view and period controls across lines and leaving one control
-	   stranded top-right, the metric switch takes a line of its own and the
-	   secondary controls right-align beneath it. */
-	const chartTypeSwitchRow = isPlatformMode ? <div className="w-full">{chartTypeSwitch}</div> : chartTypeSwitch
 	const flowOverlaySelect = (
 		<Tooltip content={definitions.flows.marketcapOverlay.description}>
 			<Select
@@ -487,43 +486,50 @@ export function RWAOverviewChartPanel({
 		includeBridgeTvl
 	})
 	const addToDashboardButton = dashboardChart ? <AddToDashboardButton chartConfig={dashboardChart} smol /> : null
+	const isFlowChartLoading = isFlowLoading || (isFlowVsPrice && isFlowMcapLoading)
+	/* .csv and .png render only while the chart plots a series (ChartPanel header). */
+	const plotsSeries = isFlowMetric
+		? !flowChartFailedRead && !isFlowChartLoading && (groupedFlowChart != null || flowChart != null)
+		: !chartFailedRead && !isChartLoading
 
 	return (
 		<>
 			{isTimeSeriesView ? (
 				<ChartPanel className="flex flex-1 flex-col">
-					<ChartPanelToolbar>
-						{chartTypeSwitchRow}
+					<ChartPanelToolbar leading={chartTypeSwitch}>
 						{isFlowMetric ? periodSwitch : null}
 						{isFlowMetric ? null : chartViewSwitch}
 						{isFlowMetric && !isFlowVsPrice && !isGroupedFlowChart ? flowOverlaySelect : null}
 						{addToDashboardButton}
-						<ChartCsvExportButton
-							chartInstance={multiSeriesChart2Instance}
-							filename={chartFilename}
-							disabled={isFlowMetric ? isFlowLoading : isChartLoading}
-							source={{
-								type: 'dataset',
-								prepare: () => {
-									const exportDataset = groupedFlowChart
-										? groupedFlowChart.dataset
-										: isFlowMetric && flowChart
-											? flowChart.dataset
-											: deferredTimeSeriesChart.dataset
-									const exportGroupBy = groupedFlowChart
-										? groupedFlowChart.groupBy
-										: isFlowMetric && flowChart
-											? flowChart.groupBy
-											: 'daily'
-									return { ...exportDataset, groupBy: exportGroupBy }
-								}
-							}}
-						/>
-						<ChartPngExportButton
-							chartInstance={multiSeriesChart2Instance}
-							filename={chartFilename}
-							title={exportChartTitle}
-						/>
+						{plotsSeries ? (
+							<>
+								<ChartCsvExportButton
+									chartInstance={multiSeriesChart2Instance}
+									filename={chartFilename}
+									source={{
+										type: 'dataset',
+										prepare: () => {
+											const exportDataset = groupedFlowChart
+												? groupedFlowChart.dataset
+												: isFlowMetric && flowChart
+													? flowChart.dataset
+													: deferredTimeSeriesChart.dataset
+											const exportGroupBy = groupedFlowChart
+												? groupedFlowChart.groupBy
+												: isFlowMetric && flowChart
+													? flowChart.groupBy
+													: 'daily'
+											return { ...exportDataset, groupBy: exportGroupBy }
+										}
+									}}
+								/>
+								<ChartPngExportButton
+									chartInstance={multiSeriesChart2Instance}
+									filename={chartFilename}
+									title={exportChartTitle}
+								/>
+							</>
+						) : null}
 					</ChartPanelToolbar>
 					{isFlowVsPrice && flowVsPriceSummary ? (
 						<RWAFlowVsPriceStrip
@@ -534,7 +540,7 @@ export function RWAOverviewChartPanel({
 					{isFlowMetric ? (
 						flowChartFailedRead ? (
 							<ChartPanelBodyError retry={flowChartFailedRead}>Couldn&apos;t load flow data.</ChartPanelBodyError>
-						) : isFlowLoading || (isFlowVsPrice && isFlowMcapLoading) ? (
+						) : isFlowChartLoading ? (
 							<ChartPanelBodyLoading />
 						) : groupedFlowChart ? (
 							<Suspense fallback={<ChartPanelBodyLoading />}>
@@ -561,7 +567,9 @@ export function RWAOverviewChartPanel({
 								/>
 							</Suspense>
 						) : (
-							<ChartPanelBodyFallback className="body-sm text-tertiary">No flow data available.</ChartPanelBodyFallback>
+							<ChartPanelBodyFallback role="status" aria-live="polite" className="text-center body-sm text-tertiary">
+								No flow data available.
+							</ChartPanelBodyFallback>
 						)
 					) : chartFailedRead ? (
 						<ChartPanelBodyError retry={chartFailedRead}>Couldn&apos;t load chart data.</ChartPanelBodyError>
@@ -599,13 +607,9 @@ export function RWAOverviewChartPanel({
 					assets={aggregateAssets}
 					selectedCategories={selectedCategories}
 					includeBridgeTvl={includeBridgeTvl}
-					toolbarStart={
-						<>
-							{chartTypeSwitchRow}
-							{chartViewSwitch}
-							{addToDashboardButton}
-						</>
-					}
+					leading={chartTypeSwitch}
+					viewSwitch={chartViewSwitch}
+					addToDashboard={addToDashboardButton}
 				/>
 			)}
 		</>

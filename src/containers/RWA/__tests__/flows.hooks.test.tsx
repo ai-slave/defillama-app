@@ -63,13 +63,23 @@ async function renderFlowSeries(request: RWAFlowSeriesRequest) {
 }
 
 describe('useRWAFlowSummary', () => {
-	test('a page that reads no flows does not download the summary', async () => {
+	test('only a page that reads flows downloads the summary', async () => {
+		const summary = { generatedAt: 1, windows: {} }
+		fetchJsonMock.mockResolvedValue(summary)
 		await mount(() => {
 			useRWAFlowSummary(false)
 			return null
 		})
-
 		expect(fetchJsonMock).not.toHaveBeenCalled()
+		await unmount()
+
+		const results: Array<ReturnType<typeof useRWAFlowSummary>['data']> = []
+		await mount(() => {
+			results.push(useRWAFlowSummary(true).data)
+			return null
+		})
+		await waitForUi(() => expect(results.at(-1)).toEqual(summary))
+		expect(fetchJsonMock).toHaveBeenCalledTimes(1)
 	})
 })
 
@@ -114,14 +124,13 @@ describe('useRWAFlowSeries', () => {
 		expect(result).toEqual({ splitPoints: undefined, assetRows: ASSET_ROWS, isLoading: false, failedRead: null })
 	})
 
-	test('requests nothing when the flows chart is not shown', async () => {
-		await renderFlowSeries({
-			scope: { kind: 'overview' },
-			includeStablecoin: false,
-			includeGovernance: false,
-			enabled: false
-		})
-
+	test('requests the series only while the flows chart is shown', async () => {
+		const scope = { kind: 'platform', slug: 'Ondo' } as const
+		await renderFlowSeries({ scope, includeStablecoin: false, includeGovernance: false, enabled: false })
 		expect(fetchJsonMock).not.toHaveBeenCalled()
+		await unmount()
+
+		const shown = await renderFlowSeries({ scope, includeStablecoin: false, includeGovernance: false, enabled: true })
+		expect(shown?.assetRows).toEqual(ASSET_ROWS)
 	})
 })

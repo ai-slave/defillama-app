@@ -1,8 +1,9 @@
-import { describe, expect, test } from 'vitest'
+import type { NextRouter } from 'next/router'
+import { describe, expect, test, vi } from 'vitest'
 import type { RWAAssetOverviewRow, RWAPerpsContractOverlayRow } from '../api.types'
 import {
+	clearRwaFilterQueryKeys,
 	filterRwaOverviewDisplayRows,
-	getRwaFilterResetPatch,
 	RWA_FILTER_QUERY_KEYS,
 	readRwaQueryFilters,
 	getRwaDisplayedDefiActiveTvl,
@@ -152,32 +153,33 @@ describe('readRwaQueryFilters', () => {
 	})
 })
 
-describe('getRwaFilterResetPatch', () => {
-	test('Reset all clears every Assets filter and toggle and keeps the view, grouping, period and Perps keys', () => {
-		expect(
-			getRwaFilterResetPatch(
-				{
-					categories: 'Treasuries',
-					excludeAssetGroups: 'Bonds',
-					redeemableStates: 'yes',
-					minActiveMcapToOnChainMcapPct: '10',
-					includeStablecoins: 'true',
-					includeCex: 'false',
-					venues: 'Binance',
-					groupBy: 'chain',
-					view: 'information',
-					period: '7d'
-				},
-				RWA_FILTER_QUERY_KEYS
-			)
-		).toStrictEqual({
-			categories: undefined,
-			excludeAssetGroups: undefined,
-			redeemableStates: undefined,
-			minActiveMcapToOnChainMcapPct: undefined,
-			includeStablecoins: undefined
-		})
-	})
+test('Reset all clears every Assets filter and toggle and keeps the view, grouping, period and Perps keys', () => {
+	const router = {
+		pathname: '/rwa',
+		asPath: '/rwa',
+		query: {
+			categories: 'Treasuries',
+			excludeAssetGroups: 'Bonds',
+			redeemableStates: 'yes',
+			minActiveMcapToOnChainMcapPct: '10',
+			includeStablecoins: 'true',
+			includeCex: 'false',
+			venues: 'Binance',
+			groupBy: 'chain',
+			view: 'information',
+			period: '7d'
+		},
+		push: vi.fn(async () => true)
+	}
+	clearRwaFilterQueryKeys(router as unknown as NextRouter, RWA_FILTER_QUERY_KEYS)
+	expect(router.push).toHaveBeenCalledWith(
+		{
+			pathname: '/rwa',
+			query: { includeCex: 'false', venues: 'Binance', groupBy: 'chain', view: 'information', period: '7d' }
+		},
+		undefined,
+		{ shallow: true }
+	)
 })
 
 describe('RWA filter state', () => {

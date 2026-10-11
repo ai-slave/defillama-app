@@ -1,12 +1,12 @@
 import { describe, expect, test } from 'vitest'
+import { CHART_SERIES_LIMIT } from '~/constants/colors'
 import type { RWAPositionalChartDataset } from '../chartDataset'
 import {
 	dropRwaRedundantTotal,
 	ensureRwaTotalSeries,
 	foldRwaTopSeries,
 	getRwaRankedSeriesNames,
-	RWA_OTHERS_SERIES_LABEL,
-	toRwaShareDataset
+	RWA_OTHERS_SERIES_LABEL
 } from '../chartFold'
 
 const dataset = (dimensions: Array<string>, source: RWAPositionalChartDataset['source']): RWAPositionalChartDataset =>
@@ -91,91 +91,64 @@ describe('foldRwaTopSeries', () => {
 		expect(under.dimensions).toEqual(['timestamp', 'A', RWA_OTHERS_SERIES_LABEL])
 		expect(under.source).toEqual([[1, 1, 5]])
 	})
-
-	test('takes a custom Others label', () => {
-		const folded = foldRwaTopSeries(dataset(['timestamp', 'A', 'B'], [[1, 1, 2]]), { max: 1, othersLabel: 'Rest' })
-		expect(folded.dimensions).toEqual(['timestamp', 'B', 'Rest'])
-	})
 })
 
 describe('foldRwaTopSeries with a pick', () => {
-	/* Twelve venues V1..V12 whose latest value is their number, so V12 is the largest; a Total line and an upstream Others. */
-	const names = Array.from({ length: 12 }, (_, index) => `V${index + 1}`)
-	const twelve = dataset(
+	/* Two venues past the series cap, V1..Vn, whose latest value is their number, so Vn is the largest; a Total line and
+	   an upstream Others. */
+	const names = Array.from({ length: CHART_SERIES_LIMIT + 2 }, (_, index) => `V${index + 1}`)
+	const largest = names[names.length - 1]
+	const venues = dataset(
 		['timestamp', 'Total Open Interest', ...names, 'Others'],
 		[
 			[1, 100, ...names.map(() => 1), 2],
 			[2, 200, ...names.map((_, index) => index + 1), 3]
 		]
 	)
-	const top10 = names.slice(2).reverse()
+	const top = names.slice(2).reverse()
+	const topLatest = top.map((_, index) => names.length - index)
 
 	test('lists the members largest first, without the Total line or the upstream Others', () => {
-		expect(getRwaRankedSeriesNames(twelve)).toEqual([...top10, 'V2', 'V1'])
+		expect(getRwaRankedSeriesNames(venues)).toEqual([...top, 'V2', 'V1'])
 	})
 
-	test('the ten largest picked draw what the top ten fold draws', () => {
-		expect(foldRwaTopSeries(twelve, { picked: top10 })).toEqual(foldRwaTopSeries(twelve, {}))
+	test('without a pick the largest up to the cap draw their own series and the rest, upstream Others included, is Others', () => {
+		const folded = foldRwaTopSeries(venues, {})
+		expect(folded.dimensions).toEqual(['timestamp', 'Total Open Interest', ...top, 'Others'])
+		expect(folded.source[1]).toEqual([2, 200, ...topLatest, 2 + 1 + 3])
 	})
 
-	test('a small member picked gets its own series and every unpicked one, the upstream Others included, folds into Others', () => {
-		const folded = foldRwaTopSeries(twelve, { picked: ['V1', 'V12'] })
-		expect(folded.dimensions).toEqual(['timestamp', 'Total Open Interest', 'V12', 'V1', 'Others'])
-		expect(folded.source[1]).toEqual([2, 200, 12, 1, 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10 + 11 + 3])
+	test('an unpicked member leaves the chart, and so does the upstream Others while a member is unpicked', () => {
+		const folded = foldRwaTopSeries(venues, { picked: ['V1', largest] })
+		expect(folded.dimensions).toEqual(['timestamp', 'Total Open Interest', largest, 'V1'])
+		expect(folded.source).toEqual([
+			[1, 100, 1, 1],
+			[2, 200, names.length, 1]
+		])
 	})
 
-	test('every member picked leaves no Others but the upstream one', () => {
-		const folded = foldRwaTopSeries(twelve, { picked: names })
-		expect(folded.dimensions.at(-1)).toBe('Others')
+	test('picks past the cap fold into Others; the upstream Others joins only when every member is picked', () => {
+		const pastCap = foldRwaTopSeries(venues, { picked: names.slice(0, CHART_SERIES_LIMIT + 1) })
+		expect(pastCap.dimensions).toEqual([
+			'timestamp',
+			'Total Open Interest',
+			...names.slice(1, CHART_SERIES_LIMIT + 1).reverse(),
+			'Others'
+		])
+		expect(pastCap.source[1]?.at(-1)).toBe(1)
+		const every = foldRwaTopSeries(venues, { picked: names })
+		expect(every.dimensions).toEqual(['timestamp', 'Total Open Interest', ...top, 'Others'])
+		expect(every.source[1]?.at(-1)).toBe(2 + 1 + 3)
+	})
+
+	test('every pick keeps its own column without the series cap', () => {
+		const folded = foldRwaTopSeries(venues, { picked: names, max: Number.POSITIVE_INFINITY })
+		expect(folded.dimensions).toEqual(['timestamp', 'Total Open Interest', ...top, 'V2', 'V1', 'Others'])
 		expect(folded.source[1]?.at(-1)).toBe(3)
 	})
-})
 
-describe('toRwaShareDataset', () => {
-	test('draws every row as percent of its total and drops the Total series', () => {
-		const share = toRwaShareDataset(
-			dataset(
-				['timestamp', 'Total Active AUM', 'A', 'B'],
-				[
-					[1, 4, 1, 3],
-					[2, 10, 5, 5]
-				]
-			)
-		)
-		expect(share.dimensions).toEqual(['timestamp', 'A', 'B'])
-		expect(share.source).toEqual([
-			[1, 25, 75],
-			[2, 50, 50]
-		])
-	})
-
-	test('sums the row from the series, not the Total column', () => {
-		const share = toRwaShareDataset(dataset(['timestamp', 'Total Active AUM', 'A', 'B'], [[1, 999, 2, 2]]))
-		expect(share.source).toEqual([[1, 50, 50]])
-	})
-
-	test('keeps Others in the share and in its denominator', () => {
-		const share = toRwaShareDataset(dataset(['timestamp', 'Total Active AUM', 'A', 'Others'], [[1, 4, 1, 3]]))
-		expect(share.dimensions).toEqual(['timestamp', 'A', 'Others'])
-		expect(share.source).toEqual([[1, 25, 75]])
-	})
-
-	test('keeps a row null when its total is zero or missing', () => {
-		const share = toRwaShareDataset(
-			dataset(
-				['timestamp', 'A', 'B'],
-				[
-					[1, 0, 0],
-					[2, null, null],
-					[3, null, 4]
-				]
-			)
-		)
-		expect(share.source).toEqual([
-			[1, null, null],
-			[2, null, null],
-			[3, null, 100]
-		])
+	test('nothing picked draws nothing, not even the Total', () => {
+		expect(foldRwaTopSeries(venues, { picked: [] })).toEqual({ dimensions: ['timestamp'], source: [] })
 	})
 })
 

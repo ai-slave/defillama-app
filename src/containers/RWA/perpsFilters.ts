@@ -1,3 +1,4 @@
+import { inRange } from '~/components/Filters/quickPicks'
 import { getQueryUpdatesFromSelected, readSelectionFromQuery } from '~/components/Select/query'
 import type { ExcludeQueryKey } from '~/components/Select/types'
 import { parseNumberInput, parseNumberQueryParam } from '~/utils/routerQuery'
@@ -18,7 +19,7 @@ import { annualiseFundingRate } from './table/rows'
  * ratios, compliance flags, Platforms). Pickers over the market's values and ranges over its numbers, all in the
  * URL, so a link carries the filter and Reset all clears it. The page's strip filters are the same records flagged
  * inline; More filters holds the rest. A page leaves out its own dimension; a picker with one value or a range no
- * market carries is not offered.
+ * market carries is not offered. Venue Type never removes a picker's value: it greys the values it leaves out.
  */
 
 type QueryLike = Readonly<Record<string, string | Array<string> | undefined>>
@@ -58,9 +59,10 @@ export type RWAPerpsFilterDefinition =
 			group: RWAPerpsFilterGroup
 			/** Drawn in the page's strip rather than in More filters. */
 			inline: boolean
-			/** Ranked by open interest, largest first. */
+			/** Every value across the page's markets, ranked by open interest, largest first. Venue Type never removes one,
+			    so "every value" means the same under each choice and a pick never turns into it. */
 			values: Array<string>
-			/** Markets per value. */
+			/** Markets per value among those Venue Type keeps; a value at 0 is drawn greyed. */
 			counts: Record<string, number>
 			includeKey: string
 			excludeKey: ExcludeQueryKey
@@ -193,8 +195,8 @@ const RANGE_FILTERS: ReadonlyArray<{
 const isPerps = (row: RWAOverviewDisplayRow): row is PerpsRow => row.kind === 'perps'
 
 /**
- * Every filter a Perps tree page offers for its markets, inline or in More filters. The pickers list the values of
- * the markets Venue Type keeps, so DEX only never offers a CEX venue.
+ * Every filter a Perps tree page offers for its markets, inline or in More filters. The pickers list every value;
+ * their counts follow Venue Type, so under DEX only a CEX venue stays listed with a 0 count.
  */
 export function getRwaPerpsFilterDefinitions(
 	rows: ReadonlyArray<RWAOverviewDisplayRow>,
@@ -216,16 +218,18 @@ export function getRwaPerpsFilterDefinitions(
 			counts: { all: markets.length, dex: markets.length - cex, cex }
 		})
 	}
-	const choice = readRwaVenueTypeChoice(query)
-	const kept = markets.filter((market) => keepsVenueType(market, choice))
+	// A page without the Venue Type control ignores includeCex/includeDex, as filterRwaPerpsRows does, so an old
+	// link carrying them neither greys values nor zeroes counts the table does not drop.
+	const choice = definitions.length > 0 ? readRwaVenueTypeChoice(query) : 'all'
 	for (const filter of SELECT_FILTERS) {
 		if (own.includes(filter.id)) continue
 		const weights = new Map<string, number>()
 		const counts: Record<string, number> = {}
-		for (const market of kept) {
+		for (const market of markets) {
+			const kept = keepsVenueType(market, choice)
 			for (const value of filter.read(market)) {
 				weights.set(value, (weights.get(value) ?? 0) + (market.openInterest ?? 0))
-				counts[value] = (counts[value] ?? 0) + 1
+				if (kept) counts[value] = (counts[value] ?? 0) + 1
 			}
 		}
 		if (weights.size < 2) continue
@@ -296,12 +300,7 @@ export function filterRwaPerpsRows<T extends RWAOverviewDisplayRow>(
 		} else {
 			const { min, max } = readRwaPerpsRange(query, definition)
 			if (min == null && max == null) continue
-			tests.push((row) => {
-				const value = definition.read(row)
-				// A market without the number fails a bounded range.
-				if (value == null) return false
-				return (min == null || value >= min) && (max == null || value <= max)
-			})
+			tests.push((row) => inRange(definition.read(row), min, max))
 		}
 	}
 	if (tests.length === 0) return [...rows]
@@ -331,14 +330,23 @@ const isFilterSet = (query: QueryLike, definition: RWAPerpsFilterDefinition) =>
 			? readSelect(query, definition) != null
 			: isRangeSet(readRwaPerpsRange(query, definition))
 
-/** One pill per More filters filter the URL sets, in the dialog's order; an inline picker shows its own on its trigger. */
+/** The filters More filters holds: all but Venue Type, and from sm all but the inline ones, which draw in the strip. */
+export function getRwaPerpsDialogFilters(
+	definitions: ReadonlyArray<RWAPerpsFilterDefinition>,
+	isPhone: boolean
+): Array<RWAPerpsFilterDefinition> {
+	return definitions.filter((definition) => definition.kind !== 'venueType' && (isPhone || !definition.inline))
+}
+
+/** One pill per filter More filters holds (getRwaPerpsDialogFilters) that the URL sets, in the dialog's order; an
+    inline picker shows its own on its trigger. */
 export function getRwaPerpsFilterPills(
 	query: QueryLike,
-	definitions: ReadonlyArray<RWAPerpsFilterDefinition>
+	dialogFilters: ReadonlyArray<RWAPerpsFilterDefinition>
 ): Array<RWAPerpsFilterPill> {
 	const pills: Array<RWAPerpsFilterPill> = []
-	for (const definition of definitions) {
-		if (definition.kind === 'venueType' || definition.inline) continue
+	for (const definition of dialogFilters) {
+		if (definition.kind === 'venueType') continue
 		if (definition.kind === 'select') {
 			const picked = readSelect(query, definition)
 			if (picked) pills.push({ definition, picked, clearKeys: clearKeysOf(definition) })

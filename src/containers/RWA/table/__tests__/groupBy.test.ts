@@ -50,10 +50,12 @@ describe('the Group by of each page', () => {
 		expect(parseRwaGroupBy('asset', 'overview')).toBe('platform')
 	})
 
-	test('reads the first value of a repeated key and writes a picked option to the URL', () => {
-		expect(parseRwaGroupBy(['assetClass', 'none'], 'perpsOverview')).toBe('assetClass')
-		expect(getRwaGroupByQueryValue('chain', 'platform')).toBe('chain')
-		expect(getRwaGroupByQueryValue('assetClass', 'venue')).toBe('assetClass')
+	test('reopens the Group by the reader picked, the first value of a repeated key winning', () => {
+		expect(parseRwaGroupBy(getRwaGroupByQueryValue('chain', 'platform'), 'platform')).toBe('chain')
+		expect(parseRwaGroupBy(getRwaGroupByQueryValue('assetClass', 'venue'), 'venue')).toBe('assetClass')
+		expect(parseRwaGroupBy([getRwaGroupByQueryValue('assetClass', 'perpsOverview'), 'none'], 'perpsOverview')).toBe(
+			'assetClass'
+		)
 	})
 })
 

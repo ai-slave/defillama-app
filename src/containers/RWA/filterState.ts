@@ -70,20 +70,7 @@ export const RWA_FILTER_QUERY_KEYS: ReadonlyArray<string> = [
 	...RWA_INCLUSION_QUERY_KEYS
 ]
 
-/** Reset all: the patch that clears the filter keys the page reads (`keys`) and the URL holds; the page's own count of
-    active filters decides whether the button shows, so a stray or empty key never does. */
-export function getRwaFilterResetPatch(
-	query: NextRouter['query'],
-	keys: ReadonlyArray<string>
-): Record<string, undefined> {
-	const patch: Record<string, undefined> = {}
-	for (const key of keys) {
-		if (query[key] !== undefined) patch[key] = undefined
-	}
-	return patch
-}
-
-/** Removes the keys from the URL, as a filter pill or reset does. */
+/** Removes the keys from the URL, as a filter pill or Reset all does; every other key stays. */
 export function clearRwaFilterQueryKeys(router: NextRouter, keys: ReadonlyArray<string>) {
 	const updates: Record<string, undefined> = {}
 	for (const key of keys) updates[key] = undefined

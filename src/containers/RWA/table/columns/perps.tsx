@@ -1,3 +1,4 @@
+import { Tag } from '~/ui/Tag'
 import { formatPercent } from '~/utils/numberFormat'
 import type { RWAPerpsContractOverlayRow } from '../../api.types'
 import { formatRwaMultiple } from '../../kpi/format'
@@ -13,11 +14,6 @@ export function getPerpsMarket(row: RWATableRow): RWAPerpsContractOverlayRow | n
 	return row.kind === 'leaf' && row.asset.kind === 'perps' ? row.asset : null
 }
 
-/** DEX or CEX belongs to the venue: beside a venue group's name and in the Venue cell, never on a market's name. */
-export function VenueTypeTag({ type }: { type: string }) {
-	return <span className="shrink-0 rounded-sm border border-medium px-1 label-xs text-secondary">{type}</span>
-}
-
 export const venueTypeColumn = columnHelper.accessor(
 	(row) => (row.kind === 'group' ? row.distinct.venueType.join(', ') : (getPerpsMarket(row)?.venueType ?? undefined)),
 	{
@@ -29,7 +25,7 @@ export const venueTypeColumn = columnHelper.accessor(
 			return (
 				<span className="flex justify-end gap-1">
 					{types.map((type) => (
-						<VenueTypeTag key={type} type={type} />
+						<Tag key={type}>{type}</Tag>
 					))}
 				</span>
 			)
@@ -74,8 +70,8 @@ export const maxLeverageColumn = columnHelper.accessor((row) => row.metrics.maxL
 })
 
 /** Fee rates sit in hundredths of a percent, so four decimals below one percent. */
-function formatFeeRate(value: number | null | undefined): string | null {
-	if (value == null || !Number.isFinite(value)) return null
+function formatFeeRate(value: number | undefined): string | null {
+	if (value == null) return null
 	const digits = Math.abs(value * 100) >= 1 ? 2 : 4
 	return formatPercent(value, { input: 'fraction', minimumFractionDigits: digits, maximumFractionDigits: digits })
 }
@@ -106,7 +102,10 @@ function createPerpsCsvColumn(id: string, header: string, pick: (market: RWAPerp
 	)
 }
 
-/** A venue group's types (one in practice); empty for any other group, whose rows span venues. */
+/**
+ * A venue group's types (one in practice); empty for any other group, whose rows span venues. DEX or CEX belongs to
+ * the venue: a venue group and the Venue cell show it, a market's name never does.
+ */
 export function getVenueGroupTypes(group: RWAGroupRow): Array<string> {
 	return group.id.startsWith('platform:') && group.children[0]?.asset.kind === 'perps' ? group.distinct.venueType : []
 }

@@ -6,7 +6,6 @@ import { describe, expect, test, vi } from 'vitest'
 vi.mock('next/router', () => ({
 	useRouter: () => ({ query: {}, pathname: '/rwa/perps/venue/ondo', asPath: '/rwa/perps/venue/ondo', push: vi.fn() })
 }))
-vi.mock('~/components/TokenLogo', () => ({ TokenLogo: () => <span data-logo /> }))
 
 import { buildRwaKpiCsv } from '../../kpi/kpiRows'
 import { getRwaPerpsKpiHeadline, getRwaVenueKpiRows } from '../../kpi/perpsKpiRows'
@@ -35,12 +34,19 @@ function render(props: Partial<RWAVenueKeyMetricsProps> = {}) {
 const labels = (root: HTMLElement) =>
 	Array.from(root.querySelectorAll('[data-metric-label]'), (label) => label.textContent)
 
+/** The venue type tag: an element whose whole text is the type, outside the h1. */
+const typeTags = (root: HTMLElement) =>
+	Array.from(root.querySelectorAll('*'))
+		.filter((element) => !element.closest('h1'))
+		.map((element) => element.textContent)
+		.filter((text) => text === 'DEX' || text === 'CEX')
+
 describe('RWAVenueKeyMetrics', () => {
 	test('names the venue with its type tag and heads with open interest', () => {
 		const root = render()
 		// The h1 is the name alone; the tag sits beside it, so search reads the venue's name.
 		expect(root.querySelector('h1')?.textContent).toBe('Ondo')
-		expect(root.querySelector('h1')?.parentElement?.textContent).toBe('OndoDEX')
+		expect(typeTags(root)).toContain('DEX')
 		expect(root.textContent).toContain('Open Interest$10,000')
 	})
 
@@ -71,19 +77,18 @@ describe('RWAVenueKeyMetrics', () => {
 		const root = render({ venueType: 'CEX', takerFeeBps: null })
 		expect(labels(root)).toContain('Share of CEX OI')
 		expect(labels(root)).not.toContain('Taker fee')
-		expect(root.querySelector('h1')?.parentElement?.textContent).toBe('OndoCEX')
+		expect(typeTags(root)).toContain('CEX')
+		expect(typeTags(root)).not.toContain('DEX')
 	})
 
-	test('writes every panel row to the csv, raw values, the venue type first', () => {
+	test('lists every panel row and sub row as a csv line, raw values, in panel order', () => {
 		const { rows } = buildRwaKpiCsv({
 			filename: 'key-metrics.csv',
 			headline: getRwaPerpsKpiHeadline(kpi),
-			rows: getRwaVenueKpiRows(kpi, 'DEX', 4.5),
-			lead: [['Venue type', 'DEX']]
+			rows: getRwaVenueKpiRows(kpi, 'DEX', 4.5)
 		})
 		const expected = [
 			['Metric', 'Value'],
-			['Venue type', 'DEX'],
 			['Open Interest', 10_000],
 			['Open Interest change (24h) %', 25],
 			['Volume (30d)', 40_000],
@@ -101,8 +106,6 @@ describe('RWAVenueKeyMetrics', () => {
 			['Est. annual fees', 36_500],
 			['Taker fee (bps)', 4.5]
 		]
-		expect(rows).toEqual(expect.arrayContaining(expected))
-		expect(rows).toHaveLength(expected.length)
-		expect(rows[1]).toEqual(['Venue type', 'DEX'])
+		expect(rows).toEqual(expected)
 	})
 })

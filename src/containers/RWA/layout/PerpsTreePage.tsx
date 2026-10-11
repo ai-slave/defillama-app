@@ -26,7 +26,7 @@ const NO_SPOT_FILTERS: Pick<IRWAAssetsOverview, RWASpotFilterKey> = {
 
 /**
  * A Perps tree page: its packed markets unpacked once, then the same overview container as the Assets pages.
- * `perpsAsset`: the underlying of /rwa/perps/asset/:key, for its chart scope and its h1.
+ * `perpsAsset`: the underlying of /rwa/perps/asset/:key, for its chart scope and its h1; null on the other two.
  */
 export function RWAPerpsTreePage({
 	overview,
@@ -37,7 +37,7 @@ export function RWAPerpsTreePage({
 	entityQuestions
 }: RWAPerpsPageProps & {
 	pageKind: Extract<RWAPageKind, 'perpsOverview' | 'perpsAssetGroup' | 'perpsAsset'>
-	perpsAsset?: string
+	perpsAsset: string | null
 	entityQuestions?: Array<string>
 }) {
 	const assets = useMemo(() => unpackRwaPerpsMarkets(markets), [markets])

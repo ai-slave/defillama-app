@@ -6,7 +6,7 @@ import { RWA_TABLE_COLUMN_SET_QUERY_KEY } from '../table/columnSetQuery'
  * of the URL. Compliance is a column set of the table (`?table=`), not a view; an old `?view=compliance` link opens the
  * list, and the table reads it as Compliance.
  */
-const RWA_ENTITY_VIEWS = ['information', 'list'] as const
+export const RWA_ENTITY_VIEWS = ['information', 'list'] as const
 export type RWAEntityView = (typeof RWA_ENTITY_VIEWS)[number]
 export const RWA_ENTITY_VIEW_QUERY_KEY = 'view'
 const RWA_ENTITY_DEFAULT_VIEW: RWAEntityView = 'list'

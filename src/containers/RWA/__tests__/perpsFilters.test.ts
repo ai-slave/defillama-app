@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest'
-import { getRwaFilterResetPatch } from '../filterState'
 import {
 	countRwaPerpsFilters,
 	createRwaPerpsFilterDraft,
 	filterRwaPerpsRows,
+	getRwaPerpsDialogFilters,
 	getRwaPerpsFilterDefinitions,
 	getRwaPerpsFilterPills,
 	getRwaPerpsFilterQueryKeys,
@@ -117,24 +117,55 @@ describe('getRwaPerpsFilterDefinitions', () => {
 		const assetPageIds = offered('perpsAsset').map(([id]) => id)
 		expect(assetPageIds).not.toContain('baseAssets')
 		expect(assetPageIds).not.toContain('assetGroups')
+		expect(assetPageIds).toContain('assetClasses')
 	})
 
-	test('the Venue picker lists the venues Venue Type keeps', () => {
+	test('Venue Type keeps every venue listed and counts only the markets it keeps', () => {
 		const venues = (query: Record<string, string>) =>
 			getRwaPerpsFilterDefinitions([...rows, { ...rows[1], id: 'd', venue: 'OKX' }], 'perpsOverview', query).find(
 				(definition) => definition.id === 'venues'
 			)
-		expect(venues({})).toMatchObject({ values: ['Binance', 'OKX', 'trade[XYZ]'] })
-		expect(venues({ includeDex: 'false' })).toMatchObject({ values: ['Binance', 'OKX'] })
-		// One DEX venue left: nothing to pick.
-		expect(venues({ includeCex: 'false' })).toBeUndefined()
+		expect(venues({})).toMatchObject({
+			values: ['Binance', 'OKX', 'trade[XYZ]'],
+			counts: { Binance: 1, OKX: 1, 'trade[XYZ]': 2 }
+		})
+		expect(venues(getRwaVenueTypeQueryPatch('cex'))).toMatchObject({
+			values: ['Binance', 'OKX', 'trade[XYZ]'],
+			counts: { Binance: 1, OKX: 1 }
+		})
+		expect(venues(getRwaVenueTypeQueryPatch('dex'))).toMatchObject({
+			values: ['Binance', 'OKX', 'trade[XYZ]'],
+			counts: { 'trade[XYZ]': 2 }
+		})
+	})
+
+	test('a page without Venue Type ignores an old includeCex link in its counts and its rows', () => {
+		const query = getRwaVenueTypeQueryPatch('dex')
+		const definitions = getRwaPerpsFilterDefinitions(rows, 'venue', query)
+		expect(definitions.find((definition) => definition.id === 'assetClasses')).toMatchObject({
+			counts: { 'Equity Perp': 2, 'Commodity Perp': 1 }
+		})
+		expect(ids(filterRwaPerpsRows(rows, query, definitions))).toEqual(['a', 'b', 'c'])
 	})
 
 	test('a picker with one value or a range no market carries is not offered', () => {
-		const one = [rows[0], { ...rows[2], takerFeeRate: null }].map((row) => ({ ...row, takerFeeRate: null }))
+		const one = [rows[0], rows[2]].map((row) => ({ ...row, takerFeeRate: null }))
 		const offeredIds = getRwaPerpsFilterDefinitions(one, 'perpsOverview').map((definition) => definition.id)
 		expect(offeredIds).not.toContain('venues')
 		expect(offeredIds).not.toContain('takerFee')
+		expect(offeredIds).toContain('premium')
+	})
+
+	test('under DEX only a venue pick keeps filtering, shows its pill and is cleared by Reset all', () => {
+		const query = { includeCex: 'false', excludeVenues: 'trade[XYZ]' }
+		const definitions = getRwaPerpsFilterDefinitions(rows, 'perpsOverview', query)
+		expect(ids(filterRwaPerpsRows(rows, query, definitions))).toEqual([])
+		expect(getRwaPerpsFilterPills(query, definitions).map((pill) => pill.definition.id)).toEqual(['venues'])
+		expect(getRwaPerpsFilterQueryKeys(definitions)).toContain('excludeVenues')
+
+		// Picking the one venue DEX only keeps is a pick, not every venue.
+		const picked = { includeCex: 'false', venues: 'trade[XYZ]' }
+		expect(countRwaPerpsFilters(picked, getRwaPerpsFilterDefinitions(rows, 'perpsOverview', picked))).toBe(2)
 	})
 })
 
@@ -221,25 +252,43 @@ describe('the More filters draft', () => {
 		expect(patch.maxOpenInterest).toBe('500')
 	})
 
-	test('pills name each set dialog filter with the keys that clear it; an inline picker shows its own', () => {
-		const pills = getRwaPerpsFilterPills(
-			{ venues: 'Binance', maxPremium: '0', assetClasses: 'Equity Perp' },
-			definitions
-		)
-		expect(pills.map((pill) => [pill.definition.id, pill.clearKeys])).toEqual([
+	test('Apply keeps a pick that CEX only narrows to the one value left, so widening Venue Type still filters', () => {
+		const cexOnly = { venues: 'Binance', ...getRwaVenueTypeQueryPatch('cex') }
+		const narrowed = getRwaPerpsFilterDefinitions(rows, 'perpsOverview', cexOnly)
+		const applied = {
+			...cexOnly,
+			...serializeRwaPerpsFilterDraft(narrowed, createRwaPerpsFilterDraft(cexOnly, narrowed))
+		}
+
+		const widened = { ...applied, ...getRwaVenueTypeQueryPatch('all') }
+		expect(
+			ids(filterRwaPerpsRows(rows, widened, getRwaPerpsFilterDefinitions(rows, 'perpsOverview', widened)))
+		).toEqual(['b'])
+	})
+
+	test('pills name each set dialog filter with the keys that clear it; an inline picker shows its own from sm', () => {
+		const query = { venues: 'Binance', maxPremium: '0', assetClasses: 'Equity Perp', includeDex: 'false' }
+		const pills = (isPhone: boolean) =>
+			getRwaPerpsFilterPills(query, getRwaPerpsDialogFilters(definitions, isPhone)).map((pill) => [
+				pill.definition.id,
+				pill.clearKeys
+			])
+		expect(pills(false)).toEqual([
 			['venues', ['venues', 'excludeVenues']],
+			['premium', ['minPremium', 'maxPremium']]
+		])
+		// Below sm the inline pickers hide, so their filters move into the dialog and show as pills.
+		expect(pills(true)).toEqual([
+			['venues', ['venues', 'excludeVenues']],
+			['assetClasses', ['assetClasses', 'excludeAssetClasses']],
 			['premium', ['minPremium', 'maxPremium']]
 		])
 	})
 })
 
-test('Reset all clears the keys the page reads and keeps the view, grouping and stray keys', () => {
+test('Reset all clears the filter keys the page reads, not its grouping or the platform scope', () => {
 	const keys = getRwaPerpsFilterQueryKeys(getRwaPerpsFilterDefinitions(rows, 'perpsOverview'))
-	expect(
-		getRwaFilterResetPatch(
-			{ venues: 'Binance', minFundingApr: '5', baseAssets: 'Gold', groupBy: 'none', platforms: 'Ondo' },
-			keys
-		)
-	).toEqual({ venues: undefined, minFundingApr: undefined, baseAssets: undefined })
-	expect(keys).toEqual(expect.arrayContaining(['includeCex', 'includeDex']))
+	expect(keys).toEqual(expect.arrayContaining(['includeDex', 'minFundingApr']))
+	expect(keys).not.toContain('groupBy')
+	expect(keys).not.toContain('platforms')
 })

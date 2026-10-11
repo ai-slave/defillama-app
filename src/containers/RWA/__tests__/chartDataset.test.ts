@@ -1,7 +1,12 @@
 import { describe, expect, test } from 'vitest'
 import { getRwaChartTotalLabel } from '../chartAggregation'
 import { getRwaPerpsChartMetricSpec } from '../chartBreakdown'
-import { isRwaTotalSeriesLabel, limitRwaHorizontalBarData, toRwaMultiSeriesChartDataset } from '../chartDataset'
+import {
+	isRwaTotalSeriesLabel,
+	limitRwaHorizontalBarData,
+	RWA_MAX_HORIZONTAL_BARS,
+	toRwaMultiSeriesChartDataset
+} from '../chartDataset'
 
 describe('toRwaMultiSeriesChartDataset', () => {
 	test('preserves dimension order, zero values, and missing values', () => {
@@ -24,20 +29,21 @@ describe('toRwaMultiSeriesChartDataset', () => {
 })
 
 describe('limitRwaHorizontalBarData', () => {
-	test('sorts the bars, drops non-positive values and keeps up to twenty, the overflow folded into Others last', () => {
+	test('sorts the bars, drops non-positive values and keeps up to the bar cap, the overflow folded into Others last', () => {
+		const cap = RWA_MAX_HORIZONTAL_BARS
 		const items = [
 			{ name: 'Zero', value: 0 },
 			{ name: 'Negative', value: -3 },
 			{ name: 'Others', value: 5 },
-			{ name: 'Tie', value: 21 },
-			...Array.from({ length: 21 }, (_, index) => ({ name: `Asset ${index + 1}`, value: index + 1 }))
+			{ name: 'Tie', value: cap + 1 },
+			...Array.from({ length: cap + 1 }, (_, index) => ({ name: `Asset ${index + 1}`, value: index + 1 }))
 		]
 		const bars = limitRwaHorizontalBarData(items, { sort: true })
-		expect(bars).toHaveLength(20)
+		expect(bars).toHaveLength(cap)
 		expect(bars.slice(0, 3)).toEqual([
-			{ name: 'Asset 21', value: 21 },
-			{ name: 'Tie', value: 21 },
-			{ name: 'Asset 20', value: 20 }
+			{ name: `Asset ${cap + 1}`, value: cap + 1 },
+			{ name: 'Tie', value: cap + 1 },
+			{ name: `Asset ${cap}`, value: cap }
 		])
 		expect(bars.slice(-2)).toEqual([
 			{ name: 'Asset 4', value: 4 },

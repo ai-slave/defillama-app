@@ -3,8 +3,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
-import { waitForUi } from '~/utils/testing/waitForUi'
+import { settleQueries } from '~/utils/testing/settleQueries'
 import type { IRWAPerpsMarket } from '../Perps/api.types'
 import { RWAPerpsBreakdownChartPanel, type RWAPerpsBreakdownChartPanelProps } from '../PerpsBreakdownChartPanel'
 import { toRWAPerpsContractOverlayRow } from '../perpsOverlay'
@@ -17,14 +18,8 @@ const router = vi.hoisted(() => ({
 }))
 vi.mock('next/router', () => ({ useRouter: () => router }))
 
-// The chart stands in for ECharts, as in the other container tests: it records the series the panel hands it.
-const chart = vi.hoisted(() => ({ charts: null as null | Array<{ name: string }> }))
-vi.mock('~/components/ECharts/MultiSeriesChart', () => ({
-	default: ({ charts }: { charts: Array<{ name: string }> }) => {
-		chart.charts = charts
-		return <div data-chart="" />
-	}
-}))
+// ECharts cannot draw in happy-dom; what the chart draws is owned by chartSeries.test.ts.
+vi.mock('~/components/ECharts/MultiSeriesChart', () => ({ default: () => null }))
 
 const http = installFixtureFetch()
 
@@ -49,7 +44,6 @@ let root: Root
 let client: QueryClient
 
 beforeEach(() => {
-	chart.charts = null
 	router.query = {}
 	router.push.mockClear()
 	client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -85,11 +79,10 @@ async function render(props: Partial<RWAPerpsBreakdownChartPanelProps> = {}) {
 	)
 }
 
-async function drawnSeries(): Promise<Array<string>> {
-	return waitForUi(() => {
-		if (!container.querySelector('[data-chart]') || !chart.charts) throw new Error('chart not drawn yet')
-		return chart.charts.map((series) => series.name)
-	})
+/** The routes the panel loaded, with the query our logic chose. */
+async function loadedRoutes(): Promise<Array<string>> {
+	await settleQueries(client)
+	return http.requests.map((request) => `${request.url.pathname}${request.url.search}`)
 }
 
 /** A segmented control option, by its aria label or the label it sits in. */
@@ -102,7 +95,7 @@ function radio(name: string): HTMLInputElement {
 }
 
 describe('RWAPerpsBreakdownChartPanel', () => {
-	test('under a filter the chart folds the per-market history over the filtered markets by the Group by', async () => {
+	test('under a filter the chart loads the per-market history instead of the server split', async () => {
 		http.serve({
 			'/api/public/rwa/perps/contract-breakdown': {
 				dimensions: ['timestamp', 'xyz:TSLA', 'xyz:AAPL', 'ost:TSLA'],
@@ -111,11 +104,24 @@ describe('RWAPerpsBreakdownChartPanel', () => {
 		})
 		await render({ isFiltered: true, markets: markets.filter((row) => row.id !== 'xyz:AAPL') })
 
-		expect(await drawnSeries()).toEqual(['Total Open Interest', 'trade[XYZ]', 'Ostium'])
-		expect(http.requests.map((request) => request.url.pathname)).toEqual(['/api/public/rwa/perps/contract-breakdown'])
+		expect(await loadedRoutes()).toEqual(['/api/public/rwa/perps/contract-breakdown?key=openInterest'])
 	})
 
-	test('unfiltered it draws the server split, and the volume period is written under flowMode', async () => {
+	test('a filter that matches no market says so instead of drawing an empty plot', async () => {
+		http.serve({
+			'/api/public/rwa/perps/contract-breakdown': {
+				dimensions: ['timestamp', 'xyz:TSLA'],
+				source: [{ timestamp: DAY, 'xyz:TSLA': 5 }]
+			}
+		})
+		await render({ isFiltered: true, markets: [] })
+		await settleQueries(client)
+
+		expect(container.querySelector('[role="status"]')).not.toBeNull()
+		expect(alertTexts(container)).toEqual([])
+	})
+
+	test('unfiltered it loads the server split, and the volume period is written under flowMode', async () => {
 		router.query = { chartType: 'volume' }
 		http.serve({
 			'/api/public/rwa/perps/overview-breakdown': {
@@ -124,7 +130,7 @@ describe('RWAPerpsBreakdownChartPanel', () => {
 			}
 		})
 		await render()
-		expect(await drawnSeries()).toEqual(['trade[XYZ]'])
+		expect(await loadedRoutes()).toEqual(['/api/public/rwa/perps/overview-breakdown?breakdown=venue&key=volume24h'])
 
 		await act(async () => radio('Weekly').click())
 		expect(router.push).toHaveBeenLastCalledWith(
@@ -143,7 +149,7 @@ describe('RWAPerpsBreakdownChartPanel', () => {
 			}
 		})
 		await render()
-		await drawnSeries()
+		await loadedRoutes()
 
 		await act(async () => radio('Volume').click())
 		expect(router.push).toHaveBeenLastCalledWith(

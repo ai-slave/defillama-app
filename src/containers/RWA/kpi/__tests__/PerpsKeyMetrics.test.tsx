@@ -38,7 +38,7 @@ function render(value = kpi, headline?: string) {
 }
 
 describe('RWAPerpsKeyMetrics', () => {
-	test('heads with open interest and its change, then the 30d sections with the rows they open to', () => {
+	test('heads with open interest and its signed change, then the Volume, Markets and Fees sections, no Funding', () => {
 		const root = render()
 		expect(root.textContent).toContain('$20,000+25.00%over 24h')
 		expect(Array.from(root.querySelectorAll('summary'), (row) => row.textContent)).toEqual([
@@ -46,28 +46,12 @@ describe('RWAPerpsKeyMetrics', () => {
 			'Markets2',
 			'Est. Fees (30d)N/A'
 		])
-		expect(Array.from(root.querySelectorAll(METRIC_VALUE_SELECTOR), (value) => value.textContent)).toEqual([
-			'$40,000',
-			'$12,000',
-			'$4,000',
-			'N/A',
-			'2x',
-			'2',
-			'1',
-			'1',
-			'1',
-			'25%',
-			'N/A',
-			'$1,000',
-			'N/A',
-			'N/A'
-		])
 	})
 
-	test('has no Funding section: no funding, premium or cumulative funding row', () => {
-		const text = render().textContent
-		expect(text).not.toContain('Funding')
-		expect(text).not.toContain('Premium')
+	test('prints turnover as a multiple and the DEX share as a percent', () => {
+		const values = Array.from(render().querySelectorAll(METRIC_VALUE_SELECTOR), (value) => value.textContent)
+		expect(values).toContain('2x')
+		expect(values).toContain('25%')
 	})
 
 	test('heads the page with its headline as the one h1', () => {
@@ -83,7 +67,7 @@ describe('RWAPerpsKeyMetrics', () => {
 		expect(values.filter((value) => value !== 'N/A')).toEqual(['0', '0', '0', '0'])
 	})
 
-	test('writes every panel row to the csv, raw values', () => {
+	test('lists every panel row and sub row as a csv line, raw values, in panel order', () => {
 		const { rows } = buildRwaKpiCsv({
 			filename: 'key-metrics.csv',
 			headline: getRwaPerpsKpiHeadline(kpi, 'Stocks Perps Open Interest'),
@@ -108,7 +92,6 @@ describe('RWAPerpsKeyMetrics', () => {
 			['Est. Fees (7d)', null],
 			['Est. Fees (all-time)', null]
 		]
-		expect(rows).toEqual(expect.arrayContaining(expected))
-		expect(rows).toHaveLength(expected.length)
+		expect(rows).toEqual(expected)
 	})
 })

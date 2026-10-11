@@ -27,8 +27,8 @@ function ShareRow({ label, share, value, color }: { label: string; share: number
 	return (
 		<div className={SHARE_ROW_CLASS}>
 			{/* One line per group: a long name truncates and keeps the bar beside it. */}
-			<Tooltip content={label}>
-				<span className="min-w-0 truncate body-md text-secondary">{label}</span>
+			<Tooltip content={label} render={<span className="min-w-0 truncate body-md text-secondary" />}>
+				{label}
 			</Tooltip>
 			<span className="ml-auto flex shrink-0 items-center gap-3">
 				<span className="h-1.5 w-28 overflow-hidden rounded-full bg-surface-elevated-1">

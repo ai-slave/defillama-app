@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { CHART_COLORS } from '~/constants/colors'
+import { CHART_COLORS, chartColor, childColors } from '~/constants/colors'
 import type { RWAAssetOverviewRow } from '../api.types'
 import { buildCompleteRwaTreemapTreeData, buildRwaNestedTreemapTreeData, buildRwaTreemapTreeData } from '../treemap'
 
@@ -160,7 +160,7 @@ describe('buildRwaNestedTreemapTreeData', () => {
 						name: 'Beta',
 						path: 'Chain/Ethereum/Beta',
 						value: [50, 45.45, 33.33],
-						itemStyle: { color: '#578ce1' }
+						itemStyle: { color: childColors(chartColor(0), 2)[1] }
 					}
 				]
 			},

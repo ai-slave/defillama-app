@@ -66,11 +66,7 @@ export function FilterBuilderDialog({
 				) : (
 					<span>{label}</span>
 				)}
-				{labelType === 'regular' && appliedCount > 0 ? (
-					<span className="min-w-4 rounded-full bg-brand-muted px-1 text-center label-xs text-link">
-						{appliedCount}
-					</span>
-				) : null}
+				{labelType === 'regular' && appliedCount > 0 ? <CountBadge count={appliedCount} /> : null}
 			</Ariakit.DialogDisclosure>
 			<Dialog size="lg" fullSheet unmountOnHide portal>
 				<Fragment key={opening}>{children}</Fragment>

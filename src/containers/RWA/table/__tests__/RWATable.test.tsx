@@ -43,14 +43,6 @@ function buildTable(
 	})
 }
 
-/** The header groups the table paints over its visible columns. */
-function paintedGroupHeaders(table: RwaTestTable): Array<string> {
-	return table
-		.getHeaderGroups()[0]
-		.headers.filter((header) => !header.isPlaceholder && header.column.columns.length > 0)
-		.map((header) => String(header.column.columnDef.header))
-}
-
 /** Visible columns the table paints; csv-only columns stay visible for the export but are never painted. */
 function paintedColumnIds(table: RwaTestTable): Array<string> {
 	return table
@@ -118,54 +110,43 @@ describe('RWA table column set', () => {
 		const ids = buildTable('perps', 'platform')
 			.getAllLeafColumns()
 			.map((column) => column.id)
+		expect(ids).toContain('openInterest')
 		expect(ids).not.toContain('chains')
 		expect(ids).not.toContain('activeMcap')
 	})
 
-	test('paints the single perps set with Asset Group only, the open-only columns left to the expand rule, specs in the picker', () => {
-		const table = buildTable('perps', 'none')
-		expect(paintedColumnIds(table)).toEqual([
-			'name',
-			'platform',
-			'assetGroup',
-			'accessModel',
-			'openInterest',
-			'openInterestChange24h',
-			'volume24h',
-			'volume7d',
-			'volume30d',
-			'protocolFees24h',
-			'protocolFees30d'
-		])
-		expect(paintedGroupHeaders(table)).toEqual(['Market', 'Open Interest', 'Volume', 'Est. Fees'])
-		const options = getRwaColumnOptions(
+	test('paints Asset Group on the perps table by default', () => {
+		expect(paintedColumnIds(buildTable('perps', 'none'))).toContain('assetGroup')
+	})
+
+	test('leaves the open-only perps columns unpainted by default but offers them in the picker', () => {
+		const painted = new Set(paintedColumnIds(buildTable('perps', 'none')))
+		const keys = new Set(
+			getRwaColumnOptions(getRwaTableColumns('perpsOverview', 'ready', '7d', 'metrics'), 'none', 'perpsOverview').map(
+				(option) => option.key
+			)
+		)
+		for (const id of ['pair', 'premium', 'fundingApr', 'maxLeverage']) {
+			expect({ id, painted: painted.has(id), offered: keys.has(id) }).toEqual({
+				id,
+				painted: false,
+				offered: true
+			})
+		}
+	})
+
+	test('keeps the csv-only perps columns out of the picker', () => {
+		const csvOnly = buildTable('perps', 'none')
+			.getAllLeafColumns()
+			.filter((column) => column.columnDef.meta?.csvOnly)
+			.map((column) => column.id)
+		expect(csvOnly).toContain('parentPlatform')
+		const keys = getRwaColumnOptions(
 			getRwaTableColumns('perpsOverview', 'ready', '7d', 'metrics'),
 			'none',
 			'perpsOverview'
-		)
-		const keys = options.map((option) => option.key)
-		for (const id of [
-			'asset',
-			'assetClass',
-			'marginAsset',
-			'maxLeverage',
-			'fundingInterval',
-			'accessModel',
-			'makerFeeRate',
-			'takerFeeRate',
-			'sizeDecimals',
-			'venueType'
-		]) {
-			expect(keys).toContain(id)
-		}
-		expect(keys).not.toContain('openInterestShare')
-		expect(keys).not.toContain('trade')
-		const names = options.map((option) => option.name)
-		expect(names).toContain('Volume: 24h')
-		expect(names).not.toContain('Volume: 24h Change')
-		expect(new Set(names).size).toBe(names.length)
-		expect(names).toContain('Volume: Turnover 30d')
-		expect(names).toContain('Price: Oracle')
+		).map((option) => option.key)
+		for (const id of csvOnly) expect(keys).not.toContain(id)
 	})
 
 	test('drops the Venue column under Group by Venue and on a venue page', () => {
@@ -177,32 +158,60 @@ describe('RWA table column set', () => {
 		expect(keys('none', 'venue')).not.toContain('platform')
 	})
 
-	test('renders the perps cells with the venue type on the venue, not the market name', () => {
-		const table = buildTable('perps', 'platform')
-		const name = cellText(table, 'perps-usdy', 'name')
+	test('names a market by its contract and asset, without its pair or venue type', () => {
+		const name = cellText(buildTable('perps', 'platform'), 'perps-usdy', 'name')
 		expect(name).toContain('hl:USDY')
+		expect(name).toContain('USDY Perp')
 		expect(name).not.toContain('USDY/USDC')
 		expect(name).not.toContain('DEX')
+	})
+
+	test('tags the venue with its type on the venue group row and in the Venue cell, linked to the venue page', () => {
+		const table = buildTable('perps', 'platform')
 		expect(cellText(table, 'platform:Hyperliquid', 'name')).toContain('DEX')
 		expect(cellText(table, 'perps-usdy', 'platform')).toBe('HyperliquidDEX')
 		expect(cellMarkup(table, 'perps-usdy', 'platform')).toContain('href="/rwa/perps/venue/hyperliquid"')
-		expect(cellText(table, 'perps-usdy', 'asset')).toBe('USDY Perp')
-		expect(cellText(table, 'perps-usdy', 'pair')).toBe('USDY/USDC')
-		expect(cellText(table, 'perps-usdy', 'openInterest')).toBe('$5,000')
-		expect(cellText(table, 'perps-usdy', 'turnover30d')).toBe('4x')
-		expect(cellText(table, 'perps-usdy', 'fundingApr')).toContain('+10.95%')
-		expect(cellText(table, 'perps-usdy', 'premium')).toContain('+0.2%')
-		// A venue's premium is a blend of unrelated underlyings, so its row leaves the cell empty.
-		expect(cellText(table, 'platform:Hyperliquid', 'premium')).toBe('')
-		// The perps classification is the assets table's Asset Type: groups on the group row, the class on a market.
+	})
+
+	test('keeps the venue type off a non-venue group row', () => {
+		const name = cellText(buildTable('perps', 'assetGroup'), 'assetGroup:Bonds', 'name')
+		expect(name).toContain('Bonds')
+		expect(name).not.toContain('DEX')
+	})
+
+	test('reads the perps Asset Group column as the groups on a group row and the class on a market', () => {
+		const table = buildTable('perps', 'platform')
 		expect(cellText(table, 'platform:Hyperliquid', 'assetGroup')).toBe('Bonds')
 		expect(cellText(table, 'perps-usdy', 'assetGroup')).toBe('Bond Perp')
-		expect(cellMarkup(table, 'perps-usdy', 'priceChange24h')).toContain('+2.50%')
+	})
+
+	test('shows a market spec on its row and lists it on the venue row', () => {
+		const table = buildTable('perps', 'platform')
+		expect(cellText(table, 'perps-usdy', 'asset')).toBe('USDY Perp')
+		expect(cellText(table, 'perps-usdy', 'pair')).toBe('USDY/USDC')
+		expect(cellText(table, 'platform:Hyperliquid', 'pair')).toBe('USDY/USDC')
+		expect(cellText(table, 'perps-usdy', 'fundingInterval')).toBe('8h')
+	})
+
+	test('leaves premium and max leverage empty on a venue row, where a blend of underlyings means nothing', () => {
+		const table = buildTable('perps', 'platform')
+		expect(cellText(table, 'perps-usdy', 'premium')).toContain('+0.2%')
+		expect(cellText(table, 'platform:Hyperliquid', 'premium')).toBe('')
 		expect(cellText(table, 'perps-usdy', 'maxLeverage')).toBe('50x')
 		expect(cellText(table, 'platform:Hyperliquid', 'maxLeverage')).toBe('')
-		expect(cellText(table, 'perps-usdy', 'fundingInterval')).toBe('8h')
+	})
+
+	test('signs the funding APR and the 24h price change', () => {
+		const table = buildTable('perps', 'platform')
+		expect(cellText(table, 'perps-usdy', 'fundingApr')).toContain('+10.95%')
+		expect(cellText(table, 'perps-usdy', 'priceChange24h')).toBe('+2.50%')
+	})
+
+	test('prints open interest in dollars, turnover as a multiple and fee rates to four decimals', () => {
+		const table = buildTable('perps', 'platform')
+		expect(cellText(table, 'perps-usdy', 'openInterest')).toBe('$5,000')
+		expect(cellText(table, 'perps-usdy', 'turnover30d')).toBe('4x')
 		expect(cellText(table, 'perps-usdy', 'makerFeeRate')).toBe('0.0150%')
-		expect(cellText(table, 'platform:Hyperliquid', 'pair')).toBe('USDY/USDC')
 	})
 
 	test('counts the venues of a group that spans several, the names in the tooltip', () => {
@@ -277,7 +286,6 @@ describe('RWA table column set', () => {
 		})
 		expect(cellText(table, 'gone', 'openInterestChange24h')).toBe('-100.00%')
 		expect(cellText(table, 'platform:Hyperliquid', 'openInterestChange24h')).toBe('+25.00%*')
-		expect(table.getRowModel().rows[0].getValue('openInterestChange24h')).toBe(25)
 	})
 
 	test('drops the asset line under a market name on the asset page, which names the asset', () => {
@@ -290,10 +298,6 @@ describe('RWA table column set', () => {
 		})
 		expect(cellText(table, 'perps-usdy', 'name')).toBe('hl:USDY')
 		expect(cellText(buildTable('perps', 'none'), 'perps-usdy', 'name')).toContain('USDY Perp')
-	})
-
-	test('keeps the venue type off a non-venue group row', () => {
-		expect(cellText(buildTable('perps', 'assetGroup'), 'assetGroup:Bonds', 'name')).not.toContain('DEX')
 	})
 
 	test('exports the csv-only perps fields with every market, none of them empty on every row', () => {

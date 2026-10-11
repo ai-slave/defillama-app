@@ -332,7 +332,7 @@ describe('old /rwa perps links', () => {
 	test('redirect to the Perps overview without the flag', async () => {
 		const { proxy } = await loadProxy()
 
-		const response = proxy(pageRequest('https://defillama.com/rwa?groupBy=assetGroup?perps=true'))
+		const response = proxy(pageRequest('https://defillama.com/rwa?perps=true&groupBy=assetGroup'))
 		expect(response.status).toBe(307)
 		expect(response.headers.get('location')).toBe('https://defillama.com/rwa/perps?groupBy=assetGroup')
 	})

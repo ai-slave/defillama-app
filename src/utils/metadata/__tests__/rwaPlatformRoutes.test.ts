@@ -20,7 +20,7 @@ const http = installFixtureFetch()
 const metadata = installMetadataSeeder()
 
 describe('published RWA platform routes', () => {
-	test('omits an inactive platform from the sitemap and switcher while retaining spot, AUM and perps platforms', async () => {
+	test('lists spot and AUM platforms in the sitemap and switcher, drops an inactive one, and lists perps-only trade[XYZ] as its venue', async () => {
 		serveCoreMetadata(http, {
 			rwaList: {
 				canonicalMarketIds: ['OUSG'],
@@ -29,7 +29,7 @@ describe('published RWA platform routes', () => {
 				platforms: ['Ondo'],
 				chains: [],
 				categories: [],
-				assetGroups: []
+				assetGroups: ['Bonds']
 			},
 			rwaPlatformsIndex: {
 				generatedAt: 1,
@@ -84,6 +84,7 @@ describe('published RWA platform routes', () => {
 				'rwa/asset/OUSG',
 				'rwa/platform/ondo',
 				'rwa/platform/sivo',
+				'rwa/asset-group/bonds',
 				'rwa/asset-group/unknown',
 				'rwa/perps/contract/xyz%3AGOLD',
 				'rwa/perps/venue/trade-xyz'

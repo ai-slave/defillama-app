@@ -314,9 +314,8 @@ type RWASpotOnlyKey =
 	| 'chartMetricAvailability'
 	| 'seriesLatestTimestamp'
 
-/** What the overview container reads: an Assets page fills every field, a Perps page leaves the spot-only ones out. */
-export type RWAOverviewFrame = Omit<IRWAAssetsOverview, RWASpotOnlyKey> &
-	Partial<Pick<IRWAAssetsOverview, RWASpotOnlyKey>>
+/** The fields every /rwa page carries: a Perps page's whole frame; an Assets page adds the spot-only ones. */
+export type RWAOverviewFrame = Omit<IRWAAssetsOverview, RWASpotOnlyKey>
 
 export type RWAChartMetricKey = 'onChainMcap' | 'activeMcap' | 'defiActiveTvl'
 export type IRWAChartMetricRows = Array<{ timestamp: number } & Record<string, number>>

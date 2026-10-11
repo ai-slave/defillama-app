@@ -245,9 +245,20 @@ describe('buildRwaOpenInterestCard', () => {
 
 describe('buildRwaDefiProtocolCard', () => {
 	test('reads the DeFi Active TVL of the rows it is given and its 30d change, bridges out of the bars', () => {
-		expect(buildRwaDefiProtocolCard([spotAsset(), perpsAsset()], true)).toEqual({
-			value: 100_000,
-			changeUsd: 50_000,
+		const bridged = spotAsset({
+			defiActiveTvl: {
+				total: 150_000,
+				breakdown: [
+					['Aave', 100_000],
+					['Across', 50_000]
+				]
+			},
+			bridgeTvl: 50_000,
+			bridgeTvlByProtocol: { total: 50_000, breakdown: [['Across', 50_000]] }
+		})
+		expect(buildRwaDefiProtocolCard([bridged, perpsAsset()], true)).toEqual({
+			value: 150_000,
+			changeUsd: 100_000,
 			bars: [{ name: 'Aave', value: 100_000 }]
 		})
 		expect(buildRwaDefiProtocolCard([perpsAsset()], true).value).toBeNull()

@@ -88,18 +88,12 @@ const market: IRWAPerpsMarket = {
 beforeEach(() => {
 	metadata.seed({ rwaPerpsList: list })
 	http.serve({
-		[`${base}/list`]: list,
-		[`${base}/stats`]: { totalMarkets: 1, totalCumulativeFunding: 10, byVenue: {}, byAssetGroup: {} },
 		[`${base}/current`]: [market],
-		[`${base}/asset/S%26P%20500%20Index`]: [market],
-		[`${base}/assetGroup/US%20Equities`]: [market],
 		[`${base}/venue/XYZ%20Venue`]: [market],
 		[`${base}/contract/xyz%3AMETA`]: [market],
 		[`${base}/chart/xyz%3Ameta`]: [],
 		[`${base}/funding/xyz%3Ameta`]: [],
-		[`${base}/chart/overview-breakdown`]: [{ timestamp: 100, xyz: 100 }],
-		[`${base}/chart/contract-breakdown`]: [{ timestamp: 100, 'xyz:META': 100 }],
-		[`${base}/chart/market-breakdown`]: [{ timestamp: 100, 'xyz:meta': 100 }]
+		[`${base}/chart/overview-breakdown`]: [{ timestamp: 100, xyz: 100 }]
 	})
 })
 const scopes = [
@@ -186,35 +180,64 @@ test('renders the raw contract identifier in the document title', async () => {
 	client.clear()
 })
 
-const nav = (active: string) => ({
-	heading: 'Asset groups',
-	links: [
-		{ label: 'All', to: '/rwa/perps' },
-		{ label: 'US Equities', to: '/rwa/perps/asset-group/us-equities' }
-	],
-	active
-})
+// A second market in another asset group and underlying, with more open interest, so the scope filter and the sort show.
+const gold: IRWAPerpsMarket = {
+	...market,
+	id: 'xyz:gold',
+	contract: 'xyz:GOLD',
+	openInterest: 200,
+	referenceAsset: 'Gold',
+	referenceAssetGroup: 'Commodities'
+}
 test.each([
-	{ name: 'the overview', load: () => overviewPage.getStaticProps({}), active: 'All', assetGroupSlug: null },
+	{
+		name: 'the overview',
+		load: () => overviewPage.getStaticProps({}),
+		ids: ['xyz:gold', 'xyz:meta'],
+		active: 'All',
+		assetGroupSlug: null
+	},
 	{
 		name: 'an asset group',
 		load: () => groupPage.getStaticProps({ params: { assetGroup: 'us-equities' } }),
+		ids: ['xyz:meta'],
 		active: 'US Equities',
 		assetGroupSlug: 'us-equities'
 	},
 	{
 		name: 'an underlying',
 		load: () => assetPage.getStaticProps({ params: { asset: 's-p-500-index' } }),
+		ids: ['xyz:meta'],
 		active: 'US Equities',
 		assetGroupSlug: null
 	}
-])('builds $name from its markets, with the asset group nav row', async ({ load, active, assetGroupSlug }) => {
-	http.serve({ [`${AI_SERVER}/suggested-questions`]: { questions: [] } })
+])('builds $name from its markets, with the asset group nav row', async ({ load, ids, active, assetGroupSlug }) => {
+	http.serve({ [`${base}/current`]: [market, gold], [`${AI_SERVER}/suggested-questions`]: { questions: [] } })
 	const result = await load()
 	assert('props' in result)
-	expect(unpackRwaPerpsMarkets(result.props.markets).map((row) => row.id)).toEqual(['xyz:meta'])
-	expect(result.props.overview.nav).toEqual(nav(active))
+	expect(unpackRwaPerpsMarkets(result.props.markets).map((row) => row.id)).toEqual(ids)
+	expect(result.props.overview.nav.active).toBe(active)
 	expect(result.props.overview.assetGroupSlug).toBe(assetGroupSlug)
+})
+test('builds a venue page from its markets, with the open interest of every venue of its type', async () => {
+	metadata.seed({ rwaPlatformsIndex: { generatedAt: 1, byPid: {}, platforms: {} } })
+	const tesla = { ...market, id: 'xyz:tsla', contract: 'xyz:TSLA', openInterest: 300 }
+	http.serve({
+		[`${base}/venue/XYZ%20Venue`]: [market, tesla],
+		[`${base}/current`]: [
+			market,
+			tesla,
+			{ ...market, id: 'abc:meta', venue: 'ABC Venue', openInterest: 40 },
+			{ ...market, id: 'cex:meta', venue: 'CEX Venue', venueType: 'CEX', openInterest: 1000 }
+		],
+		[`${AI_SERVER}/suggested-questions`]: { questions: [] }
+	})
+	const result = await venuePage.getStaticProps({ params: { venue: 'xyz-venue' } })
+	assert('props' in result)
+	expect(unpackRwaPerpsMarkets(result.props.markets).map((row) => row.id)).toEqual(['xyz:tsla', 'xyz:meta'])
+	expect(result.props.venueType).toBe('DEX')
+	expect(result.props.typeOpenInterest).toBe(440)
+	expect(result.props.nav.active).toBe('XYZ Venue')
 })
 test('answers notFound for a listed venue the server has no market for', async () => {
 	http.serve({ [`${base}/venue/XYZ%20Venue`]: fixtureStatus(404, { error: 'venue "XYZ Venue" not found' }) })
@@ -222,6 +245,10 @@ test('answers notFound for a listed venue the server has no market for', async (
 })
 test('throws on a failed venue markets request, so the last good page stays up', async () => {
 	http.serve({ [`${base}/venue/XYZ%20Venue`]: fixtureStatus(500) })
+	await expect(venuePage.getStaticProps({ params: { venue: 'xyz-venue' } })).rejects.toThrow('[500]')
+})
+test('throws on a failed all-markets request, so the last good page keeps its Share of DEX OI', async () => {
+	http.serve({ [`${base}/current`]: fixtureStatus(500) })
 	await expect(venuePage.getStaticProps({ params: { venue: 'xyz-venue' } })).rejects.toThrow('[500]')
 })
 test('throws when the Perps overview gets no market, so the last good page stays up', async () => {

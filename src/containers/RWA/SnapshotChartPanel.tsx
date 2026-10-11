@@ -49,10 +49,10 @@ type RWASnapshotChartPanelProps = {
 	isLoading: boolean
 	/** The read that failed, for the chart's Try again; null when the slices loaded or need no read. */
 	failedRead: QueryRetry | null
-	/** The metric switch, the view select and any period control, shared with the time series panel. */
-	toolbarStart: ReactNode
-	/** Controls only the treemap view offers, such as Nested by. */
-	treemapControls?: ReactNode
+	/** What the chart shows, such as the metric switch: the toolbar's left group in every view. */
+	leading: ReactNode
+	/** The rest of the toolbar in ChartPanel order (filters and grouping, then Add to dashboard), before the exports. */
+	controls: ReactNode
 	/** Slices the flat treemap keeps, Others included; every slice by default. */
 	treemapLimit?: number
 	/** A two-level tree the treemap draws and exports in place of the flat slices when it has nodes. */
@@ -74,8 +74,8 @@ export function RWASnapshotChartPanel({
 	filename,
 	isLoading,
 	failedRead,
-	toolbarStart,
-	treemapControls,
+	leading,
+	controls,
 	treemapLimit,
 	nestedTreemap = EMPTY_TREEMAP
 }: RWASnapshotChartPanelProps) {
@@ -104,37 +104,40 @@ export function RWASnapshotChartPanel({
 	}, [deferredSlices, groupLabel, nestedTreemap, treemapLimit])
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const viewFilename = `${filename}-${view}`
+	const plotsSlices = !failedRead && !isLoading && deferredSlices.length > 0
 	/* The treemap keeps 600px so its tiles stay readable; pie and bars sit on the 360px floor. */
 	const bodyClassName = view === 'treemap' ? 'min-h-[600px]' : undefined
 
 	return (
 		<ChartPanel>
-			<ChartPanelToolbar>
-				{toolbarStart}
-				{view === 'treemap' ? treemapControls : null}
-				{view === 'treemap' ? <ChartRestoreButton chartInstance={chartInstance} /> : null}
-				<ChartCsvExportButton
-					chartInstance={chartInstance}
-					filename={viewFilename}
-					disabled={isLoading}
-					source={{
-						type: 'dataset',
-						prepare: () =>
-							view === 'treemap'
-								? buildTreemapCsvDataset(
-										buildCompleteRwaTreemapTreeData({
-											nestedTreeData: nestedTreemap,
-											completePieData: slices,
-											breakdownLabel: groupLabel
-										})
-									)
-								: {
-										dimensions: [groupLabel, valueLabel],
-										source: slices.map(({ name, value }) => [name, value])
-									}
-					}}
-				/>
-				<ChartPngExportButton chartInstance={chartInstance} filename={viewFilename} title={exportTitle} />
+			<ChartPanelToolbar leading={leading}>
+				{controls}
+				{plotsSlices ? (
+					<>
+						{view === 'treemap' ? <ChartRestoreButton chartInstance={chartInstance} /> : null}
+						<ChartCsvExportButton
+							chartInstance={chartInstance}
+							filename={viewFilename}
+							source={{
+								type: 'dataset',
+								prepare: () =>
+									view === 'treemap'
+										? buildTreemapCsvDataset(
+												buildCompleteRwaTreemapTreeData({
+													nestedTreeData: nestedTreemap,
+													completePieData: slices,
+													breakdownLabel: groupLabel
+												})
+											)
+										: {
+												dimensions: [groupLabel, valueLabel],
+												source: slices.map(({ name, value }) => [name, value])
+											}
+							}}
+						/>
+						<ChartPngExportButton chartInstance={chartInstance} filename={viewFilename} title={exportTitle} />
+					</>
+				) : null}
 			</ChartPanelToolbar>
 			<ChartPanelBody className={bodyClassName}>
 				{failedRead ? (
@@ -142,7 +145,9 @@ export function RWASnapshotChartPanel({
 				) : isLoading ? (
 					<ChartPanelBodyLoading />
 				) : deferredSlices.length === 0 ? (
-					<ChartPanelBodyFallback className="body-sm text-tertiary">No data for this view.</ChartPanelBodyFallback>
+					<ChartPanelBodyFallback role="status" aria-live="polite" className="text-center body-sm text-tertiary">
+						No data for this view.
+					</ChartPanelBodyFallback>
 				) : (
 					<Suspense fallback={<ChartPanelBodyLoading className={bodyClassName} />}>
 						{view === 'pie' ? (

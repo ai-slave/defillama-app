@@ -45,7 +45,8 @@ function findVenueMeta(
 
 /**
  * The venue page's data: its markets as packed perps rows, its profile from the platforms index and the venue nav
- * row. Null when the venue lists no market; a failed markets request throws, so the last good page stays.
+ * row. Null when the venue lists no market; a failed request, the venue's markets or every market, throws, so the
+ * last good page stays.
  */
 export async function getRWAVenuePageProps({
 	venue,
@@ -58,13 +59,7 @@ export async function getRWAVenuePageProps({
 	rwaPlatformsIndex: RWAPlatformsIndex
 	rwaList: IRWAList
 }): Promise<RWAVenuePageProps | null> {
-	const [response, allMarkets] = await Promise.all([
-		fetchRWAPerpsMarketsByVenue(venue),
-		fetchRWAPerpsCurrent().catch((error) => {
-			console.error(`[rwa] venue ${venue}: all markets request failed, the card shows no share of its type:`, error)
-			return null
-		})
-	])
+	const [response, allMarkets] = await Promise.all([fetchRWAPerpsMarketsByVenue(venue), fetchRWAPerpsCurrent()])
 	if (response.length === 0) return null
 	const markets = response
 		.map((market) => toRWAPerpsContractOverlayRow(market))
@@ -72,10 +67,9 @@ export async function getRWAVenuePageProps({
 	const venueSlug = rwaSlug(venue)
 	const meta = findVenueMeta(venueSlug, markets, rwaPlatformsIndex) ?? null
 	const venueType = getRwaVenueType(markets)
-	const typeOpenInterest =
-		venueType && allMarkets
-			? sumRwaPerpsOpenInterestByVenueType(allMarkets.map((market) => toRWAPerpsContractOverlayRow(market)))[venueType]
-			: null
+	const typeOpenInterest = venueType
+		? sumRwaPerpsOpenInterestByVenueType(allMarkets.map((market) => toRWAPerpsContractOverlayRow(market)))[venueType]
+		: null
 	const hasPlatformRoute = meta != null && getRWAPlatformRoutes(rwaList).some((route) => route.slug === meta.slug)
 	return {
 		venue,

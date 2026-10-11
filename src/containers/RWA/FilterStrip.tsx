@@ -8,9 +8,9 @@ import { Card } from '~/ui/Card'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import type { RWAOverviewDisplayRow } from './api.types'
 import { RWAAssetsFilterPills, RWAAssetsMoreFilters, type RWAOverviewFiltersProps } from './Filters'
-import { getRwaExcludeQueryKey, getRwaFilterResetPatch, isRwaSelectFilterShown } from './filterState'
+import { clearRwaFilterQueryKeys, getRwaExcludeQueryKey, isRwaSelectFilterShown } from './filterState'
 import { RWAIncludeInTvlSelect } from './IncludeInTvl'
-import { getRwaAssetsInlineOptions, withRwaOptionCounts } from './inlineOptions'
+import { getRwaAssetsInlineOptions, getRwaPerpsPickerOptions, withRwaOptionCounts } from './inlineOptions'
 import type { RWAAssetsInlineFilterKey } from './layout/inlineFilters'
 import { RWAListYourAssetsButton } from './links'
 import {
@@ -31,15 +31,12 @@ const ASSETS_INLINE_FILTER_LABELS: Record<RWAAssetsInlineFilterKey, string> = {
 }
 
 /** Reset all: clears the filter keys the page reads (`keys`), inline or behind More filters; the view and grouping
-    stay. It shows only when the page counts an active filter, never for a stray or empty key. */
+    stay. It stays rendered and is disabled until the page counts an active filter (never for a stray or empty key),
+    so pressing it keeps focus on it. */
 export function RWAResetAllFilters({ active, keys }: { active: boolean; keys: ReadonlyArray<string> }) {
 	const router = useRouter()
-	if (!active) return null
 	return (
-		<ResetFiltersButton
-			nestedMenu={false}
-			onClick={() => void pushShallowQuery(router, getRwaFilterResetPatch(router.query, keys))}
-		>
+		<ResetFiltersButton nestedMenu={false} disabled={!active} onClick={() => clearRwaFilterQueryKeys(router, keys)}>
 			Reset all
 		</ResetFiltersButton>
 	)
@@ -94,7 +91,7 @@ function RWAPerpsInlineFilters({ definitions }: { definitions: ReadonlyArray<RWA
 				return (
 					<SelectWithCombobox
 						key={definition.id}
-						allValues={withRwaOptionCounts(definition.values, definition.counts)}
+						allValues={getRwaPerpsPickerOptions(definition.values, definition.counts)}
 						label={definition.label}
 						labelType="smol"
 						variant="filter"
@@ -132,17 +129,18 @@ function RWAVenueTypeFilter({ counts }: { counts: Record<RWAVenueTypeChoice, num
 
 /**
  * The left group shapes the page: the page controls (leading), Include in TVL (Assets tree) or Venue Type (Perps tree).
- * The right group
- * narrows the rows: the inline filters, Reset all when the page counts an active filter, the pills, More filters and
- * List Your Assets. On the Perps tree every filter is a record of `perpsFilters`; the inline ones draw here, the rest
- * behind More filters.
+ * The right group narrows the rows: the inline filters, Reset all (enabled when the page counts an active filter), the
+ * pills, More filters and List Your Assets. On the Perps tree every filter is a record of `perpsFilters`; the inline
+ * ones draw here, the rest behind More filters. Below sm the strip keeps two rows with nothing set: the inline pickers
+ * and List Your Assets hide, and More filters becomes the page's Filters, holding and counting the inline filters
+ * (their pills show instead of their triggers). The pickers hide with CSS, so server and client HTML match.
  */
 export function RWAOverviewFilters(
 	props: RWAOverviewFiltersProps & {
 		leading?: ReactNode
 		/** The page's rows: the Assets inline pickers count them per option. */
 		rows: ReadonlyArray<RWAOverviewDisplayRow>
-		/** The page counts an active filter: Reset all shows. */
+		/** The page counts an active filter: Reset all is enabled. */
 		active: boolean
 		/** The keys Reset all clears. */
 		resetKeys: ReadonlyArray<string>
@@ -158,15 +156,13 @@ export function RWAOverviewFilters(
 			{props.showIncludeInTvl ? <RWAIncludeInTvlSelect defaultInclusion={props.defaultInclusion} size="md" /> : null}
 			{venueType?.kind === 'venueType' ? <RWAVenueTypeFilter counts={venueType.counts} /> : null}
 			<div className="flex flex-wrap items-center gap-2 sm:ml-auto">
-				{perpsFilters ? <RWAPerpsInlineFilters definitions={perpsFilters} /> : <RWAAssetsInlineFilters {...props} />}
+				<div className="hidden sm:contents">
+					{perpsFilters ? <RWAPerpsInlineFilters definitions={perpsFilters} /> : <RWAAssetsInlineFilters {...props} />}
+				</div>
 				<RWAResetAllFilters active={props.active} keys={props.resetKeys} />
 				{perpsFilters ? <RWAPerpsFilterPills filters={perpsFilters} /> : <RWAAssetsFilterPills {...props} />}
-				{perpsFilters ? (
-					<RWAPerpsMoreFilters definitions={perpsFilters.filter((definition) => !definition.inline)} />
-				) : (
-					<RWAAssetsMoreFilters {...props} />
-				)}
-				<RWAListYourAssetsButton />
+				{perpsFilters ? <RWAPerpsMoreFilters definitions={perpsFilters} /> : <RWAAssetsMoreFilters {...props} />}
+				<RWAListYourAssetsButton className="max-sm:hidden" />
 			</div>
 		</Card>
 	)

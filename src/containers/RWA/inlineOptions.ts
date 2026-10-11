@@ -13,6 +13,18 @@ export function withRwaOptionCounts(values: SelectValues, counts: Record<string,
 	})
 }
 
+/**
+ * A Perps picker's options: each value counts the markets Venue Type keeps, and a value Venue Type leaves out stays
+ * listed, greyed (`muted`), with the choice that brings it back, as the Assets pickers do for Include in TVL.
+ */
+export function getRwaPerpsPickerOptions(values: Array<string>, counts: Record<string, number>): Array<SelectOption> {
+	return withRwaOptionCounts(values, counts).map((option) =>
+		counts[option.key]
+			? option
+			: { ...option, muted: true, help: 'Left out by Venue Type: choose DEX and CEX to count these markets.' }
+	)
+}
+
 type RWAInclusionState = Record<Exclude<RWAInclusionKey, 'includeBridgeTvl'>, boolean>
 
 /** The Include in TVL toggles that leave the row out, by their labels. */

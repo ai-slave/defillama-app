@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { getRwaAssetsInlineOptions, withRwaOptionCounts } from '../inlineOptions'
+import { getRwaAssetsInlineOptions, getRwaPerpsPickerOptions, withRwaOptionCounts } from '../inlineOptions'
 import { spotAsset } from '../table/__tests__/fixtures'
 
 describe('withRwaOptionCounts', () => {
@@ -16,6 +16,15 @@ describe('withRwaOptionCounts', () => {
 			{ key: 'Debt', name: 'Debt (1,200)', help: 'Loans' },
 			{ key: 'Fund', name: 'Fund (0)' }
 		])
+	})
+})
+
+describe('getRwaPerpsPickerOptions', () => {
+	test('greys a value Venue Type leaves out and keeps it selectable with a hint', () => {
+		const [binance, xyz] = getRwaPerpsPickerOptions(['Binance', 'trade[XYZ]'], { 'trade[XYZ]': 2 })
+		expect(binance).toMatchObject({ key: 'Binance', name: 'Binance (0)', muted: true })
+		expect(binance.help).toBeTypeOf('string')
+		expect(xyz).toEqual({ key: 'trade[XYZ]', name: 'trade[XYZ] (2)' })
 	})
 })
 

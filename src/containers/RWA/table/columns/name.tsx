@@ -1,9 +1,11 @@
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Icon } from '~/ui/Icon'
+import { Tag } from '~/ui/Tag'
+import { Tooltip } from '~/ui/Tooltip'
 import { RWASuspiciousWarning } from '../../SuspiciousWarning'
 import type { RWAGroupRow, RWALeafRow } from '../rows'
-import { getVenueGroupTypes, VenueTypeTag } from './perps'
+import { getVenueGroupTypes } from './perps'
 import { columnHelper } from './shared'
 
 /** The row's name; `assetLine` off drops the reference asset under a market's contract, for the asset's own page. */
@@ -54,21 +56,25 @@ function GroupNameCell({ group, expanded, onToggle }: { group: RWAGroupRow; expa
 			) : group.icon?.kind === 'src' ? (
 				<TokenLogo src={group.icon.src} size={24} alt={`Logo of ${group.label}`} />
 			) : null}
-			<span className="-my-1.5 flex flex-col overflow-hidden">
+			{/* -my-2, not the leaf's -my-1.5: the venue type's Tag makes the second line 22px, and the column still fits
+			   the 50px row the virtualized table places rows by. */}
+			<span className="-my-2 flex flex-col overflow-hidden">
 				{group.href ? (
 					<BasicLink href={group.href} className="truncate label-md text-link hover:underline">
 						{group.label}
 					</BasicLink>
 				) : (
-					<span className="truncate label-md" title={group.label}>
+					<Tooltip content={group.label} render={<span className="truncate label-md" />}>
 						{group.label}
-					</span>
+					</Tooltip>
 				)}
 				{/* The venue type sits beside the count, not the name, so a phone keeps the row on two lines. */}
 				<span className="flex items-center gap-1 label-sm text-secondary">
 					{formatMemberCount(group.metrics.assetCount, group.children[0]?.asset.kind === 'perps')}
 					{getVenueGroupTypes(group).map((type) => (
-						<VenueTypeTag key={type} type={type} />
+						<Tag key={type} className="shrink-0">
+							{type}
+						</Tag>
 					))}
 				</span>
 			</span>
@@ -91,9 +97,9 @@ function LeafNameCell({ leaf, nested, assetLine }: { leaf: RWALeafRow; nested: b
 				{/* One line, like the title above: the virtualized table places rows by a fixed height, so a wrapped name
 				   (a perps market's full asset name) pushes the rows around it while scrolling. */}
 				{assetLine || asset.kind !== 'perps' ? (
-					<span className="truncate label-sm text-secondary" title={getSecondaryLabel(leaf)}>
+					<Tooltip content={getSecondaryLabel(leaf)} render={<span className="truncate label-sm text-secondary" />}>
 						{getSecondaryLabel(leaf)}
-					</span>
+					</Tooltip>
 				) : null}
 			</span>
 			{asset.suspicious ? (

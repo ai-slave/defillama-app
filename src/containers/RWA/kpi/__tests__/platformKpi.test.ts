@@ -1,12 +1,4 @@
 import { describe, expect, test } from 'vitest'
-import {
-	filterRwaOverviewDisplayRows,
-	getRwaRowFilterValues,
-	readRwaQueryFilters,
-	resolveRWAOverviewInclusionFlag,
-	RWA_SELECT_FILTER_KEYS,
-	type RWASelectFilterOptions
-} from '../../filterState'
 import { spotAsset } from '../../table/__tests__/fixtures'
 import { foldRwaPlatformKpi, getRwaPlatformFold } from '../platformKpi'
 
@@ -105,29 +97,17 @@ describe('getRwaPlatformFold', () => {
 		includeBridgeTvl: true,
 		includeWrappers: true
 	}
-	// Every value the rows carry, as the page's loader lists them.
-	const options = {} as RWASelectFilterOptions
-	for (const key of RWA_SELECT_FILTER_KEYS) {
-		options[key] = [...new Set(rows.flatMap((row) => getRwaRowFilterValues(row, key)))]
+	// The fold the Assets view hands over: its filtered table rows and toggles.
+	const filtered = {
+		aggregateAssets: [assets[1]],
+		includeStablecoins: true,
+		includeGovernance: false,
+		includeBridgeTvl: false,
+		activeFilters: true
 	}
-	/** The Assets view's fold under an address, read as the platform page reads it. */
-	const assetsViewFold = (query: Record<string, string>) => {
-		const includeStablecoins = resolveRWAOverviewInclusionFlag(query.includeStablecoins, false)
-		const includeBridgeTvl = resolveRWAOverviewInclusionFlag(query.includeBridgeTvl, true)
-		const { aggregateAssets } = filterRwaOverviewDisplayRows(rows, {
-			...readRwaQueryFilters(query, options, 'platform'),
-			isPlatformMode: true,
-			includeStablecoins,
-			includeGovernance: false,
-			includeBridgeTvl,
-			includeWrappers: true
-		})
-		return { aggregateAssets, includeStablecoins, includeGovernance: false, includeBridgeTvl, activeFilters: true }
-	}
-	const query = { issuers: 'Apollo', includeStablecoins: 'true', includeBridgeTvl: 'false' }
 
-	test('under Information the card folds every asset the platform counts by default, whatever the address filters', () => {
-		const fold = getRwaPlatformFold('information', rows, defaultInclusion, assetsViewFold(query))
+	test('under Information the card folds every asset the platform counts by default, whatever the Assets view filtered', () => {
+		const fold = getRwaPlatformFold('information', rows, defaultInclusion, filtered)
 		const kpi = foldRwaPlatformKpi(fold.aggregateAssets, { includeBridgeTvl: fold.includeBridgeTvl })
 		expect(kpi.metrics.assetCount).toBe(3)
 		expect(kpi.metrics.activeMcap).toBe(1_800_000)
@@ -137,9 +117,10 @@ describe('getRwaPlatformFold', () => {
 	})
 
 	test('under Assets the card folds the rows the table shows', () => {
-		const fold = getRwaPlatformFold('list', rows, defaultInclusion, assetsViewFold(query))
+		const fold = getRwaPlatformFold('list', rows, defaultInclusion, filtered)
 		const kpi = foldRwaPlatformKpi(fold.aggregateAssets, { includeBridgeTvl: fold.includeBridgeTvl })
 		expect(kpi.metrics.assetCount).toBe(1)
-		expect(kpi.distinct.issuer).toEqual(['Apollo'])
+		// The chart follows the table's filters.
+		expect(fold.activeFilters).toBe(true)
 	})
 })

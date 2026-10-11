@@ -2,10 +2,16 @@ import { useRouter } from 'next/router'
 import { lazy, Suspense, useDeferredValue } from 'react'
 import { ChartCsvExportButton } from '~/components/ChartExport/ChartCsvExportButton'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
-import { groupMultiSeriesBarChartDataset } from '~/components/ECharts/MultiSeriesChart/groupDataset'
 import { Select } from '~/components/Select/Select'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { CHART_FILL, ChartPanel, ChartPanelBodyError, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import {
+	CHART_FILL,
+	ChartPanel,
+	ChartPanelBodyError,
+	ChartPanelBodyFallback,
+	ChartPanelBodyLoading,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type { RWAOverviewDisplayRow } from './api.types'
@@ -23,14 +29,8 @@ import {
 	type RWAPerpsChartMetric
 } from './chartBreakdown'
 import { toRwaMultiSeriesChartDataset, type RWAPositionalChartDataset } from './chartDataset'
-import {
-	dropRwaRedundantTotal,
-	ensureRwaTotalSeries,
-	foldRwaTopSeries,
-	getRwaRankedSeriesNames,
-	toRwaShareDataset
-} from './chartFold'
-import { buildRwaPerpsChartSeries, buildRwaTimeSeriesCharts } from './chartSeries'
+import { getRwaRankedSeriesNames } from './chartFold'
+import { buildRwaPerpsTimeSeriesChart } from './chartSeries'
 import { getChartViewQueryValue } from './chartState'
 import { parseRWAFlowGrouping, RWA_FLOW_GROUPING_OPTIONS, type RWAFlowGrouping } from './flows'
 import type { RWAPageKind } from './layout/pageLayout'
@@ -93,12 +93,10 @@ export function RWAPerpsBreakdownChartPanel({
 	const view = parseRwaPerpsChartView(metric, readSingleQueryValue(router.query.chartView))
 	const viewOptions = getRwaChartViewOptions(metric)
 	const isTimeSeries = view === 'timeSeries' || view === 'share'
-	const { valueSymbol, totalLabel } = getRwaPerpsChartMetricSpec(metric)
+	const { valueSymbol } = getRwaPerpsChartMetricSpec(metric)
 	const plan = getRwaPerpsChartPlan({ scope, groupBy, isFiltered })
-	const groupLabels = getRwaPerpsGroupLabels(plan.groupBy)
-	const rowSnapshot = isTimeSeries
-		? null
-		: buildRwaPerpsRowSnapshot(markets, { metric, period, groupBy: plan.groupBy, includeCex })
+	const groupLabels = getRwaPerpsGroupLabels(groupBy)
+	const rowSnapshot = isTimeSeries ? null : buildRwaPerpsRowSnapshot(markets, { metric, period, groupBy, includeCex })
 	/* The pie, treemap and bar views read the rows when they carry the window; otherwise the history loads. */
 	const needsHistory = isTimeSeries || rowSnapshot == null
 	const split = useRwaPerpsChartDataset({
@@ -106,16 +104,16 @@ export function RWAPerpsBreakdownChartPanel({
 		metric,
 		includeCex,
 		scope,
-		enabled: needsHistory && plan.kind === 'split'
+		enabled: needsHistory && plan === 'split'
 	})
 	const fold = useRwaPerpsHistoryDataset({
 		scope,
 		metric,
-		groupBy: plan.groupBy,
+		groupBy,
 		marketIds: null,
 		rows: markets,
 		includeCex,
-		enabled: needsHistory && plan.kind === 'fold'
+		enabled: needsHistory && plan === 'fold'
 	})
 	const isLoading = split.isChartLoading || fold.isLoading
 	// The plan reads one of the two, so at most one has a failed read.
@@ -124,28 +122,22 @@ export function RWAPerpsBreakdownChartPanel({
 	// The React Compiler memoizes this; a manual useMemo could not be preserved over the router reads.
 	const chart = (() => {
 		const dataset =
-			plan.kind === 'fold'
-				? fold.dataset
-					? toRwaMultiSeriesChartDataset(fold.dataset)
-					: EMPTY_DATASET
-				: split.chartDataset
+			plan === 'fold' ? (fold.dataset ? toRwaMultiSeriesChartDataset(fold.dataset) : EMPTY_DATASET) : split.chartDataset
 		const pickOptions = getRwaRankedSeriesNames(dataset)
 		const picked = readRwaSeriesPick(router.query, pickOptions)
-		/* Volume bars stack and the tooltip sums them; open interest and markets draw their Total line. */
-		const withTotal = isVolume ? dataset : ensureRwaTotalSeries(dataset, totalLabel)
-		/* The picked members draw their own series, the ten largest by default; the rest fold into Others. */
-		const folded = foldRwaTopSeries(dropRwaRedundantTotal(withTotal), { picked })
-		/* Volume sums into the picked period first, so its Share reads each week's or month's split. */
-		const grouped = isVolume ? groupMultiSeriesBarChartDataset({ dataset: folded, groupBy: period }) : folded
-		const isShare = view === 'share'
-		const drawn = isShare ? toRwaShareDataset(grouped) : grouped
 		return {
-			dataset: drawn,
-			charts: isVolume ? buildRwaPerpsChartSeries(drawn) : buildRwaTimeSeriesCharts(drawn),
+			...buildRwaPerpsTimeSeriesChart({
+				dataset,
+				metric,
+				view: view === 'share' ? 'share' : 'timeSeries',
+				period,
+				picked
+			}),
 			slices:
 				rowSnapshot ??
 				(isTimeSeries ? [] : buildRwaPerpsSnapshot(dataset, getRwaPerpsSnapshotWindowDays(metric, period))),
-			isShare,
+			isEmpty: pickOptions.length === 0 || picked.length === 0,
+			isShare: view === 'share',
 			isVolume,
 			period,
 			pickOptions,
@@ -212,9 +204,9 @@ export function RWAPerpsBreakdownChartPanel({
 				filename={filename}
 				isLoading={isLoading}
 				failedRead={failedRead}
-				toolbarStart={
+				leading={metricSwitch}
+				controls={
 					<>
-						{metricSwitch}
 						{periodSwitch}
 						{viewSwitch}
 					</>
@@ -223,30 +215,32 @@ export function RWAPerpsBreakdownChartPanel({
 		)
 	}
 
+	const plotsSeries = !failedRead && !isLoading && !deferredChart.isEmpty
 	return (
 		<ChartPanel className="flex flex-1 flex-col">
 			<ChartPanelToolbar leading={metricSwitch}>
 				{periodSwitch}
 				{viewSwitch}
 				<RWASeriesPicker label={groupLabels.many} options={chart.pickOptions} picked={chart.picked} />
-				<ChartCsvExportButton
-					chartInstance={chartInstance}
-					filename={filename}
-					disabled={isLoading}
-					source={{
-						type: 'dataset',
-						prepare: () => ({
-							...deferredChart.dataset,
-							groupBy: deferredChart.isVolume ? deferredChart.period : 'daily'
-						})
-					}}
-				/>
-				<ChartPngExportButton chartInstance={chartInstance} filename={filename} title={`${title} ${metricLabel}`} />
+				{plotsSeries ? (
+					<>
+						<ChartCsvExportButton
+							chartInstance={chartInstance}
+							filename={filename}
+							source={{ type: 'dataset', prepare: deferredChart.csv }}
+						/>
+						<ChartPngExportButton chartInstance={chartInstance} filename={filename} title={`${title} ${metricLabel}`} />
+					</>
+				) : null}
 			</ChartPanelToolbar>
 			{failedRead ? (
 				<ChartPanelBodyError retry={failedRead}>Couldn&apos;t load chart data.</ChartPanelBodyError>
 			) : isLoading ? (
 				<ChartPanelBodyLoading />
+			) : deferredChart.isEmpty ? (
+				<ChartPanelBodyFallback role="status" aria-live="polite" className="text-center body-sm text-tertiary">
+					No data for this view.
+				</ChartPanelBodyFallback>
 			) : (
 				<Suspense fallback={<ChartPanelBodyLoading />}>
 					<MultiSeriesChart

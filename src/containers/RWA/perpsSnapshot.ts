@@ -4,7 +4,8 @@ import type { RWAOverviewDisplayRow } from './api.types'
 import { getRwaPerpsMarkets } from './cards/cardData'
 import { getRwaPerpsMetricLabel, type RWAPerpsChartMetric } from './chartBreakdown'
 import { isRwaTotalSeriesLabel, type RWAPositionalChartDataset, type RwaNamedValue } from './chartDataset'
-import { getRwaPerpsMarketGroups, type RwaPerpsHistoryGroupBy } from './perpsHistoryFold'
+import { getRwaPerpsMarketGroups } from './perpsHistoryFold'
+import type { RWAGroupBy } from './table/groupBy'
 
 /* The pie, treemap and bar views of a perps split: one value per series. Open interest and markets are balances,
    read on the latest day; volume is a flow, summed over the period the volume control picks, the rolling window the
@@ -49,7 +50,7 @@ export function buildRwaPerpsSnapshot(dataset: RWAPositionalChartDataset, days: 
 		for (const [index, name] of dataset.dimensions.entries()) {
 			if (index === 0 || isRwaTotalSeriesLabel(name)) continue
 			const value = row[index]
-			if (typeof value !== 'number' || !Number.isFinite(value)) continue
+			if (value == null) continue
 			sums.set(name, (sums.get(name) ?? 0) + value)
 		}
 	}
@@ -87,8 +88,8 @@ function getRowSnapshotField(
 }
 
 /**
- * The pie, treemap and bar slices from the page's own rows, summed by the Group by (one slice per market without
- * one), largest first; null when the rows carry no field for the window, so the panel reads the history instead.
+ * The pie, treemap and bar slices from the page's own rows, summed by the table's Group by (one slice per market
+ * under None), largest first; null when the rows carry no field for the window, so the panel reads the history instead.
  */
 export function buildRwaPerpsRowSnapshot(
 	rows: ReadonlyArray<RWAOverviewDisplayRow>,
@@ -100,7 +101,7 @@ export function buildRwaPerpsRowSnapshot(
 	}: {
 		metric: RWAPerpsChartMetric
 		period: ChartTimeGroupingWithCumulative
-		groupBy: RwaPerpsHistoryGroupBy | null
+		groupBy: RWAGroupBy
 		includeCex: boolean
 	}
 ): Array<RwaNamedValue> | null {
@@ -112,7 +113,7 @@ export function buildRwaPerpsRowSnapshot(
 	for (const market of markets) {
 		const value = market[field]
 		const group = groups.get(market.id)
-		if (group == null || typeof value !== 'number' || !Number.isFinite(value)) continue
+		if (group == null || value == null) continue
 		sums.set(group, (sums.get(group) ?? 0) + value)
 	}
 	return toRankedSlices(sums)

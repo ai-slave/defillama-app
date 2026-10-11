@@ -37,8 +37,12 @@ export type RWAOverviewBreakdownPanelProps = {
 	assets: IRWAAssetsOverview['assets']
 	selectedCategories: Array<string>
 	includeBridgeTvl: boolean
-	/** The metric switch and the view select, shared with the time series panel. */
-	toolbarStart: ReactNode
+	/** The metric switch, shared with the time series panel: the toolbar's left group. */
+	leading: ReactNode
+	/** The view select, shared with the time series panel. */
+	viewSwitch: ReactNode
+	/** Follows the treemap's Nested by: the ChartPanel toolbar puts grouping before Add to dashboard. */
+	addToDashboard: ReactNode
 }
 
 /** The pie, treemap and bar views of the Assets chart: one slice per group of the table's Group by. */
@@ -55,7 +59,9 @@ export function RWAOverviewBreakdownPanel({
 	assets,
 	selectedCategories,
 	includeBridgeTvl,
-	toolbarStart
+	leading,
+	viewSwitch,
+	addToDashboard
 }: RWAOverviewBreakdownPanelProps) {
 	const slices = useMemo(
 		() => buildRwaBreakdownSlices({ axis, assets, metric, selectedCategories, includeBridgeTvl }),
@@ -89,25 +95,31 @@ export function RWAOverviewBreakdownPanel({
 			filename={filename}
 			isLoading={false}
 			failedRead={null}
-			toolbarStart={toolbarStart}
+			leading={leading}
+			controls={
+				<>
+					{viewSwitch}
+					{view === 'treemap' ? (
+						<Select
+							heading="Nested by"
+							allValues={treemapNestedByOptions}
+							selectedValues={treemapNestedBy}
+							setSelectedValues={(value: string) => {
+								const selectedNestedBy = treemapNestedByOptions.find((option) => option.key === value)?.key
+								if (!selectedNestedBy) throw new Error(`Unknown RWA treemap grouping: ${value}`)
+								onTreemapNestedByChange(selectedNestedBy)
+							}}
+							label={`Nested by: ${getTreemapNestedByLabel(treemapNestedBy)}`}
+							labelType="none"
+							variant="filter"
+							size="md"
+						/>
+					) : null}
+					{addToDashboard}
+				</>
+			}
 			treemapLimit={TREEMAP_LIMITS[axis]}
 			nestedTreemap={nestedTreemap}
-			treemapControls={
-				<Select
-					heading="Nested by"
-					allValues={treemapNestedByOptions}
-					selectedValues={treemapNestedBy}
-					setSelectedValues={(value: string) => {
-						const selectedNestedBy = treemapNestedByOptions.find((option) => option.key === value)?.key
-						if (!selectedNestedBy) throw new Error(`Unknown RWA treemap grouping: ${value}`)
-						onTreemapNestedByChange(selectedNestedBy)
-					}}
-					label={`Nested by: ${getTreemapNestedByLabel(treemapNestedBy)}`}
-					labelType="none"
-					variant="filter"
-					size="md"
-				/>
-			}
 		/>
 	)
 }
