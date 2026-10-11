@@ -2,14 +2,10 @@ import * as Ariakit from '@ariakit/react'
 import { matchSorter } from 'match-sorter'
 import { useRouter } from 'next/router'
 import { startTransition, useMemo, useRef, useState } from 'react'
-import { Button } from '~/ui/Button'
-import { Icon } from '~/ui/Icon'
-import { Input, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { NoResults } from '~/ui/NoResults'
-import { popoverMenuItemStyles, popoverSeeMoreStyles } from '~/ui/Popover'
-import { ComboboxSurface } from '~/ui/PopoverSurface'
+import { ComboboxSurface, PopoverRow } from '~/ui/PopoverSurface'
+import { SearchField } from '~/ui/SearchField'
 import { BusyGlyph } from '~/ui/Status'
-import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { focusFirstNewItem } from '~/utils/focusFirstNewItem'
 
@@ -28,7 +24,7 @@ export function RaisesSearch({ list }: { list?: Array<string> }) {
 
 	const comboboxRef = useRef<HTMLDivElement>(null)
 
-	const handleSeeMore = (e: React.MouseEvent<HTMLDivElement>) => {
+	const handleSeeMore = (e: React.MouseEvent) => {
 		e.preventDefault()
 		e.stopPropagation()
 		setViewableMatches((prev) => prev + 20)
@@ -47,28 +43,22 @@ export function RaisesSearch({ list }: { list?: Array<string> }) {
 				open={open}
 				setOpen={setOpen}
 			>
-				<SearchInput placeholder="Search investors…" open={open} setOpen={setOpen} />
+				<SearchField combobox label="Search investors" placeholder="Search investors…" autoSelect />
 
-				<ComboboxSurface
-					variant="search-results"
-					sameWidth
-					className="max-h-[min(400px,var(--popover-available-height))]"
-				>
+				<ComboboxSurface variant="search-results" sameWidth maxHeight="lg">
 					{matches.length > 0 ? (
 						<Ariakit.ComboboxList ref={comboboxRef}>
 							{matches.slice(0, viewableMatches).map((option: string) => (
 								<Row key={option} name={option} setOpen={setOpen} />
 							))}
 							{matches.length > viewableMatches ? (
-								<Ariakit.ComboboxItem
-									value="__see_more__"
-									setValueOnClick={false}
-									hideOnClick={false}
-									className={popoverSeeMoreStyles}
+								<PopoverRow
+									variant="action"
+									render={<Ariakit.ComboboxItem value="__see_more__" setValueOnClick={false} hideOnClick={false} />}
 									onClick={handleSeeMore}
 								>
 									See more…
-								</Ariakit.ComboboxItem>
+								</PopoverRow>
 							) : null}
 						</Ariakit.ComboboxList>
 					) : (
@@ -80,50 +70,13 @@ export function RaisesSearch({ list }: { list?: Array<string> }) {
 	)
 }
 
-function SearchInput({
-	open,
-	setOpen,
-	placeholder
-}: {
-	open: boolean
-	setOpen: React.Dispatch<React.SetStateAction<boolean>>
-	placeholder: string
-}) {
-	return (
-		<>
-			<Tooltip
-				content={open ? 'Close search' : 'Open search'}
-				render={
-					<Button
-						variant="ghost"
-						size="sm"
-						square
-						className="absolute top-1/2 left-2 -translate-y-1/2"
-						aria-label={open ? 'Close search' : 'Open search'}
-						aria-expanded={open}
-						onClick={() => setOpen((prev) => !prev)}
-					/>
-				}
-			>
-				<Icon name={open ? 'x' : 'search'} className="size-4" />
-			</Tooltip>
-
-			<Ariakit.Combobox
-				placeholder={placeholder}
-				autoSelect
-				render={<Input className={searchFieldInputPlacementStyles} />}
-			/>
-		</>
-	)
-}
-
 function Row({ name, setOpen }: { name: string; setOpen: (open: boolean) => void }) {
 	const [loading, setLoading] = useState(false)
 	const router = useRouter()
 
 	return (
-		<Ariakit.ComboboxItem
-			value={name}
+		<PopoverRow
+			render={<Ariakit.ComboboxItem value={name} focusOnHover hideOnClick={false} setValueOnClick={false} />}
 			onClick={(_e) => {
 				setLoading(true)
 
@@ -132,14 +85,10 @@ function Row({ name, setOpen }: { name: string; setOpen: (open: boolean) => void
 					setOpen(false)
 				})
 			}}
-			focusOnHover
-			hideOnClick={false}
-			setValueOnClick={false}
 			disabled={loading}
-			className={popoverMenuItemStyles}
 		>
 			<span>{name}</span>
 			{loading ? <BusyGlyph decorative size={12} /> : null}
-		</Ariakit.ComboboxItem>
+		</PopoverRow>
 	)
 }

@@ -2,11 +2,11 @@ import { useMutation } from '@tanstack/react-query'
 import dynamic from 'next/dynamic'
 import { type ComponentProps, useState } from 'react'
 import { BasicLink } from '~/components/Link'
-import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { DialogBody, DialogHeader, SideSheet } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
+import { Logo } from '~/ui/Logo'
 import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { StatusBadge } from '~/ui/StatusBadge'
 import { StatTile } from '~/ui/SummaryStats'
@@ -293,7 +293,7 @@ function DrawerBody({
 		<div className="flex flex-col gap-6 p-4">
 			<section className="flex flex-col gap-3">
 				<div className="flex items-center gap-2">
-					{logo ? <TokenLogo src={logo} size={28} alt={name} /> : null}
+					{logo ? <Logo src={logo} size={28} alt={name} /> : null}
 					<h3 className="heading-xs">About {name}</h3>
 				</div>
 				<p className="body-sm text-secondary">{description}</p>

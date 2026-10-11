@@ -22,6 +22,7 @@ import { ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { EntityTitleRow } from '~/ui/EntityTitleRow'
 import { Icon } from '~/ui/Icon'
 import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
+import { Logo } from '~/ui/Logo'
 import { MetricChip } from '~/ui/MetricChip'
 import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/MetricPrimitives'
 import { Panel } from '~/ui/Panel'
@@ -193,12 +194,7 @@ export function TokenPageHero({
 				as={Heading}
 				logo={
 					logo ? (
-						<TokenLogo
-							src={logo}
-							fallbackSrc={tokenIconUrl(overview.name)}
-							size={24}
-							alt={`Logo of ${overview.name}`}
-						/>
+						<Logo src={logo} fallbackSrc={tokenIconUrl(overview.name)} size={24} alt={`Logo of ${overview.name}`} />
 					) : (
 						<TokenLogo name={overview.name} kind="token" size={24} alt={`Logo of ${overview.name}`} />
 					)

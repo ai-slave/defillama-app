@@ -20,7 +20,7 @@ import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Select } from '~/ui/Select'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { TableToolbarControlGroup } from '~/ui/Toolbar'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition, Tooltip } from '~/ui/Tooltip'
 import { formatMonthYear } from '~/utils/dateFormat'
 import { tokenIconUrl } from '~/utils/icons'
 import { formatUsd, formatPercent } from '~/utils/numberFormat'
@@ -893,18 +893,7 @@ function IncomeStatementByLabel({
 						) : alignWithBreakdownRows ? (
 							<span aria-hidden="true" className="-ml-1 block size-6 shrink-0" />
 						) : null}
-						{methodology ? (
-							<Tooltip
-								content={methodology}
-								className="flex cursor-help items-center justify-start gap-1 underline decoration-current decoration-dotted"
-								tabIndex={0}
-							>
-								{label}
-								<Icon name="help-circle" className="size-3.5 shrink-0" />
-							</Tooltip>
-						) : (
-							<>{label}</>
-						)}
+						<Definition content={methodology}>{label}</Definition>
 					</div>
 				</TokenPageTableIncomeHeaderCell>
 				{tableHeaders.map((header, i) => {
@@ -918,7 +907,7 @@ function IncomeStatementByLabel({
 							className={`font-medium group-hover:bg-hover-row ${isEarnings ? (currentValue !== undefined && currentValue >= 0 ? 'text-data-up' : 'text-data-down') : ''}`}
 						>
 							{currentValue === undefined ? null : showComparison && i !== 0 && previousHeader ? (
-								<Tooltip
+								<Definition
 									content={
 										<PerformanceTooltipContent
 											currentValue={currentValue}
@@ -927,11 +916,16 @@ function IncomeStatementByLabel({
 											dataType={dataType}
 										/>
 									}
-									className={`cursor-help justify-start underline decoration-dotted ${isEarnings ? (currentValue >= 0 ? 'decoration-(--border-data-up-muted)' : 'decoration-(--border-data-down-muted)') : 'decoration-current'}`}
-									tabIndex={0}
+									className={
+										isEarnings
+											? currentValue >= 0
+												? 'decoration-(--border-data-up-muted)'
+												: 'decoration-(--border-data-down-muted)'
+											: undefined
+									}
 								>
 									{formatUsd(currentValue, { compact: true })}
-								</Tooltip>
+								</Definition>
 							) : (
 								<>{formatUsd(currentValue, { compact: true })}</>
 							)}
@@ -947,17 +941,7 @@ function IncomeStatementByLabel({
 								sticky
 								className="w-[36%] pl-10 font-normal italic group-hover:bg-hover-row"
 							>
-								{breakdownMethodology[breakdownlabel] ? (
-									<Tooltip
-										content={breakdownMethodology[breakdownlabel]}
-										className="flex cursor-help justify-start underline decoration-current decoration-dotted"
-										tabIndex={0}
-									>
-										{breakdownlabel}
-									</Tooltip>
-								) : (
-									<>{breakdownlabel}</>
-								)}
+								<Definition content={breakdownMethodology[breakdownlabel]}>{breakdownlabel}</Definition>
 							</TokenPageTableIncomeHeaderCell>
 							{tableHeaders.map((header, i) => (
 								<TokenPageTableIncomeCell
@@ -969,7 +953,7 @@ function IncomeStatementByLabel({
 									  showComparison &&
 									  tableHeaders[i + 1] &&
 									  getBreakdownValue(tableHeaders[i + 1], breakdownlabel) != null ? (
-										<Tooltip
+										<Definition
 											content={
 												<PerformanceTooltipContent
 													currentValue={getBreakdownValue(header, breakdownlabel) ?? null}
@@ -979,11 +963,9 @@ function IncomeStatementByLabel({
 													label={breakdownlabel}
 												/>
 											}
-											className="cursor-help justify-start underline decoration-current decoration-dotted"
-											tabIndex={0}
 										>
 											{formatUsd(getBreakdownValue(header, breakdownlabel), { compact: true })}
-										</Tooltip>
+										</Definition>
 									) : (
 										<>{formatUsd(getBreakdownValue(header, breakdownlabel), { compact: true })}</>
 									)}
@@ -1001,13 +983,7 @@ function IncomeStatementByLabel({
 										sticky
 										className="w-[36%] pl-10 font-normal italic group-hover:bg-hover-row"
 									>
-										<Tooltip
-											content={explanation}
-											className="flex cursor-help justify-start underline decoration-current decoration-dotted"
-											tabIndex={0}
-										>
-											{unknownLabel}
-										</Tooltip>
+										<Definition content={explanation}>{unknownLabel}</Definition>
 									</TokenPageTableIncomeHeaderCell>
 									{tableHeaders.map((header, i) => (
 										<TokenPageTableIncomeCell

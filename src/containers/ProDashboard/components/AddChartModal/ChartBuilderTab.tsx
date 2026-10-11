@@ -12,6 +12,7 @@ import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
+import { OptionTile } from '~/ui/OptionTile'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Skeleton } from '~/ui/Skeleton'
 import { EmptyState, InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
@@ -729,28 +730,17 @@ export function ChartBuilderTab({
 
 					<div className="border-t border-subtle pt-1.5">
 						<h4 className="mb-1 label-sm text-secondary">Chart type</h4>
+						{/* Icon tiles, not a SegmentedControl: four icon-and-label segments overflow this 320px column. */}
 						<Ariakit.RadioProvider
-							orientation="both"
 							value={chartBuilder.chartType}
-							setValue={(next) => {
-								const option = CHART_TYPE_OPTIONS.find((item) => item.value === next)
-								if (option && next !== chartBuilder.chartType) onChartBuilderChange({ chartType: option.value })
-							}}
+							setValue={(next) => onChartBuilderChange({ chartType: next as ChartBuilderConfig['chartType'] })}
 						>
-							<Ariakit.RadioGroup aria-label="Chart type" className="grid grid-cols-2 gap-1 sm:grid-cols-4">
+							<Ariakit.RadioGroup aria-label="Chart type" className="grid grid-cols-4 gap-1">
 								{CHART_TYPE_OPTIONS.map((option) => (
-									<label
-										key={option.value}
-										className={`relative flex cursor-pointer flex-col items-center gap-0.5 rounded-md border p-1 text-center transition-colors has-focus-visible:focus-ring ${
-											chartBuilder.chartType === option.value
-												? 'border-brand bg-brand-muted text-link'
-												: 'border-medium text-secondary hover:bg-hover-row hover:text-primary'
-										}`}
-									>
-										<Ariakit.Radio value={option.value} className="sr-only" />
+									<OptionTile key={option.value} layout="compact" radio={option.value}>
 										<Icon name={option.icon} className="size-3.5" />
 										<span className="label-sm">{option.label}</span>
-									</label>
+									</OptionTile>
 								))}
 							</Ariakit.RadioGroup>
 						</Ariakit.RadioProvider>

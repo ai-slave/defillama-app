@@ -7,7 +7,6 @@ import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
 import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { Card } from '~/ui/Card'
-import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
@@ -308,11 +307,7 @@ export function DirectoryTable({
 							size="md"
 						/>
 					</TableToolbarControlGroup>
-					<TableSearchInput
-						columnId="name"
-						placeholder="Search exchanges…"
-						className={searchFieldInlineWrapperStyles}
-					/>
+					<TableSearchInput columnId="name" placeholder="Search exchanges…" width="inline" />
 					<TableColumnSelect />
 					<TableCsvExport filename="exchanges-directory" includeHiddenColumns />
 				</TableToolbar>

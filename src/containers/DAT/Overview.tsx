@@ -27,7 +27,7 @@ import { Panel } from '~/ui/Panel'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { TableToolbar } from '~/ui/Toolbar'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition } from '~/ui/Tooltip'
 import { formatCompactNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type { IDATOverviewFlowSeries, IDATOverviewPageProps } from './types'
@@ -198,7 +198,7 @@ const overviewColumns = columnHelper.columns([
 					<Hovercard
 						placement="right-start"
 						content={<AssetTooltipContent assetBreakdown={assetBreakdown} />}
-						contentClassName="w-72 max-w-(--popover-available-width) p-3"
+						width="md"
 						render={<button type="button" aria-label="Show asset breakdown" className="h-5 bg-surface-elevated-2" />}
 						className="w-full align-middle"
 					>
@@ -252,17 +252,16 @@ const overviewColumns = columnHelper.columns([
 			if (priceChange24h == null)
 				return <>{formatUsd(price, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</>
 			return (
-				<Tooltip
+				<Definition
 					content={
 						<>
 							24h change: <Change value={priceChange24h} />
 						</>
 					}
-					className="cursor-help justify-end underline decoration-dotted"
-					tabIndex={0}
+					className="justify-end"
 				>
 					{formatUsd(price, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
-				</Tooltip>
+				</Definition>
 			)
 		},
 		meta: {

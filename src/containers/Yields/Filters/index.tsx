@@ -86,7 +86,7 @@ export function SaveViewButton({
 				Save view
 				{count > 0 ? <CountBadge count={count} /> : null}
 			</Ariakit.PopoverDisclosure>
-			<PopoverSurface variant="list" heading="Saved views" overflowPadding={16} className="w-72">
+			<PopoverSurface variant="list" heading="Saved views" overflowPadding={16} width="md">
 				<div className="border-b border-subtle p-2">
 					{/* The surface unmounts on hide, so each opening starts with no error; the draft name lives here and survives it. */}
 					<SaveViewForm name={name} setName={setName} onSave={handleSave} />

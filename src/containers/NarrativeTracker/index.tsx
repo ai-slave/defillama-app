@@ -16,7 +16,6 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
 import { ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
@@ -356,7 +355,7 @@ export function CategoryPerformanceContainer({
 				<Card padding="none">
 					<TableToolbar>
 						<h2 className="mr-auto label-md">Categories</h2>
-						<TableSearchInput columnId="name" placeholder="Search…" className={searchFieldInlineWrapperStyles} />
+						<TableSearchInput columnId="name" placeholder="Search…" width="inline" />
 						<TableCsvExport filename={isCoinPage ? 'narrative-tracker-coin' : 'narrative-tracker-category'} />
 					</TableToolbar>
 					<VirtualSearchTableView />

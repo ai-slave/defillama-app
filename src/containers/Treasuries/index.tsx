@@ -7,11 +7,10 @@ import { SearchTableProvider } from '~/components/Table/search/SearchTableProvid
 import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
 import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
-import { TokenLogo } from '~/components/TokenLogo'
 import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { Card } from '~/ui/Card'
 import { Hovercard } from '~/ui/Hovercard'
-import { searchFieldInlineWrapperStyles } from '~/ui/Input'
+import { Logo } from '~/ui/Logo'
 import { PanelTitle, PanelHeader } from '~/ui/Panel'
 import { getDominancePercent } from '~/utils'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
@@ -40,7 +39,7 @@ export function Treasuries({ data, entity }: { data: Array<ITreasuryRow>; entity
 					<PanelTitle as="h1" className="whitespace-nowrap">
 						Treasuries
 					</PanelTitle>
-					<TableSearchInput columnId="name" placeholder="Search projects…" className={searchFieldInlineWrapperStyles} />
+					<TableSearchInput columnId="name" placeholder="Search projects…" width="inline" />
 					<TableCsvExport filename={entity ? 'entities' : 'treasuries'} />
 				</PanelHeader>
 				<VirtualSearchTableView />
@@ -60,7 +59,7 @@ const columns = columnHelper.columns([
 			return (
 				<span className="relative flex items-center gap-2">
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
-					<TokenLogo src={row.original.logo} data-lgonly alt={`Logo of ${name}`} />
+					<Logo size={24} src={row.original.logo} data-lgonly alt={`Logo of ${name}`} />
 					{protocolHref ? (
 						<BasicLink href={protocolHref} className="truncate label-md text-link hover:underline">
 							{name}
@@ -99,7 +98,6 @@ const columns = columnHelper.columns([
 				<Hovercard
 					placement="right-start"
 					content={<BreakdownTooltipContent dominance={dominance} protocolName={info.row.original.name} />}
-					contentClassName="w-max max-w-[min(20rem,var(--popover-available-width))] p-3"
 					render={<button type="button" />}
 					className="h-5 w-full bg-surface-elevated-2 align-middle"
 				>

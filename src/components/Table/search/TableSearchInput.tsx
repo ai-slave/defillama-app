@@ -1,6 +1,5 @@
 import { useSelector } from '@tanstack/react-store'
 import { useDeferredValue, useEffect, useState } from 'react'
-import { searchFieldWrapperStyles } from '~/ui/Input'
 import { SearchField } from '~/ui/SearchField'
 import { useSearchTableScope } from './context'
 
@@ -16,11 +15,12 @@ import { useSearchTableScope } from './context'
 export function TableSearchInput({
 	columnId,
 	placeholder,
-	className = searchFieldWrapperStyles
+	width = 'standalone'
 }: {
 	columnId: string
 	placeholder: string
-	className?: string
+	/** SearchField's toolbar width: standalone at the start of a toolbar, inline beside other controls. */
+	width?: 'standalone' | 'inline'
 }) {
 	const { table, filterChanges } = useSearchTableScope()
 	const change = useSelector(filterChanges)
@@ -88,7 +88,7 @@ export function TableSearchInput({
 				})
 			}
 			placeholder={placeholder}
-			className={className}
+			width={width}
 		/>
 	)
 }

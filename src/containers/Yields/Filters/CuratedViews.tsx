@@ -259,7 +259,8 @@ export function CuratedViews({
 							key={preset.id}
 							placement="bottom-start"
 							showOnClick={false}
-							contentClassName="flex min-w-48 max-w-75 flex-col gap-3 p-3"
+							width="md"
+							contentClassName="flex flex-col gap-3"
 							content={preset.criteria.map((group) => (
 								<div className="flex flex-col gap-1.5" key={group.label}>
 									<span className="label-sm text-secondary uppercase">{group.label}</span>

@@ -25,13 +25,13 @@ const FEE_TONE: Record<FeeTone, { label: string; status: Status }> = {
 export function ValueBadge({
 	status,
 	ariaLabel,
-	contentClassName,
+	width,
 	content,
 	children
 }: {
 	status: Status
 	ariaLabel: string
-	contentClassName: string
+	width: 'fit' | 'md'
 	content: React.ReactNode
 	children: React.ReactNode
 }) {
@@ -39,7 +39,7 @@ export function ValueBadge({
 		<Hovercard
 			placement="left-start"
 			render={<StatusBadge status={status} render={<button type="button" aria-label={ariaLabel} />} />}
-			contentClassName={contentClassName}
+			width={width}
 			content={content}
 		>
 			{children}

@@ -86,7 +86,7 @@ export function PDFExportButton({ sessionId, messageId }: { sessionId: string; m
 				>
 					<Icon name="download-paper" className="size-4" />
 				</Tooltip>
-				<MenuSurface variant="actions" className="w-44">
+				<MenuSurface variant="actions" width="sm">
 					<MenuItem
 						data-umami-event="export-pdf"
 						data-umami-event-theme="light"

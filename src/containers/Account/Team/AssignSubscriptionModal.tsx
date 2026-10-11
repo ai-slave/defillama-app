@@ -5,6 +5,7 @@ import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter, DialogHeader, DialogCancelButton } from '~/ui/Dialog'
 import { FieldGroup } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
+import { OptionTile } from '~/ui/OptionTile'
 import { InlineStatus } from '~/ui/Status'
 import type { TeamMember } from './types'
 import { useTeam } from './useTeam'
@@ -63,37 +64,29 @@ export function AssignSubscriptionModal({ onClose, member, finalFocus }: AssignS
 						</InlineStatus>
 					) : (
 						<FieldGroup label="Subscription type" error={submitted ? choiceMessage : null}>
-							<div className="flex flex-col gap-2">
-								{availableSubscriptions.map((sub, index) => (
-									<label
-										key={sub.id}
-										className="flex cursor-pointer items-center gap-3 rounded-lg border border-medium p-3 transition-colors has-checked:border-brand has-checked:bg-brand-muted"
-									>
-										{/* Ariakit's autoFocus, so the dialog starts on the first plan instead of the ×. */}
-										<Ariakit.Focusable
+							<Ariakit.RadioProvider
+								value={subscriptionType}
+								setValue={(value) => setSubscriptionType(value as string)}
+							>
+								<Ariakit.RadioGroup aria-label="Subscription type" className="flex flex-col gap-2">
+									{availableSubscriptions.map((sub, index) => (
+										<OptionTile
+											key={sub.id}
+											layout="stack"
+											radio={sub.type}
+											// Ariakit's autoFocus, so the dialog starts on the first plan instead of the ×.
 											autoFocus={index === 0}
-											render={
-												<input
-													type="radio"
-													name="subscriptionType"
-													value={sub.type}
-													checked={subscriptionType === sub.type}
-													onChange={() => setSubscriptionType(sub.type)}
-													required
-													disabled={pending}
-													className="size-4 accent-brand"
-												/>
-											}
-										/>
-										<div className="flex flex-col">
-											<span className="label-sm text-primary">{getSubscriptionLabel(sub.type)}</span>
+											required
+											disabled={pending}
+										>
+											<span className="label-sm">{getSubscriptionLabel(sub.type)}</span>
 											<span className="body-sm text-secondary">
 												{sub.seats.availableSeats} seat{sub.seats.availableSeats !== 1 ? 's' : ''} available
 											</span>
-										</div>
-									</label>
-								))}
-							</div>
+										</OptionTile>
+									))}
+								</Ariakit.RadioGroup>
+							</Ariakit.RadioProvider>
 						</FieldGroup>
 					)}
 

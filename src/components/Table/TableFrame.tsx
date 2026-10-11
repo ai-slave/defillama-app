@@ -13,7 +13,7 @@ import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react'
 import { SortIcon } from '~/components/Table/SortIcon'
 import { useMedia } from '~/hooks/useMedia'
 import { EmptyState } from '~/ui/Status'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition, Tooltip } from '~/ui/Tooltip'
 import type { SortingFeatures, VisibilityFeatures } from './features/contracts'
 import { TableColumnGroup } from './TableColumnGroup'
 import { TableEmptyRow } from './TableEmptyRow'
@@ -447,7 +447,8 @@ function HeaderWithTooltip({
 	children: React.ReactNode
 	content?: string
 	onClick: (() => void) | null
-	tabIndex?: number
+	/** -1 in the sticky mirror, a copy of the header row whose controls are reached in the original. */
+	tabIndex?: -1
 }) {
 	if (onClick) {
 		if (!content)
@@ -469,13 +470,8 @@ function HeaderWithTooltip({
 	}
 	if (!content) return children
 	return (
-		<Tooltip
-			content={content}
-			// Not a control: a focusable span lets keyboard readers open the definition without announcing a button.
-			render={<span className="cursor-help underline decoration-dotted" />}
-			tabIndex={tabIndex ?? 0}
-		>
+		<Definition as="span" content={content} tabIndex={tabIndex}>
 			{children}
-		</Tooltip>
+		</Definition>
 	)
 }

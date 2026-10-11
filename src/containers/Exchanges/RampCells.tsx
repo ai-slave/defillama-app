@@ -38,12 +38,7 @@ export function CostBadge({
 	ariaLabel: string
 }) {
 	return (
-		<ValueBadge
-			status={costStatus(fraction, limits)}
-			ariaLabel={ariaLabel}
-			contentClassName="w-80 p-3 text-primary"
-			content={children}
-		>
+		<ValueBadge status={costStatus(fraction, limits)} ariaLabel={ariaLabel} width="md" content={children}>
 			{label}
 		</ValueBadge>
 	)

@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
-import { searchFieldWrapperStyles } from '~/ui/Input'
 import { SearchField } from '~/ui/SearchField'
 
 /**
@@ -44,10 +43,12 @@ export function UrlSearchInput({
 				debouncedSend.cancel()
 				send(field.text.trim())
 			}}
-			className={searchFieldWrapperStyles}
+			// The field, not the form, is the toolbar's flex item, so its width applies.
+			className="contents"
 		>
 			<SearchField
 				label={label}
+				width="standalone"
 				name="search"
 				value={field.text}
 				onChange={(text) => {

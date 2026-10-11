@@ -6,14 +6,13 @@ import { SearchTableProvider } from '~/components/Table/search/SearchTableProvid
 import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
 import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
-import { TokenLogo } from '~/components/TokenLogo'
 import { ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { getChainsByREVPageData } from '~/containers/AdapterMetrics/queries'
 import type { IChainsByREVPageData } from '~/containers/AdapterMetrics/types'
 import Layout from '~/layout'
 import { definitions } from '~/public/definitions'
 import { Card } from '~/ui/Card'
-import { searchFieldInlineWrapperStyles } from '~/ui/Input'
+import { Logo } from '~/ui/Logo'
 import { PanelTitle, PanelHeader } from '~/ui/Panel'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { formatUsd } from '~/utils/numberFormat'
@@ -50,7 +49,7 @@ function REVByChain(props: IChainsByREVPageData) {
 						<PanelTitle as="h1" className="whitespace-nowrap">
 							Chain rankings
 						</PanelTitle>
-						<TableSearchInput columnId="name" placeholder="Search chains…" className={searchFieldInlineWrapperStyles} />
+						<TableSearchInput columnId="name" placeholder="Search chains…" width="inline" />
 						<TableCsvExport filename="revenue-chains" />
 					</PanelHeader>
 					<VirtualSearchTableView rowSize={64} compact />
@@ -71,7 +70,7 @@ const columns = columnHelper.columns([
 				<span className="relative flex items-center gap-2">
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 
-					<TokenLogo src={row.original.logo} alt={`Logo of ${row.original.name}`} data-lgonly />
+					<Logo size={24} src={row.original.logo} alt={`Logo of ${row.original.name}`} data-lgonly />
 
 					<span className="-my-2 flex flex-col">
 						<BasicLink href={`/chain/${row.original.slug}`} className="truncate label-md text-link hover:underline">

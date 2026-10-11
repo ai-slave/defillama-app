@@ -206,6 +206,7 @@ export function ExchangeRegionalInformation({
 						return (
 							<Card key={placeholder.key} as="section" padding="none" className="overflow-hidden">
 								<div className="flex items-center gap-2 border-b border-subtle px-3 py-2.5">
+									{/* An icon chip on the brand tint, not a selected state. */}
 									<span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-muted text-link">
 										<Icon name={presentation.icon} className="size-4" />
 									</span>

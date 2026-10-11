@@ -43,6 +43,7 @@ export function ArtifactCard<T extends ElementType = 'button'>({
 			className={`hover-wash-card flex min-h-14 cursor-pointer items-center gap-3 text-left aria-busy:cursor-progress ${className ?? ''}`.trim()}
 			{...props}
 		>
+			{/* An icon chip on the brand tint, not a selected state. */}
 			<span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-brand-muted text-link">
 				<Icon name={icon} className="size-4" />
 			</span>

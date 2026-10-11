@@ -12,7 +12,7 @@ import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StatusBadge, type Status } from '~/ui/StatusBadge'
 import { Tabs, TabPanel } from '~/ui/Tabs'
 import { Tag } from '~/ui/Tag'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition, Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import {
@@ -561,14 +561,9 @@ function SectionCard({ title, badge, children }: { title: string; badge?: string
 function GreenCard({ title, tooltip, children }: { title: string; tooltip: string; children: ReactNode }) {
 	return (
 		<section className="flex flex-col gap-2 rounded-lg border border-success-muted bg-success-tint p-2">
-			<Tooltip
-				content={tooltip}
-				render={<h2 />}
-				className="w-fit cursor-help label-lg text-success underline decoration-dotted"
-				tabIndex={0}
-			>
+			<Definition as="h2" content={tooltip} className="w-fit label-lg text-success">
 				{title}
-			</Tooltip>
+			</Definition>
 			{children}
 		</section>
 	)
@@ -577,18 +572,9 @@ function GreenCard({ title, tooltip, children }: { title: string; tooltip: strin
 function KeyValueRow({ label, tooltip, children }: { label: string; tooltip?: string; children: ReactNode }) {
 	return (
 		<div className="flex items-center justify-between gap-4 border-b border-subtle py-2 last:border-b-0">
-			{tooltip ? (
-				<Tooltip
-					content={tooltip}
-					render={<dt />}
-					className="shrink-0 cursor-help body-md text-secondary underline decoration-dotted"
-					tabIndex={0}
-				>
-					{label}
-				</Tooltip>
-			) : (
-				<dt className="shrink-0 body-md text-secondary">{label}</dt>
-			)}
+			<Definition as="dt" content={tooltip} className="shrink-0 body-md text-secondary">
+				{label}
+			</Definition>
 			<dd className="flex flex-wrap items-center justify-end gap-1.5">{children}</dd>
 		</div>
 	)
@@ -640,18 +626,9 @@ function RightsRow({
 	return (
 		<div className="flex flex-col gap-2 rounded-lg border border-subtle bg-surface-elevated-1 p-2">
 			<div className="flex flex-wrap items-center justify-between gap-2">
-				{tooltip ? (
-					<Tooltip
-						content={tooltip}
-						render={<h3 />}
-						className="cursor-help label-md text-secondary underline decoration-dotted"
-						tabIndex={0}
-					>
-						{label}
-					</Tooltip>
-				) : (
-					<h3 className="label-md text-secondary">{label}</h3>
-				)}
+				<Definition as="h3" content={tooltip} className="label-md text-secondary">
+					{label}
+				</Definition>
 				{children}
 			</div>
 			{details !== null ? <p className="body-sm">{details}</p> : null}
@@ -663,18 +640,9 @@ function RaiseHistorySection({ tooltip, raises }: { tooltip?: string; raises: Ar
 	return (
 		<div className="flex flex-col gap-2">
 			<div className="flex items-center justify-between">
-				{tooltip ? (
-					<Tooltip
-						content={tooltip}
-						render={<h3 />}
-						className="cursor-help label-md underline decoration-dotted"
-						tabIndex={0}
-					>
-						Raise History
-					</Tooltip>
-				) : (
-					<h3 className="label-md">Raise history</h3>
-				)}
+				<Definition as="h3" content={tooltip} className="label-md">
+					Raise history
+				</Definition>
 				<span className="label-sm text-secondary">
 					{raises.length} round{raises.length !== 1 ? 's' : ''} · <RaisesTotal {...summarizeRaises(raises)} /> total
 				</span>

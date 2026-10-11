@@ -184,7 +184,7 @@ function ApyViewSheet({
 				<span className="sr-only">view settings: {spoken}</span>
 				<Ariakit.PopoverDisclosureArrow className="size-4 shrink-0 text-tertiary" />
 			</Ariakit.PopoverDisclosure>
-			<PopoverSurface variant="panel" dismiss="own" overflowPadding={16} className="sm:w-80">
+			<PopoverSurface variant="panel" dismiss="own" overflowPadding={16} width="lg">
 				<div className="flex items-center justify-between gap-2 border-b border-subtle py-1 pr-1 pl-4">
 					<Ariakit.PopoverHeading className="label-md text-primary">APY view</Ariakit.PopoverHeading>
 					<DrawerDismiss label="Close APY view" />

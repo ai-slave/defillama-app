@@ -187,6 +187,7 @@ function EarnView({
 							<>
 								{' · '}
 								{medianLabel === 'selection' ? 'median APY of selection' : `${medianLabel} median APY`}{' '}
+								{/* A highlighted figure in the sentence, not a selected state. */}
 								<strong className="rounded-md bg-brand-muted px-1.5 py-0.5 text-link">
 									{formatPercent(medianApy, YIELD_PERCENT_OPTIONS)}
 								</strong>

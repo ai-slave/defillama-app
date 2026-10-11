@@ -24,6 +24,7 @@ import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { Select } from '~/ui/Select'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { TableToolbar } from '~/ui/Toolbar'
+import { Tooltip } from '~/ui/Tooltip'
 import {
 	formatCompactNumber,
 	formatPercent,
@@ -32,7 +33,6 @@ import {
 	USD_LOWERCASE_MILLIONS_OPTIONS
 } from '~/utils/numberFormat'
 import type { QueryRetry } from '~/utils/query'
-import { InstantTooltip } from '../InstantTooltip'
 import { YIELD_PERCENT_OPTIONS } from '../poolDetail/format'
 import { ProtocolIcon } from '../poolDetail/Icons'
 import { getChartTooltipItems, getChartTooltipValue } from '../poolDetail/tooltip'
@@ -403,12 +403,14 @@ function RatesByProtocolPanel({
 								</TokenPageTableBodyCell>
 								<TokenPageTableBodyCell textAlign="end" className="text-primary">
 									{protocol.supply ? (
-										<InstantTooltip
+										<Tooltip
+											instant
+											placement="top"
 											content={`${formatUsd(protocol.supply.weight_usd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '—'} weighted`}
 											className="justify-end"
 										>
 											{weightPct(protocol.supply.weight_pct)}
-										</InstantTooltip>
+										</Tooltip>
 									) : (
 										'—'
 									)}
@@ -418,12 +420,14 @@ function RatesByProtocolPanel({
 								</TokenPageTableBodyCell>
 								<TokenPageTableBodyCell textAlign="end" className="text-primary">
 									{protocol.borrow ? (
-										<InstantTooltip
+										<Tooltip
+											instant
+											placement="top"
 											content={`${formatUsd(protocol.borrow.weight_usd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '—'} weighted`}
 											className="justify-end"
 										>
 											{weightPct(protocol.borrow.weight_pct)}
-										</InstantTooltip>
+										</Tooltip>
 									) : (
 										'—'
 									)}

@@ -1,6 +1,6 @@
 import { BasicLink } from '~/components/Link'
 import { Tag } from '~/ui/Tag'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition } from '~/ui/Tooltip'
 import { getRwaPlatforms, UNKNOWN_PLATFORM } from '../../grouping'
 import { perpsDefinitions } from '../../Perps/definitions'
 import { getRwaPlatformHref } from '../classificationHrefs'
@@ -31,13 +31,9 @@ function createPlatformColumn(kind: 'spot' | 'perps') {
 					const venues = original.distinct.platform
 					if (kind === 'perps' && venues.length > 1) {
 						return (
-							<Tooltip
-								content={venues.join(', ')}
-								className="cursor-help justify-end underline decoration-dotted"
-								tabIndex={0}
-							>
+							<Definition content={venues.join(', ')} className="justify-end">
 								{`${venues.length} venues`}
-							</Tooltip>
+							</Definition>
 						)
 					}
 					return <DistinctListCell values={venues} />

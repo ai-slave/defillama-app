@@ -23,7 +23,7 @@ import { Card } from '~/ui/Card'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { Input, searchFieldInlineWrapperStyles } from '~/ui/Input'
+import { Input } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { SearchField } from '~/ui/SearchField'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
@@ -840,7 +840,7 @@ function TransactionsTable({
 						value={globalFilter}
 						onChange={setGlobalFilter}
 						placeholder="Search hash, address, token, chain…"
-						className={searchFieldInlineWrapperStyles}
+						width="inline"
 					/>
 					<span className="body-sm whitespace-nowrap text-secondary">
 						{filteredCount === data.length

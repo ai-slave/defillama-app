@@ -1,10 +1,9 @@
-import * as Ariakit from '@ariakit/react'
 import { useMemo, type ReactNode } from 'react'
 import { CODE_BLOCK } from '~/containers/LlamaAI/components/codeBlockStyles'
 import type { UnifiedCitationReference } from '~/containers/LlamaAI/types'
 import { sanitizeUrl } from '~/containers/LlamaAI/utils/markdownHelpers'
+import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
-import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
 import {
 	accentFor,
 	badgeFor,
@@ -416,7 +415,6 @@ export function PillBody({
 
 export function CitationPill({ reference, numberOnlyMarker }: CitationPillProps) {
 	const id = reference.id
-	const hovercard = Ariakit.useHovercardStore({ placement: 'top', showTimeout: 120, hideTimeout: 180 })
 	const badge = badgeFor(reference.sourceType)
 	const iconName = iconFor(reference.sourceType)
 	const headline = citationHeadline(reference)
@@ -450,84 +448,87 @@ export function CitationPill({ reference, numberOnlyMarker }: CitationPillProps)
 	const { open } = useCitationSheet()
 
 	return (
-		<Ariakit.HovercardProvider store={hovercard}>
-			<Ariakit.HovercardAnchor
-				render={<button type="button" />}
-				onClick={() => (isLink && url ? window.open(url, '_blank', 'noopener,noreferrer') : open(reference))}
-				className={`${CITATION_MARKER_BOX} ${accent.marker} cursor-pointer not-disabled:not-aria-disabled:hover:brightness-110`}
-				aria-label={headline ? `Source ${id ?? ''}: ${headline}` : `Source ${id ?? ''}`}
-			>
-				{showMarkerIcon ? <Icon name={iconName} className="size-3 shrink-0" /> : null}
-				<span className={showMarkerIcon ? 'truncate' : ''}>{markerText}</span>
-			</Ariakit.HovercardAnchor>
-			<Ariakit.Hovercard
-				portal
-				unmountOnHide
-				gutter={6}
-				overflowPadding={16}
-				className={`${popoverHovercardSurfaceStyles} flex w-96 min-w-[min(18rem,var(--popover-available-width))] flex-col gap-2 p-3`}
-			>
-				<div className="flex items-center gap-2 border-b border-subtle pb-2">
-					<span className={`flex size-5 shrink-0 items-center justify-center rounded-md ${accent.chip}`}>
-						<Icon name={iconName} className="size-3.5" />
-					</span>
-					<span className={`label-xs tracking-wide uppercase ${accent.text}`}>{badge}</span>
-					{asOfText ? <span className="ml-auto body-sm text-tertiary">as of {asOfText}</span> : null}
-				</div>
-
-				{headline ? (
-					<div className="flex flex-col gap-0.5">
-						<p className="m-0 label-lg text-primary tabular-nums">{headline}</p>
-					</div>
-				) : null}
-
-				{description ? <p className="m-0 body-sm text-secondary">{description}</p> : null}
-
-				{mismatch ? (
-					<div className="flex items-start gap-1.5 body-sm text-warning">
-						<span className="flex h-lh shrink-0 items-center">
-							<Icon name="alert-triangle" className="size-3.5" />
+		<Hovercard
+			placement="top"
+			width="lg"
+			contentClassName="flex flex-col gap-2"
+			// The marker opens the source, so a tap does that and keyboard readers reach the card through its disclosure.
+			showOnClick={false}
+			render={
+				<button
+					type="button"
+					onClick={() => (isLink && url ? window.open(url, '_blank', 'noopener,noreferrer') : open(reference))}
+					className={`${CITATION_MARKER_BOX} ${accent.marker} cursor-pointer not-disabled:not-aria-disabled:hover:brightness-110`}
+					aria-label={headline ? `Source ${id ?? ''}: ${headline}` : `Source ${id ?? ''}`}
+				/>
+			}
+			content={
+				<>
+					<div className="flex items-center gap-2 border-b border-subtle pb-2">
+						<span className={`flex size-5 shrink-0 items-center justify-center rounded-md ${accent.chip}`}>
+							<Icon name={iconName} className="size-3.5" />
 						</span>
-						<span>{mismatchLabel(reference)}</span>
+						<span className={`label-xs tracking-wide uppercase ${accent.text}`}>{badge}</span>
+						{asOfText ? <span className="ml-auto body-sm text-tertiary">as of {asOfText}</span> : null}
 					</div>
-				) : unverified ? (
-					<div className="flex items-start gap-1.5 body-sm text-tertiary">
-						<span className="flex h-lh shrink-0 items-center">
-							<Icon name="help-circle" className="size-3.5" />
-						</span>
-						<span>{unverifiedLabel()}</span>
-					</div>
-				) : null}
 
-				{isLink ? (
-					<>
-						{domainFromUrl(reference.url) ? (
-							<span className="body-sm text-tertiary">{domainFromUrl(reference.url)}</span>
-						) : null}
-						{sanitizeExcerpt(reference.excerpt) ? (
-							<p className="m-0 body-sm text-secondary">{sanitizeExcerpt(reference.excerpt)}</p>
-						) : null}
-						{url ? (
-							<a
-								href={url}
-								target="_blank"
-								rel="noopener noreferrer"
-								className="self-start label-sm text-link hover:underline"
-							>
-								Open link ↗
-							</a>
-						) : null}
-					</>
-				) : (
-					<button
-						type="button"
-						onClick={() => open(reference)}
-						className="self-start label-sm text-link not-disabled:not-aria-disabled:hover:underline"
-					>
-						Click to see the source →
-					</button>
-				)}
-			</Ariakit.Hovercard>
-		</Ariakit.HovercardProvider>
+					{headline ? (
+						<div className="flex flex-col gap-0.5">
+							<p className="m-0 label-lg text-primary tabular-nums">{headline}</p>
+						</div>
+					) : null}
+
+					{description ? <p className="m-0 body-sm text-secondary">{description}</p> : null}
+
+					{mismatch ? (
+						<div className="flex items-start gap-1.5 body-sm text-warning">
+							<span className="flex h-lh shrink-0 items-center">
+								<Icon name="alert-triangle" className="size-3.5" />
+							</span>
+							<span>{mismatchLabel(reference)}</span>
+						</div>
+					) : unverified ? (
+						<div className="flex items-start gap-1.5 body-sm text-tertiary">
+							<span className="flex h-lh shrink-0 items-center">
+								<Icon name="help-circle" className="size-3.5" />
+							</span>
+							<span>{unverifiedLabel()}</span>
+						</div>
+					) : null}
+
+					{isLink ? (
+						<>
+							{domainFromUrl(reference.url) ? (
+								<span className="body-sm text-tertiary">{domainFromUrl(reference.url)}</span>
+							) : null}
+							{sanitizeExcerpt(reference.excerpt) ? (
+								<p className="m-0 body-sm text-secondary">{sanitizeExcerpt(reference.excerpt)}</p>
+							) : null}
+							{url ? (
+								<a
+									href={url}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="self-start label-sm text-link hover:underline"
+								>
+									Open link ↗
+								</a>
+							) : null}
+						</>
+					) : (
+						<button
+							type="button"
+							onClick={() => open(reference)}
+							className="self-start label-sm text-link not-disabled:not-aria-disabled:hover:underline"
+						>
+							Click to see the source →
+						</button>
+					)}
+				</>
+			}
+		>
+			{showMarkerIcon ? <Icon name={iconName} className="size-3 shrink-0" /> : null}
+			<span className={showMarkerIcon ? 'truncate' : ''}>{markerText}</span>
+		</Hovercard>
 	)
 }

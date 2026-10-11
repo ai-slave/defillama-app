@@ -1,6 +1,5 @@
 import { matchSorter } from 'match-sorter'
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type Ref } from 'react'
-import { TokenLogo } from '~/components/TokenLogo'
 import { useMedia } from '~/hooks/useMedia'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
@@ -8,9 +7,9 @@ import { Dialog, DialogBody, DialogSearchHeader } from '~/ui/Dialog'
 import { focusNeighborOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { ListRow } from '~/ui/ListRow'
+import { Logo } from '~/ui/Logo'
 import { MetricOptionChip } from '~/ui/MetricChip'
 import { NoResults } from '~/ui/NoResults'
-import { popoverMultiSelectCheckStyles, popoverSingleSelectCheckStyles } from '~/ui/Popover'
 import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { geckoTokenIconUrl } from '~/utils/icons'
@@ -187,7 +186,7 @@ function LeadMark({ value, geckoId, size }: { value: string; geckoId: string | u
 	if (isFamily(value)) return null
 	return (
 		<span className="flex shrink-0">
-			<TokenLogo src={geckoId ? geckoTokenIconUrl(geckoId, size * 2) : null} alt="" size={size} />
+			<Logo src={geckoId ? geckoTokenIconUrl(geckoId, size * 2) : null} alt="" size={size} />
 		</span>
 	)
 }
@@ -218,16 +217,12 @@ function TokenOptionRow({
 			aria-selected={selected}
 			// The keyboard highlight; the check, not a fill, marks a pick.
 			data-active-item={active || undefined}
+			check={multiple ? 'box' : 'tick'}
+			checked={selected}
 			className="min-h-10 gap-2.5"
 		>
 			<LeadMark value={value} geckoId={geckoId} size={22} />
 			<span className="truncate font-medium text-primary">{name}</span>
-			<span
-				aria-hidden
-				className={multiple ? popoverMultiSelectCheckStyles(selected) : popoverSingleSelectCheckStyles(selected)}
-			>
-				<Icon name="check" className="size-3" aria-hidden />
-			</span>
 		</ListRow>
 	)
 }

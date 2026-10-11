@@ -175,7 +175,7 @@ const ERROR_LINE_INSET = { none: '', menuRow: 'px-3 py-2' } as const
 
 /** A request error where InlineStatus's box has no room: a menu, a toolbar, a chip row, a dialog footer beside its
     buttons. The red icon marks it as an error, as in InlineStatus, and the message stays primary text. `menuRow` gives
-    it a popover row's padding (./Popover.ts), so it lines up with the rows above it. */
+    it a popover row's padding (MenuItem, PopoverRow), so it lines up with the rows above it. */
 export function ErrorLine({ children, inset }: { children: ReactNode; inset: keyof typeof ERROR_LINE_INSET }) {
 	return (
 		<p role="alert" className={`flex gap-1.5 body-sm text-primary ${ERROR_LINE_INSET[inset]}`.trim()}>

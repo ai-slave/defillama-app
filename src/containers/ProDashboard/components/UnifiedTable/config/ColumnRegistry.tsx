@@ -8,6 +8,7 @@ import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
 import { Button } from '~/ui/Button'
 import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
+import { Logo } from '~/ui/Logo'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { formatPercent, formatRatio, formatUsd } from '~/utils/numberFormat'
@@ -178,7 +179,7 @@ export const getUnifiedTableColumns = ({
 								shouldShowChainIcon ? (
 									<TokenLogo name={display.displayName} kind="chain" alt={`Logo of ${display.displayName}`} size={24} />
 								) : (
-									<TokenLogo src={display.logo ?? undefined} alt={`Logo of ${display.displayName}`} size={24} />
+									<Logo src={display.logo ?? undefined} alt={`Logo of ${display.displayName}`} size={24} />
 								)
 							) : (
 								<span className="inline-block size-6 shrink-0" />

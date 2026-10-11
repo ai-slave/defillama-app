@@ -1,7 +1,7 @@
 // Shared pieces of the rows around a chart panel's plot: keys, cells and fields.
 
 import type { ReactNode } from 'react'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition } from '~/ui/Tooltip'
 import { tw } from '~/ui/tw'
 
 export const readoutKeysStyles = tw`flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2 body-sm text-secondary`
@@ -33,13 +33,12 @@ export function SeriesMark({
 
 /** One entry in the small-print key: a mark, what it means, and its count where it has one. */
 export function ReadoutKey({ color, children, hint }: { color: string; children: ReactNode; hint?: string }) {
-	const body = (
-		<span className={`flex items-center gap-1.5${hint ? ' underline decoration-dotted' : ''}`}>
+	return (
+		<Definition content={hint} className="gap-1.5">
 			<SeriesMark color={color} shape="block" opacity={1} />
 			{children}
-		</span>
+		</Definition>
 	)
-	return hint ? <Tooltip content={hint}>{body}</Tooltip> : body
 }
 
 export function ReadoutCell({
@@ -56,13 +55,9 @@ export function ReadoutCell({
 }) {
 	return (
 		<div className={`flex min-w-0 flex-col gap-1 ${className ?? ''}`.trim()}>
-			{hint ? (
-				<Tooltip content={hint} className="cursor-help" tabIndex={0}>
-					<span className="flex items-center gap-1.5 label-md text-secondary underline decoration-dotted">{label}</span>
-				</Tooltip>
-			) : (
-				<span className="flex items-center gap-1.5 label-md text-secondary">{label}</span>
-			)}
+			<Definition content={hint} className="gap-1.5 label-md text-secondary">
+				{label}
+			</Definition>
 			{/* One value-line height for every cell, so the row cannot change height. */}
 			<span className="flex min-h-5 flex-wrap items-baseline gap-x-2">{children}</span>
 		</div>

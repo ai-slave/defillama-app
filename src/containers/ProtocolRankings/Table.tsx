@@ -20,7 +20,6 @@ import { getHideableColumns } from '~/components/Table/search/columnSelect'
 import { TablePagesStatus } from '~/components/Table/TablePagesStatus'
 import { prepareTableCsv } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
-import { TokenLogo } from '~/components/TokenLogo'
 import { applyProtocolTvlSettings } from '~/containers/ProtocolLists/utils'
 import { getProtocolTvlStrike } from '~/containers/ProtocolRankings/tvlStrike'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
@@ -37,9 +36,9 @@ import { Button } from '~/ui/Button'
 import { Change } from '~/ui/Change'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Icon } from '~/ui/Icon'
-import { searchFieldInlineWrapperStyles } from '~/ui/Input'
+import { Logo } from '~/ui/Logo'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
-import { popoverFooterActionStyles } from '~/ui/Popover'
+import { PopoverFooterAction } from '~/ui/PopoverSurface'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -546,7 +545,7 @@ function ChainProtocolsTableInner({
 				}}
 				placeholder="Search protocols…"
 				autoComplete="off"
-				className={searchFieldInlineWrapperStyles}
+				width="inline"
 			/>
 			<SegmentedControl
 				variant="default"
@@ -611,15 +610,14 @@ function ChainProtocolsTableInner({
 								))}
 							</ul>
 						) : null}
-						<button
+						<PopoverFooterAction
 							ref={addColumnButtonRef}
-							className={popoverFooterActionStyles}
+							inset="popover"
 							onClick={() => setEditingColumn({ id: null })}
-							type="button"
 						>
 							<Icon name="plus" className="size-3.5" />
 							Add custom column
-						</button>
+						</PopoverFooterAction>
 					</>
 				}
 			/>
@@ -1310,7 +1308,7 @@ const columns = columnHelper.columns([
 
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 
-					<TokenLogo src={row.original.logo} data-lgonly alt={`Logo of ${row.original.name}`} />
+					<Logo size={24} src={row.original.logo} data-lgonly alt={`Logo of ${row.original.name}`} />
 
 					<span className="-my-2 flex flex-col">
 						<span className="flex items-center gap-1 overflow-hidden">

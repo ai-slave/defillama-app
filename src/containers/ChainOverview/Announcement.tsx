@@ -1,6 +1,7 @@
 import { useAuthContext } from '~/auth'
 import { Announcement } from '~/components/Announcement'
 import { TokenLogo } from '~/components/TokenLogo'
+import { Logo } from '~/ui/Logo'
 import { slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import { TargetedAnnouncement } from '../Announcements/TargetedAnnouncement'
@@ -19,7 +20,7 @@ export function ChainOverviewAnnouncement({ chainName }: { chainName?: string })
 			<Announcement announcementId="near-investor-relations" version="2026-05-26-2" scope="near">
 				<span className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
 					<span className="inline-flex items-center gap-1.5 rounded-full border border-near-announcement-badge-border bg-near-announcement-badge-bg px-2 py-0.5 title-sm text-near-announcement-badge-text">
-						<TokenLogo src={NEAR_CHAIN_ICON} size={14} alt="Logo of NEAR" />
+						<Logo src={NEAR_CHAIN_ICON} size={14} alt="Logo of NEAR" />
 						NEAR IR
 					</span>
 					<span>View NEAR&apos;s</span>

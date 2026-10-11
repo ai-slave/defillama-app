@@ -10,7 +10,6 @@ import { PROJECT_FILE_ACCEPT, useProjectFileUpload } from './useProjectFileUploa
 interface AddSourcesMenuProps {
 	projectId: string
 	trigger: React.ReactNode
-	menuClassName?: string
 	gutter?: number
 	// When set, the menu leads with a "This message" section that attaches files to the next
 	// chat (ephemeral) rather than to permanent project knowledge.
@@ -19,13 +18,7 @@ interface AddSourcesMenuProps {
 
 const SECTION_LABEL_CLASS = 'px-3 pt-2 pb-1 label-xs tracking-wide text-tertiary uppercase'
 
-export function AddSourcesMenu({
-	projectId,
-	trigger,
-	menuClassName,
-	gutter = 6,
-	onAddPhotosFiles
-}: AddSourcesMenuProps) {
+export function AddSourcesMenu({ projectId, trigger, gutter = 6, onAddPhotosFiles }: AddSourcesMenuProps) {
 	const { handleFiles, isUploading, feedback, dismissFeedback } = useProjectFileUpload(projectId)
 	const addTextStore = Ariakit.useDialogStore()
 	const githubStore = Ariakit.useDialogStore()
@@ -38,7 +31,7 @@ export function AddSourcesMenu({
 		<>
 			<Ariakit.MenuProvider placement="bottom-start">
 				<Ariakit.MenuButton ref={triggerRef} disabled={isUploading} render={trigger as React.ReactElement} />
-				<MenuSurface variant="actions" gutter={gutter} className={menuClassName ?? 'w-60'}>
+				<MenuSurface variant="actions" gutter={gutter} width="sm">
 					{onAddPhotosFiles ? (
 						<>
 							<div className={SECTION_LABEL_CLASS}>This message</div>

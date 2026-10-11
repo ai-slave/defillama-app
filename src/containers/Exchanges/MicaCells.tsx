@@ -94,10 +94,10 @@ export function PromotionGift({ promotion, venue }: { promotion: ExchangePromoti
 		<Hovercard
 			placement="right-start"
 			render={<Button size="md" square aria-label={`${venue.name} promotion: ${promotion.label}`} />}
-			contentClassName="w-72 overflow-hidden p-0"
+			width="md"
 			content={
 				<>
-					<span className="flex flex-col gap-3 p-3">
+					<span className="flex flex-col gap-3">
 						<span className="flex items-start gap-2">
 							<span className="inline-flex size-7 shrink-0 items-center justify-center rounded-lg border border-subtle bg-surface text-secondary">
 								<Icon name="gift" className="size-3.5" />
@@ -114,7 +114,8 @@ export function PromotionGift({ promotion, venue }: { promotion: ExchangePromoti
 						</span>
 					</span>
 					{links.length > 0 ? (
-						<span className="flex flex-col border-t border-subtle">
+						// Full-bleed link rows: their hover wash and divider reach the card's edges.
+						<span className="-mx-3 mt-3 -mb-3 flex flex-col border-t border-subtle">
 							{links.map((link) => (
 								<a
 									key={`${link.label}:${link.href}`}

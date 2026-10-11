@@ -7,7 +7,6 @@ import { SearchTableProvider } from '~/components/Table/search/SearchTableProvid
 import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
 import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
-import { TokenLogo } from '~/components/TokenLogo'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import { fetchProtocolExpenses } from '~/containers/ProtocolOverview/api'
 import { buildProtocolExpenseRows } from '~/containers/ProtocolOverview/expenses'
@@ -15,7 +14,7 @@ import Layout from '~/layout'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
-import { searchFieldInlineWrapperStyles } from '~/ui/Input'
+import { Logo } from '~/ui/Logo'
 import { PanelTitle, PanelHeader } from '~/ui/Panel'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
@@ -61,11 +60,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 						<PanelTitle as="h1" className="whitespace-nowrap">
 							Protocol expenses
 						</PanelTitle>
-						<TableSearchInput
-							columnId="name"
-							placeholder="Search protocol…"
-							className={searchFieldInlineWrapperStyles}
-						/>
+						<TableSearchInput columnId="name" placeholder="Search protocol…" width="inline" />
 						<TableCsvExport filename="protocol-expenses" />
 					</PanelHeader>
 					<VirtualSearchTableView />
@@ -84,7 +79,7 @@ const columns = columnHelper.columns([
 			return (
 				<span className="relative flex items-center gap-2">
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
-					<TokenLogo src={row.original.protocol?.logo} data-lgonly alt={`Logo of ${value}`} />
+					<Logo size={24} src={row.original.protocol?.logo} data-lgonly alt={`Logo of ${value}`} />
 					<span className="flex items-center gap-1 overflow-hidden">
 						<BasicLink
 							href={`/protocol/${slug(value)}`}

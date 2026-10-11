@@ -15,7 +15,6 @@ import { VirtualTable } from '~/components/Table/VirtualTable'
 import { CHART_SERIES_LIMIT } from '~/constants/colors'
 import { RaisesFilters } from '~/containers/Raises/Filters'
 import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
-import { searchFieldWrapperStyles } from '~/ui/Input'
 import { MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
 import { Panel } from '~/ui/Panel'
 import { SearchField } from '~/ui/SearchField'
@@ -67,7 +66,7 @@ function RaisesByInvestorTable({ raises }: { raises: Array<Raise> }) {
 					value={projectName}
 					onChange={setProjectName}
 					placeholder="Search projects…"
-					className={searchFieldWrapperStyles}
+					width="standalone"
 				/>
 				<CSVDownloadButton prepareCsv={() => prepareRaisesCsv(instance)} smol size="md" />
 			</TableToolbar>

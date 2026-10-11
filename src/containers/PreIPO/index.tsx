@@ -11,7 +11,6 @@ import { PaginatedTable, usePaginatedTableDisplayRowNumber } from '~/components/
 import { prepareTableCsv } from '~/components/Table/utils'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
-import { searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { SearchField } from '~/ui/SearchField'
 import { StaleText } from '~/ui/StaleText'
@@ -215,7 +214,7 @@ export function PreIpoOverview({ companies, updatedAt }: PreIpoOverviewPageProps
 							resetPage()
 						}}
 						placeholder="Search companies…"
-						className={searchFieldWrapperStyles}
+						width="standalone"
 					/>
 					<TableToolbarControlGroup>
 						<UrlSelectWithCombobox

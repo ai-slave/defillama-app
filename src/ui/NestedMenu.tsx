@@ -2,12 +2,8 @@ import * as Ariakit from '@ariakit/react'
 import { useId, type ReactNode } from 'react'
 import { Button } from './Button'
 import { Icon } from './Icon'
-import {
-	nestedMenuDisclosureIconStyles,
-	nestedMenuRootRowStyles,
-	nestedMenuSelectRowStyles,
-	popoverMultiSelectCheckStyles
-} from './Popover'
+import { Check } from './internal/Check'
+import { nestedMenuDisclosureIconStyles, nestedMenuRootRowStyles, nestedMenuSelectRowStyles } from './internal/Popover'
 import { DrawerDismiss, NestedDrawerHeader, MenuSurface } from './PopoverSurface'
 
 interface NestedMenuProps extends Ariakit.MenuButtonProps<'div'> {
@@ -84,9 +80,7 @@ export function NestedMenuToggle({
 			className={nestedMenuSelectRowStyles}
 		>
 			<span className="flex min-w-0 items-center gap-2">{children}</span>
-			<span className={popoverMultiSelectCheckStyles(checked)} aria-hidden>
-				{checked ? <Icon name="check" className="size-3" aria-hidden /> : null}
-			</span>
+			<Check kind="box" checked={checked} className="ml-auto" />
 		</Ariakit.MenuItemCheckbox>
 	)
 }

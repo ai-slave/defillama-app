@@ -138,6 +138,7 @@ export function DocsDrawer({ open, onClose }: { open: boolean; onClose: () => vo
 					</nav>
 
 					<div ref={spySections} className="flex min-w-0 flex-1 flex-col gap-8 p-4 md:p-6">
+						{/* A callout box on the brand tint, not a selected state. */}
 						<div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-subtle bg-brand-muted p-2">
 							<div className="flex items-start gap-2 label-md">
 								<span className="flex h-lh shrink-0 items-center">

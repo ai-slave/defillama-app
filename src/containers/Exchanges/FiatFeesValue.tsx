@@ -72,7 +72,7 @@ export function FiatFeesValue({ name, fees }: { name: string; fees: ExchangeFiat
 		<ValueBadge
 			status="neutral"
 			ariaLabel={`${name} fiat fee details: ${fees.onRamp.length} on-ramp routes and ${fees.offRamp.length} off-ramp routes`}
-			contentClassName="w-[900px] p-3"
+			width="fit"
 			content={
 				<div className="flex flex-col gap-4">
 					<h3 className="heading-xs">{name} authored fiat fees</h3>

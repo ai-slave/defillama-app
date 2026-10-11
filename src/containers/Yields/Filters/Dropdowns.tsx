@@ -2,7 +2,6 @@ import { useRouter } from 'next/router'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { AvailableRange } from '~/components/Filters/AvailableRange'
 import { TVLRange } from '~/components/Filters/TVLRange'
-import { nestedMenuActionStyles } from '~/ui/Popover'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import { pushYieldsQuery } from '../queryUpdates.client'
 import { APYRange } from './APYRange'
@@ -134,7 +133,7 @@ export function YieldFilterDropdowns({
 			) : null}
 
 			{prepareCsv && nestedMenu ? (
-				<CSVDownloadButton replaceClassName className={nestedMenuActionStyles} prepareCsv={prepareCsv} />
+				<CSVDownloadButton nestedMenu prepareCsv={prepareCsv} />
 			) : prepareCsv ? (
 				<CSVDownloadButton size="md" prepareCsv={prepareCsv} />
 			) : null}

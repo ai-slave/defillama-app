@@ -44,19 +44,10 @@ import { tw } from './tw'
    Ariakit host) passes one, else a generated one, so the browser never
    reports a field it cannot tell apart from the others.
 
-   Search fields: every plain search (its value held in state) is
+   Search fields: every search input, an Ariakit Combobox's included, is
    SearchField (./SearchField.tsx), which owns the icon, this recipe, the
-   accessible label and the clear ×. `searchFieldIconStyles` and
-   `searchFieldInputPlacementStyles` serve only an Ariakit Combobox or
-   ComboboxInput: its store owns the value, so it renders this Input through
-   `render` beside the icon. `hand-built-search-field`
-   (scripts/policies/check-design-tokens.mjs) refuses the two strings
-   anywhere else. Table searches pass SearchField one wrapper as `className`:
-   `searchFieldWrapperStyles` (standalone, left-anchored),
-   `searchFieldInlineWrapperStyles` (fixed 280px beside other toolbar
-   controls, never shrinks), or `searchFieldFlexibleWrapperStyles` (shares
-   the remaining toolbar width). Never copy a page-local
-   `sm:max-w-[280px]` wrapper.
+   accessible label, the clear × and the field's width among toolbar
+   controls.
 
    Leading icon (optional, per the recipe's 16px icon + gap-1): wrap the
    field in a `relative` label, absolutely position a 16px icon at left-3,
@@ -95,16 +86,6 @@ const fieldFrameStyles = tw`flex min-h-8 min-w-0 cursor-text items-center gap-1 
 // [font:inherit] takes the frame's type: the base layer sets every input to text-sm, which would put 14px beside a
 // 16px prefix on phones and let iOS zoom on focus.
 const fieldFrameInputStyles = tw`min-w-0 flex-1 cursor-[inherit] bg-transparent py-0.5 text-inherit outline-hidden [font:inherit] placeholder:text-tertiary`
-
-export const searchFieldWrapperStyles = tw`relative mr-auto w-full min-w-0 sm:max-w-[280px]`
-
-export const searchFieldInlineWrapperStyles = tw`relative w-full min-w-0 sm:w-[280px] sm:flex-none`
-
-export const searchFieldFlexibleWrapperStyles = tw`relative w-full min-w-0 sm:max-w-[280px]`
-
-export const searchFieldIconStyles = tw`pointer-events-none absolute top-0 bottom-0 left-3 my-auto size-4 text-tertiary`
-
-export const searchFieldInputPlacementStyles = tw`w-full pl-8`
 
 /* A rename in place (a query tab, a saved row): the field takes the label's own type and stands where the label was,
    24px inside a 32px row, with a brand ring marking it as editing. A rename with room for a full field (a sidebar row

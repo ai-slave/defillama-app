@@ -36,6 +36,7 @@ import { Field } from '~/ui/Field'
 import { focusNeighborOnLeave, neighborRowControl, showFieldErrors, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, Textarea } from '~/ui/Input'
+import { RailItem } from '~/ui/RailItem'
 import { Select } from '~/ui/Select'
 import { Skeleton } from '~/ui/Skeleton'
 import { InlineLoading, InlineStatus } from '~/ui/Status'
@@ -45,7 +46,6 @@ import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatFixedNumber } from '~/utils/numberFormat'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { BalanceSettings } from './BalanceSettings'
-import { RAIL_TAB } from './tabRailStyles'
 
 const MAX_LENGTH = 5000
 // The picker's key for "no override": the settings store an empty string, which a picker option cannot carry.
@@ -484,7 +484,12 @@ export const SettingsModal = memo(function SettingsModal({
 								className="flex gap-1 overflow-x-auto p-2 sm:sticky sm:top-0 sm:flex-col sm:gap-0.5 sm:overflow-visible"
 							>
 								{tabs.map((tab) => (
-									<Tab key={tab.id} type="button" value={tab.id} className={RAIL_TAB}>
+									<Tab
+										key={tab.id}
+										value={tab.id}
+										// Below sm the rail is a sideways strip, so each row keeps its label's width.
+										render={<RailItem as="button" type="button" className="max-sm:w-auto max-sm:shrink-0" />}
+									>
 										<Icon name={tab.icon} className="size-3.5 shrink-0" />
 										<span>{tab.label}</span>
 									</Tab>

@@ -48,7 +48,6 @@ export function FullOldViewButton() {
 				</Button>
 				<Hovercard
 					content={featureContent}
-					contentClassName="w-max max-w-(--popover-available-width) p-3"
 					render={<Button type="button" variant="ghost" size="md" square aria-label="What Full View includes" />}
 				>
 					<Icon name="help-circle" className="size-4" />

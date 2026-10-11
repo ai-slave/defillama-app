@@ -180,7 +180,7 @@ export function TokenPricingCheck({ chainDisplayNames }: { chainDisplayNames: Re
 										size="md"
 										singleSelect
 										searchPlaceholder="Search chains…"
-										popoverClassName="sm:w-(--popover-anchor-width) sm:min-w-0"
+										popoverWidth="trigger"
 										className={`w-full justify-between ${selectedChain ? 'pl-9' : ''}`}
 										triggerProps={{
 											...control,

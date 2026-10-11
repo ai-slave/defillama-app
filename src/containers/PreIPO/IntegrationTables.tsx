@@ -7,7 +7,6 @@ import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
 import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
-import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { TableToolbar } from '~/ui/Toolbar'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
@@ -197,11 +196,7 @@ export function PerpetualMarketsTable({
 			<Card padding="none">
 				<TableToolbar>
 					<h2 className="mr-auto label-md">Perpetual markets</h2>
-					<TableSearchInput
-						columnId="exchangeName"
-						placeholder="Search exchanges…"
-						className={searchFieldInlineWrapperStyles}
-					/>
+					<TableSearchInput columnId="exchangeName" placeholder="Search exchanges…" width="inline" />
 					<TableCsvExport filename={`${companyName}-perpetual-markets`} />
 				</TableToolbar>
 				<SearchTableView />
@@ -225,11 +220,7 @@ export function TokenIssuersTable({
 			<Card padding="none">
 				<TableToolbar>
 					<h2 className="mr-auto label-md">Token issuers</h2>
-					<TableSearchInput
-						columnId="issuerName"
-						placeholder="Search issuers…"
-						className={searchFieldInlineWrapperStyles}
-					/>
+					<TableSearchInput columnId="issuerName" placeholder="Search issuers…" width="inline" />
 					<TableCsvExport filename={`${companyName}-token-issuers`} />
 				</TableToolbar>
 				<SearchTableView />

@@ -3,13 +3,7 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
 import { Field, FieldGroup } from '~/ui/Field'
-import {
-	Input,
-	searchFieldFlexibleWrapperStyles,
-	searchFieldInlineWrapperStyles,
-	searchFieldWrapperStyles,
-	Textarea
-} from '~/ui/Input'
+import { Input, Textarea } from '~/ui/Input'
 import { SearchField } from '~/ui/SearchField'
 import { Cell, Example, type Family, type KnobValues, StateGrid } from '../shared'
 
@@ -89,43 +83,43 @@ function SearchFieldDemo({ values }: { values: KnobValues }) {
 function SearchFieldPlacement() {
 	const [search, setSearch] = useState('aave')
 	return (
-		<Example name="Placement" prop="searchField*WrapperStyles">
+		<Example name="Placement" prop="width">
 			<div className="flex w-96 flex-col gap-4">
 				<div className="flex flex-col gap-1">
-					<span className="mono-sm text-tertiary">searchFieldWrapperStyles</span>
+					<span className="mono-sm text-tertiary">width="standalone"</span>
 					<div className="flex items-center gap-2">
 						<SearchField
 							label="Search protocols"
 							placeholder="Search protocols"
 							value={search}
 							onChange={setSearch}
-							className={searchFieldWrapperStyles}
+							width="standalone"
 						/>
 						<Button size="md">.csv</Button>
 					</div>
 				</div>
 				<div className="flex flex-col gap-1">
-					<span className="mono-sm text-tertiary">searchFieldInlineWrapperStyles</span>
+					<span className="mono-sm text-tertiary">width="inline"</span>
 					<div className="flex items-center justify-end gap-2">
 						<SearchField
 							label="Search protocols"
 							placeholder="Search protocols"
 							value={search}
 							onChange={setSearch}
-							className={searchFieldInlineWrapperStyles}
+							width="inline"
 						/>
 						<Button size="md">.csv</Button>
 					</div>
 				</div>
 				<div className="flex flex-col gap-1">
-					<span className="mono-sm text-tertiary">searchFieldFlexibleWrapperStyles</span>
+					<span className="mono-sm text-tertiary">width="flexible"</span>
 					<div className="flex items-center gap-2">
 						<SearchField
 							label="Search protocols"
 							placeholder="Search protocols"
 							value={search}
 							onChange={setSearch}
-							className={searchFieldFlexibleWrapperStyles}
+							width="flexible"
 						/>
 						<Button size="md">.csv</Button>
 					</div>

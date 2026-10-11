@@ -1,5 +1,5 @@
-import { TokenLogo } from '~/components/TokenLogo'
 import { Card as UICard } from '~/ui/Card'
+import { Logo } from '~/ui/Logo'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import type { AggregatedMetrics } from './data'
 
@@ -30,7 +30,7 @@ function Card({ label, winner, value }: { label: string; winner: AggregatedMetri
 			<div className="flex items-center justify-between gap-2">
 				{winner ? (
 					<div className="flex min-w-0 items-center gap-2">
-						<TokenLogo src={winner.marketMakerImageUrl} size={24} />
+						<Logo src={winner.marketMakerImageUrl} size={24} />
 						<span className="truncate label-md">{winner.marketMakerName}</span>
 					</div>
 				) : (

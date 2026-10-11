@@ -6,6 +6,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { MenuItem, MenuSeparator, MenuSurface } from '~/ui/PopoverSurface'
 import { Tooltip } from '~/ui/Tooltip'
@@ -467,132 +468,130 @@ export function UpcomingEvent({
 
 	return (
 		<div className="flex h-full items-center gap-2">
-			<Ariakit.HovercardProvider timeout={0}>
-				<Ariakit.HovercardAnchor>
-					{timeLeft > 0 ? (
-						<div className="flex items-center gap-3">
-							{/* fixed-width summary slot keeps the countdown tiles at the same x on every row */}
-							<div className="flex w-[200px] shrink-0 flex-col gap-1">
-								{eventSummaries.length === 0 ? (
-									<span className="label-sm text-tertiary">Amount unavailable</span>
-								) : (
-									eventSummaries.map((summary) => (
-										<div key={summary.label} className="flex items-center justify-between gap-3">
-											<div className="flex min-w-0 flex-col items-start">
-												<span className="inline-flex items-baseline gap-1 title-sm whitespace-nowrap text-primary">
-													{summary.usdValue !== null
-														? formatUsd(summary.usdValue, {
-																compact: true,
-																minimumCompactValue: 1_000_000,
-																compactSuffix: 'lowercase'
-															})
-														: `${formatCompactNumber(summary.amount, {
-																minimumCompactValue: 1_000_000,
-																compactSuffix: 'lowercase'
-															})} ${tokenSymbol}`}
-													{summary.displayUnit ? <span className="label-sm text-tertiary">/ week</span> : null}
-												</span>
-												<span className="truncate label-sm text-tertiary">{summary.label}</span>
-											</div>
-											{summary.percentageFloat !== null ? (
-												<div className="flex shrink-0 flex-col items-end">
-													<span className="title-sm text-primary">
-														{formatPercent(summary.percentageFloat, { input: 'percent', compact: true })}
-													</span>
-													<span className="label-sm whitespace-nowrap text-tertiary">of float</span>
-												</div>
-											) : null}
-										</div>
-									))
-								)}
-							</div>
-
-							<div className="flex items-center gap-1.5">
-								<span className={countdownTileStyles}>{days}D</span>
-								<span className={countdownTileStyles}>{hours}H</span>
-								<span className={countdownTileStyles}>{minutes}M</span>
-								<span className={countdownTileStyles}>{seconds}S</span>
-							</div>
-						</div>
-					) : (
-						<span className="label-sm text-tertiary">{formatTimeAgo(timestamp, nowSec)}</span>
-					)}
-				</Ariakit.HovercardAnchor>
-				<Ariakit.HovercardDisclosure />
-				<Ariakit.Hovercard
-					className="z-10 flex max-h-(--popover-available-height) w-96 max-w-(--popover-available-width) flex-col gap-2 overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay p-4 body-md text-primary shadow-overlay"
-					unmountOnHide
-					hideOnInteractOutside
-					overflowPadding={16}
-					portal
-				>
-					<span className="flex items-center justify-between gap-4">
-						<span className="flex items-center gap-2 font-medium">
-							<TokenLogo
-								name={name}
-								kind="token"
-								size={30}
-								fallbackSrc={geckoId ? geckoTokenIconUrl(geckoId) : null}
-								alt={`Logo of ${name}`}
-							/>
-							{tokenSymbol}
-						</span>
-						<span className="flex flex-col items-end">
-							<span className="font-medium">{dayjs(timestamp * 1e3).format('MMM D, YYYY')}</span>
-							<span className="body-sm text-tertiary">
-								{`${dayjs(timestamp * 1e3).format('HH:mm')} GMT${dayjs(timestamp * 1e3).format('Z')}`}
+			<Hovercard
+				placement="bottom"
+				width="lg"
+				contentClassName="flex flex-col gap-2"
+				render={<div />}
+				content={
+					<>
+						<span className="flex items-center justify-between gap-4">
+							<span className="flex items-center gap-2 font-medium">
+								<TokenLogo
+									name={name}
+									kind="token"
+									size={30}
+									fallbackSrc={geckoId ? geckoTokenIconUrl(geckoId) : null}
+									alt={`Logo of ${name}`}
+								/>
+								{tokenSymbol}
+							</span>
+							<span className="flex flex-col items-end">
+								<span className="font-medium">{dayjs(timestamp * 1e3).format('MMM D, YYYY')}</span>
+								<span className="body-sm text-tertiary">
+									{`${dayjs(timestamp * 1e3).format('HH:mm')} GMT${dayjs(timestamp * 1e3).format('Z')}`}
+								</span>
 							</span>
 						</span>
-					</span>
-					<hr className="border-medium" />
-					<div className="flex flex-col gap-4">
-						{currentUnlockBreakdown.map((item, i) => renderBreakdownRow(item, 'hover', i))}
-					</div>
-					<hr className="border-medium" />
+						<hr className="border-medium" />
+						<div className="flex flex-col gap-4">
+							{currentUnlockBreakdown.map((item, i) => renderBreakdownRow(item, 'hover', i))}
+						</div>
+						<hr className="border-medium" />
 
-					<span className="flex flex-col gap-2">
-						{eventSummaries.length === 0 ? (
-							<span className="body-sm text-tertiary">Amount unavailable</span>
-						) : (
-							eventSummaries.map((summary) => (
-								<span key={summary.label} className="flex flex-col gap-1">
-									<span className="flex items-center justify-between gap-2 font-semibold">
-										<span>{summary.label}</span>
-										<span className="inline-flex items-baseline gap-1">
-											{summary.usdValue !== null
-												? formatUsd(summary.usdValue, {
-														compact: true,
-														minimumCompactValue: 1_000_000,
-														compactSuffix: 'lowercase'
-													})
-												: '-'}
-											{summary.displayUnit ? <span className="body-sm text-tertiary">/ week</span> : null}
+						<span className="flex flex-col gap-2">
+							{eventSummaries.length === 0 ? (
+								<span className="body-sm text-tertiary">Amount unavailable</span>
+							) : (
+								eventSummaries.map((summary) => (
+									<span key={summary.label} className="flex flex-col gap-1">
+										<span className="flex items-center justify-between gap-2 font-semibold">
+											<span>{summary.label}</span>
+											<span className="inline-flex items-baseline gap-1">
+												{summary.usdValue !== null
+													? formatUsd(summary.usdValue, {
+															compact: true,
+															minimumCompactValue: 1_000_000,
+															compactSuffix: 'lowercase'
+														})
+													: '-'}
+												{summary.displayUnit ? <span className="body-sm text-tertiary">/ week</span> : null}
+											</span>
+										</span>
+										<span className="flex items-center justify-between gap-2 body-sm text-tertiary">
+											<span>
+												{summary.percentage !== null
+													? formatPercent(summary.percentage, { input: 'percent', compact: true })
+													: null}
+												{summary.percentageFloat !== null
+													? ` (${formatPercent(summary.percentageFloat, { input: 'percent', compact: true })} of float)`
+													: null}
+											</span>
+											<span>
+												{formatCompactNumber(summary.amount, {
+													minimumCompactValue: 1_000_000,
+													compactSuffix: 'lowercase'
+												})}{' '}
+												{tokenSymbol}
+												{summary.displayUnit ? ' / week' : ''}
+											</span>
 										</span>
 									</span>
-									<span className="flex items-center justify-between gap-2 body-sm text-tertiary">
-										<span>
-											{summary.percentage !== null
-												? formatPercent(summary.percentage, { input: 'percent', compact: true })
-												: null}
-											{summary.percentageFloat !== null
-												? ` (${formatPercent(summary.percentageFloat, { input: 'percent', compact: true })} of float)`
-												: null}
-										</span>
-										<span>
-											{formatCompactNumber(summary.amount, {
-												minimumCompactValue: 1_000_000,
-												compactSuffix: 'lowercase'
-											})}{' '}
-											{tokenSymbol}
-											{summary.displayUnit ? ' / week' : ''}
-										</span>
-									</span>
-								</span>
-							))
-						)}
-					</span>
-				</Ariakit.Hovercard>
-			</Ariakit.HovercardProvider>
+								))
+							)}
+						</span>
+					</>
+				}
+			>
+				{timeLeft > 0 ? (
+					<div className="flex items-center gap-3">
+						{/* fixed-width summary slot keeps the countdown tiles at the same x on every row */}
+						<div className="flex w-[200px] shrink-0 flex-col gap-1">
+							{eventSummaries.length === 0 ? (
+								<span className="label-sm text-tertiary">Amount unavailable</span>
+							) : (
+								eventSummaries.map((summary) => (
+									<div key={summary.label} className="flex items-center justify-between gap-3">
+										<div className="flex min-w-0 flex-col items-start">
+											<span className="inline-flex items-baseline gap-1 title-sm whitespace-nowrap text-primary">
+												{summary.usdValue !== null
+													? formatUsd(summary.usdValue, {
+															compact: true,
+															minimumCompactValue: 1_000_000,
+															compactSuffix: 'lowercase'
+														})
+													: `${formatCompactNumber(summary.amount, {
+															minimumCompactValue: 1_000_000,
+															compactSuffix: 'lowercase'
+														})} ${tokenSymbol}`}
+												{summary.displayUnit ? <span className="label-sm text-tertiary">/ week</span> : null}
+											</span>
+											<span className="truncate label-sm text-tertiary">{summary.label}</span>
+										</div>
+										{summary.percentageFloat !== null ? (
+											<div className="flex shrink-0 flex-col items-end">
+												<span className="title-sm text-primary">
+													{formatPercent(summary.percentageFloat, { input: 'percent', compact: true })}
+												</span>
+												<span className="label-sm whitespace-nowrap text-tertiary">of float</span>
+											</div>
+										) : null}
+									</div>
+								))
+							)}
+						</div>
+
+						<div className="flex items-center gap-1.5">
+							<span className={countdownTileStyles}>{days}D</span>
+							<span className={countdownTileStyles}>{hours}H</span>
+							<span className={countdownTileStyles}>{minutes}M</span>
+							<span className={countdownTileStyles}>{seconds}S</span>
+						</div>
+					</div>
+				) : (
+					<span className="label-sm text-tertiary">{formatTimeAgo(timestamp, nowSec)}</span>
+				)}
+			</Hovercard>
 			{timeLeft > 0 ? (
 				<CalendarButton
 					event={{ timestamp }}

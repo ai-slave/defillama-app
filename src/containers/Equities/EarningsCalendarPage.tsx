@@ -220,7 +220,7 @@ function WeekExposure({
 								<button type="button" aria-label={`${weekday}: ${formatCap(day.marketCap)} across ${companies}`} />
 							}
 							className="hover-wash w-full rounded-md text-left"
-							contentClassName="w-80 max-w-(--popover-available-width) p-3"
+							width="md"
 							content={
 								<div className="flex flex-col gap-2">
 									<div>
@@ -489,7 +489,7 @@ export function EarningsCalendarPage({ bootstrap }: { bootstrap?: EarningsCalend
 							value={searchQuery}
 							onChange={setSearchQuery}
 							placeholder="Search ticker or company"
-							className="min-w-0 flex-1 sm:w-[280px]"
+							width="inline"
 						/>
 						<Button type="submit" variant="secondary" size="md" disabled={!companies}>
 							Search

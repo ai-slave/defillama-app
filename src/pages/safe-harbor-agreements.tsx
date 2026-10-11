@@ -7,13 +7,12 @@ import { SearchTableProvider } from '~/components/Table/search/SearchTableProvid
 import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
 import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
-import { TokenLogo } from '~/components/TokenLogo'
 import { getProtocolRankingsSnapshot } from '~/containers/ProtocolRankings/server/tableData.server'
 import Layout from '~/layout'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
-import { searchFieldInlineWrapperStyles } from '~/ui/Input'
+import { Logo } from '~/ui/Logo'
 import { PanelTitle, PanelHeader } from '~/ui/Panel'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
@@ -102,11 +101,7 @@ export default function SafeHarborAgreements({ protocols }: InferGetStaticPropsT
 						<PanelTitle as="h1" className="whitespace-nowrap">
 							Safe Harbor agreements
 						</PanelTitle>
-						<TableSearchInput
-							columnId="name"
-							placeholder="Search protocols…"
-							className={searchFieldInlineWrapperStyles}
-						/>
+						<TableSearchInput columnId="name" placeholder="Search protocols…" width="inline" />
 						<TableCsvExport filename="safe-harbor-agreements" />
 					</PanelHeader>
 					<VirtualSearchTableView compact />
@@ -143,7 +138,7 @@ const columns = columnHelper.columns([
 				<span className="relative flex items-center gap-2">
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 
-					<TokenLogo src={row.original.logo} data-lgonly alt={`Logo of ${row.original.name}`} />
+					<Logo size={24} src={row.original.logo} data-lgonly alt={`Logo of ${row.original.name}`} />
 
 					{row.original.chains.length > 0 ? (
 						<span className="-my-2 flex flex-col">

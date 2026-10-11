@@ -1,5 +1,4 @@
-import { Icon } from '../Icon'
-import { popoverMultiSelectCheckStyles } from '../Popover'
+import { Check } from './Check'
 
 /* The tri-state "Select all" row that leads every multi-select list (Select, SelectWithCombobox,
    VirtualizedMultiSelect): checked when every option is selected, a brand dash when some are, empty when none. A click
@@ -35,13 +34,7 @@ export function SelectAllContent({ label, state }: { label: string; state: Selec
 					{state === 'all' ? ', all selected' : state === 'some' ? ', some selected' : ''}
 				</span>
 			</span>
-			<span className={popoverMultiSelectCheckStyles(state !== 'none')} aria-hidden>
-				{state === 'all' ? (
-					<Icon name="check" className="size-3" aria-hidden />
-				) : state === 'some' ? (
-					<span className="h-0.5 w-2 rounded-full bg-current" />
-				) : null}
-			</span>
+			<Check kind="box" checked={state === 'all' ? true : state === 'some' ? 'mixed' : false} className="ml-auto" />
 		</>
 	)
 }

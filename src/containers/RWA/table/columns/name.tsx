@@ -1,6 +1,7 @@
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Icon } from '~/ui/Icon'
+import { Logo } from '~/ui/Logo'
 import { Tag } from '~/ui/Tag'
 import { Tooltip } from '~/ui/Tooltip'
 import { RWASuspiciousWarning } from '../../SuspiciousWarning'
@@ -54,7 +55,7 @@ function GroupNameCell({ group, expanded, onToggle }: { group: RWAGroupRow; expa
 			{group.icon?.kind === 'chain' ? (
 				<TokenLogo name={group.icon.name} kind="chain" size={24} alt={`Logo of ${group.label}`} />
 			) : group.icon?.kind === 'src' ? (
-				<TokenLogo src={group.icon.src} size={24} alt={`Logo of ${group.label}`} />
+				<Logo src={group.icon.src} size={24} alt={`Logo of ${group.label}`} />
 			) : null}
 			{/* -my-2, not the leaf's -my-1.5: the venue type's Tag makes the second line 22px, and the column still fits
 			   the 50px row the virtualized table places rows by. */}
@@ -89,7 +90,7 @@ function LeafNameCell({ leaf, nested, assetLine }: { leaf: RWALeafRow; nested: b
 	return (
 		<span className={`flex items-center gap-2 ${nested ? 'pl-12' : ''}`}>
 			<span className="vf-row-index shrink-0" aria-hidden="true" />
-			{asset.logo ? <TokenLogo src={asset.logo} size={24} alt={`${asset.assetName} logo`} /> : null}
+			{asset.logo ? <Logo src={asset.logo} size={24} alt={`${asset.assetName} logo`} /> : null}
 			<span className="-my-1.5 flex flex-col overflow-hidden">
 				<BasicLink href={asset.detailHref} className="truncate label-md text-link hover:underline">
 					{label}

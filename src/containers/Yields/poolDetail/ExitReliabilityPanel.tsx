@@ -8,7 +8,7 @@ import {
 import { keepFocus } from '~/ui/focus'
 import { Panel } from '~/ui/Panel'
 import { StatusBadge, type Status } from '~/ui/StatusBadge'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
 import { formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import type { VerifiedBlock } from '../data/types'
@@ -141,13 +141,12 @@ export function ExitLedger({
 									<TokenPageTableHeaderCell textAlign="end">Withdrawable</TokenPageTableHeaderCell>
 									<TokenPageTableHeaderCell textAlign="end">Deposits</TokenPageTableHeaderCell>
 									<TokenPageTableHeaderCell textAlign="end">
-										<Tooltip
+										<Definition
 											content="What could have been withdrawn immediately, against total deposits, both measured onchain at that day's block."
-											className="ml-auto w-fit cursor-help"
-											tabIndex={0}
+											className="ml-auto w-fit"
 										>
-											<span className="underline decoration-dotted">Share</span>
-										</Tooltip>
+											Share
+										</Definition>
 									</TokenPageTableHeaderCell>
 								</tr>
 							</thead>
@@ -267,13 +266,12 @@ function CrowdingNote({ verified, holders }: { verified: VerifiedBlock; holders:
 
 	return (
 		<div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 border-t border-subtle px-3 py-2">
-			<Tooltip
+			<Definition
 				content="Each holder's share of the receipt supply times total deposits, compared against the measured instant lane. Positions are point-in-time and holders rarely exit together — this flags concentration against capacity, not a prediction."
-				className="cursor-help"
-				tabIndex={0}
+				className="label-xs tracking-widest text-tertiary"
 			>
-				<span className="label-xs tracking-widest text-tertiary underline decoration-dotted">CROWDING</span>
-			</Tooltip>
+				CROWDING
+			</Definition>
 			<span className={`body-sm ${largestCovered ? 'text-secondary' : 'text-warning'}`}>
 				{largestCovered
 					? `The largest holder (${formatUsd(largestUsd, RECEIPT_USD)}) could exit in full today.`

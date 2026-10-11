@@ -1,8 +1,8 @@
-import * as Ariakit from '@ariakit/react'
 import dayjs from 'dayjs'
 import * as React from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Change } from '~/ui/Change'
+import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { geckoTokenIconUrl } from '~/utils/icons'
@@ -137,149 +137,156 @@ export function PastUnlockPriceImpact({ data, title, className, initialNowSec }:
 							</span>
 						}
 						trailingIcon={
-							<Ariakit.HovercardProvider>
-								<Ariakit.HovercardAnchor>
-									<Icon name="help-circle" className="size-4 cursor-help text-tertiary" />
-								</Ariakit.HovercardAnchor>
-								<Ariakit.Hovercard
-									className="z-10 flex max-h-(--popover-available-height) w-96 max-w-(--popover-available-width) flex-col gap-2 overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay p-4 body-md text-primary shadow-overlay"
-									unmountOnHide
-									hideOnInteractOutside
-									overflowPadding={16}
-									portal
-								>
-									<span className="flex items-center justify-between gap-4">
-										<span className="flex items-center gap-2 font-medium">
-											<TokenLogo
-												name={impact.name}
-												kind="token"
-												size={30}
-												fallbackSrc={impact.geckoId ? geckoTokenIconUrl(impact.geckoId) : null}
-												alt={`Logo of ${impact.name}`}
-											/>
-											{impact.symbol}
-										</span>
-										<span className="flex flex-col items-end">
-											<span className="font-medium">{dayjs(impact.timestamp * 1e3).format('MMM D, YYYY')}</span>
-											<span className="body-sm text-tertiary">
-												{dayjs(impact.timestamp * 1e3).format('HH:mm')} GMT
-												{dayjs(impact.timestamp * 1e3).format('Z')}
+							<Hovercard
+								width="lg"
+								contentClassName="flex flex-col gap-2"
+								render={
+									<button
+										type="button"
+										aria-label={`Unlock details for ${impact.name}`}
+										className="text-tertiary hover:text-secondary"
+									/>
+								}
+								content={
+									<>
+										<span className="flex items-center justify-between gap-4">
+											<span className="flex items-center gap-2 font-medium">
+												<TokenLogo
+													name={impact.name}
+													kind="token"
+													size={30}
+													fallbackSrc={impact.geckoId ? geckoTokenIconUrl(impact.geckoId) : null}
+													alt={`Logo of ${impact.name}`}
+												/>
+												{impact.symbol}
+											</span>
+											<span className="flex flex-col items-end">
+												<span className="font-medium">{dayjs(impact.timestamp * 1e3).format('MMM D, YYYY')}</span>
+												<span className="body-sm text-tertiary">
+													{dayjs(impact.timestamp * 1e3).format('HH:mm')} GMT
+													{dayjs(impact.timestamp * 1e3).format('Z')}
+												</span>
 											</span>
 										</span>
-									</span>
 
-									<hr className="border-medium" />
+										<hr className="border-medium" />
 
-									<span className="flex flex-col gap-4">
-										{impact.unlockBreakdown.map((item) => {
-											const percentage = impact.maxSupply > 0 ? (item.amount / impact.maxSupply) * 100 : null
-											const percentageFloat =
-												impact.mcap != null && impact.mcap > 0
-													? ((item.amount * impact.price) / impact.mcap) * 100
-													: null
-											const usdValue = item.amount * impact.price
+										<span className="flex flex-col gap-4">
+											{impact.unlockBreakdown.map((item) => {
+												const percentage = impact.maxSupply > 0 ? (item.amount / impact.maxSupply) * 100 : null
+												const percentageFloat =
+													impact.mcap != null && impact.mcap > 0
+														? ((item.amount * impact.price) / impact.mcap) * 100
+														: null
+												const usdValue = item.amount * impact.price
 
-											return (
-												<span
-													className="flex flex-col gap-1"
-													key={`unlock-${item.name}-${percentage}-${percentageFloat}-${usdValue}`}
-												>
-													<span className="flex items-center justify-between gap-2">
-														<span className="flex items-center gap-2">
-															{item.name}
-															<Tooltip content={item.unlockType === 'linear' ? 'Linear Unlock' : 'Cliff Unlock'}>
-																<Icon
-																	name={item.unlockType === 'linear' ? 'linear-unlock' : 'cliff-unlock'}
-																	className="size-4 text-tertiary"
-																/>
-															</Tooltip>
+												return (
+													<span
+														className="flex flex-col gap-1"
+														key={`unlock-${item.name}-${percentage}-${percentageFloat}-${usdValue}`}
+													>
+														<span className="flex items-center justify-between gap-2">
+															<span className="flex items-center gap-2">
+																{item.name}
+																<Tooltip content={item.unlockType === 'linear' ? 'Linear Unlock' : 'Cliff Unlock'}>
+																	<Icon
+																		name={item.unlockType === 'linear' ? 'linear-unlock' : 'cliff-unlock'}
+																		className="size-4 text-tertiary"
+																	/>
+																</Tooltip>
+															</span>
+															<span className="font-medium">
+																{formatUsd(usdValue, {
+																	compact: true,
+																	minimumCompactValue: 1_000_000,
+																	compactSuffix: 'lowercase'
+																})}
+																{item.unlockType === 'linear' ? ' / week' : ''}
+															</span>
 														</span>
-														<span className="font-medium">
-															{formatUsd(usdValue, {
-																compact: true,
-																minimumCompactValue: 1_000_000,
-																compactSuffix: 'lowercase'
-															})}
-															{item.unlockType === 'linear' ? ' / week' : ''}
+														<span className="flex items-center justify-between gap-2 body-sm text-tertiary">
+															<span>
+																{percentage != null ? (
+																	<>
+																		{formatCompactNumber(percentage, {
+																			minimumCompactValue: 1_000_000,
+																			compactSuffix: 'lowercase'
+																		})}
+																		%
+																	</>
+																) : null}{' '}
+																{percentageFloat != null ? (
+																	<>
+																		(
+																		{formatCompactNumber(percentageFloat, {
+																			minimumCompactValue: 1_000_000,
+																			compactSuffix: 'lowercase'
+																		})}
+																		% of float)
+																	</>
+																) : null}
+															</span>
+															<span>
+																{formatCompactNumber(item.amount, {
+																	minimumCompactValue: 1_000_000,
+																	compactSuffix: 'lowercase'
+																})}{' '}
+																{impact.symbol}
+																{item.unlockType === 'linear' ? ' / week' : ''}
+															</span>
 														</span>
 													</span>
-													<span className="flex items-center justify-between gap-2 body-sm text-tertiary">
-														<span>
-															{percentage != null ? (
-																<>
-																	{formatCompactNumber(percentage, {
-																		minimumCompactValue: 1_000_000,
-																		compactSuffix: 'lowercase'
-																	})}
-																	%
-																</>
-															) : null}{' '}
-															{percentageFloat != null ? (
-																<>
-																	(
-																	{formatCompactNumber(percentageFloat, {
-																		minimumCompactValue: 1_000_000,
-																		compactSuffix: 'lowercase'
-																	})}
-																	% of float)
-																</>
-															) : null}
-														</span>
-														<span>
-															{formatCompactNumber(item.amount, {
-																minimumCompactValue: 1_000_000,
-																compactSuffix: 'lowercase'
-															})}{' '}
-															{impact.symbol}
-															{item.unlockType === 'linear' ? ' / week' : ''}
-														</span>
-													</span>
-												</span>
-											)
-										})}
-									</span>
-									<hr className="border-medium" />
+												)
+											})}
+										</span>
+										<hr className="border-medium" />
 
-									<span className="flex flex-col gap-2">
-										{summaries.map((summary) => {
-											const usdValue = summary.amount * impact.price
-											return (
-												<span key={summary.label} className="flex flex-col gap-1">
-													<span className="flex items-center justify-between gap-2 font-semibold">
-														<span>{summary.label}</span>
-														<span>
-															{formatUsd(usdValue, {
-																compact: true,
-																minimumCompactValue: 1_000_000,
-																compactSuffix: 'lowercase'
-															})}
-															{summary.displayUnit ? ' / week' : ''}
+										<span className="flex flex-col gap-2">
+											{summaries.map((summary) => {
+												const usdValue = summary.amount * impact.price
+												return (
+													<span key={summary.label} className="flex flex-col gap-1">
+														<span className="flex items-center justify-between gap-2 font-semibold">
+															<span>{summary.label}</span>
+															<span>
+																{formatUsd(usdValue, {
+																	compact: true,
+																	minimumCompactValue: 1_000_000,
+																	compactSuffix: 'lowercase'
+																})}
+																{summary.displayUnit ? ' / week' : ''}
+															</span>
+														</span>
+														<span className="flex items-center justify-between gap-2 body-sm text-tertiary">
+															<span>
+																{impact.maxSupply > 0
+																	? formatPercent(summary.amount / impact.maxSupply, {
+																			input: 'fraction',
+																			compact: true
+																		})
+																	: null}
+																{impact.mcap != null && impact.mcap > 0
+																	? ` (${formatPercent(usdValue / impact.mcap, { input: 'fraction', compact: true })} of float)`
+																	: null}
+															</span>
+															<span>
+																{formatCompactNumber(summary.amount, {
+																	minimumCompactValue: 1_000_000,
+																	compactSuffix: 'lowercase'
+																})}{' '}
+																{impact.symbol}
+																{summary.displayUnit ? ' / week' : ''}
+															</span>
 														</span>
 													</span>
-													<span className="flex items-center justify-between gap-2 body-sm text-tertiary">
-														<span>
-															{impact.maxSupply > 0
-																? formatPercent(summary.amount / impact.maxSupply, { input: 'fraction', compact: true })
-																: null}
-															{impact.mcap != null && impact.mcap > 0
-																? ` (${formatPercent(usdValue / impact.mcap, { input: 'fraction', compact: true })} of float)`
-																: null}
-														</span>
-														<span>
-															{formatCompactNumber(summary.amount, {
-																minimumCompactValue: 1_000_000,
-																compactSuffix: 'lowercase'
-															})}{' '}
-															{impact.symbol}
-															{summary.displayUnit ? ' / week' : ''}
-														</span>
-													</span>
-												</span>
-											)
-										})}
-									</span>
-								</Ariakit.Hovercard>
-							</Ariakit.HovercardProvider>
+												)
+											})}
+										</span>
+									</>
+								}
+							>
+								<Icon name="help-circle" className="size-4" />
+							</Hovercard>
 						}
 					/>
 				)

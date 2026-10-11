@@ -491,6 +491,7 @@ function MetaSheet({
 								<div className="flex flex-col gap-1.5">
 									<span className="label-sm text-secondary">Editorial</span>
 									<div className="flex flex-wrap gap-1.5">
+										{/* Tag pills on the brand tint, not a selected state. */}
 										{article.editorialTags.filter(isEditorialTagSlug).map((slug) => (
 											<span key={slug} className="rounded-full bg-brand-muted px-2 py-0.5 label-sm text-link">
 												{EDITORIAL_TAGS[slug].label}
@@ -671,6 +672,7 @@ function MetaSheet({
 											// eslint-disable-next-line @next/next/no-img-element
 											<img src={entry.profile.avatarUrl} alt="" className="size-7 shrink-0 rounded-full object-cover" />
 										) : (
+											// An initials avatar on the brand tint, not a selected state.
 											<span
 												aria-hidden
 												className="grid size-7 shrink-0 place-items-center rounded-full bg-brand-muted label-sm text-link"

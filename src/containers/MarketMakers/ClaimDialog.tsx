@@ -1,7 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import type { TurnstileInstance } from '@marsidev/react-turnstile'
 import { useId, useRef, useState } from 'react'
-import { TokenLogo } from '~/components/TokenLogo'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
 import { Checkbox } from '~/ui/Checkbox'
@@ -17,6 +16,7 @@ import {
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Input } from '~/ui/Input'
+import { Logo } from '~/ui/Logo'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus } from '~/ui/Status'
 import { emailError } from '~/utils/email'
@@ -171,7 +171,7 @@ function ClaimForm({
 										{...control}
 										readOnly
 										value={marketMakerName}
-										prefix={<TokenLogo src={marketMakerLogo ?? null} size={18} />}
+										prefix={<Logo src={marketMakerLogo ?? null} size={18} />}
 									/>
 								)}
 							</Field>

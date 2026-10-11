@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { type RefObject, useRef, useState } from 'react'
 import { Card } from '~/ui/Card'
 import { DialogBackButton, DialogBody, DialogHeader, SideSheet, useOpeningKey } from '~/ui/Dialog'
 import { keepFocus } from '~/ui/focus'
@@ -59,21 +59,35 @@ export function CriteriaDrawer({ state, ...props }: CriteriaDrawerProps) {
 	if (state && state !== last) setLast(state)
 	const shown = state ?? last
 	const key = useOpeningKey(state != null)
+	const detailRef = useRef<HTMLHeadingElement>(null)
 	if (!shown || shown.criteria.length === 0) return null
 	return (
-		<SideSheet size="lg" canvas open={state != null} onClose={props.onClose} portal unmountOnHide>
-			<CriteriaSheetContent key={key} state={shown} {...props} />
+		<SideSheet
+			size="lg"
+			canvas
+			open={state != null}
+			onClose={props.onClose}
+			// Opened on a criterion, the sheet starts on its detail, so a reader hears the criterion first.
+			initialFocus={shown.activeKey ? detailRef : undefined}
+			portal
+			unmountOnHide
+		>
+			<CriteriaSheetContent key={key} state={shown} detailRef={detailRef} {...props} />
 		</SideSheet>
 	)
 }
 
 function CriteriaSheetContent({
 	state,
+	detailRef,
 	assetLabel,
 	lastEditedAt,
 	disclosures,
 	grading
-}: Omit<CriteriaDrawerProps, 'state' | 'onClose'> & { state: CriteriaDrawerState }) {
+}: Omit<CriteriaDrawerProps, 'state' | 'onClose'> & {
+	state: CriteriaDrawerState
+	detailRef: RefObject<HTMLHeadingElement | null>
+}) {
 	// Below md one pane shows at a time. Opening from a criterion lands on its detail.
 	const [narrowPane, setNarrowPane] = useState<'list' | 'detail'>(state.activeKey ? 'detail' : 'list')
 	const [activeKey, setActiveKey] = useState(state.activeKey)
@@ -128,10 +142,16 @@ function CriteriaSheetContent({
 									type="button"
 									active={current}
 									aria-current={current ? 'true' : undefined}
-									onClick={() => {
-										setActiveKey(criterion.key)
-										setNarrowPane('detail')
-									}}
+									// Below md the list hides as the detail shows, so focus moves to the detail's heading.
+									onClick={() =>
+										keepFocus(
+											() => {
+												setActiveKey(criterion.key)
+												setNarrowPane('detail')
+											},
+											() => detailRef.current
+										)
+									}
 								>
 									{index + 1}.{' '}
 									{
@@ -150,7 +170,7 @@ function CriteriaSheetContent({
 						aria-label={activeCopy.heading}
 						className={`flex min-h-0 min-w-0 flex-col gap-4 overflow-y-auto p-4 ${narrowPane === 'list' ? 'max-md:hidden' : ''}`}
 					>
-						<h3 className="label-lg text-primary">
+						<h3 ref={detailRef} tabIndex={-1} className="label-lg text-primary">
 							{activeIndex + 1}. {activeCopy.heading}
 						</h3>
 						{activeCopy.definition ? <p className="body-md text-secondary">{activeCopy.definition}</p> : null}

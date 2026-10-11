@@ -517,6 +517,7 @@ export function PromptInput({
 
 			<PastedContentModal preview={imageUpload.pastedPreview} onClose={() => imageUpload.setPastedPreview(null)} />
 
+			{/* The quoted passage as a blockquote strip on the brand tint, not a selected state. */}
 			{quotedText ? (
 				<div className="flex items-center gap-2 rounded-md border-l-2 border-brand bg-brand-muted py-1 pr-1 pl-3">
 					<Icon name="message-square-plus" className="size-3.5 shrink-0 text-link" />

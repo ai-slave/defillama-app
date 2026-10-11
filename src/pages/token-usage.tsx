@@ -31,15 +31,13 @@ import Layout from '~/layout'
 import { Button } from '~/ui/Button'
 import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Checkbox } from '~/ui/Checkbox'
-import { Icon } from '~/ui/Icon'
-import { Input } from '~/ui/Input'
+import { Logo } from '~/ui/Logo'
 import { ListLoading, NoResults } from '~/ui/NoResults'
 import { Panel } from '~/ui/Panel'
-import { popoverRowWithBorderStyles } from '~/ui/Popover'
-import { ComboboxSurface } from '~/ui/PopoverSurface'
+import { ComboboxSurface, PopoverList, PopoverRow } from '~/ui/PopoverSurface'
+import { SearchField } from '~/ui/SearchField'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { EmptyState, ErrorLine, PanelLoadingStatus, PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
-import { Tooltip } from '~/ui/Tooltip'
 import { formatUsd } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
@@ -365,37 +363,16 @@ export function TokenUsageSearch() {
 			open={open}
 			setOpen={setOpen}
 		>
-			<span className="relative isolate w-full lg:max-w-[50vw]">
-				<Tooltip
-					content={open ? 'Close search' : 'Open search'}
-					render={
-						<Button
-							variant="ghost"
-							size="sm"
-							square
-							className="absolute top-1/2 left-2 -translate-y-1/2"
-							aria-label={open ? 'Close search' : 'Open search'}
-							aria-expanded={open}
-							onClick={() => setOpen((prev) => !prev)}
-						/>
-					}
-				>
-					<Icon name={open ? 'x' : 'search'} className="size-4" />
-				</Tooltip>
+			<SearchField
+				combobox
+				id="token-usage-search-input"
+				label="Search tokens"
+				placeholder="Search tokens…"
+				autoSelect
+				width="standalone"
+			/>
 
-				<Ariakit.Combobox
-					id="token-usage-search-input"
-					placeholder="Search tokens…"
-					autoSelect
-					render={<Input className="w-full pl-9" />}
-				/>
-			</span>
-
-			<ComboboxSurface
-				variant="search-results"
-				sameWidth
-				className="max-h-[min(400px,var(--popover-available-height))]"
-			>
+			<ComboboxSurface variant="search-results" sameWidth maxHeight="lg">
 				{queryReadFailed(searchQuery) ? (
 					<ErrorLine inset="menuRow">Couldn't search tokens.</ErrorLine>
 				) : searchQuery.isLoading ? (
@@ -403,28 +380,26 @@ export function TokenUsageSearch() {
 				) : !data?.length ? (
 					<NoResults />
 				) : (
-					<Ariakit.ComboboxList>
+					<PopoverList divided render={<Ariakit.ComboboxList />}>
 						{data.map((tokenResult) => (
-							<Ariakit.ComboboxItem
+							<PopoverRow
 								key={tokenResult.id}
-								value={tokenResult.name}
+								render={
+									<Ariakit.ComboboxItem value={tokenResult.name} focusOnHover hideOnClick={false} setValueOnClick />
+								}
 								onClick={() => {
 									void pushShallowQuery(router, { token: tokenResult.symbol }).then(() => {
 										setOpen(false)
 									})
 								}}
-								focusOnHover
-								hideOnClick={false}
-								setValueOnClick
-								className={`${popoverRowWithBorderStyles} justify-start gap-4 aria-disabled:text-disabled`}
 							>
 								{tokenResult?.logo ? (
-									<TokenLogo src={tokenResult?.logo} alt={`Logo of ${tokenResult?.name ?? ''}`} />
+									<Logo size={24} src={tokenResult?.logo} alt={`Logo of ${tokenResult?.name ?? ''}`} />
 								) : null}
 								<span>{tokenResult.name}</span>
-							</Ariakit.ComboboxItem>
+							</PopoverRow>
 						))}
-					</Ariakit.ComboboxList>
+					</PopoverList>
 				)}
 			</ComboboxSurface>
 		</Ariakit.ComboboxProvider>

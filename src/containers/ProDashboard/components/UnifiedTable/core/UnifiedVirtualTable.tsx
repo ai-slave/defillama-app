@@ -5,7 +5,7 @@ import { FlexRender, type Column, type HeaderGroup, type Row } from '@tanstack/r
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useLayoutEffect, useRef } from 'react'
 import { SortIcon } from '~/components/Table/SortIcon'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition, Tooltip } from '~/ui/Tooltip'
 import type { ProtocolTableRow } from '../types'
 import type { tableFeaturesConfig } from './useUnifiedTable'
 
@@ -216,9 +216,5 @@ interface HeaderWithTooltipProps {
 
 function HeaderWithTooltip({ children, content }: HeaderWithTooltipProps) {
 	if (!content) return <>{children}</>
-	return (
-		<Tooltip content={content} className="cursor-help underline decoration-dotted" tabIndex={0}>
-			{children}
-		</Tooltip>
-	)
+	return <Definition content={content}>{children}</Definition>
 }

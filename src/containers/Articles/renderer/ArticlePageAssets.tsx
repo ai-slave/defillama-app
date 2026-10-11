@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
-import { TokenLogo } from '~/components/TokenLogo'
 import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
+import { Logo } from '~/ui/Logo'
 import { Skeleton } from '~/ui/Skeleton'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatUsd } from '~/utils/numberFormat'
@@ -56,7 +56,7 @@ function AssetRow({
 	const content = (
 		<>
 			<span className="inline-flex shrink-0 group-hover/asset:animate-wiggle">
-				<TokenLogo src={logoSrc} size={22} alt={asset.symbol} title={asset.name} />
+				<Logo src={logoSrc} size={22} alt={asset.symbol} title={asset.name} />
 			</span>
 			<span
 				className="min-w-0 truncate title-md text-primary transition-colors group-hover/asset:text-link"

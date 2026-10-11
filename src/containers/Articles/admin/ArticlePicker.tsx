@@ -7,11 +7,9 @@ import type { ArticleDocument } from '~/containers/Articles/types'
 import { ARTICLE_SECTION_LABELS } from '~/containers/Articles/types'
 import { Button } from '~/ui/Button'
 import { keepFocus } from '~/ui/focus'
-import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { ListLoading, NoResults } from '~/ui/NoResults'
-import { popoverMeasuredRowStyles } from '~/ui/Popover'
-import { ComboboxSurface } from '~/ui/PopoverSurface'
+import { ComboboxSurface, PopoverRow } from '~/ui/PopoverSurface'
+import { SearchField } from '~/ui/SearchField'
 
 type ListArticlesParams = NonNullable<Parameters<typeof listArticles>[0]>
 const EMPTY_ARTICLE_DOCUMENTS: Array<ArticleDocument> = []
@@ -89,47 +87,19 @@ export function ArticlePicker({ value, onChange, hint, listArticlesParams }: Pro
 				setInputValue={(next) => setSearchValue(next)}
 				resetValueOnHide
 			>
-				<div className="relative">
-					<Icon name="search" className={searchFieldIconStyles} aria-hidden="true" />
-					<Ariakit.Combobox
-						ref={inputRef}
-						placeholder={selectedLabel ? selectedLabel : 'Search articles by title…'}
-						autoSelect
-						render={<Input className={`${searchFieldInputPlacementStyles} pr-9`} />}
-					/>
-					{value ? (
-						<Button
-							variant="ghost"
-							size="sm"
-							square
-							onClick={() =>
-								keepFocus(
-									() => {
-										setSearchValue('')
-										onChange(null)
-									},
-									() => inputRef.current
-								)
-							}
-							aria-label="Clear selection"
-							className="absolute top-1/2 right-1.5 -translate-y-1/2"
-						>
-							<Icon name="x" className="size-4" />
-						</Button>
-					) : null}
-				</div>
-				<ComboboxSurface
-					variant="search-results"
-					sameWidth
-					className="max-h-[min(288px,var(--popover-available-height))]"
-				>
+				<SearchField
+					combobox
+					ref={inputRef}
+					label="Search articles by title"
+					placeholder={selectedLabel ? selectedLabel : 'Search articles by title…'}
+					autoSelect
+				/>
+				<ComboboxSurface variant="search-results" sameWidth maxHeight="md">
 					{isFetching && items.length === 0 ? <ListLoading label="Searching" /> : null}
 					{!isFetching && items.length === 0 ? <NoResults>No results</NoResults> : null}
 					{items.map((article) => (
-						<Ariakit.ComboboxItem
+						<PopoverRow
 							key={article.id}
-							value={article.title}
-							setValueOnClick={false}
 							onClick={() => {
 								setTitles((prev) =>
 									prev[article.id] === article.title ? prev : { ...prev, [article.id]: article.title }
@@ -138,7 +108,7 @@ export function ArticlePicker({ value, onChange, hint, listArticlesParams }: Pro
 								onChange(article)
 								setOpen(false)
 							}}
-							className={popoverMeasuredRowStyles}
+							render={<Ariakit.ComboboxItem value={article.title} setValueOnClick={false} />}
 						>
 							<span className="grid min-w-0 gap-0.5">
 								<span className="truncate">{article.title}</span>
@@ -146,14 +116,32 @@ export function ArticlePicker({ value, onChange, hint, listArticlesParams }: Pro
 									{article.section ? ARTICLE_SECTION_LABELS[article.section] : 'No section'} · /{article.slug}
 								</span>
 							</span>
-						</Ariakit.ComboboxItem>
+						</PopoverRow>
 					))}
 				</ComboboxSurface>
 			</Ariakit.ComboboxProvider>
-			{value && selectedLabel ? (
-				<p className="label-xs tracking-[0.16em] text-tertiary uppercase">
-					Selected: <span className="tracking-normal text-secondary normal-case">{selectedLabel}</span>
-				</p>
+			{value ? (
+				<div className="flex items-center gap-2">
+					{selectedLabel ? (
+						<p className="min-w-0 label-xs tracking-[0.16em] text-tertiary uppercase">
+							Selected: <span className="tracking-normal text-secondary normal-case">{selectedLabel}</span>
+						</p>
+					) : null}
+					{/* The search field's × clears the typed text; this clears the pick. */}
+					<Button
+						type="button"
+						variant="link"
+						className="ml-auto"
+						onClick={() =>
+							keepFocus(
+								() => onChange(null),
+								() => inputRef.current
+							)
+						}
+					>
+						Clear selection
+					</Button>
+				</div>
 			) : null}
 			{hint ? <p className="body-sm text-tertiary">{hint}</p> : null}
 		</div>

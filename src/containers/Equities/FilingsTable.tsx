@@ -12,7 +12,6 @@ import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { prepareTableCsv, useTableSearch } from '~/components/Table/utils'
 import { Icon } from '~/ui/Icon'
-import { searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { SearchField } from '~/ui/SearchField'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
@@ -135,7 +134,7 @@ export function EquitiesFilingsTable({
 					value={searchValue}
 					onChange={setSearchValue}
 					placeholder="Search filings"
-					className={searchFieldWrapperStyles}
+					width="standalone"
 				/>
 				<SelectWithCombobox
 					allValues={['All', ...filingForms]}

@@ -10,7 +10,6 @@ import { VirtualTable } from '~/components/Table/VirtualTable'
 import { getInvestorsPageData } from '~/containers/Raises/queries'
 import type { IInvestorsPageData, IInvestorTimespan } from '~/containers/Raises/types'
 import Layout from '~/layout'
-import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -183,7 +182,7 @@ function ActiveInvestors({ investors }: IInvestorsPageData) {
 						value={investorName}
 						onChange={setInvestorName}
 						placeholder="Search investors…"
-						className={searchFieldInlineWrapperStyles}
+						width="inline"
 					/>
 					<SegmentedControl
 						value={selectedPeriod}

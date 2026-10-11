@@ -45,7 +45,7 @@ export function IrTabMenu({
 					}
 				/>
 			</Ariakit.MenuButton>
-			<MenuSurface variant="actions" className="sm:w-90">
+			<MenuSurface variant="actions" width="lg">
 				<div className="flex items-center gap-3 border-b border-subtle px-4 py-3">
 					<TokenLogo name={dashboard.entityName} kind="token" size={28} alt={`Logo of ${dashboard.entityName}`} />
 					<div className="flex min-w-0 flex-col">

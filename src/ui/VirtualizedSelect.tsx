@@ -4,19 +4,14 @@ import { matchSorter } from 'match-sorter'
 import { type ReactNode, type Ref, startTransition, useId, useMemo, useRef, useState } from 'react'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { ComboboxSelectTrigger, selectTriggerStyles } from './ComboboxSelectTrigger'
-import { Icon } from './Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from './Input'
+import { Check } from './internal/Check'
+import { popoverMeasuredRowStyles, popoverScrollAreaStyles } from './internal/Popover'
 import { isSearchable } from './internal/searchThreshold'
 import { getSelectAllState, SELECT_ALL_VALUE, SelectAllContent } from './internal/SelectAll'
 import { Logo } from './Logo'
-import {
-	popoverMeasuredRowStyles,
-	popoverMultiSelectCheckStyles,
-	popoverScrollAreaStyles,
-	popoverSingleSelectCheckStyles
-} from './Popover'
 import { PopoverHeader } from './PopoverHeader'
 import { ComboboxSurface } from './PopoverSurface'
+import { SearchField } from './SearchField'
 import { BusyGlyph, InlineLoading } from './Status'
 
 /* ----------------------------------------------------------------------------
@@ -109,9 +104,6 @@ function estimateRowHeight(option: VirtualizedSelectOption | null, startsGroup: 
 	return (twoLines ? 49 : phone ? 44 : 33) + (startsGroup ? 32 : 0)
 }
 
-// A field's list matches the field, but never narrower than a readable row: fields sit in two-column filter grids.
-const FIELD_SURFACE_WIDTH = 'w-[max(16rem,var(--popover-anchor-width))]'
-
 /** The typed search. Server-searched pickers also hear it through `onSearchChange`. */
 function useSearch(onSearchChange: ((value: string) => void) | undefined) {
 	const [search, setSearch] = useState('')
@@ -137,19 +129,6 @@ function filterOptions<T extends string>(
 ) {
 	if (serverSearch || !search) return options
 	return matchSorter(options, search, { keys: ['label', 'value', 'group'], threshold: matchSorter.rankings.CONTAINS })
-}
-
-function SearchInput({ label }: { label: string }) {
-	return (
-		<div className="relative">
-			<Icon name="search" className={searchFieldIconStyles} aria-hidden="true" />
-			<Ariakit.ComboboxInput
-				aria-label={`Search ${label}`}
-				placeholder="Search…"
-				render={<Input className={searchFieldInputPlacementStyles} />}
-			/>
-		</div>
-	)
 }
 
 function LogoSlot({ option, size, reserve }: { option: VirtualizedSelectOption; size: number; reserve: boolean }) {
@@ -277,16 +256,7 @@ function OptionList({
 								>
 									<OptionContent option={option} reserveLogo={reserveLogo} />
 									<Ariakit.ComboboxItemSelected>
-										{(selected) => (
-											<span
-												aria-hidden
-												className={
-													multiple ? popoverMultiSelectCheckStyles(selected) : popoverSingleSelectCheckStyles(selected)
-												}
-											>
-												{selected ? <Icon name="check" className="size-3" aria-hidden /> : null}
-											</span>
-										)}
+										{(selected) => <Check kind={multiple ? 'box' : 'tick'} checked={selected} className="ml-auto" />}
 									</Ariakit.ComboboxItemSelected>
 								</Ariakit.ComboboxItem>
 							)}
@@ -416,9 +386,13 @@ function PickerSurface({
 		<ComboboxSurface
 			variant={searchable ? 'list' : 'panel'}
 			heading={label}
-			className={`${variant === 'chip' ? 'w-72' : FIELD_SURFACE_WIDTH}`}
+			width={variant === 'chip' ? 'md' : 'trigger'}
 		>
-			<PopoverHeader search={searchable ? <SearchInput label={label} /> : null}>{header}</PopoverHeader>
+			<PopoverHeader
+				search={searchable ? <SearchField combobox label={`Search ${label}`} placeholder="Search…" /> : null}
+			>
+				{header}
+			</PopoverHeader>
 			{children}
 		</ComboboxSurface>
 	)

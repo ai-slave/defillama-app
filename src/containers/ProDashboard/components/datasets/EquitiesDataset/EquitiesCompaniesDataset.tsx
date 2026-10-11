@@ -21,7 +21,6 @@ import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashbo
 import { fetchProDashboardProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
 import { PRO_EQUITIES_COMPANIES_QUERY_KEY } from '~/containers/ProDashboard/tableQueryKeys'
 import { Change } from '~/ui/Change'
-import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { SearchField } from '~/ui/SearchField'
 import type { CsvCell } from '~/utils/csvCell'
 import { downloadCSV } from '~/utils/download'
@@ -271,7 +270,7 @@ export function EquitiesCompaniesDataset() {
 							value={searchValue}
 							onChange={setSearchValue}
 							placeholder="Search companies…"
-							className={searchFieldInlineWrapperStyles}
+							width="inline"
 						/>
 					</div>
 				</div>

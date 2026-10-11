@@ -4,10 +4,10 @@ import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
 import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
-import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
+import { Logo } from '~/ui/Logo'
 import { Tooltip } from '~/ui/Tooltip'
 import { geckoTokenIconUrl, letterLogoDataUri } from '~/utils/icons'
 import { GetCardButton } from './GetCardButton'
@@ -274,7 +274,12 @@ export function buildCardsColumns(
 								)}
 							</Button>
 						) : null}
-						<TokenLogo src={card.logo} fallbackSrc={letterLogoDataUri(card.cardName)} alt={`${card.cardName} logo`} />
+						<Logo
+							size={24}
+							src={card.logo}
+							fallbackSrc={letterLogoDataUri(card.cardName)}
+							alt={`${card.cardName} logo`}
+						/>
 						{/* The name opens the card page; the Get pill beside it is the one way to the issuer. */}
 						<div className="flex min-w-0 flex-1 items-center gap-1">
 							{reference.detailsHrefByIssuer[card.parentId] ? (
@@ -372,7 +377,8 @@ export function buildCardsColumns(
 				return (
 					<span className="flex items-center gap-1.5">
 						{geckoId ? (
-							<TokenLogo
+							<Logo
+								size={24}
 								src={geckoTokenIconUrl(geckoId)}
 								fallbackSrc={letterLogoDataUri(currency)}
 								alt={`${currency} logo`}

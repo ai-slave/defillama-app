@@ -1,5 +1,4 @@
 import {
-	Combobox,
 	ComboboxItem,
 	ComboboxList,
 	ComboboxProvider,
@@ -13,16 +12,9 @@ import { useDeferredValue, useId, useMemo, useRef, useState } from 'react'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { NoResults } from '~/ui/NoResults'
-import {
-	popoverMeasuredRowStyles,
-	popoverRowStyles,
-	popoverScrollAreaStyles,
-	popoverSingleSelectCheckStyles
-} from '~/ui/Popover'
 import { PopoverHeader } from '~/ui/PopoverHeader'
-import { PopoverSurface } from '~/ui/PopoverSurface'
+import { PopoverList, PopoverRow, PopoverSurface, type SurfaceWidth } from '~/ui/PopoverSurface'
 import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { useAppMetadata } from '../../AppMetadataContext'
@@ -96,11 +88,11 @@ const WINDOW_LABELS = Object.fromEntries(WINDOW_OPTIONS.map((option) => [option.
 type MetricToken = 'aggregator' | 'metric' | 'subject' | 'window'
 
 // From `sm` the popover sits beside its token at these widths; on phones it is a full-width drawer.
-const TOKEN_POPOVERS: Record<MetricToken, { heading: string; width: string }> = {
-	aggregator: { heading: 'Aggregation', width: 'w-[260px]' },
-	metric: { heading: 'Metric', width: 'w-80' },
-	subject: { heading: 'Subject', width: 'w-[360px]' },
-	window: { heading: 'Time window', width: 'w-[260px]' }
+const TOKEN_POPOVERS: Record<MetricToken, { heading: string; width: SurfaceWidth }> = {
+	aggregator: { heading: 'Aggregation', width: 'sm' },
+	metric: { heading: 'Metric', width: 'lg' },
+	subject: { heading: 'Subject', width: 'lg' },
+	window: { heading: 'Time window', width: 'sm' }
 }
 
 interface MetricSentenceBuilderProps {
@@ -463,25 +455,23 @@ export function MetricSentenceBuilder({
 								/>
 							}
 						/>
-						<div className={popoverScrollAreaStyles}>
+						<PopoverList>
 							{baseMetricTypes.length === 0 ? <NoResults>No metrics available.</NoResults> : null}
 							{baseMetricTypes.length > 0 && filteredMetrics.length === 0 ? (
 								<NoResults>No metrics match that search.</NoResults>
 							) : null}
 							{filteredMetrics.map((value) => (
-								<button
+								<PopoverRow
 									key={value}
-									type="button"
-									className={`${popoverRowStyles} w-full text-left`}
+									aria-pressed={value === metricType}
+									check="tick"
+									checked={value === metricType}
 									onClick={() => handleSelectMetric(value)}
 								>
 									<span className="truncate">{getProDashboardChartTypeConfig(value)?.title || value}</span>
-									<span aria-hidden className={popoverSingleSelectCheckStyles(value === metricType)}>
-										<Icon name="check" className="size-3" aria-hidden />
-									</span>
-								</button>
+								</PopoverRow>
 							))}
-						</div>
+						</PopoverList>
 					</>
 				)
 			case 'subject':
@@ -489,15 +479,12 @@ export function MetricSentenceBuilder({
 					<ComboboxProvider store={subjectCombobox}>
 						<PopoverHeader
 							search={
-								<div className="relative">
-									<Icon name="search" className={searchFieldIconStyles} />
-									<Combobox
-										autoFocus
-										placeholder={subjectTab === 'chain' ? 'Search chains…' : 'Search protocols…'}
-										render={<Input className={searchFieldInputPlacementStyles} />}
-										aria-label={subjectTab === 'chain' ? 'Search chains' : 'Search protocols'}
-									/>
-								</div>
+								<SearchField
+									combobox
+									autoFocus
+									label={subjectTab === 'chain' ? 'Search chains' : 'Search protocols'}
+									placeholder={subjectTab === 'chain' ? 'Search chains…' : 'Search protocols…'}
+								/>
 							}
 						>
 							<div className="px-3 pb-2">
@@ -521,27 +508,24 @@ export function MetricSentenceBuilder({
 									if (!variable) return null
 									const bound = subjectParameter.boundVariable?.id === variable.id
 									return (
-										<button
+										<PopoverRow
 											key={option.value}
-											type="button"
 											aria-pressed={bound}
+											check="tick"
+											checked={bound}
 											onClick={() => handleSubjectParameterSelect(variable.id, variable.value)}
 											data-umami-event="dashboard-parameter-bind-metric-subject"
-											className={`${popoverRowStyles} w-full text-left`}
 										>
 											<span className="min-w-0 flex-1 truncate">{variable.label}</span>
 											<span className="shrink-0 body-sm text-tertiary">{option.description}</span>
-											<span aria-hidden className={popoverSingleSelectCheckStyles(bound)}>
-												<Icon name="check" className="size-3" aria-hidden />
-											</span>
-										</button>
+										</PopoverRow>
 									)
 								})}
 							</div>
 						) : null}
 						{subjectTab === 'chain' ? (
 							filteredChainOptions.length > 0 ? (
-								<ComboboxList ref={chainListRef} className={popoverScrollAreaStyles}>
+								<PopoverList render={<ComboboxList ref={chainListRef} />}>
 									<div className="relative w-full" style={{ height: chainVirtualizer.totalSize }}>
 										{chainVirtualizer.items.map((virtualRow) => {
 											const option = filteredChainOptions[virtualRow.index]!
@@ -554,14 +538,14 @@ export function MetricSentenceBuilder({
 													className="absolute inset-x-0 top-0"
 													style={{ transform: `translateY(${virtualRow.start}px)` }}
 												>
-													<ComboboxItem
-														value={option.value}
-														setValueOnClick={false}
+													<PopoverRow
+														render={<ComboboxItem value={option.value} setValueOnClick={false} />}
+														check="tick"
+														checked={metricChain === option.value}
 														onClick={() => {
 															handleChainSelect(option)
 															closePopover()
 														}}
-														className={popoverMeasuredRowStyles}
 													>
 														<span className="flex min-w-0 items-center gap-2">
 															{iconUrl ? (
@@ -575,20 +559,17 @@ export function MetricSentenceBuilder({
 															) : null}
 															<span className="truncate">{option.label}</span>
 														</span>
-														<span aria-hidden className={popoverSingleSelectCheckStyles(metricChain === option.value)}>
-															<Icon name="check" className="size-3" aria-hidden />
-														</span>
-													</ComboboxItem>
+													</PopoverRow>
 												</div>
 											)
 										})}
 									</div>
-								</ComboboxList>
+								</PopoverList>
 							) : (
 								<NoResults>No chains found.</NoResults>
 							)
 						) : filteredProtocolOptions.length > 0 ? (
-							<ComboboxList ref={protocolListRef} className={popoverScrollAreaStyles}>
+							<PopoverList render={<ComboboxList ref={protocolListRef} />}>
 								<div className="relative w-full" style={{ height: protocolVirtualizer.totalSize }}>
 									{protocolVirtualizer.items.map((virtualRow) => {
 										const option = filteredProtocolOptions[virtualRow.index]!
@@ -601,14 +582,14 @@ export function MetricSentenceBuilder({
 												className="absolute inset-x-0 top-0"
 												style={{ transform: `translateY(${virtualRow.start}px)` }}
 											>
-												<ComboboxItem
-													value={option.value}
-													setValueOnClick={false}
+												<PopoverRow
+													render={<ComboboxItem value={option.value} setValueOnClick={false} />}
+													check="tick"
+													checked={metricProtocol === option.value}
 													onClick={() => {
 														handleProtocolSelect(option)
 														closePopover()
 													}}
-													className={popoverMeasuredRowStyles}
 												>
 													<span className={`flex min-w-0 items-center gap-2 ${option.isChild ? 'pl-4' : ''}`}>
 														{iconUrl ? (
@@ -627,15 +608,12 @@ export function MetricSentenceBuilder({
 															{option.isChild ? <span className="body-sm text-tertiary">Child protocol</span> : null}
 														</span>
 													</span>
-													<span aria-hidden className={popoverSingleSelectCheckStyles(metricProtocol === option.value)}>
-														<Icon name="check" className="size-3" aria-hidden />
-													</span>
-												</ComboboxItem>
+												</PopoverRow>
 											</div>
 										)
 									})}
 								</div>
-							</ComboboxList>
+							</PopoverList>
 						) : (
 							<NoResults>No protocols found.</NoResults>
 						)}
@@ -724,7 +702,7 @@ export function MetricSentenceBuilder({
 					modal={false}
 					variant="list"
 					heading={TOKEN_POPOVERS[activeToken].heading}
-					className={TOKEN_POPOVERS[activeToken].width}
+					width={TOKEN_POPOVERS[activeToken].width}
 				>
 					{popoverContent}
 				</PopoverSurface>
@@ -733,8 +711,7 @@ export function MetricSentenceBuilder({
 	)
 }
 
-/** A pick list whose rows carry a label and a one-line description; the picked row shows the check. The rows skip
-    `content-visibility` (popoverMeasuredRowStyles): its placeholder is a one-line row's height. */
+/** A pick list whose rows carry a label and a one-line description; the picked row shows the check. */
 function DescribedOptionRows<T extends string>({
 	options,
 	selected,
@@ -747,20 +724,18 @@ function DescribedOptionRows<T extends string>({
 	return (
 		<>
 			{options.map((option) => (
-				<button
+				<PopoverRow
 					key={option.value}
-					type="button"
-					className={`${popoverMeasuredRowStyles} w-full text-left`}
+					aria-pressed={option.value === selected}
+					check="tick"
+					checked={option.value === selected}
 					onClick={() => onSelect(option.value)}
 				>
 					<span className="flex min-w-0 flex-col">
 						<span className="label-md">{option.label}</span>
 						<span className="body-sm text-tertiary">{option.description}</span>
 					</span>
-					<span aria-hidden className={popoverSingleSelectCheckStyles(option.value === selected)}>
-						<Icon name="check" className="size-3" aria-hidden />
-					</span>
-				</button>
+				</PopoverRow>
 			))}
 		</>
 	)

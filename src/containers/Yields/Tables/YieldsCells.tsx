@@ -16,7 +16,6 @@ import {
 	exitStatusLine,
 	exitTone
 } from '../domain/exitPresentation'
-import { InstantTooltip } from '../InstantTooltip'
 import { EXIT_STATUS_ID } from '../poolDetail/ExitReliabilityPanel'
 import { YIELD_PERCENT_OPTIONS } from '../poolDetail/format'
 import { HOW_WE_VERIFY_ID } from '../poolDetail/VerifiedApyPanel'
@@ -97,7 +96,7 @@ export function SupplyCapBar({ tvl, available }: { tvl: number | null; available
 		? 'No capacity for new deposits — pool is at its supply cap'
 		: `${formatUsd(available, { compact: true, compactSuffix: 'lowercase' })} can still be deposited — supply cap is ~${formatPercent(fill, { input: 'fraction', maximumFractionDigits: 0 })} utilized`
 	return (
-		<InstantTooltip content={label} className="ml-auto w-fit max-w-full justify-end">
+		<Tooltip instant placement="top" content={label} className="ml-auto w-fit max-w-full justify-end">
 			<span
 				role="img"
 				aria-label={label}
@@ -108,7 +107,7 @@ export function SupplyCapBar({ tvl, available }: { tvl: number | null; available
 					style={{ width: `${fill * 100}%` }}
 				/>
 			</span>
-		</InstantTooltip>
+		</Tooltip>
 	)
 }
 
@@ -236,8 +235,8 @@ export function EarnApyCell({ row, median }: { row: IYieldTableRow; median: Earn
 	// One anchor, one card, so nothing in the cell competes for the cursor.
 	const anchored = (onUpgrade?: () => void) => (
 		<Hovercard
-			contentClassName="p-3"
 			placement="right-start"
+			width={onUpgrade || row.verified ? 'md' : 'fit'}
 			content={
 				<MeasuredCard
 					rows={cardRows}
@@ -274,13 +273,9 @@ export function ExitCell({ row }: { row: IYieldTableRow }) {
 			<LockedCell placement="exit-cell">
 				{(onUpgrade) => (
 					<Hovercard
-						contentClassName="p-3"
 						placement="right-start"
-						content={
-							<span className="flex w-80 max-w-(--popover-available-width) flex-col">
-								<MeasuredExitOffer poolName={row.pool} onUpgrade={onUpgrade} />
-							</span>
-						}
+						width="md"
+						content={<MeasuredExitOffer poolName={row.pool} onUpgrade={onUpgrade} />}
 					>
 						<span className="flex items-center gap-1.5 text-secondary">
 							<span className="underline decoration-dotted">•••</span>
@@ -314,10 +309,10 @@ export function ExitCell({ row }: { row: IYieldTableRow }) {
 	// A hovercard rather than a tooltip: the footer links out to the pool page's exit ledger.
 	return (
 		<Hovercard
-			contentClassName="p-3"
 			placement="right-start"
+			width="md"
 			content={
-				<span className="flex w-80 max-w-(--popover-available-width) flex-col gap-2 text-left body-sm">
+				<span className="flex flex-col gap-2 text-left">
 					{/* The status is the headline, its stamp beside it as in the APY card; the line itself is the
 					    APY card's exit footer, so the two never word one fact differently. */}
 					<span className="flex items-center justify-between gap-3">
@@ -487,7 +482,6 @@ export function TotalApyCell({
 		<Hovercard
 			placement="right-start"
 			className="max-w-full"
-			contentClassName="p-3"
 			content={
 				<span className="grid grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-1 whitespace-nowrap">
 					{tipRows.map((tip) => (
@@ -564,7 +558,6 @@ export function SignedApyCell({
 		<Hovercard
 			placement="right-start"
 			className="max-w-full"
-			contentClassName="max-w-96 p-3"
 			content={
 				<span className="grid grid-cols-[1fr_auto_auto] items-baseline gap-x-4 gap-y-1 whitespace-nowrap">
 					{note ? (
@@ -622,12 +615,14 @@ export function AvailableCell({
 	// cell, so the (centered, placement='top') tooltip centers over the content rather than the full
 	// cell width — otherwise the anchor spans the whole right-aligned cell and the tooltip drifts left.
 	return (
-		<InstantTooltip
+		<Tooltip
+			instant
+			placement="top"
 			content={`${formatPercent(filledPct, { input: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false })} utilized`}
 			className="ml-auto w-fit max-w-full justify-end"
 		>
 			{body}
-		</InstantTooltip>
+		</Tooltip>
 	)
 }
 

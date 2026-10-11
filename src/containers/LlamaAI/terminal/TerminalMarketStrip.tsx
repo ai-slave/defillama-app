@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { type RefObject, useEffect, useId, useRef, useState } from 'react'
-import { TokenLogo } from '~/components/TokenLogo'
 import { AI_SERVER } from '~/constants'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
+import { Logo } from '~/ui/Logo'
 import { Skeleton } from '~/ui/Skeleton'
 import { InlineStatus } from '~/ui/Status'
 import { InlineStatStrip, type InlineStatStripItem } from '~/ui/SummaryStats'
@@ -107,7 +107,7 @@ function MarketIdentity({ symbol, maxLeverage }: { symbol: string; maxLeverage?:
 	const dex = perpDex(symbol)
 	return (
 		<span className="flex items-center gap-2">
-			<TokenLogo src={coinIconUrl(symbol)} size={20} />
+			<Logo src={coinIconUrl(symbol)} size={20} />
 			<span className="label-md">{pairName(symbol)}</span>
 			{dex ? <Tag>{dex}</Tag> : null}
 			{maxLeverage ? <Tag>{maxLeverage}x</Tag> : null}

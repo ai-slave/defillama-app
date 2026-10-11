@@ -10,8 +10,7 @@ import {
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { popoverMenuItemStyles, popoverMultiSelectCheckStyles } from '~/ui/Popover'
-import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
+import { MenuItem, MenuSeparator, MenuSurface } from '~/ui/PopoverSurface'
 import { BusyGlyph } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { copyTableImage, downloadTableImage, type TableImageInput } from './renderTableImage'
@@ -193,18 +192,18 @@ export function TableImageButtons({
 						<span>Copy image</span>
 					</MenuItem>
 					{watermarkMode === 'preference' && !hideWatermarkItem ? (
-						<Ariakit.MenuItemCheckbox
-							name="watermark"
-							checked={watermarkEnabled}
-							onChange={toggleWatermark}
-							hideOnClick={false}
-							className={`${popoverMenuItemStyles} border-t border-subtle`}
-						>
-							<span>Include watermark</span>
-							<span className={popoverMultiSelectCheckStyles(watermarkEnabled)} aria-hidden>
-								{watermarkEnabled ? <Icon name="check" className="size-3" aria-hidden /> : null}
-							</span>
-						</Ariakit.MenuItemCheckbox>
+						<>
+							<MenuSeparator />
+							<MenuItem
+								kind="checkbox"
+								name="watermark"
+								checked={watermarkEnabled}
+								onChange={toggleWatermark}
+								hideOnClick={false}
+							>
+								Include watermark
+							</MenuItem>
+						</>
 					) : null}
 				</MenuSurface>
 			</Ariakit.MenuProvider>

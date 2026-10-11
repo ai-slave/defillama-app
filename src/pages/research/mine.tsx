@@ -255,7 +255,7 @@ function MyArticlesContent() {
 							value={searchInput}
 							onChange={setSearchInput}
 							placeholder="Search title, slug…"
-							className="min-w-0 flex-1 sm:w-56 sm:flex-none"
+							width="inline"
 						/>
 						<Select
 							allValues={SORT_OPTIONS}
@@ -376,6 +376,7 @@ function MyArticlesContent() {
 											<h3 className="truncate title-lg tracking-tight text-primary group-hover:text-link">
 												{article.title || 'Untitled'}
 											</h3>
+											{/* Status badges on the brand tint, not a selected state. */}
 											{scheduled ? (
 												<span
 													className="rounded-sm bg-brand-muted px-1.5 py-0.5 label-xs tracking-[0.12em] text-link uppercase"

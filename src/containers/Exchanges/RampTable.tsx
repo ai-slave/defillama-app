@@ -6,7 +6,6 @@ import { TableColumnSelect } from '~/components/Table/search/TableColumnSelect'
 import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
 import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { Card } from '~/ui/Card'
-import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
@@ -92,11 +91,7 @@ export function RampTable({ catalog }: { catalog: RampCatalogModel }) {
 							size="md"
 						/>
 					</TableToolbarControlGroup>
-					<TableSearchInput
-						columnId="name"
-						placeholder="Search exchanges…"
-						className={searchFieldInlineWrapperStyles}
-					/>
+					<TableSearchInput columnId="name" placeholder="Search exchanges…" width="inline" />
 					<TableColumnSelect />
 					<TableCsvExport filename="fiat-ramp-costs" includeHiddenColumns />
 				</TableToolbar>

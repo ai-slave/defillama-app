@@ -18,7 +18,6 @@ import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { ChartPanelToolbar } from '~/ui/ChartPanel'
-import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { PanelTitle, PanelHeader, Panel } from '~/ui/Panel'
 import { FailedDataNote } from '~/ui/ScopeNote'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
@@ -209,11 +208,7 @@ export function OraclesByChain({
 							<PanelTitle as="h1" className="whitespace-nowrap">
 								Oracle rankings
 							</PanelTitle>
-							<TableSearchInput
-								columnId="name"
-								placeholder="Search oracles…"
-								className={searchFieldInlineWrapperStyles}
-							/>
+							<TableSearchInput columnId="name" placeholder="Search oracles…" width="inline" />
 							<TableCsvExport filename="oracle-rankings" />
 						</PanelHeader>
 						<VirtualSearchTableView />

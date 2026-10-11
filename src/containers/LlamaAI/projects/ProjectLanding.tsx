@@ -255,7 +255,7 @@ export function ProjectLanding({
 								>
 									<Icon name="ellipsis" className="size-4" />
 								</Ariakit.MenuButton>
-								<MenuSurface variant="actions" gutter={6} className="w-52">
+								<MenuSurface variant="actions" gutter={6} width="sm">
 									<MenuItem onClick={renameStore.show}>Rename project</MenuItem>
 									<MenuItem destructive onClick={() => setConfirmDelete(true)}>
 										Delete project
@@ -266,6 +266,7 @@ export function ProjectLanding({
 					</header>
 
 					<div className="flex items-center gap-2 pb-2">
+						{/* An icon chip on the brand tint, not a selected state. */}
 						<div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-muted text-link">
 							<Icon name="folder" className="size-4" />
 						</div>

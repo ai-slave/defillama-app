@@ -29,6 +29,8 @@ Each recipe above is a call or two at the site, so it stays inline: a dismiss's 
 
 A dialog records the control that opened it, and a click inside a dialog focuses the pressed button first, as Chrome does, so Safari and Firefox return focus to the right place too. Never read `Ariakit.useDialogContext()` to find "the dialog": inside a `TabPanel` it returns the panel's store. Use what the surface provides (`DialogCancelButton`, `DialogBackButton`, `useDialogLeave`).
 
+A part decides what to render from its props, never from store state its own render sets (Ariakit's `anchorElement`, `disclosureElement`, `popoverElement`). The element registers itself when it mounts, that update renders the part again, a different branch mounts a new element that registers in turn, and React stops with "Maximum update depth exceeded". `Hovercard` reads whether its anchor is a button from `render`, so the server and the first client render agree too.
+
 ## Errors and retries
 
 | When                                                 | Use                                                                                                                                         | Example                                                                        |

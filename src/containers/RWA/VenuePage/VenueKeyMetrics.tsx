@@ -1,4 +1,4 @@
-import { TokenLogo } from '~/components/TokenLogo'
+import { Logo } from '~/ui/Logo'
 import { Tag } from '~/ui/Tag'
 import { RWAKpiCard } from '../kpi/KpiCard'
 import { getRwaKpiCsvName } from '../kpi/kpiRows'
@@ -27,7 +27,7 @@ export function RWAVenueKeyMetrics({ venue, logo, venueSlug, kpi, venueType, tak
 			identity={
 				<div className="flex flex-wrap items-center gap-2">
 					<h1 className="flex items-center gap-2 heading-sm">
-						{logo ? <TokenLogo src={logo} size={24} alt={`${venue} logo`} /> : null}
+						{logo ? <Logo src={logo} size={24} alt={`${venue} logo`} /> : null}
 						<span>{venue}</span>
 					</h1>
 					{venueType ? <Tag>{venueType}</Tag> : null}

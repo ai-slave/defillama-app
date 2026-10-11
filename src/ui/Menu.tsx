@@ -2,7 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { type ReactElement, useMemo } from 'react'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { Button } from './Button'
-import { popoverRowWithBorderStyles } from './Popover'
+import { popoverRowWithBorderStyles } from './internal/Popover'
 import { MenuSurface } from './PopoverSurface'
 
 /* Menu — a button that opens a list of strings: external URLs that open in a new tab (`isExternal`, several websites or

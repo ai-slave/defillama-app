@@ -2,6 +2,7 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { tabTo } from '~/utils/testing/keyboard'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { MobileToolsPopover } from '../MobileToolsPopover'
 
@@ -93,4 +94,41 @@ test('back from Explore returns to the tools menu', async () => {
 	await click(button('Back to mobile tools')!)
 	await waitForUi(() => expect(exploreDrawer()).toBeNull())
 	expect(menuItem('Upload files')).toBeTruthy()
+})
+
+async function press(key: string) {
+	const element = document.activeElement as HTMLElement
+	await act(async () => {
+		const down = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })
+		element.dispatchEvent(down)
+		if (key === 'Enter' && !down.defaultPrevented && element instanceof HTMLButtonElement) element.click()
+		element.dispatchEvent(new KeyboardEvent('keyup', { key, bubbles: true, cancelable: true }))
+		await new Promise((resolve) => setTimeout(resolve, 30))
+	})
+}
+
+test('Explore opened by keyboard starts on its back button with its tooltip closed, and one Escape goes back', async () => {
+	await act(async () =>
+		root.render(
+			<MobileToolsPopover
+				mode="quick"
+				setMode={vi.fn()}
+				isPending={false}
+				onPromptSelect={promptSelected}
+				onImageUploadClick={vi.fn()}
+			/>
+		)
+	)
+	await tabTo(button('Open mobile tools')!)
+	await press('Enter')
+	await waitForUi(() => expect(document.activeElement?.getAttribute('role')).toBe('menuitem'))
+	await act(async () => menuItem('Explore')!.focus())
+	await press('Enter')
+	await waitForUi(() => expect(document.activeElement).toBe(button('Back to mobile tools')))
+	expect(document.querySelector('[role="tooltip"]')).toBeNull()
+	await press('Escape')
+	await waitForUi(() => expect(exploreDrawer()).toBeNull())
+	// One level back: the tools menu stays open on the Explore row.
+	expect(document.activeElement).toBe(menuItem('Explore'))
+	expect(menuItem('Explore')!.getAttribute('aria-expanded')).toBe('false')
 })

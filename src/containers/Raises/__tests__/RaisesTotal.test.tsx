@@ -3,6 +3,7 @@ import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
+import { tabTo } from '~/utils/testing/keyboard'
 import { RaisesTotal } from '../RaisesTotal'
 import { summarizeRaises } from '../summary'
 
@@ -33,8 +34,8 @@ describe('fundraising totals', () => {
 	)
 
 	test.each([
-		{ undisclosedCount: 1, interaction: 'focus' },
-		{ undisclosedCount: 2, interaction: 'focus' },
+		{ undisclosedCount: 1, interaction: 'Tab' },
+		{ undisclosedCount: 2, interaction: 'Tab' },
 		{ undisclosedCount: 1, interaction: 'touch' }
 	])('explains $undisclosedCount undisclosed rounds on $interaction', async ({ undisclosedCount, interaction }) => {
 		const container = document.createElement('div')
@@ -44,10 +45,8 @@ describe('fundraising totals', () => {
 			await act(async () => root.render(<RaisesTotal totalUsd={16_500_000} undisclosedCount={undisclosedCount} />))
 			const trigger = container.querySelector<HTMLElement>('[tabindex="0"]')
 			expect(trigger?.textContent).toBe('$16.5m')
-			await act(async () => {
-				if (interaction === 'focus') trigger?.focus()
-				else trigger?.dispatchEvent(new Event('touchstart', { bubbles: true }))
-			})
+			if (interaction === 'Tab') await tabTo(trigger!)
+			else await act(async () => trigger?.dispatchEvent(new Event('touchstart', { bubbles: true })))
 			expect(document.querySelector('[role="tooltip"]')?.textContent).toContain(`Excludes ${undisclosedCount}`)
 			expect(document.querySelector('[role="tooltip"]')?.textContent).toContain('not the complete total')
 		} finally {

@@ -78,6 +78,7 @@ export function BalanceSettings({ result, balanceBefore }: { result?: TopupResul
 						Couldn't load your balance.
 					</InlineStatus>
 				) : result === 'success' && returnState !== 'hidden' ? (
+					// A success callout on the brand tint, not a selected state.
 					<div className="space-y-3 rounded-lg border border-subtle bg-brand-muted p-4">
 						<div role="status" className="space-y-1 body-sm">
 							<p className="font-semibold text-primary">

@@ -329,6 +329,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 				) : null}
 				<span className="truncate">{session.title}</span>
 			</Ariakit.Button>
+			{/* The actions strip takes its row's fill, the active row's brand tint included, so it covers the title. */}
 			<div className="pointer-events-none absolute inset-y-0 right-0 flex items-center justify-center gap-0.5 rounded-r-md bg-surface-elevated-1 px-1 opacity-0 group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100 group-data-[active=true]:bg-brand-muted">
 				<Tooltip
 					content="Edit session title"

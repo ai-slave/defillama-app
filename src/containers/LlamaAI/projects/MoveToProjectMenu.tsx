@@ -26,10 +26,9 @@ export function MoveToProjectMenuItem({ sessionId, currentProjectId = null }: Mo
 
 	return (
 		<Ariakit.MenuProvider store={menu}>
-			<MenuItem render={<Ariakit.MenuButton />}>
+			<MenuItem kind="submenu">
 				<Icon name="folder-plus" className="size-3.5 shrink-0" />
-				<span className="flex-1 text-left">Move to project</span>
-				<Icon name="chevron-right" className="size-3.5 shrink-0 text-tertiary" />
+				<span>Move to project</span>
 			</MenuItem>
 			<MenuSurface variant="nested" composite={false} aria-label="Move to project" gutter={4}>
 				<NestedDrawerHeader

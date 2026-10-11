@@ -8,7 +8,6 @@ import {
 } from '~/components/Table/search/columnSelect'
 import { prepareTableCsv } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
-import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -115,7 +114,7 @@ function RWATableView({
 							value={searchValue}
 							onChange={setSearchValue}
 							placeholder={section === 'perps' ? 'Search markets…' : 'Search assets…'}
-							className={searchFieldInlineWrapperStyles}
+							width="inline"
 						/>
 						{periodSwitch && onPeriodChange ? (
 							<SegmentedControl

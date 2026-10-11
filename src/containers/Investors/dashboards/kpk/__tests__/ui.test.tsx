@@ -3,7 +3,9 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { LedgerTile } from '../ui'
+import { tabTo } from '~/utils/testing/keyboard'
+import { waitForUi } from '~/utils/testing/waitForUi'
+import { InfoTip, LedgerTile } from '../ui'
 
 const TX_COUNT_REF = { label: 'KPK transaction count — Dune', url: 'https://dune.com/kpk/kpk-tx-count' }
 
@@ -82,5 +84,40 @@ describe('LedgerTile', () => {
 
 		expect(container.querySelectorAll('a')).toHaveLength(1)
 		expect(container.querySelector('a[href="https://example.com/mandates"]')).not.toBeNull()
+	})
+})
+
+describe('InfoTip', () => {
+	let container: HTMLDivElement
+	let root: Root
+
+	beforeEach(() => {
+		;(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+		container = document.createElement('div')
+		document.body.appendChild(container)
+		root = createRoot(container)
+	})
+
+	afterEach(async () => {
+		await act(async () => root.unmount())
+		container.remove()
+	})
+
+	test('a note is a named tab stop that opens on focus, and a missing note draws nothing', async () => {
+		const note = 'Money-weighted over every priced position-day'
+		await act(async () =>
+			root.render(
+				<>
+					<InfoTip text={note} />
+					<InfoTip text={undefined} />
+				</>
+			)
+		)
+		const marks = container.querySelectorAll('[role="img"]')
+		expect([...marks].map((mark) => [mark.getAttribute('aria-label'), (mark as HTMLElement).tabIndex])).toEqual([
+			[note, 0]
+		])
+		await tabTo(marks[0] as HTMLElement)
+		await waitForUi(() => expect(document.querySelector('[role="tooltip"]')?.textContent).toBe(note))
 	})
 })

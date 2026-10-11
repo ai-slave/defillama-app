@@ -8,7 +8,6 @@ import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Card } from '~/ui/Card'
-import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { PanelTitle, PanelHeader } from '~/ui/Panel'
 import { formatUsd } from '~/utils/numberFormat'
 import type { IProtocolTotalValueLostInHacksByProtocol } from './types'
@@ -86,7 +85,7 @@ export function TotalValueLostContainer({ protocols }: IProtocolTotalValueLostIn
 					<PanelTitle as="h1" className="whitespace-nowrap">
 						Total value lost in hacks
 					</PanelTitle>
-					<TableSearchInput columnId="Name" placeholder="Search…" className={searchFieldInlineWrapperStyles} />
+					<TableSearchInput columnId="Name" placeholder="Search…" width="inline" />
 					<TableColumnSelect />
 					<TableCsvExport filename="total-value-lost-in-hacks" />
 				</PanelHeader>

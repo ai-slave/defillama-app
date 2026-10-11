@@ -4,8 +4,7 @@ import { ModeUsage } from '~/containers/LlamaAI/components/input/ModeToggle'
 import type { AgenticAnswerMode, FactCheckedUsage, ResearchUsage } from '~/containers/LlamaAI/types'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { popoverMenuItemStyles } from '~/ui/Popover'
-import { NestedDrawerHeader, PopoverSurface, MenuSeparator, MenuSurface } from '~/ui/PopoverSurface'
+import { MenuItem, MenuSeparator, MenuSurface, NestedDrawerHeader, PopoverSurface } from '~/ui/PopoverSurface'
 
 interface MobileToolsPopoverProps {
 	mode: AgenticAnswerMode
@@ -20,8 +19,6 @@ interface MobileToolsPopoverProps {
 	isStopping?: boolean
 	walkthroughActive?: boolean
 }
-
-const itemClassName = `${popoverMenuItemStyles} w-full gap-3 text-left`
 
 export function MobileToolsPopover({
 	mode,
@@ -72,20 +69,15 @@ export function MobileToolsPopover({
 				// while the drawer ignores a key pressed in the card, so the tour's layer counts as part of the drawer.
 				getPersistentElements={() => document.querySelectorAll('[data-walkthrough="tour-layer"]')}
 			>
-				<Ariakit.MenuItem
-					data-walkthrough="mobile-upload-item"
-					className={itemClassName}
-					hideOnClick={false}
-					onClick={handleImageUpload}
-				>
+				<MenuItem data-walkthrough="mobile-upload-item" hideOnClick={false} onClick={handleImageUpload}>
 					<Icon name="paperclip" className="size-4 shrink-0 text-secondary" />
 					<span>Upload files</span>
-				</Ariakit.MenuItem>
+				</MenuItem>
 
 				<MenuSeparator />
 
-				<Ariakit.MenuItemRadio
-					className={itemClassName}
+				<MenuItem
+					kind="radio"
 					hideOnClick={false}
 					name="answerMode"
 					value="quick"
@@ -93,12 +85,11 @@ export function MobileToolsPopover({
 					data-umami-event="llamaai-quick-mode-toggle"
 				>
 					<Icon name="sparkles" className="size-4 shrink-0 text-secondary" />
-					<span className="flex-1">Quick</span>
-					{mode === 'quick' ? <Icon name="check" className="size-3.5 shrink-0 text-link" /> : null}
-				</Ariakit.MenuItemRadio>
+					<span>Quick</span>
+				</MenuItem>
 
-				<Ariakit.MenuItemRadio
-					className={itemClassName}
+				<MenuItem
+					kind="radio"
 					hideOnClick={false}
 					name="answerMode"
 					value="fact_checked"
@@ -114,15 +105,12 @@ export function MobileToolsPopover({
 				>
 					<Icon name="check" className="size-4 shrink-0 text-secondary" />
 					<span className="flex-1">Fact-checked</span>
-					<span className="flex items-center gap-1.5">
-						<ModeUsage usage={factCheckedUsage} feature="fact_checked" />
-						{mode === 'fact_checked' ? <Icon name="check" className="size-3.5 shrink-0 text-link" /> : null}
-					</span>
-				</Ariakit.MenuItemRadio>
+					<ModeUsage usage={factCheckedUsage} feature="fact_checked" />
+				</MenuItem>
 
-				<Ariakit.MenuItemRadio
+				<MenuItem
+					kind="radio"
 					data-walkthrough="mobile-research-item"
-					className={itemClassName}
 					hideOnClick={false}
 					name="answerMode"
 					value="research"
@@ -131,33 +119,23 @@ export function MobileToolsPopover({
 				>
 					<Icon name="search" className="size-4 shrink-0 text-secondary" />
 					<span className="flex-1">Research</span>
-					<span className="flex items-center gap-1.5">
-						<ModeUsage usage={researchUsage} feature="research" />
-						{mode === 'research' ? <Icon name="check" className="size-3.5 shrink-0 text-link" /> : null}
-					</span>
-				</Ariakit.MenuItemRadio>
+					<ModeUsage usage={researchUsage} feature="research" />
+				</MenuItem>
 
 				<MenuSeparator />
 
 				{/* Scoped to the menu content, so closing the menu unmounts it and each open starts at the root. */}
 				<Ariakit.PopoverProvider placement="right-start">
-					<Ariakit.PopoverDisclosure
-						render={<Ariakit.MenuItem hideOnClick={false} />}
-						role="menuitem"
+					<MenuItem
+						kind="submenu"
+						render={<Ariakit.PopoverDisclosure />}
+						hideOnClick={false}
 						data-walkthrough="mobile-explore-item"
-						className={itemClassName}
 					>
 						<Icon name="layout-grid" className="size-4 shrink-0 text-secondary" />
-						<span className="flex-1">Explore</span>
-						<Icon name="chevron-right" className="size-4" />
-					</Ariakit.PopoverDisclosure>
-					<PopoverSurface
-						variant="nested"
-						gutter={4}
-						modal
-						aria-label="Explore AI capabilities"
-						className="overflow-hidden sm:w-[600px] sm:max-w-[calc(100vw-2rem)]"
-					>
+						<span>Explore</span>
+					</MenuItem>
+					<PopoverSurface variant="nested" gutter={4} modal aria-label="Explore AI capabilities" width="xl">
 						<ExploreHeader onCloseTools={menu.hideAll} />
 						<BrowserContent onPromptSelect={handlePromptSelect} hideDragHandle />
 					</PopoverSurface>

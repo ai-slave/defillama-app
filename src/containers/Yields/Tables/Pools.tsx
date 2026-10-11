@@ -5,7 +5,7 @@ import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
 import { BasicLink } from '~/components/Link'
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { StatusBadge } from '~/ui/StatusBadge'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition, Tooltip } from '~/ui/Tooltip'
 import { formatCompactNumber, formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { parseSelectedEarnColumns } from '../Filters/columnOptions'
 import { stabilityStatus, YIELD_PERCENT_OPTIONS } from '../poolDetail/format'
@@ -14,7 +14,6 @@ import { NameYield, PoolNameLockup } from './Name'
 import { PaginatedYieldsTable } from './PaginatedYieldsTable'
 import { Sparkline } from './Sparkline'
 import { hasSparkline } from './sparklineModel'
-import { TruncatedText } from './TruncatedText'
 import type { IYieldsTableProps, IYieldTableRow, YieldsTableAppearance } from './types'
 import { EarnApyCell, EmptyCell, ExitCell, RewardApyCell, SupplyCapBar, type EarnApyMedian } from './YieldsCells'
 
@@ -111,13 +110,15 @@ function createEarnColumns(
 				if (!value) return <EmptyCell />
 				const route = info.row.original.referenceTokenRoute
 				return (
-					<TruncatedText text={value}>
+					<Tooltip content={value} onlyWhenClipped render={<span className="block max-w-full truncate" />}>
 						{route ? (
 							<BasicLink href={route} target="_blank" rel="noopener noreferrer" className="hover:underline">
 								{value}
 							</BasicLink>
-						) : null}
-					</TruncatedText>
+						) : (
+							value
+						)}
+					</Tooltip>
 				)
 			},
 			meta: {
@@ -145,7 +146,13 @@ function createEarnColumns(
 			enableSorting: false,
 			cell: (info) => {
 				const value = info.getValue()
-				return value ? <TruncatedText text={value} /> : <EmptyCell />
+				return value ? (
+					<Tooltip content={value} onlyWhenClipped render={<span className="block max-w-full truncate" />}>
+						{value}
+					</Tooltip>
+				) : (
+					<EmptyCell />
+				)
 			},
 			meta: { headerClassName: 'w-[110px] min-w-[110px]' }
 		}),
@@ -328,11 +335,9 @@ function createEarnColumns(
 						</span>
 					)
 				return (
-					<Tooltip content={content} className="cursor-help justify-end" tabIndex={0}>
-						<span className={content ? 'underline decoration-dotted' : undefined}>
-							{formatCompactNumber(count, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
-						</span>
-					</Tooltip>
+					<Definition content={content} className="justify-end">
+						{formatCompactNumber(count, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+					</Definition>
 				)
 			},
 			meta: {
@@ -380,19 +385,15 @@ function createEarnColumns(
 				const riskLabel =
 					value >= 80 ? 'High concentration' : value >= 50 ? 'Medium concentration' : 'Low concentration'
 				return (
-					<Tooltip content={riskLabel} className="cursor-help justify-end" tabIndex={0}>
-						<span className="inline-flex items-center gap-1.5">
-							<span className={`size-2 shrink-0 rounded-full ${accentClass}`} />
-							<span className="underline decoration-dotted">
-								{formatPercent(value, {
-									input: 'percent',
-									minimumFractionDigits: 1,
-									maximumFractionDigits: 1,
-									useGrouping: false
-								})}
-							</span>
-						</span>
-					</Tooltip>
+					<Definition content={riskLabel} className="justify-end gap-1.5">
+						<span className={`size-2 shrink-0 rounded-full ${accentClass}`} />
+						{formatPercent(value, {
+							input: 'percent',
+							minimumFractionDigits: 1,
+							maximumFractionDigits: 1,
+							useGrouping: false
+						})}
+					</Definition>
 				)
 			},
 			meta: {

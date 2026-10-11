@@ -141,6 +141,7 @@ function EditorialTagSection({ definition }: { definition: EditorialTagDefinitio
 				<div>
 					<div className="flex items-center gap-2">
 						<h2 className="heading-sm text-primary">{definition.label}</h2>
+						{/* A label badge on the brand tint, not a selected state. */}
 						<span className="inline-flex items-center rounded-full bg-brand-muted px-2 py-0.5 label-xs tracking-[0.18em] text-link uppercase">
 							{definition.cardinality === 'singleton' ? '1 article' : 'Many articles'}
 						</span>

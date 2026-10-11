@@ -9,9 +9,9 @@ import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Card } from '~/ui/Card'
-import { searchFieldInlineWrapperStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { Logo } from '~/ui/Logo'
 import { TableToolbar } from '~/ui/Toolbar'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition, Tooltip } from '~/ui/Tooltip'
 import { formatDate, formatDateTime } from '~/utils/dateFormat'
 import { geckoTokenIconUrl, letterLogoDataUri } from '~/utils/icons'
 import {
@@ -94,7 +94,7 @@ export function buildPairColumns(
 				const ticker = base.toUpperCase()
 				return (
 					<span className="flex min-w-0 items-center gap-2">
-						<TokenLogo
+						<Logo
 							src={row.original.baseGeckoId ? geckoTokenIconUrl(row.original.baseGeckoId, 20) : null}
 							size={20}
 							fallbackSrc={letterLogoDataUri(base)}
@@ -223,17 +223,14 @@ export function buildPairColumns(
 						? null
 						: `${formatPercent(nvol.activeLiquidityShare, PERCENT_OPTIONS) ?? '–'} of the visible book`
 				return (
-					<Tooltip
+					<Definition
 						content={[`Band ±${formatPercent(nvol.band, PERCENT_OPTIONS) ?? '–'} of mid`, share]
 							.filter(Boolean)
 							.join(' · ')}
-						className="ms-auto w-fit cursor-help"
-						tabIndex={0}
+						className="ms-auto w-fit"
 					>
-						<span className="underline decoration-dotted">
-							{formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
-						</span>
-					</Tooltip>
+						{formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
+					</Definition>
 				)
 			},
 			meta: {
@@ -247,7 +244,7 @@ export function buildPairColumns(
 			header: definitions.depth2Usd.label,
 			cell: ({ row, getValue }) =>
 				capabilities.depth ? (
-					<Tooltip
+					<Definition
 						content={`Bid ${formatUsd(row.original.depthBid2Usd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'} · Ask ${formatUsd(row.original.depthAsk2Usd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}${
 							row.original.depthBidMaxDistance != null || row.original.depthAskMaxDistance != null
 								? ` · fetched to ${
@@ -261,13 +258,10 @@ export function buildPairColumns(
 									}`
 								: ''
 						}`}
-						className="ms-auto w-fit cursor-help"
-						tabIndex={0}
+						className="ms-auto w-fit"
 					>
-						<span className="underline decoration-dotted">
-							{formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
-						</span>
-					</Tooltip>
+						{formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
+					</Definition>
 				) : (
 					<UnsupportedMetric />
 				),
@@ -296,23 +290,21 @@ export function buildPairColumns(
 				if (segment === 'inverse_perp') return <UnsupportedMetric />
 				const nvol = row.original.normalizedVolume
 				return nvol ? (
-					<Tooltip
-						content={`${formatPercent(nvol.discountFraction, PERCENT_OPTIONS) ?? '–'} below ${formatUsd(nvol.reported, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'} reported · ${nvol.status}${
-							nvol.cap === 'oi' ? ' · capped by open interest' : nvol.cap === 'depth' ? ' · capped by book depth' : ''
-						}`}
-						className="ms-auto w-fit cursor-help"
-						tabIndex={0}
-					>
-						<span className="underline decoration-dotted">
+					<span className="ms-auto flex w-fit items-center">
+						<Definition
+							content={`${formatPercent(nvol.discountFraction, PERCENT_OPTIONS) ?? '–'} below ${formatUsd(nvol.reported, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'} reported · ${nvol.status}${
+								nvol.cap === 'oi' ? ' · capped by open interest' : nvol.cap === 'depth' ? ' · capped by book depth' : ''
+							}`}
+						>
 							{formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
-						</span>
-						{/* Unsigned gap to reported, outside the underline: normalized is never above it, the tooltip says "below". */}
+						</Definition>
+						{/* Unsigned gap to reported, beside the definition: normalized is never above it, the tooltip says "below". */}
 						{nvol.discountFraction > 0 ? (
 							<span className="ms-1 label-xs text-tertiary">
 								{formatPercent(nvol.discountFraction, PERCENT_OPTIONS)}
 							</span>
 						) : null}
-					</Tooltip>
+					</span>
 				) : (
 					'–'
 				)
@@ -391,21 +383,18 @@ export function buildPairColumns(
 						const value = getValue()
 						if (value == null) return <span className="text-tertiary">–</span>
 						return (
-							<Tooltip
+							<Definition
 								content={`${value > 0 ? 'Longs pay shorts. ' : value < 0 ? 'Shorts pay longs. ' : ''}Raw venue period: ${row.original.fundingPeriodHours ?? 'unknown'}h; normalized to 8h`}
-								className="ms-auto w-fit cursor-help"
-								tabIndex={0}
+								className="ms-auto w-fit"
 							>
-								<span className="underline decoration-dotted">
-									{formatPercent(value, {
-										input: 'fraction',
-										minimumFractionDigits: 4,
-										maximumFractionDigits: 4,
-										useGrouping: false,
-										signDisplay: 'exceptZero'
-									})}
-								</span>
-							</Tooltip>
+								{formatPercent(value, {
+									input: 'fraction',
+									minimumFractionDigits: 4,
+									maximumFractionDigits: 4,
+									useGrouping: false,
+									signDisplay: 'exceptZero'
+								})}
+							</Definition>
 						)
 					},
 					meta: {
@@ -651,7 +640,7 @@ export function PairTable({
 						<TableSearchInput
 							columnId={columnToSearch}
 							placeholder={placeholder}
-							className={leadingControls || header ? searchFieldInlineWrapperStyles : searchFieldWrapperStyles}
+							width={leadingControls || header ? 'inline' : 'standalone'}
 						/>
 						<TableColumnSelect />
 						<TableCsvExport filename={csvFileName} includeHiddenColumns />

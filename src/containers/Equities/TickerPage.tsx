@@ -12,6 +12,7 @@ import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
 import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
+import { Logo } from '~/ui/Logo'
 import { MetricRow } from '~/ui/MetricPrimitives'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -608,7 +609,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 										label="Country"
 										value={
 											<span className="flex items-center gap-2">
-												<TokenLogo src={equityCountryFlagUrl(props.country)} alt={`${props.country} flag`} />
+												<Logo size={24} src={equityCountryFlagUrl(props.country)} alt={`${props.country} flag`} />
 												{props.country}
 											</span>
 										}

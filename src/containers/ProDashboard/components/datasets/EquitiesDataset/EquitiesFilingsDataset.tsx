@@ -23,7 +23,6 @@ import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashbo
 import { fetchProDashboardProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
 import { getProEquitiesFilingsCacheKey } from '~/containers/ProDashboard/tableQueryKeys'
 import { Icon } from '~/ui/Icon'
-import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { SearchField } from '~/ui/SearchField'
 import { Select } from '~/ui/Select'
 import type { CsvCell } from '~/utils/csvCell'
@@ -257,7 +256,7 @@ export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 							value={searchValue}
 							onChange={setSearchValue}
 							placeholder="Search filings…"
-							className={searchFieldInlineWrapperStyles}
+							width="inline"
 						/>
 					</div>
 				</div>

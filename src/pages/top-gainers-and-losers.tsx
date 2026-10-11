@@ -9,12 +9,12 @@ import { BasicLink } from '~/components/Link'
 import { displayTableFeatures } from '~/components/Table/features/display'
 import { splitArrayByFalsyValues } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
-import { TokenLogo } from '~/components/TokenLogo'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import type { ProtocolsResponse } from '~/containers/ProtocolLists/api.types'
 import { TVL_SETTINGS_KEYS_SET, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import Layout from '~/layout'
 import { Change } from '~/ui/Change'
+import { Logo } from '~/ui/Logo'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { getPercentChange, slug } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -57,7 +57,7 @@ const topGainersAndLosersColumns = columnHelper.columns([
 				>
 					<Bookmark size="sm" readableName={value} className="absolute -left-1.5 hidden lg:flex" />
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
-					<TokenLogo src={row.original.logo} data-lgonly alt={`Logo of ${value}`} />
+					<Logo size={24} src={row.original.logo} data-lgonly alt={`Logo of ${value}`} />
 					<span className="flex items-center gap-1 overflow-hidden">
 						<BasicLink
 							href={`/protocol/${slug(value)}`}

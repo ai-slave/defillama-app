@@ -21,7 +21,7 @@ import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition, Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
 import { formatCompactNumber, formatUsd } from '~/utils/numberFormat'
 import type { IDATCompanyPageProps } from './types'
@@ -167,17 +167,15 @@ export function DATCompany(props: IDATCompanyPageProps) {
 								label={`$${props.ticker} price`}
 								value={
 									props.priceChange24h != null ? (
-										<Tooltip
+										<Definition
 											content={
 												<>
 													24h change: <Change value={props.priceChange24h} />
 												</>
 											}
-											className="cursor-help underline decoration-dotted"
-											tabIndex={0}
 										>
 											${props.price}
-										</Tooltip>
+										</Definition>
 									) : (
 										<>${props.price}</>
 									)

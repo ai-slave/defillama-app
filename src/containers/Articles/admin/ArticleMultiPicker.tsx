@@ -8,10 +8,9 @@ import { ARTICLE_SECTION_LABELS } from '~/containers/Articles/types'
 import { Button } from '~/ui/Button'
 import { focusNeighborOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { ListLoading, NoResults } from '~/ui/NoResults'
-import { popoverMeasuredRowStyles } from '~/ui/Popover'
-import { ComboboxSurface } from '~/ui/PopoverSurface'
+import { ComboboxSurface, PopoverRow } from '~/ui/PopoverSurface'
+import { SearchField } from '~/ui/SearchField'
 import { Tooltip } from '~/ui/Tooltip'
 
 type ListArticlesParams = NonNullable<Parameters<typeof listArticles>[0]>
@@ -96,31 +95,25 @@ export function ArticleMultiPicker({ value, onChange, hint, listArticlesParams }
 				setInputValue={(next) => setSearchValue(next)}
 				resetValueOnHide
 			>
-				<div className="relative">
-					<Icon name="search" className={searchFieldIconStyles} aria-hidden="true" />
-					<Ariakit.Combobox
-						ref={inputRef}
-						placeholder="Search articles by title…"
-						autoSelect
-						render={<Input className={searchFieldInputPlacementStyles} />}
-					/>
-				</div>
-				<ComboboxSurface
-					variant="search-results"
-					sameWidth
-					className="max-h-[min(288px,var(--popover-available-height))]"
-				>
+				<SearchField
+					combobox
+					ref={inputRef}
+					label="Search articles by title"
+					placeholder="Search articles by title…"
+					autoSelect
+				/>
+				<ComboboxSurface variant="search-results" sameWidth maxHeight="md">
 					{isFetching && items.length === 0 ? <ListLoading label="Searching" /> : null}
 					{!isFetching && items.length === 0 ? <NoResults>No results</NoResults> : null}
 					{items.map((article) => {
 						const selected = value.includes(article.id)
 						return (
-							<Ariakit.ComboboxItem
+							<PopoverRow
 								key={article.id}
-								value={article.title}
-								setValueOnClick={false}
 								onClick={() => addArticle(article)}
-								className={popoverMeasuredRowStyles}
+								render={<Ariakit.ComboboxItem value={article.title} setValueOnClick={false} />}
+								check="tick"
+								checked={selected}
 							>
 								<span className="grid min-w-0 gap-0.5">
 									<span className="truncate">{article.title}</span>
@@ -128,8 +121,7 @@ export function ArticleMultiPicker({ value, onChange, hint, listArticlesParams }
 										{article.section ? ARTICLE_SECTION_LABELS[article.section] : 'No section'} · /{article.slug}
 									</span>
 								</span>
-								{selected ? <Icon name="check" className="size-3.5 shrink-0 text-link" /> : null}
-							</Ariakit.ComboboxItem>
+							</PopoverRow>
 						)
 					})}
 				</ComboboxSurface>

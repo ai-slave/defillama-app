@@ -10,7 +10,6 @@ import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
 import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { TokenLogo } from '~/components/TokenLogo'
-import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { SearchField } from '~/ui/SearchField'
 import { TableToolbar } from '~/ui/Toolbar'
 import { formatCompactNumber, formatUsd } from '~/utils/numberFormat'
@@ -410,7 +409,7 @@ export function LiquidationsPositionsTable({
 								value={searchValue}
 								onChange={setSearchValue}
 								placeholder="Search positions by protocol, chain, owner, or collateral"
-								className={searchFieldInlineWrapperStyles}
+								width="inline"
 							/>
 							<TableCsvExport filename="liquidations-v2-100k-positions" />
 						</TableToolbar>

@@ -1,9 +1,11 @@
 import * as Ariakit from '@ariakit/react'
 import type { ComponentProps, ReactNode } from 'react'
+import { Check } from './internal/Check'
 
 /* ----------------------------------------------------------------------------
-   Checkbox — a 14px rounded box: checked is bg-brand with a white check,
-   unchecked an empty border-strong box. Callers choose the wrapper
+   Checkbox — the 14px box of ./internal/Check.tsx, the same mark every
+   multi-pick row draws (ListRow, OptionTile, popover and menu rows take it
+   through their `check` slot). Callers choose the wrapper
    `variant`:
    - default / filter / filter-borderless: rows in lists, menus and filters.
    - inline:  label-md, centered, for short one-line toggles.
@@ -44,9 +46,6 @@ const CHECKBOX_WRAPPER_VARIANTS = {
 		'group relative flex cursor-pointer flex-row-reverse flex-nowrap items-center justify-between gap-4 rounded-md px-3 py-2 body-sm text-primary hover:bg-hover-row has-focus-visible:bg-hover-row has-focus-visible:focus-ring'
 } as const
 
-const CHECKBOX_INDICATOR_STYLES =
-	'grid size-3.5 shrink-0 place-items-center rounded-[4px] border border-strong bg-transparent text-transparent data-[checked=true]:border-brand data-[checked=true]:bg-brand data-[checked=true]:text-on-brand group-has-disabled:border-disabled group-has-disabled:data-[checked=true]:border-disabled group-has-disabled:data-[checked=true]:bg-disabled group-has-disabled:data-[checked=true]:text-disabled'
-
 /** Controlled only: the caller owns `checked` and updates it in onChange. The hidden input's own keyboard focus draws
     the ring on the label (has-focus-visible). */
 interface CheckboxProps extends Omit<ComponentProps<'input'>, 'checked' | 'defaultChecked'> {
@@ -72,24 +71,8 @@ export function Checkbox({ ref, children, variant, isLoading, ...props }: Checkb
 				/>
 			</Ariakit.VisuallyHidden>
 			{/* mt-px centers the 14px box on body-sm's 16px first line. */}
-			<CheckboxIndicator checked={props.checked} className={variant === 'consent' ? 'mt-px' : undefined} />
+			<Check kind="box" checked={props.checked} className={variant === 'consent' ? 'mt-px' : undefined} />
 			{children}
 		</label>
-	)
-}
-
-/** The box alone, for a control that is itself the checkbox (a card or list row with role="checkbox", an Ariakit
-    Checkbox rendered as a row button), where a label around a hidden input would nest one control inside another.
-    It stays exported for those rows: `Checkbox` cannot be the row, and the row owns its own look. `className` is
-    placement only. */
-export function CheckboxIndicator({ checked, className }: { checked: boolean; className?: string }) {
-	return (
-		<span aria-hidden className={`${CHECKBOX_INDICATOR_STYLES} ${className ?? ''}`.trim()} data-checked={checked}>
-			{checked ? (
-				<svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 14 14" height="0.875rem" width="0.875rem">
-					<polyline points="3,7 5.75,9.75 11,4.5" strokeLinecap="round" strokeLinejoin="round" />
-				</svg>
-			) : null}
-		</span>
 	)
 }

@@ -1,5 +1,5 @@
-import { TokenLogo } from '~/components/TokenLogo'
 import { Change } from '~/ui/Change'
+import { Logo } from '~/ui/Logo'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import type { UtrTopMover } from './types'
 
@@ -11,7 +11,7 @@ export function TopMovers({ movers }: { movers: Array<UtrTopMover> }) {
 			<span className="shrink-0 label-sm text-tertiary">Top Movers (MoM, %)</span>
 			{keyedOccurrences(movers, (mover) => JSON.stringify([mover.asset, mover.name])).map(({ item: mover, key }) => (
 				<span key={key} className="flex shrink-0 items-center gap-1.5 px-2 label-sm">
-					<TokenLogo src={mover.logoUrl ?? null} size={18} />
+					<Logo src={mover.logoUrl ?? null} size={18} />
 					<span className="text-primary">{mover.name}</span>
 					<Change value={mover.momChangePct} />
 				</span>

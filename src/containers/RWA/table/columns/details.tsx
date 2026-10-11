@@ -61,7 +61,7 @@ function LeafAssetTypeCell({ asset }: { asset: RWAOverviewDisplayRow }) {
 					))}
 				</span>
 			}
-			contentClassName="w-80 max-w-(--popover-available-width) p-3 whitespace-normal"
+			width="md"
 			className="max-w-full"
 		>
 			<span className="truncate">{assetClasses.join(', ')}</span>

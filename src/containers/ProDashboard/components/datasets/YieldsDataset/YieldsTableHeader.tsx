@@ -1,7 +1,6 @@
 import * as React from 'react'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { CSVExportButton } from '../../CSVExportButton'
@@ -55,7 +54,7 @@ export function YieldsTableHeader({
 					value={poolName}
 					onChange={setPoolName}
 					placeholder="Search pools…"
-					className={searchFieldInlineWrapperStyles}
+					width="inline"
 				/>
 			</div>
 

@@ -16,6 +16,7 @@ import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
 import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
+import { Logo } from '~/ui/Logo'
 import { Panel } from '~/ui/Panel'
 import { StatItem, SummaryCardGrid, SummaryChange, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
@@ -156,7 +157,7 @@ function createColumns(metric: ExtraTvlMetric) {
 
 						<span className="vf-row-index shrink-0" aria-hidden="true" />
 
-						<TokenLogo src={row.original.logo} data-lgonly alt={`Logo of ${row.original.name}`} />
+						<Logo size={24} src={row.original.logo} data-lgonly alt={`Logo of ${row.original.name}`} />
 
 						<span className="-my-2 flex flex-col">
 							<span className="flex items-center gap-1 overflow-hidden">

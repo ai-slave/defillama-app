@@ -10,6 +10,7 @@ import { Card } from '~/ui/Card'
 import { Field } from '~/ui/Field'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
+import { ListRow } from '~/ui/ListRow'
 import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { EmptyState, InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
@@ -515,9 +516,9 @@ export function YieldsChartTab({
 													const isSelected = selectedYieldPool?.configID === pool.configID
 													const iconUrl = getItemIconUrl('protocol', null, pool.project)
 													return (
-														<button
-															type="button"
+														<ListRow
 															key={pool.configID}
+															selected={isSelected}
 															aria-pressed={isSelected}
 															onClick={() => {
 																onSelectedYieldPoolChange({
@@ -528,11 +529,6 @@ export function YieldsChartTab({
 																})
 																closePoolPicker()
 															}}
-															className={`grid w-full cursor-pointer grid-cols-[1fr_72px_72px] items-center gap-2 px-3 py-2 text-left label-sm sm:grid-cols-[1fr_100px_100px_80px] ${
-																isSelected
-																	? 'bg-brand-muted'
-																	: 'hover:bg-hover-row focus-visible:bg-hover-row active:bg-pressed-row'
-															}`}
 															style={{
 																position: 'absolute',
 																top: 0,
@@ -541,64 +537,69 @@ export function YieldsChartTab({
 																transform: `translateY(${row.start}px)`
 															}}
 														>
-															<div className="flex min-w-0 items-center gap-2">
-																{iconUrl ? (
-																	<img
-																		src={iconUrl}
-																		alt={pool.project}
-																		width={24}
-																		height={24}
-																		className="size-6 shrink-0 rounded-full object-cover ring-1 ring-(--border-subtle)"
-																	/>
-																) : null}
-																<div className="min-w-0">
-																	<div className={`truncate font-medium ${isSelected ? 'text-link' : 'text-primary'}`}>
-																		{pool.pool}
-																	</div>
-																	<div className="truncate body-sm text-tertiary">
-																		{pool.project} • {pool.chains[0]}
+															{/* The columns line up with the list's header row above. */}
+															<div className="grid min-w-0 flex-1 grid-cols-[1fr_72px_72px] items-center gap-2 sm:grid-cols-[1fr_100px_100px_80px]">
+																<div className="flex min-w-0 items-center gap-2">
+																	{iconUrl ? (
+																		<img
+																			src={iconUrl}
+																			alt={pool.project}
+																			width={24}
+																			height={24}
+																			className="size-6 shrink-0 rounded-full object-cover ring-1 ring-(--border-subtle)"
+																		/>
+																	) : null}
+																	<div className="min-w-0">
+																		<div
+																			className={`truncate font-medium ${isSelected ? 'text-link' : 'text-primary'}`}
+																		>
+																			{pool.pool}
+																		</div>
+																		<div className="truncate body-sm text-tertiary">
+																			{pool.project} • {pool.chains[0]}
+																		</div>
 																	</div>
 																</div>
-															</div>
 
-															<div className={`text-right font-medium ${isSelected ? 'text-link' : 'text-primary'}`}>
-																{formatUsd(pool.tvl, {
-																	compact: true,
-																	minimumCompactValue: 1_000_000,
-																	compactSuffix: 'lowercase'
-																})}
-															</div>
-
-															<div className="text-right">
-																<div className={`font-medium ${isSelected ? 'text-link' : 'text-primary'}`}>
-																	{formatPercent(pool.apy, {
-																		input: 'percent',
-																		minimumFractionDigits: 2,
-																		maximumFractionDigits: 2,
-																		useGrouping: false
-																	}) ?? '0.00%'}
+																<div className={`text-right font-medium ${isSelected ? 'text-link' : 'text-primary'}`}>
+																	{formatUsd(pool.tvl, {
+																		compact: true,
+																		minimumCompactValue: 1_000_000,
+																		compactSuffix: 'lowercase'
+																	})}
 																</div>
-																{pool.apyMean30d != null ? (
-																	<div className="body-sm text-tertiary">
-																		30d:{' '}
-																		{formatPercent(pool.apyMean30d, {
+
+																<div className="text-right">
+																	<div className={`font-medium ${isSelected ? 'text-link' : 'text-primary'}`}>
+																		{formatPercent(pool.apy, {
 																			input: 'percent',
 																			minimumFractionDigits: 2,
 																			maximumFractionDigits: 2,
 																			useGrouping: false
-																		})}
+																		}) ?? '0.00%'}
 																	</div>
-																) : null}
-															</div>
+																	{pool.apyMean30d != null ? (
+																		<div className="body-sm text-tertiary">
+																			30d:{' '}
+																			{formatPercent(pool.apyMean30d, {
+																				input: 'percent',
+																				minimumFractionDigits: 2,
+																				maximumFractionDigits: 2,
+																				useGrouping: false
+																			})}
+																		</div>
+																	) : null}
+																</div>
 
-															<div className="text-right max-sm:hidden">
-																{pool.category ? (
-																	<span className="inline-block truncate rounded-sm px-1.5 py-0.5 body-sm text-tertiary">
-																		{pool.category}
-																	</span>
-																) : null}
+																<div className="text-right max-sm:hidden">
+																	{pool.category ? (
+																		<span className="inline-block truncate rounded-sm px-1.5 py-0.5 body-sm text-tertiary">
+																			{pool.category}
+																		</span>
+																	) : null}
+																</div>
 															</div>
-														</button>
+														</ListRow>
 													)
 												})}
 											</div>

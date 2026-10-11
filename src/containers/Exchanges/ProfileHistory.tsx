@@ -14,6 +14,7 @@ import type { ExchangeProfileModel } from './models'
 function HistoryHeader({ icon, title, count }: { icon: IIcon['name']; title: string; count?: number }) {
 	return (
 		<div className="flex items-center gap-2">
+			{/* An icon chip on the brand tint, not a selected state. */}
 			<span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-muted text-link">
 				<Icon name={icon} className="size-4" />
 			</span>

@@ -84,3 +84,35 @@ test('Save changes keeps focus through the save and once nothing is left to save
 	expect(save.disabled).toBe(false)
 	expect(document.activeElement).toBe(save)
 })
+
+test('the audience radios pick on arrow keys and a region tile toggles on each press', async () => {
+	await act(async () =>
+		root.render(
+			<session.Wrapper>
+				<BannerForm banner={banner} />
+			</session.Wrapper>
+		)
+	)
+	const audience = (value: string) =>
+		container.querySelector<HTMLInputElement>(`[role="radiogroup"][aria-label="Audience"] input[value="${value}"]`)!
+	const region = () =>
+		[...container.querySelectorAll<HTMLButtonElement>('[role="checkbox"]')].find((el) =>
+			el.textContent!.startsWith('European Union')
+		)
+	expect(audience('global').checked).toBe(true)
+	expect(region()).toBeUndefined()
+	await act(async () => {
+		audience('global').focus()
+		audience('global').dispatchEvent(
+			new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true })
+		)
+		await new Promise((resolve) => setTimeout(resolve, 30))
+	})
+	await waitForUi(() => expect(audience('selected').checked).toBe(true))
+	expect(document.activeElement).toBe(audience('selected'))
+	expect(region()!.getAttribute('aria-checked')).toBe('false')
+	await act(async () => region()!.click())
+	expect(region()!.getAttribute('aria-checked')).toBe('true')
+	await act(async () => region()!.click())
+	expect(region()!.getAttribute('aria-checked')).toBe('false')
+})

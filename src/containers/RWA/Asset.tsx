@@ -4,7 +4,6 @@ import { type CSSProperties, lazy, Suspense, useMemo, useState } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { BasicLink } from '~/components/Link'
-import { TokenLogo } from '~/components/TokenLogo'
 import { CHART_COLORS } from '~/constants/colors'
 import { YIELD_EARN_PRIVATE_API } from '~/containers/Yields/constants'
 import type { EarnPageRow } from '~/containers/Yields/data/types'
@@ -20,6 +19,7 @@ import { CopyHelper } from '~/ui/Copy'
 import { HeroMetric } from '~/ui/HeroMetric'
 import { Icon } from '~/ui/Icon'
 import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
+import { Logo } from '~/ui/Logo'
 import { Menu } from '~/ui/Menu'
 import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/MetricPrimitives'
 import { Panel } from '~/ui/Panel'
@@ -28,7 +28,7 @@ import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Switch } from '~/ui/Switch'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition } from '~/ui/Tooltip'
 import { truncateAddress } from '~/utils'
 import { handleSimpleFetchResponse } from '~/utils/async'
 import { chainIconUrl } from '~/utils/icons'
@@ -169,7 +169,7 @@ function AssetHeader({
 	return (
 		<>
 			<Tag className="flex flex-wrap items-center gap-2 heading-sm">
-				{asset.logo ? <TokenLogo src={asset.logo} size={24} /> : null}
+				{asset.logo ? <Logo src={asset.logo} size={24} /> : null}
 				<span>{displayName}</span>
 				{asset.ticker ? <span className="font-normal text-tertiary">({asset.ticker})</span> : null}
 				{asset.suspicious === true ? (
@@ -349,6 +349,7 @@ function ChainBadge({
 			<div className="flex min-w-0 flex-1 flex-col">
 				<div className="flex items-center gap-1.5">
 					<p className="label-md">{chain}</p>
+					{/* A "Primary" label pill on the brand tint, not a selected state. */}
 					{isPrimary && showPrimaryStyle ? (
 						<span className="rounded-full border border-brand bg-brand-muted px-1.5 py-0.5 label-sm text-link">
 							Primary
@@ -610,13 +611,9 @@ export function RWAAssetPage({
 					<SectionCard title="Token properties">
 						<div className="grid grid-cols-2 gap-2">
 							<Card padding="sm" className="flex flex-col gap-1">
-								<Tooltip
-									content={definitions.category.description}
-									className="cursor-help text-secondary underline decoration-dotted"
-									tabIndex={0}
-								>
+								<Definition content={definitions.category.description} className="text-secondary">
 									{definitions.category.label}
-								</Tooltip>
+								</Definition>
 								{categories.length > 0 ? (
 									<span className="flex flex-wrap items-center gap-1 font-medium">
 										{categories.map((category, idx) => (
@@ -636,13 +633,9 @@ export function RWAAssetPage({
 								)}
 							</Card>
 							<Card padding="sm" className="flex flex-col gap-1">
-								<Tooltip
-									content={definitions.assetClass.description}
-									className="cursor-help text-secondary underline decoration-dotted"
-									tabIndex={0}
-								>
+								<Definition content={definitions.assetClass.description} className="text-secondary">
 									{definitions.assetClass.label}
-								</Tooltip>
+								</Definition>
 								{assetClasses.length > 0 ? (
 									<span className="flex flex-wrap items-center gap-1 font-medium">
 										{assetClasses.map((ac, idx) => (
@@ -660,23 +653,15 @@ export function RWAAssetPage({
 								)}
 							</Card>
 							<Card padding="sm" className="flex flex-col gap-1">
-								<Tooltip
-									content={definitions.type.description}
-									className="cursor-help text-secondary underline decoration-dotted"
-									tabIndex={0}
-								>
+								<Definition content={definitions.type.description} className="text-secondary">
 									{definitions.type.label}
-								</Tooltip>
+								</Definition>
 								<span className="font-medium">{asset.type || '-'}</span>
 							</Card>
 							<Card padding="sm" className="flex flex-col gap-1">
-								<Tooltip
-									content={definitions.rwaClassification.description}
-									className="cursor-help text-secondary underline decoration-dotted"
-									tabIndex={0}
-								>
+								<Definition content={definitions.rwaClassification.description} className="text-secondary">
 									{definitions.rwaClassification.label}
-								</Tooltip>
+								</Definition>
 								<span className={`flex items-center gap-1 font-medium ${asset.trueRWA ? 'text-success' : ''}`}>
 									{asset.rwaClassification || '-'}
 									{asset.rwaClassificationDescription ? (
@@ -685,13 +670,9 @@ export function RWAAssetPage({
 								</span>
 							</Card>
 							<Card padding="sm" className="flex flex-col gap-1">
-								<Tooltip
-									content={definitions.accessModel.description}
-									className="cursor-help text-secondary underline decoration-dotted"
-									tabIndex={0}
-								>
+								<Definition content={definitions.accessModel.description} className="text-secondary">
 									{definitions.accessModel.label}
-								</Tooltip>
+								</Definition>
 								<span className="flex items-center gap-1 font-medium">
 									{asset.accessModel || '-'}
 									{asset.accessModelDescription ? <QuestionHelper text={asset.accessModelDescription} /> : null}
@@ -767,48 +748,32 @@ export function RWAAssetPage({
 					<SectionCard title="Asset information">
 						<div className="flex flex-col gap-3">
 							<p className="flex flex-col gap-1">
-								<Tooltip
-									content={definitions.issuer.description}
-									className="cursor-help text-secondary underline decoration-dotted"
-									tabIndex={0}
-								>
+								<Definition content={definitions.issuer.description} className="text-secondary">
 									{definitions.issuer.label}
-								</Tooltip>
+								</Definition>
 								<span className="font-medium">{asset.issuer || '-'}</span>
 							</p>
 							{asset.isin ? (
 								<p className="flex flex-col gap-1">
-									<Tooltip
-										content={definitions.isin.description}
-										className="cursor-help text-secondary underline decoration-dotted"
-										tabIndex={0}
-									>
+									<Definition content={definitions.isin.description} className="text-secondary">
 										{definitions.isin.label}
-									</Tooltip>
+									</Definition>
 									<span className="mono-md">{asset.isin}</span>
 								</p>
 							) : null}
 							{asset.issuerRegistryInfo && asset.issuerRegistryInfo.length > 0 ? (
 								<p className="flex flex-col gap-1">
-									<Tooltip
-										content={definitions.registryInformation.description}
-										className="cursor-help text-secondary underline decoration-dotted"
-										tabIndex={0}
-									>
+									<Definition content={definitions.registryInformation.description} className="text-secondary">
 										{definitions.registryInformation.label}
-									</Tooltip>
+									</Definition>
 									<span className="font-medium">{asset.issuerRegistryInfo.join('; ')}</span>
 								</p>
 							) : null}
 							{asset.issuerSourceLink ? (
 								<p className="flex flex-col gap-1">
-									<Tooltip
-										content={definitions.source.description}
-										className="cursor-help text-secondary underline decoration-dotted"
-										tabIndex={0}
-									>
+									<Definition content={definitions.source.description} className="text-secondary">
 										{definitions.source.label}
-									</Tooltip>
+									</Definition>
 									{asset.issuerSourceLink.map((link) => (
 										<a
 											key={link}
@@ -909,17 +874,7 @@ export function RWAAssetPage({
 
 					{/* Attestations */}
 					{attestationLinks.length > 0 || asset.dateOfLastAttestation != null || attestationFrequency != null ? (
-						<SectionCard
-							title={
-								<Tooltip
-									content={definitions.attestations.description}
-									className="cursor-help underline decoration-dotted"
-									tabIndex={0}
-								>
-									Attestations
-								</Tooltip>
-							}
-						>
+						<SectionCard title={<Definition content={definitions.attestations.description}>Attestations</Definition>}>
 							<div className="flex flex-col gap-3">
 								{asset.dateOfLastAttestation != null ? (
 									<p className="flex flex-wrap items-center gap-2">

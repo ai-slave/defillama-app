@@ -5,9 +5,10 @@ import { focusFirstNewItem } from '~/utils/focusFirstNewItem'
 import { Button } from './Button'
 import { focusNeighborOnLeave } from './focus'
 import { Icon } from './Icon'
+import { Check } from './internal/Check'
+import { popoverRowWithBorderStyles, popoverSeeMoreStyles } from './internal/Popover'
 import { Logo } from './Logo'
 import { ListLoading } from './NoResults'
-import { popoverMultiSelectCheckStyles, popoverRowWithBorderStyles, popoverSeeMoreStyles } from './Popover'
 import { ComboboxSurface } from './PopoverSurface'
 
 /* MultiSelectCombobox — a search with its input on the page and the picks as removable chips in front of it; the
@@ -145,7 +146,7 @@ export function MultiSelectCombobox({
 				// Chips reduce the input width; anchor results to the whole control.
 				getAnchorRect={() => anchorRef.current?.getBoundingClientRect() ?? null}
 				sameWidth
-				className="max-h-[min(400px,var(--popover-available-height))]"
+				maxHeight="lg"
 			>
 				<Ariakit.ComboboxList ref={comboboxRef}>
 					{isLoading ? <ListLoading label="Loading options" /> : null}
@@ -159,11 +160,7 @@ export function MultiSelectCombobox({
 							{item.logo ? <Logo src={item.logo} size={20} /> : null}
 							<span>{item.label}</span>
 							<Ariakit.ComboboxItemSelected>
-								{(selected) => (
-									<span className={popoverMultiSelectCheckStyles(selected)} aria-hidden>
-										{selected ? <Icon name="check" className="size-3" aria-hidden /> : null}
-									</span>
-								)}
+								{(selected) => <Check kind="box" checked={selected} className="ml-auto" />}
 							</Ariakit.ComboboxItemSelected>
 						</Ariakit.ComboboxItem>
 					))}

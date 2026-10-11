@@ -15,12 +15,10 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
 import { Change } from '~/ui/Change'
 import { ChartPanelBody } from '~/ui/ChartPanel'
-import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { MetricSeriesToggle } from '~/ui/MetricChip'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
-import { popoverRowStyles } from '~/ui/Popover'
-import { DrawerDismiss, PopoverSurface } from '~/ui/PopoverSurface'
+import { DrawerDismiss, PopoverRow, PopoverSurface } from '~/ui/PopoverSurface'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
@@ -458,7 +456,7 @@ function GrowthReadout({
 						{anchoredOn ? (formatDate(anchoredOn) ?? anchoredOn) : '—'}
 						<Ariakit.PopoverDisclosureArrow className="size-3.5 shrink-0 text-tertiary" />
 					</Ariakit.PopoverDisclosure>
-					<PopoverSurface variant="panel" dismiss="own" className="sm:w-72">
+					<PopoverSurface variant="panel" dismiss="own" width="md">
 						<div className="flex items-center justify-between gap-2 border-b border-subtle py-1 pr-1 pl-3">
 							<Ariakit.PopoverHeading className="label-md text-primary">Deposit day</Ariakit.PopoverHeading>
 							<DrawerDismiss label="Close deposit day" />
@@ -468,9 +466,11 @@ function GrowthReadout({
 								const active = !anchorDate && range === option.value
 								const day = presetDays[option.value]
 								return (
-									<Ariakit.PopoverDismiss
+									<PopoverRow
 										key={option.value}
-										className={popoverRowStyles}
+										render={<Ariakit.PopoverDismiss />}
+										check="tick"
+										checked={active}
 										aria-current={active ? 'true' : undefined}
 										onClick={() => setQuery({ [rangeKey]: getRangeQueryValue(option.value), growthFrom: undefined })}
 									>
@@ -478,8 +478,7 @@ function GrowthReadout({
 											<span className={active ? 'text-primary' : 'text-secondary'}>{option.label}</span>
 											{day ? <span className="mono-sm text-tertiary">{formatDate(day) ?? day}</span> : null}
 										</span>
-										{active ? <Icon name="check" className="size-3.5 shrink-0 text-primary" aria-hidden /> : null}
-									</Ariakit.PopoverDismiss>
+									</PopoverRow>
 								)
 							})}
 						</div>

@@ -1,5 +1,5 @@
-import { TokenLogo } from '~/components/TokenLogo'
 import { Icon } from '~/ui/Icon'
+import { Logo } from '~/ui/Logo'
 import { StatusBadge } from '~/ui/StatusBadge'
 import type { RWAPlatformMeta } from '../PlatformPage/api.types'
 import { getRwaAssetsKpiHeadline, getRwaPlatformKpiRows, RWA_PLATFORM_KPI_LABEL } from './assetsKpiRows'
@@ -20,7 +20,7 @@ export function RWAPlatformKeyMetrics({ meta, kpi }: RWAPlatformKeyMetricsProps)
 			identity={
 				<div className="flex flex-col gap-2">
 					<h1 className="flex flex-wrap items-center gap-2 heading-sm">
-						{meta.logo ? <TokenLogo src={meta.logo} size={24} alt={`${meta.name} logo`} /> : null}
+						{meta.logo ? <Logo src={meta.logo} size={24} alt={`${meta.name} logo`} /> : null}
 						<span>{meta.name}</span>
 						{meta.suspicious === true ? <StatusBadge status="bad">Suspicious</StatusBadge> : null}
 					</h1>

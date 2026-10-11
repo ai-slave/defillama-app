@@ -220,6 +220,7 @@ export function CoveragePricingContent({
 			<div className="flex flex-col gap-1">
 				<div className="flex flex-wrap items-center justify-between gap-2">
 					<h3 className="heading-sm text-primary">{card.title}</h3>
+					{/* A plan badge on the brand tint, not a selected state. */}
 					{card.recommendedLabel ? (
 						<span className="rounded-sm bg-brand-muted px-2 py-1 label-sm text-link">{card.recommendedLabel}</span>
 					) : null}
@@ -231,6 +232,7 @@ export function CoveragePricingContent({
 							<span className="mono-xl text-link">{card.priceMain}</span>
 							<span className="body-lg text-primary">{card.priceUnit}</span>
 						</p>
+						{/* A trial badge on the brand tint, not a selected state. */}
 						{card.key === 'pro' && isTrialAvailable ? (
 							<span className="w-fit rounded-sm bg-brand-muted px-2 py-1 label-sm text-link">
 								7-day free trial available

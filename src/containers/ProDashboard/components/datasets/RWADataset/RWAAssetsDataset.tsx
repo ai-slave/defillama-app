@@ -21,7 +21,6 @@ import { PRO_RWA_ASSETS_TABLE_QUERY_KEY } from '~/containers/ProDashboard/tableQ
 import { fetchRWAActiveTVLs } from '~/containers/RWA/api'
 import type { IFetchedRWAProject } from '~/containers/RWA/api.types'
 import { RWASuspiciousWarning } from '~/containers/RWA/SuspiciousWarning'
-import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { SearchField } from '~/ui/SearchField'
 import { downloadCSV } from '~/utils/download'
 import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
@@ -209,7 +208,7 @@ export function RWAAssetsDataset({ chain }: { chain?: string }) {
 							value={projectName}
 							onChange={setProjectName}
 							placeholder="Search assets…"
-							className={searchFieldInlineWrapperStyles}
+							width="inline"
 						/>
 					</div>
 				</div>

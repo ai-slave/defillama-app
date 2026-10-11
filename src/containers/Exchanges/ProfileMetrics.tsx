@@ -1,9 +1,9 @@
 import { Fragment, type ReactNode } from 'react'
 import { BasicLink } from '~/components/Link'
 import { ReportIncorrectData } from '~/components/ReportIncorrectData'
-import { TokenLogo } from '~/components/TokenLogo'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
+import { Logo } from '~/ui/Logo'
 import { MetricRow, MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
 import { StatItem, SummaryChange } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'
@@ -262,7 +262,7 @@ export function ProfileMetrics({
 								href={profile.nativeToken.url}
 								className="flex items-center justify-end gap-1.5 hover:underline"
 							>
-								<TokenLogo
+								<Logo
 									src={profile.nativeToken.coinId ? geckoTokenIconUrl(profile.nativeToken.coinId, 20) : null}
 									size={20}
 									alt={`${profile.nativeToken.name} logo`}

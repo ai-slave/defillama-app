@@ -177,7 +177,6 @@ export function QueryTabBar({
 							: undefined
 					}
 					gutter={2}
-					className="min-w-[200px]"
 				>
 					<MenuItem
 						onClick={() => {

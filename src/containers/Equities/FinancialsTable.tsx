@@ -6,7 +6,7 @@ import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type { IEquitiesStatementsResponse } from './api.types'
@@ -229,13 +229,7 @@ export function EquitiesFinancialsTable({ statements }: { statements: IEquitiesS
 										key={`${statementType}-${periodType}-${header.periodEnding}`}
 										className="min-w-[132px] truncate border border-subtle bg-page p-2 text-left font-medium"
 									>
-										<Tooltip
-											className="cursor-help underline decoration-dotted underline-offset-3"
-											content={tooltipContent}
-											tabIndex={0}
-										>
-											{formatStatementPeriodLabel(header.periodEnding)}
-										</Tooltip>
+										<Definition content={tooltipContent}>{formatStatementPeriodLabel(header.periodEnding)}</Definition>
 									</th>
 								)
 							})}

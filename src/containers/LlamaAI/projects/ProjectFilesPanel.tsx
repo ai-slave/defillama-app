@@ -111,7 +111,7 @@ export function ProjectFilesPanel({
 						<Icon name="plus" className="size-3.5" />
 						Add sources
 					</Ariakit.MenuButton>
-					<MenuSurface variant="actions" gutter={6} className="w-60">
+					<MenuSurface variant="actions" gutter={6} width="sm">
 						<MenuItem onClick={onPick}>
 							<Icon name="file-plus" className="size-3.5" />
 							Upload from device

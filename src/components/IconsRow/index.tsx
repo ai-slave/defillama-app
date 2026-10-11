@@ -2,6 +2,7 @@ import { useMemo, useRef } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useResize } from '~/hooks/useResize'
 import { Hovercard } from '~/ui/Hovercard'
+import { Logo } from '~/ui/Logo'
 import { Tooltip } from '~/ui/Tooltip'
 import { letterLogoDataUri } from '~/utils/icons'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
@@ -28,12 +29,12 @@ function IconItemLogo({ item }: IIconItemLogoProps) {
 	const logoTitle = item.href ? undefined : title
 	const logo =
 		item.src !== undefined ? (
-			<TokenLogo
+			<Logo
 				src={item.src}
 				fallbackSrc={letterLogoDataUri(item.label)}
 				alt={`Logo of ${item.label}`}
-				{...(logoTitle !== undefined ? { title: logoTitle } : {})}
-				{...(item.size !== undefined ? { size: item.size } : {})}
+				title={logoTitle}
+				size={item.size ?? 24}
 			/>
 		) : (
 			<TokenLogo
@@ -113,10 +114,14 @@ export function IconsRow({ items = EMPTY_ITEMS, align = 'end' }: IIconsRowProps)
 							className="min-h-6 min-w-6 justify-center rounded-full bg-surface-elevated-2 px-1 label-sm text-primary"
 						/>
 					}
-					contentClassName="flex max-w-[min(36rem,var(--popover-available-width))] flex-wrap items-center gap-1 p-1"
-					content={hiddenItems.map(({ item, key }) => (
-						<IconItemLogo key={key} item={item} />
-					))}
+					content={
+						// Ten 24px logos to a row: the card hugs a few and wraps a long list instead of growing past the row.
+						<div className="flex max-w-69 flex-wrap items-center gap-1">
+							{hiddenItems.map(({ item, key }) => (
+								<IconItemLogo key={key} item={item} />
+							))}
+						</div>
+					}
 				>
 					{`+${hiddenItems.length}`}
 				</Hovercard>

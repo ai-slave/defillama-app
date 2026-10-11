@@ -189,10 +189,10 @@ export function MeasuredColumnHint() {
 			{/* With the header's own 4px gap this matches the cells' 6px figure-to-seal gap. */}
 			<span className="ml-0.5 flex">
 				<Hovercard
-					contentClassName="p-3"
 					placement="bottom-end"
+					width="md"
 					content={
-						<span className="flex w-80 max-w-(--popover-available-width) flex-col gap-2">
+						<span className="flex flex-col gap-2">
 							{/* The claim in its own tinted block: what the column holds, the tier, and what the number means. */}
 							<span className="flex flex-col gap-1 rounded-lg border border-medium bg-border-subtle px-3 py-2.5">
 								<span className="flex items-center justify-between gap-3">
@@ -260,10 +260,10 @@ export function MeasuredExitColumnHint() {
 		<>
 			<span className="ml-0.5 flex">
 				<Hovercard
-					contentClassName="p-3"
 					placement="bottom-end"
+					width="md"
 					content={
-						<span className="flex w-80 max-w-(--popover-available-width) flex-col gap-2">
+						<span className="flex flex-col gap-2">
 							<span className="flex flex-col gap-1 rounded-lg border border-medium bg-border-subtle px-3 py-2.5">
 								<span className="flex items-center justify-between gap-3">
 									<span className="flex items-center gap-1.5 title-md text-primary">
@@ -332,7 +332,8 @@ export interface MeasuredRow {
 
 /**
  * The APY cell's hovercard: the breakdown alone when unmeasured, the same grid plus a header and
- * exit line when measured, and the offer in place of both when locked.
+ * exit line when measured, and the offer in place of both when locked. The Hovercard sizes it: `md`
+ * with a header or the offer, `fit` for the breakdown alone.
  */
 export function MeasuredCard({
 	rows,
@@ -360,7 +361,7 @@ export function MeasuredCard({
 
 	if (offer) {
 		return (
-			<span className="flex w-80 max-w-(--popover-available-width) flex-col gap-3">
+			<span className="flex flex-col gap-3">
 				{rows.length > 0 ? <Grid rows={rows} /> : null}
 				<MeasuredApyOffer poolName={offer.poolName} onUpgrade={offer.onUpgrade} />
 			</span>
@@ -370,7 +371,7 @@ export function MeasuredCard({
 	const breakdown = rows.length > 0 ? <Grid rows={rows} /> : null
 
 	if (!verified) {
-		return <span className="flex w-max max-w-(--popover-available-width) flex-col">{breakdown}</span>
+		return <span className="flex flex-col">{breakdown}</span>
 	}
 
 	const feeWarning = verified.exit ? exitFeeWarning(verified.exit.fee_bps) : null
@@ -383,7 +384,7 @@ export function MeasuredCard({
 	})
 
 	return (
-		<span className="flex w-80 max-w-(--popover-available-width) flex-col gap-2">
+		<span className="flex flex-col gap-2">
 			<span className="flex items-center justify-between gap-3">
 				<span className="flex items-center gap-1.5 title-md text-primary">
 					<MeasuredSeal muted={!measured} size="size-4" />

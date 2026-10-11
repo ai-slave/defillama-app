@@ -123,6 +123,7 @@ export function CitationRowsTable({
 							{cols.map((c) => {
 								const isCited = !!citedCell && citedCell.rowIndex === ri && citedCell.column === c
 								return (
+									// The tint marks the cell the answer cites, a highlight in a read-only table, not a selection.
 									<td
 										key={c}
 										ref={isCited ? centerCitedCell : null}

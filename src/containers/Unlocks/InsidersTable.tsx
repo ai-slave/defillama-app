@@ -80,7 +80,7 @@ const getColumns = (blockExplorersData: BlockExplorersResponse, tokenChain: stri
 						<Hovercard
 							placement="right-start"
 							className="max-w-full"
-							contentClassName="w-80 max-w-(--popover-available-width) p-3"
+							width="md"
 							content={
 								<span className="flex flex-col gap-1">
 									{keyedOccurrences(allocations, (a) => JSON.stringify([a.category, a.allocationSection])).map(

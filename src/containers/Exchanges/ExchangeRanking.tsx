@@ -5,7 +5,7 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition } from '~/ui/Tooltip'
 import { letterLogoDataUri } from '~/utils/icons'
 import { byRealPillarOrder, TIER_COLORS, TierBadge } from './directoryColumns'
 import { EXCHANGES_METHODOLOGY_URL, ExchangeDocsLinks } from './docsLinks'
@@ -90,13 +90,9 @@ function SubScoreRows({
 			<span className="label-sm text-secondary">{title}</span>
 			{subs.map((sub) => (
 				<div key={sub.key} className="flex items-center justify-between gap-3">
-					<Tooltip
-						content={sub.what}
-						render={<span className="min-w-0 cursor-help truncate body-sm underline decoration-dotted" />}
-						tabIndex={0}
-					>
+					<Definition as="span" content={sub.what} className="min-w-0 truncate body-sm">
 						{sub.label} <span className="text-tertiary">{sub.weight}</span>
-					</Tooltip>
+					</Definition>
 					<ScoreBar score={scores[sub.key] ?? null} />
 				</div>
 			))}
@@ -172,13 +168,9 @@ function RankingRow({
 					<td colSpan={4 + pillars.length} className="px-2 py-3">
 						{intra ? (
 							<div className="flex flex-col gap-1 pb-3">
-								<Tooltip
-									content={ranking.intraSpreadCheck?.what ?? ''}
-									className="w-fit cursor-help label-sm underline decoration-dotted"
-									tabIndex={0}
-								>
+								<Definition content={ranking.intraSpreadCheck?.what ?? ''} className="w-fit label-sm">
 									Intra-spread volume
-								</Tooltip>
+								</Definition>
 								<p className="body-sm text-secondary">
 									{`${(
 										Object.entries(intra.segments) as Array<[ExchangeSegment, { flagged: number; measured: number }]>
@@ -203,13 +195,13 @@ function RankingRow({
 								extra={
 									row.execDelivery !== null ? (
 										<div className="flex items-center justify-between gap-3">
-											<Tooltip
+											<Definition
+												as="span"
 												content="Did fills pay what the book promised at that size? 100 means at or better than quoted; a shortfall cuts Execution by up to 12%."
-												render={<span className="min-w-0 cursor-help truncate body-sm underline decoration-dotted" />}
-												tabIndex={0}
+												className="min-w-0 truncate body-sm"
 											>
 												Delivery vs quote
-											</Tooltip>
+											</Definition>
 											<ScoreBar score={row.execDelivery} />
 										</div>
 									) : null
@@ -270,6 +262,7 @@ function PillarSection({ pillar, ranking }: { pillar: ExchangeRankingPillarModel
 					<span className="pr-2 text-tertiary">{pillar.key}</span>
 					{pillar.label}
 				</h3>
+				{/* A weight badge on the brand tint, not a selected state. */}
 				<span className="rounded-sm bg-brand-muted px-2 py-0.5 mono-sm-bold text-primary">{pillar.weight} points</span>
 			</div>
 			<p className="body-md text-secondary">{pillar.what}</p>
@@ -366,11 +359,9 @@ export function ExchangeRanking({ ranking }: { ranking: ExchangeRankingModel | n
 								<th className="pr-4 pb-1 font-normal">Score</th>
 								{pillars.map((pillar) => (
 									<th key={pillar.key} className="pr-4 pb-1 font-normal">
-										<Tooltip content={pillar.what} className="cursor-help" tabIndex={0}>
-											<span className="underline decoration-dotted">
-												{pillar.label} {pillar.weight}
-											</span>
-										</Tooltip>
+										<Definition content={pillar.what}>
+											{pillar.label} {pillar.weight}
+										</Definition>
 									</th>
 								))}
 								<td className="pb-1" />

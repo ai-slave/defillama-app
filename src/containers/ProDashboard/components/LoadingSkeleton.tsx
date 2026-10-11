@@ -1,6 +1,4 @@
-import { Card } from '~/ui/Card'
-import { tw } from '~/ui/tw'
-import { SkeletonShimmer } from './ProCardSkeleton'
+import { Skeleton } from '~/ui/Skeleton'
 
 interface LoadingSkeletonProps {
 	viewMode?: 'grid' | 'list'
@@ -20,20 +18,12 @@ export function LoadingSkeleton({ viewMode = 'grid', items = 18 }: LoadingSkelet
 			{/* The cards are aria-hidden shapes, so the region needs words to announce. */}
 			<span className="sr-only">Loading dashboards</span>
 			{Array.from({ length: items }).map((_, i) => (
-				// oxlint-disable-next-line react/no-array-index-key -- Loading placeholders are fixed display slots, not data items.
-				<SkeletonCard key={`skeleton-item-${i}`} viewMode={viewMode} />
+				<Skeleton
+					// oxlint-disable-next-line react/no-array-index-key -- Loading placeholders are fixed display slots, not data items.
+					key={`skeleton-item-${i}`}
+					className={viewMode === 'grid' ? 'min-h-[220px] rounded-lg' : 'min-h-[156px] rounded-lg'}
+				/>
 			))}
 		</div>
-	)
-}
-
-const GRID_CARD_CLASS = tw`relative isolate min-h-[220px] overflow-hidden`
-const LIST_CARD_CLASS = tw`relative isolate min-h-[156px] overflow-hidden`
-
-function SkeletonCard({ viewMode }: { viewMode: 'grid' | 'list' }) {
-	return (
-		<Card padding="none" className={viewMode === 'grid' ? GRID_CARD_CLASS : LIST_CARD_CLASS} aria-hidden>
-			<SkeletonShimmer />
-		</Card>
 	)
 }

@@ -733,12 +733,8 @@ const RULES = [
 		exceptions: {
 			'src/ui/UploadTile.tsx':
 				'ImageReplaceTile disables a tile showing the current image; a disabled token cannot dim imagery',
-			'src/containers/Articles/editor/ArticleChartPicker.tsx':
-				'an entity row with its logo; a disabled token cannot dim the logo',
 			'src/containers/LlamaAI/components/GoldCta.tsx':
 				"the gold gradient CTA's auth-loading placeholder; the disabled fill would swap the gold for gray and flash on every load of /ai",
-			'src/containers/ProDashboard/components/ComparisonWizard/steps/SelectItemsStep.tsx':
-				'an item row with its token logo; a disabled token cannot dim the logo',
 			'src/containers/LlamaAI/components/charts/ChartStyleEditor.tsx':
 				'the color swatches dim with the locked form during a save; a disabled token cannot dim the color they show',
 			'src/containers/ProDashboard/components/CreateDashboardPicker.tsx':
@@ -835,8 +831,8 @@ const RULES = [
 	{
 		id: 'raw-popover-surface',
 		description:
-			'Ariakit.Menu/Popover/ComboboxPopover rendered directly — use MenuSurface, PopoverSurface or ComboboxSurface from src/ui, which wire the drawer wrapper, scrim and close button from one `variant`',
-		pattern: /<Ariakit\.(?:Menu|Popover|ComboboxPopover|SelectPopover)\b/g,
+			'Ariakit.Menu/Popover/ComboboxPopover/Hovercard/Tooltip rendered directly — use MenuSurface, PopoverSurface or ComboboxSurface from src/ui, which wire the drawer wrapper, scrim and close button from one `variant`, or Hovercard, Tooltip or Definition, which own the hover surface, its stacking and its keyboard and tap paths',
+		pattern: /<Ariakit\.(?:Menu|Popover|ComboboxPopover|SelectPopover|Hovercard|Tooltip)\b/g,
 		// src/ui owns the wrappers; NestedMenu and the legacy Select/Menu paths live there.
 		uiOwned: true,
 		skipTests: true,
@@ -901,29 +897,6 @@ const RULES = [
 		}
 	},
 	{
-		id: 'hand-built-search-field',
-		description:
-			'a search field assembled from searchFieldIconStyles and searchFieldInputPlacementStyles — render SearchField from src/ui/SearchField.tsx (the icon, the Input recipe, an accessible `label`, the clear × and its focus return), with a searchField*WrapperStyles constant as `className` for placement',
-		match: (content) => withoutComments(content).match(/\bsearchField(?:Icon|InputPlacement)Styles\b/g),
-		exceptions: {
-			'src/containers/Articles/admin/ArticleMultiPicker.tsx':
-				'the Combobox store owns the value, so the field renders the Input through `render`',
-			'src/containers/Articles/admin/ArticlePicker.tsx':
-				'the Combobox store owns the value, so the field renders the Input through `render`; its × also clears the picked article',
-			'src/containers/Articles/editor/ArticlePageAssetPicker.tsx':
-				'the Combobox store owns the value, so the field renders the Input through `render`',
-			'src/containers/LlamaAI/components/sidebar/AgenticSidebar.tsx':
-				"the sidebar search's × closes the field and hands focus to the search toggle, and a spinner takes its place while results load; SearchField's × only clears the text",
-			'src/containers/ProDashboard/components/AddChartModal/MetricSentenceBuilder.tsx':
-				'the subject search is a Combobox whose store owns the value, so the field renders the Input through `render`',
-			'src/containers/Raises/Search.tsx':
-				'the Combobox store owns the value, so the field renders the Input through `render`',
-			'src/pages/directory.tsx': 'the Combobox store owns the value, so the field renders the Input through `render`'
-		},
-		uiOwned: true,
-		skipTests: true
-	},
-	{
 		id: 'native-select',
 		description:
 			'native <select> — use Select (or SelectWithCombobox for a long or searchable list) from src/ui, which owns the trigger, the phone drawer and disabled options',
@@ -979,11 +952,11 @@ const RULES = [
 		uiOwned: true
 	},
 	{
-		id: 'surface-chrome-override',
+		id: 'surface-class-override',
 		description:
-			'shadow, background, border, radius or padding passed to MenuSurface/PopoverSurface/ComboboxSurface — the variant owns the surface chrome; className is layout only (width, z-index)',
+			'chrome or size classes passed to MenuSurface/PopoverSurface/ComboboxSurface (shadow, bg, border, rounded, padding, w-*, min-w-*, max-w-*, h-*, min-h-*, max-h-*, overflow-*) — the variant owns the chrome, `width` and `maxHeight` own the size; className is placement only',
 		pattern:
-			/<(?:MenuSurface|PopoverSurface|ComboboxSurface)\b[^>]*?className="[^"]*(?<![\w-])(?:shadow|bg|border|rounded|p[xytblr]?)-[^\s"]*/g
+			/<(?:MenuSurface|PopoverSurface|ComboboxSurface)\b[^>]*?className="[^"]*(?<![\w-])(?:shadow|bg|border|rounded|p[xytblr]?|w|min-w|max-w|h|min-h|max-h|overflow(?:-[xy])?)-[^\s"]*/g
 	},
 	{
 		// ChartPanelToolbar takes no className, so only the parts that keep a placement className are read.

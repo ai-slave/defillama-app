@@ -24,6 +24,7 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanelBody } from '~/ui/ChartPanel'
 import { Checkbox } from '~/ui/Checkbox'
 import { Icon } from '~/ui/Icon'
+import { Logo } from '~/ui/Logo'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
@@ -56,7 +57,7 @@ const columns = columnHelper.columns([
 			return (
 				<span className="flex min-w-0 items-center gap-2">
 					{row.original.logo ? (
-						<TokenLogo src={row.original.logo} alt={`Logo of ${value}`} size={22} />
+						<Logo src={row.original.logo} alt={`Logo of ${value}`} size={22} />
 					) : (
 						<TokenLogo name={value} kind="token" alt={`Logo of ${value}`} size={22} />
 					)}

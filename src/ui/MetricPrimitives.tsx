@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { Icon } from '~/ui/Icon'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition, Tooltip } from '~/ui/Tooltip'
 
 /* ----------------------------------------------------------------------------
    Metric rows for summary cards (./SummaryStats.tsx variants 1 and 2) and
@@ -41,19 +41,9 @@ export function MetricRow({
 		<p
 			className={`group flex min-h-6 flex-wrap items-baseline justify-start gap-1 border-b ${dashed ? 'border-dashed' : ''} border-subtle py-1 last:border-none ${className}`.trim()}
 		>
-			{tooltip ? (
-				<Tooltip
-					content={tooltip}
-					render={<span className="cursor-help body-md text-secondary underline decoration-dotted" />}
-					tabIndex={0}
-				>
-					<span data-metric-label>{label}</span>
-				</Tooltip>
-			) : (
-				<span className="body-md text-secondary" data-metric-label>
-					{label}
-				</span>
-			)}
+			<Definition as="span" content={tooltip} className="body-md text-secondary">
+				<span data-metric-label>{label}</span>
+			</Definition>
 			{extra}
 			<span className={valueClassName} data-metric-value>
 				{value}

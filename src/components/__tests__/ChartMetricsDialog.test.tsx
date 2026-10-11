@@ -3,6 +3,7 @@ import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { tabTo } from '~/utils/testing/keyboard'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { ChartMetricsDialog, type ChartMetricOption } from '../ChartMetricsDialog'
 
@@ -117,7 +118,7 @@ test("a metric's definition shows when its chip takes keyboard focus", async () 
 	await click(button('Add Metrics'))
 	const chip = button('TVL')
 	expect(chip.getAttribute('aria-pressed')).toBe('false')
-	await act(async () => chip.focus())
+	await tabTo(chip)
 	await waitForUi(() => expect(document.querySelector('[role="tooltip"]')?.textContent).toBe('Value locked in DeFi.'))
 })
 

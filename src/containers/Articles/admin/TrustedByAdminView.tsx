@@ -563,6 +563,7 @@ function SortableMentionRow({
 				<Icon name="menu" className="size-4 text-tertiary" />
 			</Tooltip>
 
+			{/* A slot badge on the brand tint, not a selected state. */}
 			{slotLabel ? (
 				<span className="inline-flex shrink-0 items-center rounded-full bg-brand-muted px-2 py-0.5 label-xs tracking-[0.18em] text-link uppercase">
 					{slotLabel}

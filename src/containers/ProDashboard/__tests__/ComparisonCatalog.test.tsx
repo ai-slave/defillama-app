@@ -151,3 +151,30 @@ test('a catalog failure shows an error and Try again recovers the chain list', a
 	expect(container.querySelector('[role="alert"]')).toBeNull()
 	expect(chainListReads()).toBe(2)
 })
+
+test('at the ten-item limit an unpicked row stays focusable, reads as unavailable and ignores a press', async () => {
+	const names = Array.from({ length: 11 }, (_, i) => `Chain ${String(i + 1).padStart(2, '0')}`)
+	http.serve({ [CHAINS_URL]: names.map((name, i) => ({ name, tvl: 1000 - i })) })
+	await mount()
+	await click('Compare chains')
+	await click('Create comparison')
+	await waitForText('Chain 11')
+	const row = (name: string) => container.querySelector<HTMLButtonElement>(`[role="checkbox"][aria-label="${name}"]`)!
+	for (const name of names.slice(0, 10)) await act(async () => row(name).click())
+	expect(container.textContent).toContain('Selected (10/10)')
+
+	const last = row('Chain 11')
+	expect(last.getAttribute('aria-disabled')).toBe('true')
+	expect(last.disabled).toBe(false)
+	await act(async () => last.focus())
+	expect(document.activeElement).toBe(last)
+	await act(async () => last.click())
+	expect(last.getAttribute('aria-checked')).toBe('false')
+	expect(container.textContent).toContain('Selected (10/10)')
+
+	// The opposite edge: unpicking one frees the row again.
+	await act(async () => row('Chain 01').click())
+	expect(last.hasAttribute('aria-disabled')).toBe(false)
+	await act(async () => last.click())
+	expect(last.getAttribute('aria-checked')).toBe('true')
+})

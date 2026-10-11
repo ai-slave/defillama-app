@@ -6,9 +6,9 @@
  */
 import * as React from 'react'
 import { BasicLink } from '~/components/Link'
-import { TokenLogo } from '~/components/TokenLogo'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
+import { Logo } from '~/ui/Logo'
 import { geckoTokenIconUrl, letterLogoDataUri } from '~/utils/icons'
 import { EXCHANGE_SEGMENTS, type ExchangePairModel, type ExchangeProfileModel, type ExchangeSegment } from './models'
 import { formatPairPrice } from './PairTable'
@@ -79,7 +79,7 @@ export function ProfileHighlights({ profile }: { profile: ExchangeProfileModel }
 			>
 				{movers.slice(0, rows * PER_ROW).map(({ pair, segment }) => (
 					<Card key={`${segment}:${pair.symbol}`} padding="sm" className="flex items-center gap-2">
-						<TokenLogo
+						<Logo
 							src={pair.baseGeckoId ? geckoTokenIconUrl(pair.baseGeckoId, 24) : null}
 							size={24}
 							fallbackSrc={letterLogoDataUri(pair.base)}

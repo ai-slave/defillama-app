@@ -17,8 +17,7 @@ import { useLlamaAIWelcome } from '~/contexts/LocalStorage'
 import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { popoverMenuItemStyles } from '~/ui/Popover'
-import { PopoverSurface } from '~/ui/PopoverSurface'
+import { MenuItem, MenuSurface, PopoverList } from '~/ui/PopoverSurface'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 const FEATURED_KEYS = ['trade_thesis', 'x_data', 'tradfi', 'yields', 'onchain_analytics'] as const
@@ -242,8 +241,8 @@ function Capability({
 	getAnchorRect: () => { x: number; y: number; width: number; height: number } | null
 }) {
 	const isMobile = useMedia('(max-width: 640px)')
-	const popoverStore = Ariakit.usePopoverStore()
-	const open = Ariakit.useStoreState(popoverStore, 'open')
+	const menu = Ariakit.useMenuStore()
+	const open = Ariakit.useStoreState(menu, 'open')
 
 	const handlePromptClick = (prompt: string) => {
 		trackUmamiEvent('llamaai-landing-prompt-click', {
@@ -251,7 +250,7 @@ function Capability({
 			prompt: prompt.slice(0, 100)
 		})
 
-		popoverStore.hide()
+		menu.hide()
 
 		const textarea = promptInputRef.current
 		if (textarea) {
@@ -263,27 +262,28 @@ function Capability({
 	}
 
 	return (
-		<Ariakit.PopoverProvider store={popoverStore}>
-			<Ariakit.PopoverDisclosure
+		<Ariakit.MenuProvider store={menu}>
+			<Ariakit.MenuButton
 				onClick={() => trackUmamiEvent('llamaai-landing-capability-click', { category: cap.key })}
 				render={<Button type="button" size="md" variant={open ? 'outline' : 'secondary'} />}
 			>
 				<Icon name={cap.icon} className="size-3.5" />
 				{cap.name}
+				{/* A category badge (New, Beta) on the brand tint, not a selected state. */}
 				{cap.badge ? (
 					<span className="rounded-sm bg-brand-muted px-1 py-px label-xs tracking-wide text-link uppercase">
 						{cap.badge}
 					</span>
 				) : null}
-			</Ariakit.PopoverDisclosure>
-			<PopoverSurface
+			</Ariakit.MenuButton>
+			<MenuSurface
 				variant="list"
 				modal={isMobile}
 				getAnchorRect={getAnchorRect}
 				gutter={14}
 				flip={false}
 				dismiss="own"
-				className="w-[min(calc(100vw-32px),42rem)] max-w-xl overflow-hidden"
+				width="xl"
 			>
 				<div className="flex shrink-0 items-center gap-2 border-b border-subtle py-1 pr-2 pl-3">
 					<Icon name={cap.icon} className="size-3.5 text-link" />
@@ -295,25 +295,18 @@ function Capability({
 						<Icon name="x" className="size-4" />
 					</Ariakit.PopoverDismiss>
 				</div>
-				<div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-					{cap.prompts.map((prompt, i) => (
-						<button
-							key={`${cap.key}:${prompt}`}
-							type="button"
-							className={`${popoverMenuItemStyles} group w-full justify-between text-left ${
-								i < cap.prompts.length - 1 ? 'border-b border-subtle' : ''
-							}`}
-							onClick={() => handlePromptClick(prompt)}
-						>
+				<PopoverList divided>
+					{cap.prompts.map((prompt) => (
+						<MenuItem key={`${cap.key}:${prompt}`} onClick={() => handlePromptClick(prompt)}>
 							{prompt}
 							<Icon
 								name="chevron-right"
-								className="size-3.5 shrink-0 text-tertiary opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100"
+								className="ml-auto size-3.5 shrink-0 text-tertiary opacity-0 group-hover:opacity-100 group-data-active-item:opacity-100"
 							/>
-						</button>
+						</MenuItem>
 					))}
-				</div>
-			</PopoverSurface>
-		</Ariakit.PopoverProvider>
+				</PopoverList>
+			</MenuSurface>
+		</Ariakit.MenuProvider>
 	)
 }

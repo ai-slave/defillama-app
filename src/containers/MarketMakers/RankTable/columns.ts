@@ -1,9 +1,9 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { createElement } from 'react'
 import type { SortedTableFeatures } from '~/components/Table/features/sorting'
-import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { Logo } from '~/ui/Logo'
 import { heatmapClass, percentileOpacity, rankOpacity } from '../colors'
 import type { ColumnConfig, DisplayMode } from '../constants'
 import { selectCellNumber } from '../constants'
@@ -57,7 +57,7 @@ export function buildRankColumns({ columns, mode, rowCount, onSelectMM }: IBuild
 					onClick: () => onSelectMM(row.original.marketMakerId, row.original.marketMakerName),
 					className: 'flex items-center gap-2 text-link hover:underline'
 				},
-				createElement(TokenLogo, { src: row.original.marketMakerImageUrl, size: 24 }),
+				createElement(Logo, { src: row.original.marketMakerImageUrl, size: 24 }),
 				createElement('span', { className: 'truncate' }, row.original.marketMakerName)
 			),
 		enableSorting: false,

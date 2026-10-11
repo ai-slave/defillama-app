@@ -9,6 +9,7 @@ import { TrialCsvLimitModal } from '~/containers/Subscription/shared/TrialCsvLim
 import { useIsClient } from '~/hooks/useIsClient'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { PopoverFooterAction } from '~/ui/PopoverSurface'
 import { BusyGlyph } from '~/ui/Status'
 import { slug } from '~/utils'
 import { downloadCSV } from '~/utils/download'
@@ -17,7 +18,8 @@ interface CSVDownloadButtonProps {
 	// Common props
 	className?: string
 	size?: 'sm' | 'md'
-	replaceClassName?: boolean
+	/** The phone filter menu's closing action row instead of a toolbar button. */
+	nestedMenu?: boolean
 	smol?: boolean
 	children?: ReactNode
 	free?: boolean
@@ -105,17 +107,7 @@ export function CsvDownloadDialogs({ controller }: { controller: ReturnType<type
 
 // use children to pass in the text
 export function CSVDownloadButton(props: CSVDownloadButtonPropsUnion) {
-	const {
-		className,
-		replaceClassName,
-		smol,
-		children,
-		free,
-		disabled = false,
-		size = 'sm',
-		prepareCsv,
-		onClick
-	} = props
+	const { className, nestedMenu, smol, children, free, disabled = false, size = 'sm', prepareCsv, onClick } = props
 	const csv = useCsvDownload(free)
 	const isLoading = csv.userLoading || props.isLoading || csv.status === 'pending'
 	const isClient = useIsClient()
@@ -149,19 +141,17 @@ export function CSVDownloadButton(props: CSVDownloadButtonPropsUnion) {
 
 	return (
 		<>
-			{replaceClassName ? (
-				// A caller that styles the control itself (a menu row) gets the behavior without Button's look.
-				<Ariakit.Button
-					type="button"
+			{nestedMenu ? (
+				<PopoverFooterAction
+					inset="nested"
 					data-umami-event="export-csv"
 					data-umami-event-page={router.pathname}
-					className={`${className ?? ''} aria-disabled:cursor-not-allowed aria-disabled:text-disabled`}
 					onClick={handleButtonClick}
 					disabled={disabled || !isClient || isLoading}
 					accessibleWhenDisabled={csv.status === 'pending' || props.isLoading}
 				>
 					{buttonContent}
-				</Ariakit.Button>
+				</PopoverFooterAction>
 			) : (
 				<Button
 					size={size}

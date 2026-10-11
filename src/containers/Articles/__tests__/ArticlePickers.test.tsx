@@ -3,6 +3,7 @@
 import { act, useState, type ReactElement } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { ArticleMultiPicker } from '../admin/ArticleMultiPicker'
@@ -142,6 +143,11 @@ describe('article pickers keep known titles', () => {
 		return <ArticleMultiPicker value={value} onChange={setValue} />
 	}
 
+	const clearSelection = () =>
+		[...container.querySelectorAll<HTMLElement>('button')].find(
+			(button) => accessibleName(button) === 'Clear selection'
+		)
+
 	async function press(button: HTMLElement) {
 		await act(async () => {
 			button.focus()
@@ -154,9 +160,9 @@ describe('article pickers keep known titles', () => {
 		await render(<SinglePicker />)
 		await flush()
 
-		await press(container.querySelector<HTMLElement>('[aria-label="Clear selection"]')!)
+		await press(clearSelection()!)
 
-		expect(container.querySelector('[aria-label="Clear selection"]')).toBeNull()
+		expect(clearSelection()).toBeUndefined()
 		expect(document.activeElement).toBe(container.querySelector('[role="combobox"]'))
 	})
 

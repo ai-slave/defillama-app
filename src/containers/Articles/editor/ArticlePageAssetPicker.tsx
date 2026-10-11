@@ -1,15 +1,14 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
 import { type Ref, useMemo, useRef, useState } from 'react'
-import { TokenLogo } from '~/components/TokenLogo'
 import { useDebouncedValue } from '~/hooks/useDebounce'
 import { Button } from '~/ui/Button'
 import { focusNeighborOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
+import { Logo } from '~/ui/Logo'
 import { ListLoading, NoResults } from '~/ui/NoResults'
-import { popoverRowStyles } from '~/ui/Popover'
-import { ComboboxSurface } from '~/ui/PopoverSurface'
+import { ComboboxSurface, PopoverRow } from '~/ui/PopoverSurface'
+import { SearchField } from '~/ui/SearchField'
 import { ErrorLine } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { geckoTokenIconUrl } from '~/utils/icons'
@@ -83,22 +82,15 @@ export function ArticlePageAssetPicker({
 				setInputValue={setSearchValue}
 				resetValueOnHide
 			>
-				<div className="relative">
-					<Icon name="search" className={searchFieldIconStyles} />
-					<Ariakit.Combobox
-						ref={searchRef}
-						aria-label="Search tokens to add"
-						placeholder={atLimit ? `Limit reached (max ${MAX_PAGE_ASSETS})` : 'Search a token by symbol or name…'}
-						disabled={atLimit}
-						autoSelect
-						render={<Input className={searchFieldInputPlacementStyles} />}
-					/>
-				</div>
-				<ComboboxSurface
-					variant="search-results"
-					sameWidth
-					className="max-h-[min(256px,var(--popover-available-height))]"
-				>
+				<SearchField
+					combobox
+					ref={searchRef}
+					label="Search tokens to add"
+					placeholder={atLimit ? `Limit reached (max ${MAX_PAGE_ASSETS})` : 'Search a token by symbol or name…'}
+					disabled={atLimit}
+					autoSelect
+				/>
+				<ComboboxSurface variant="search-results" sameWidth maxHeight="md">
 					{isFetching && hits.length === 0 ? <ListLoading label="Searching" /> : null}
 					{!isFetching && isError ? (
 						<ErrorLine inset="menuRow">Couldn&apos;t search tokens. Edit the search to try again.</ErrorLine>
@@ -106,23 +98,17 @@ export function ArticlePageAssetPicker({
 						<NoResults>No tokens found</NoResults>
 					) : null}
 					{hits.map((hit) => (
-						<Ariakit.ComboboxItem
+						<PopoverRow
 							key={hit.geckoId}
-							value={hit.geckoId}
-							setValueOnClick={false}
 							onClick={() => addAsset(hit)}
-							className={popoverRowStyles}
+							render={<Ariakit.ComboboxItem value={hit.geckoId} setValueOnClick={false} />}
 						>
 							<span className="flex min-w-0 items-center gap-2">
-								<TokenLogo
-									src={hit.image ?? geckoTokenIconUrl(`coingecko:${hit.geckoId}`)}
-									size={20}
-									alt={hit.symbol}
-								/>
+								<Logo src={hit.image ?? geckoTokenIconUrl(`coingecko:${hit.geckoId}`)} size={20} alt={hit.symbol} />
 								<span className="label-md text-primary">{hit.symbol}</span>
 								<span className="truncate body-sm text-tertiary">{hit.name}</span>
 							</span>
-						</Ariakit.ComboboxItem>
+						</PopoverRow>
 					))}
 				</ComboboxSurface>
 			</Ariakit.ComboboxProvider>
@@ -135,7 +121,7 @@ export function ArticlePageAssetPicker({
 							data-row
 							className="flex items-center gap-2 rounded-lg border border-subtle bg-page px-3 py-2"
 						>
-							<TokenLogo src={geckoTokenIconUrl(`coingecko:${asset.geckoId}`)} size={20} alt={asset.symbol} />
+							<Logo src={geckoTokenIconUrl(`coingecko:${asset.geckoId}`)} size={20} alt={asset.symbol} />
 							<div className="flex min-w-0 flex-col">
 								<span className="label-md text-primary">{asset.symbol}</span>
 								<span className="truncate body-sm text-tertiary">{asset.name}</span>

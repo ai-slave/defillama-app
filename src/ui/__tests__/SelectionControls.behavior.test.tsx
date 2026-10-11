@@ -3,6 +3,7 @@
 import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { tabTo } from '~/utils/testing/keyboard'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { Checkbox } from '../Checkbox'
 import { SegmentedControl } from '../SegmentedControl'
@@ -280,7 +281,7 @@ test('a checkbox toggles on click, never on Enter', async () => {
 })
 
 test.each(['radio', 'tabs'] as const)(
-	'%s: an option definition opens when its control takes keyboard focus',
+	'%s: an option definition opens when an arrow key moves focus to its control',
 	async (semantics) => {
 		const container = document.createElement('div')
 		document.body.append(container)
@@ -307,8 +308,13 @@ test.each(['radio', 'tabs'] as const)(
 				)
 			)
 		)
-		const perps = container.querySelectorAll<HTMLElement>('input[type="radio"], [role="tab"]')[1]
-		await act(async () => perps.focus())
+		const [spot, perps] = container.querySelectorAll<HTMLElement>('input[type="radio"], [role="tab"]')
+		await tabTo(spot)
+		await act(async () => {
+			spot.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }))
+			await new Promise((resolve) => setTimeout(resolve, 30))
+		})
+		expect(document.activeElement).toBe(perps)
 		await waitForUi(() =>
 			expect(document.querySelector('[role="tooltip"]')?.textContent).toBe('Contracts with no expiry')
 		)

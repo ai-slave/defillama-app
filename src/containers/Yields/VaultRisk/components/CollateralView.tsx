@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import type { BlockExplorersResponse } from '~/api/types'
 import { TokenPageTableShell } from '~/components/Table/helpers'
 import { Button } from '~/ui/Button'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition } from '~/ui/Tooltip'
 import { buildAllocation } from '../allocation'
 import { collateralMarketBreakLossUsd, isDustCollateral } from '../derive'
 import { ChapterHead } from '../primitives/ChapterHead'
@@ -134,32 +134,29 @@ export function CollateralView({
 				>
 					<span>Collateral</span>
 					{alloc ? (
-						<Tooltip
+						<Definition
 							content="What the curator has deployed into this market — the pool's actual supplied position."
-							className="cursor-help justify-self-end underline decoration-dotted"
-							tabIndex={0}
+							className="justify-self-end"
 						>
 							Allocation
-						</Tooltip>
+						</Definition>
 					) : null}
-					<Tooltip
+					<Definition
 						content={
 							alloc
 								? 'Modeled bad-debt exposure if this collateral goes to zero. When attribution is missing, this falls back to the position cap.'
 								: 'Modeled bad-debt exposure if this collateral goes to zero. When attribution is missing, this falls back to the market and pool-size cap.'
 						}
-						className="cursor-help justify-self-end underline decoration-dotted"
-						tabIndex={0}
+						className="justify-self-end"
 					>
 						Market Exposure
-					</Tooltip>
-					<Tooltip
+					</Definition>
+					<Definition
 						content="Separate oracle-compromise path: drainable if the price feed is pushed to a fake value."
-						className="cursor-help justify-self-end underline decoration-dotted"
-						tabIndex={0}
+						className="justify-self-end"
 					>
 						Oracle Exposure
-					</Tooltip>
+					</Definition>
 					<span />
 				</div>
 				<div>

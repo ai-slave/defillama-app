@@ -1,10 +1,9 @@
 import * as Ariakit from '@ariakit/react'
 import type { RefObject } from 'react'
-import { TokenLogo } from '~/components/TokenLogo'
 import { getAnchorRect } from '~/containers/LlamaAI/utils/entitySuggestions'
+import { Logo } from '~/ui/Logo'
 import { ListLoading } from '~/ui/NoResults'
-import { popoverMenuItemStyles } from '~/ui/Popover'
-import { ComboboxSurface } from '~/ui/PopoverSurface'
+import { ComboboxSurface, PopoverList, PopoverRow } from '~/ui/PopoverSurface'
 import { Tag } from '~/ui/Tag'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
@@ -51,27 +50,27 @@ export function EntityComboboxPopover({
 				if (!textarea) return null
 				return getAnchorRect(textarea)
 			}}
-			className="max-w-[280px]"
+			width="md"
 		>
 			{hasMatches && matches ? (
-				matches.map(({ id, name, logo, type }) => (
-					<Ariakit.ComboboxItem
-						key={id}
-						value={id}
-						focusOnHover
-						onClick={() => {
-							trackUmamiEvent('llamaai-entity-select', { type })
-							onItemClick({ id, name, type })
-						}}
-						className={`${popoverMenuItemStyles} border-t border-subtle first:border-t-0`}
-					>
-						{logo ? <TokenLogo src={logo} alt={`Logo of ${name}`} size={20} /> : null}
-						<span className="flex items-center gap-1.5">
-							<span className="font-medium">{name}</span>
-							<Tag>{type}</Tag>
-						</span>
-					</Ariakit.ComboboxItem>
-				))
+				<PopoverList divided>
+					{matches.map(({ id, name, logo, type }) => (
+						<PopoverRow
+							key={id}
+							render={<Ariakit.ComboboxItem value={id} focusOnHover />}
+							onClick={() => {
+								trackUmamiEvent('llamaai-entity-select', { type })
+								onItemClick({ id, name, type })
+							}}
+						>
+							{logo ? <Logo src={logo} alt={`Logo of ${name}`} size={20} /> : null}
+							<span className="flex items-center gap-1.5">
+								<span className="font-medium">{name}</span>
+								<Tag>{type}</Tag>
+							</span>
+						</PopoverRow>
+					))}
+				</PopoverList>
 			) : (
 				<ListLoading label="Loading suggestions" />
 			)}

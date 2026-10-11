@@ -56,7 +56,7 @@ export function EmbedChart() {
 				<span className="sr-only">Embed chart</span>
 			</Tooltip>
 
-			<PopoverSurface variant="panel" heading="Embed chart" className="w-80">
+			<PopoverSurface variant="panel" heading="Embed chart" width="lg">
 				<span className="flex flex-col items-end gap-2 p-3">
 					<code className="block rounded-lg bg-page p-2 body-sm break-all">{url}</code>
 					<Button size="md" onClick={() => void copy(url)} doneLabel="Copied" done={copied}>

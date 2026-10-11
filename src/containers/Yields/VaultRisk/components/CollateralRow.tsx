@@ -1,9 +1,9 @@
 import type { BlockExplorersResponse } from '~/api/types'
 import { BasicLink } from '~/components/Link'
-import { TokenLogo } from '~/components/TokenLogo'
 import { Icon } from '~/ui/Icon'
+import { Logo } from '~/ui/Logo'
 import { StatusBadge } from '~/ui/StatusBadge'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { formatUsd } from '~/utils/numberFormat'
@@ -355,7 +355,7 @@ export function CollateralRow({
 			>
 				<div className="flex items-center justify-between gap-2 sm:contents">
 					<span className="flex min-w-0 items-center gap-2">
-						<TokenLogo src={c.logoUrl} size={18} alt={c.symbol} />
+						<Logo src={c.logoUrl} size={18} alt={c.symbol} />
 						{/* The summary holds no link or tooltip: each would be a tab stop inside the disclosure. The token
 						    link and the oracle mechanism sit in the expanded row. */}
 						<span className="truncate label-md text-primary">{c.symbol}</span>
@@ -511,13 +511,9 @@ export function CollateralRow({
 							</span>
 						) : null}
 						<span className="flex flex-wrap items-baseline gap-x-1.5">
-							<Tooltip
-								content={trustScopeTooltip(trustScope)}
-								className="cursor-help text-primary underline decoration-dotted"
-								tabIndex={0}
-							>
+							<Definition content={trustScopeTooltip(trustScope)} className="text-primary">
 								Aggregate Collateral Trust (ACT):
-							</Tooltip>
+							</Definition>
 							<span>{aggregateTrust ?? '—'}</span>
 							{c.vaultCount > 0 ? <span className="body-sm text-tertiary">{`${c.vaultCount} vaults`}</span> : null}
 						</span>

@@ -18,12 +18,11 @@ import { VirtualTable } from '~/components/Table/VirtualTable'
 import { TokenLogo } from '~/components/TokenLogo'
 import type { calcCirculating } from '~/containers/Stablecoins/hooks'
 import { Change, formatChange } from '~/ui/Change'
-import { searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SearchField } from '~/ui/SearchField'
 import { TableToolbar } from '~/ui/Toolbar'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { formatPercentChange, formatUsd } from '~/utils/numberFormat'
 
@@ -236,17 +235,16 @@ const stablecoinsColumns = columnHelper.columns([
 				)
 			}
 			return info.row.original.deadFrom || info.row.original.delisted ? (
-				<Tooltip
+				<Definition
 					content={
 						info.row.original.deadFrom
 							? `No current market cap after ${info.row.original.deadFrom}`
 							: 'No current market cap for this delisted stablecoin'
 					}
-					className="w-full cursor-help justify-end underline decoration-dotted"
-					tabIndex={0}
+					className="w-full justify-end"
 				>
 					N/A
-				</Tooltip>
+				</Definition>
 			) : (
 				<span className="flex w-full justify-end">N/A</span>
 			)
@@ -315,7 +313,7 @@ export function StablecoinsTable({ data }: { data: Array<StablecoinRow> }) {
 					value={projectName}
 					onChange={setProjectName}
 					placeholder="Search…"
-					className={searchFieldWrapperStyles}
+					width="standalone"
 				/>
 				<CSVDownloadButton
 					prepareCsv={() => prepareTableCsv({ instance, filename: 'stablecoins-assets' })}

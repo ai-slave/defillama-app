@@ -17,7 +17,6 @@ import type { groupBridgeData } from '~/containers/Stablecoins/hooks'
 import { Button } from '~/ui/Button'
 import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
-import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { SearchField } from '~/ui/SearchField'
 import { TableToolbar } from '~/ui/Toolbar'
@@ -215,7 +214,8 @@ export function StablecoinByChainUsageTable({ data }: { data: Array<StablecoinBy
 					value={projectName}
 					onChange={setProjectName}
 					placeholder="Search…"
-					className={`${searchFieldInlineWrapperStyles} ml-auto`}
+					width="inline"
+					className="ml-auto"
 				/>
 			</TableToolbar>
 			<VirtualTable table={instance} />

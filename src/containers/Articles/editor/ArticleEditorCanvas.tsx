@@ -45,12 +45,7 @@ function CalloutMenu({
 	const menu = Ariakit.useMenuStore()
 	return (
 		<Ariakit.MenuProvider store={menu}>
-			<MenuItem render={<Ariakit.MenuButton />}>
-				{children}
-				<span aria-hidden className="ml-auto text-tertiary">
-					›
-				</span>
-			</MenuItem>
+			<MenuItem kind="submenu">{children}</MenuItem>
 			<MenuSurface variant="nested" aria-label="Callout" gutter={4}>
 				<NestedDrawerHeader
 					title="Callout"
@@ -379,7 +374,7 @@ export function ArticleEditorCanvas({
 							</Tooltip>
 							{/* Portalled like every surface, so its phone sheet is not trapped under the rail in FloatingMenu's z-30
 							    layer. Pressing "+" sets tiptap's preventHide, so the editor blur that opening the menu causes keeps it shown. */}
-							<MenuSurface variant="actions" gutter={6} className="min-w-[200px]">
+							<MenuSurface variant="actions" gutter={6}>
 								{blockItems.map((item) => (
 									<MenuItem key={item.label} onClick={item.run}>
 										<span>{item.label}</span>
@@ -504,7 +499,7 @@ export function ArticleEditorCanvas({
 									<Icon name="ellipsis" className="size-3.5" />
 									Insert
 								</Ariakit.MenuButton>
-								<MenuSurface variant="actions" className="min-w-[200px]">
+								<MenuSurface variant="actions">
 									<MenuItem
 										onClick={() => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
 									>

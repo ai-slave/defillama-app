@@ -1,14 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
 import { matchSorter } from 'match-sorter'
 import { useDeferredValue, useMemo, useRef, useState } from 'react'
-import { TokenLogo } from '~/components/TokenLogo'
 import { fetchChainsByCategory, fetchChainsCategories } from '~/containers/Chains/api'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
-import { CheckboxIndicator } from '~/ui/Checkbox'
 import { Field } from '~/ui/Field'
 import { focusNeighborOnLeave, keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { ListRow } from '~/ui/ListRow'
+import { Logo } from '~/ui/Logo'
 import { SearchField } from '~/ui/SearchField'
 import { InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
@@ -229,7 +229,7 @@ export function SelectItemsStep() {
 									data-row
 									className="flex shrink-0 items-center gap-1.5 rounded-md border border-medium pl-1.5 body-sm text-primary"
 								>
-									<TokenLogo src={item.logo} alt={`Logo of ${item.label}`} size={16} />
+									<Logo src={item.logo} alt={`Logo of ${item.label}`} size={16} />
 									<span className="whitespace-nowrap">{item.label}</span>
 									<Tooltip
 										content="Remove"
@@ -337,34 +337,34 @@ export function SelectItemsStep() {
 										const isDisabled = isDisabledByParent || isDisabledByLimit
 
 										return (
-											<button
+											<ListRow
 												key={option.value}
-												type="button"
 												role="checkbox"
 												aria-checked={!!isSelected}
 												aria-label={option.label}
-												onClick={() => actions.toggleSelectedItem(option.value)}
-												disabled={isDisabled}
-												className={`group absolute top-0 left-0 flex w-full items-center gap-3 px-3 py-2 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
-													isSelected ? 'bg-brand-muted' : 'not-disabled:hover:bg-hover-row'
-												} ${option.isChild ? 'pl-8' : ''}`}
+												// Stays focusable at the limit or under a picked parent, so a reader hears it is unavailable.
+												aria-disabled={isDisabled || undefined}
+												onClick={isDisabled ? undefined : () => actions.toggleSelectedItem(option.value)}
+												selected={!!isSelected}
+												check="box"
+												nested={!!option.isChild}
+												className="absolute top-0 left-0 gap-3"
 												style={{
 													height: `${virtualRow.size}px`,
 													transform: `translateY(${virtualRow.start}px)`
 												}}
 											>
-												<CheckboxIndicator checked={!!isSelected} />
-
-												<span className={option.isChild ? 'opacity-70' : undefined}>
-													<TokenLogo src={option.logo} alt={`Logo of ${option.label}`} size={24} />
+												{/* A disabled row's text takes the disabled color; its logo dims with it. */}
+												<span className={option.isChild ? 'opacity-70' : 'group-aria-disabled:opacity-60'}>
+													<Logo src={option.logo} alt={`Logo of ${option.label}`} size={24} />
 												</span>
 
 												<span
-													className={`min-w-0 flex-1 truncate body-md ${option.isChild ? 'text-secondary' : 'text-primary'}`}
+													className={`min-w-0 flex-1 truncate body-md ${option.isChild ? 'text-secondary group-aria-disabled:text-disabled' : ''}`}
 												>
 													{option.label}
 												</span>
-											</button>
+											</ListRow>
 										)
 									})}
 								</div>

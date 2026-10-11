@@ -1,8 +1,8 @@
 import { BasicLink } from '~/components/Link'
 import { useHorizontalOverflow } from '~/hooks/useHorizontalOverflow'
 import { Button } from '~/ui/Button'
-import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
+import { Skeleton } from '~/ui/Skeleton'
 import { EmptyState } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import type { Dashboard } from '../dashboardTypes'
@@ -60,14 +60,11 @@ export function DiscoverySection({
 				<DiscoveryShelfHeading title={title} subtitle={subtitle} />
 				<div className="flex gap-3 overflow-hidden">
 					{Array.from({ length: 5 }).map((_, i) => (
-						<Card
-							padding="none"
+						<Skeleton
 							// oxlint-disable-next-line react/no-array-index-key -- Loading placeholders are fixed display slots, not data items.
 							key={`skeleton-${title}-${i}`}
-							className="relative isolate min-h-[220px] w-[300px] shrink-0 overflow-hidden md:w-[320px]"
-						>
-							<div className="pointer-events-none absolute inset-y-0 -right-1/2 -left-1/2 animate-shimmer bg-linear-[99.97deg] from-transparent via-hover-row to-transparent" />
-						</Card>
+							className="min-h-[220px] w-[300px] shrink-0 rounded-lg md:w-[320px]"
+						/>
 					))}
 				</div>
 			</div>

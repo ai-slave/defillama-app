@@ -13,7 +13,6 @@ import * as React from 'react'
 import { orderedFilteredTableFeatures } from '~/components/Table/features/orderedFiltering'
 import { TablePager } from '~/components/Table/TablePager'
 import { useTableSearch } from '~/components/Table/utils'
-import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { SearchField } from '~/ui/SearchField'
 import type { CsvCell } from '~/utils/csvCell'
 import { downloadCSV } from '~/utils/download'
@@ -142,7 +141,7 @@ export function StablecoinsDataset({ chain }: StablecoinsDatasetProps) {
 							value={projectName}
 							onChange={setProjectName}
 							placeholder="Search stablecoins…"
-							className={searchFieldInlineWrapperStyles}
+							width="inline"
 						/>
 					</div>
 				</div>

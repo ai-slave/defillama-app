@@ -5,7 +5,7 @@ import { DividedGrid } from '~/ui/DividedGrid'
 import { Icon } from '~/ui/Icon'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { StatusBadge } from '~/ui/StatusBadge'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition } from '~/ui/Tooltip'
 import { formatCompactNumber, formatPercent, formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { hasPart } from '../domain/apyPresentation'
 import { stabilityStatus, YIELD_PERCENT_OPTIONS } from './format'
@@ -116,17 +116,9 @@ function Stat({
 }) {
 	return (
 		<span className="flex min-w-0 flex-col gap-1">
-			{tooltip ? (
-				<Tooltip
-					content={tooltip}
-					className="w-fit cursor-help label-md text-secondary underline decoration-dotted"
-					tabIndex={0}
-				>
-					{label}
-				</Tooltip>
-			) : (
-				<span className="label-md text-secondary">{label}</span>
-			)}
+			<Definition content={tooltip} className="w-fit label-md text-secondary">
+				{label}
+			</Definition>
 			{/* Beside the figure where there is room; under it on a phone, where a tile is half the screen. */}
 			<span className="flex flex-wrap items-center gap-x-4 gap-y-1">
 				<span className={`flex items-center gap-2 mono-xl whitespace-nowrap ${valueClassName || 'text-primary'}`}>

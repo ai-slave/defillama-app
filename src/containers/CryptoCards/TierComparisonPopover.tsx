@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { useId } from 'react'
+import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import type { CardTableRow, CardTierRollupField, CardTierRow } from './models'
 import { VARIES_BY_TIER } from './models'
@@ -111,58 +111,44 @@ export function TierComparisonTable({
 }
 
 export function TierComparisonPopover({ row, field }: { row: CardTableRow; field: CardTierRollupField }) {
-	const store = Ariakit.useHovercardStore({ placement: 'bottom-start', showTimeout: 150, hideTimeout: 150 })
-	const open = Ariakit.useStoreState(store, 'open')
-	const contentId = useId()
 	const tiers = row.comparisonRows
 	if (!tiers?.length) return <span className="text-tertiary">{VARIES_BY_TIER}</span>
 	const label = TIER_COMPARISON_LABELS[field]
 	const groupedByParent = row.rowKind === 'parent'
 	return (
-		<Ariakit.HovercardProvider store={store}>
-			<Ariakit.HovercardAnchor
-				store={store}
-				render={<button type="button" />}
-				onClick={(event) => {
-					store.setDisclosureElement(event.currentTarget)
-					store.setAutoFocusOnShow(true)
-					store.show()
-				}}
-				className="-mx-1 -my-1 inline-flex rounded-sm px-1 py-1 text-left text-tertiary underline decoration-dotted underline-offset-2 hover:text-secondary focus-visible:focus-ring"
-				aria-label={`Show ${label.toLowerCase()} by ${groupedByParent ? 'card and tier' : 'tier'} for ${row.cardName}`}
-				aria-controls={contentId}
-				aria-expanded={open}
-				aria-haspopup="dialog"
-			>
-				{VARIES_BY_TIER}
-			</Ariakit.HovercardAnchor>
-			<Ariakit.Hovercard
-				store={store}
-				id={contentId}
-				portal
-				unmountOnHide
-				hideOnInteractOutside
-				fitViewport
-				gutter={6}
-				overflowPadding={16}
-				className="z-50 flex max-h-[min(32rem,var(--popover-available-height))] w-[min(36rem,var(--popover-available-width))] flex-col overflow-hidden rounded-xl border border-medium bg-overlay text-primary shadow-overlay"
-			>
-				<div className="flex shrink-0 items-start gap-3 border-b border-medium px-3 py-2">
-					<div className="min-w-0 flex-1">
-						<Ariakit.HovercardHeading render={<h2 />} className="label-md text-primary">
-							{label} by {groupedByParent ? 'card and tier' : 'tier'}
-						</Ariakit.HovercardHeading>
-						<p className="truncate body-sm text-secondary">{row.cardName}</p>
+		<Hovercard
+			placement="bottom-start"
+			contentClassName="flex flex-col"
+			render={
+				<button
+					type="button"
+					className="-mx-1 -my-1 rounded-sm px-1 py-1 text-left text-tertiary underline decoration-dotted underline-offset-2 hover:text-secondary focus-visible:focus-ring"
+					aria-label={`Show ${label.toLowerCase()} by ${groupedByParent ? 'card and tier' : 'tier'} for ${row.cardName}`}
+				/>
+			}
+			content={
+				<>
+					{/* Full-bleed header: its divider reaches the card's edges above the table. */}
+					<div className="-mx-3 -mt-3 flex items-start gap-3 border-b border-medium px-3 py-2">
+						<div className="min-w-0 flex-1">
+							<Ariakit.HovercardHeading render={<h2 />} className="label-md text-primary">
+								{label} by {groupedByParent ? 'card and tier' : 'tier'}
+							</Ariakit.HovercardHeading>
+							<p className="truncate body-sm text-secondary">{row.cardName}</p>
+						</div>
+						<Ariakit.HovercardDismiss className="flex size-8 shrink-0 items-center justify-center rounded-md text-secondary hover:bg-hover-row hover:text-primary focus-visible:focus-ring">
+							<Icon name="x" className="size-4" aria-hidden="true" />
+							<span className="sr-only">Close tier comparison</span>
+						</Ariakit.HovercardDismiss>
 					</div>
-					<Ariakit.HovercardDismiss className="flex size-8 shrink-0 items-center justify-center rounded-md text-secondary hover:bg-hover-row hover:text-primary focus-visible:focus-ring">
-						<Icon name="x" className="size-4" aria-hidden="true" />
-						<span className="sr-only">Close tier comparison</span>
-					</Ariakit.HovercardDismiss>
-				</div>
-				<div className="min-h-0 overflow-auto overscroll-contain">
-					<TierComparisonTable cardName={row.cardName} tiers={tiers} field={field} showCardName={groupedByParent} />
-				</div>
-			</Ariakit.Hovercard>
-		</Ariakit.HovercardProvider>
+					{/* The table's cells carry their own padding, so it runs to the card's edges and scrolls sideways. */}
+					<div className="-mx-3 -mb-3 overflow-x-auto">
+						<TierComparisonTable cardName={row.cardName} tiers={tiers} field={field} showCardName={groupedByParent} />
+					</div>
+				</>
+			}
+		>
+			{VARIES_BY_TIER}
+		</Hovercard>
 	)
 }

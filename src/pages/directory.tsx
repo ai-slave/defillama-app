@@ -2,15 +2,14 @@ import * as Ariakit from '@ariakit/react'
 import { matchSorter } from 'match-sorter'
 import { startTransition, useMemo, useRef, useState } from 'react'
 import { Announcement } from '~/components/Announcement'
-import { TokenLogo } from '~/components/TokenLogo'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import Layout from '~/layout'
 import { Card } from '~/ui/Card'
-import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
+import { Logo } from '~/ui/Logo'
 import { NoResults } from '~/ui/NoResults'
-import { popoverMenuItemStyles, popoverSeeMoreStyles } from '~/ui/Popover'
+import { PopoverRow } from '~/ui/PopoverSurface'
+import { SearchField } from '~/ui/SearchField'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
@@ -124,7 +123,7 @@ export default function Protocols({ protocols }: { protocols: Array<{ name: stri
 			.slice(0, 6)
 	}, [recentProtocolsInStorage])
 
-	const handleSeeMore = (e: React.MouseEvent<HTMLDivElement>) => {
+	const handleSeeMore = (e: React.MouseEvent) => {
 		e.preventDefault()
 		e.stopPropagation()
 		const previousCount = viewableMatches
@@ -178,7 +177,7 @@ export default function Protocols({ protocols }: { protocols: Array<{ name: stri
 									className="hover-wash-card flex cursor-pointer items-center gap-2 text-left"
 								>
 									{protocol.logo ? (
-										<TokenLogo src={protocol.logo} alt={`Logo of ${protocol.name}`} />
+										<Logo size={24} src={protocol.logo} alt={`Logo of ${protocol.name}`} />
 									) : (
 										<div className="size-6 rounded-sm bg-surface-elevated-1" />
 									)}
@@ -190,15 +189,7 @@ export default function Protocols({ protocols }: { protocols: Array<{ name: stri
 				) : null}
 
 				<div className="mx-auto my-8 w-full max-w-3xl min-w-0">
-					<div className="relative">
-						<Icon name="search" className={searchFieldIconStyles} />
-						<Ariakit.Combobox
-							aria-label="Search protocols"
-							placeholder="Search protocols…"
-							autoSelect
-							render={<Input className={searchFieldInputPlacementStyles} />}
-						/>
-					</div>
+					<SearchField combobox label="Search protocols" placeholder="Search protocols…" autoSelect />
 					<Ariakit.ComboboxList
 						ref={comboboxRef}
 						alwaysVisible
@@ -208,34 +199,35 @@ export default function Protocols({ protocols }: { protocols: Array<{ name: stri
 						{matches.length > 0 ? (
 							<>
 								{matches.slice(0, viewableMatches).map((option) => (
-									<Ariakit.ComboboxItem
+									<PopoverRow
 										key={option.name}
-										value={option.name}
+										render={
+											<Ariakit.ComboboxItem
+												value={option.name}
+												focusOnHover
+												hideOnClick={false}
+												setValueOnClick={false}
+											/>
+										}
 										onClick={() => {
 											if (typeof document !== 'undefined') {
 												window.open(option.route, '_blank')
 											}
 											saveRecent(option)
 										}}
-										focusOnHover
-										hideOnClick={false}
-										setValueOnClick={false}
-										className={`${popoverMenuItemStyles} gap-4 aria-disabled:bg-hover-row aria-selected:bg-hover-row`}
 									>
-										{option.logo ? <TokenLogo src={option.logo} alt={`Logo of ${option.name}`} /> : null}
+										{option.logo ? <Logo size={24} src={option.logo} alt={`Logo of ${option.name}`} /> : null}
 										<span>{option.name}</span>
-									</Ariakit.ComboboxItem>
+									</PopoverRow>
 								))}
 								{matches.length > viewableMatches ? (
-									<Ariakit.ComboboxItem
-										value="__see_more__"
-										setValueOnClick={false}
-										hideOnClick={false}
-										className={popoverSeeMoreStyles}
+									<PopoverRow
+										variant="action"
+										render={<Ariakit.ComboboxItem value="__see_more__" setValueOnClick={false} hideOnClick={false} />}
 										onClick={handleSeeMore}
 									>
 										See more…
-									</Ariakit.ComboboxItem>
+									</PopoverRow>
 								) : null}
 							</>
 						) : (

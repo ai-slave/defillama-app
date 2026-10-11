@@ -31,7 +31,6 @@ import { useProDashboardTime } from '~/containers/ProDashboard/ProDashboardAPICo
 import { getTimePeriodBounds, StreamDoneContext } from '~/containers/ProDashboard/queries'
 import type { CexDatasetTableConfig } from '~/containers/ProDashboard/types'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { SearchField } from '~/ui/SearchField'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import type { CsvCell } from '~/utils/csvCell'
@@ -321,7 +320,7 @@ function VenueComparisonTable({ data }: { data: CexAnalyticsSnapshotResponse }) 
 							value={venueName}
 							onChange={setVenueName}
 							placeholder="Search CEXs…"
-							className={searchFieldInlineWrapperStyles}
+							width="inline"
 						/>
 					</div>
 				</div>

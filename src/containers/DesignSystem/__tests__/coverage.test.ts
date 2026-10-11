@@ -20,12 +20,12 @@ const NOT_SHOWN_ALONE: Record<string, string> = {
 	'src/ui/Watermark.tsx#Watermark': 'drawn by KeyMetricsPanel and SmolStatCard; shown through them',
 	'src/ui/PopoverSurface.tsx#DrawerDismiss': 'renders only in phone drawers; phone-only states get a note',
 	'src/ui/PopoverSurface.tsx#NestedDrawerHeader': 'renders only in phone drawers; phone-only states get a note',
-	'src/ui/Checkbox.tsx#CheckboxIndicator':
-		'the check glyph a selectable picker row draws; shown through Checkbox, and a building piece',
 	'src/ui/NestedMenu.tsx#NestedMenu':
 		'the phone filter menu ResponsiveFilterLayout renders below sm; phone-only states get a note',
 	'src/ui/NestedMenu.tsx#NestedMenuToggle': 'an on/off row inside the phone filter menu; phone-only states get a note',
 	'src/ui/ComboboxSelectTrigger.tsx#ComboboxSelectTrigger': 'the trigger every picker renders; shown through them',
+	'src/components/TokenLogo/index.tsx#TokenLogo':
+		'finds a logo URL by name and draws Logo; the page shows Logo, since its demos use local images',
 	'src/components/Select/UrlSelect.tsx#UrlSelect': 'Select bound to the URL; the page shows Select',
 	'src/components/Select/UrlSelect.tsx#UrlSelectWithCombobox':
 		'SelectWithCombobox bound to the URL; the page shows SelectWithCombobox'
@@ -34,7 +34,6 @@ const NOT_SHOWN_ALONE: Record<string, string> = {
 /** Parts no design.md row names in its Use cell, with why. Each heads no row of its family's "Which one" table. */
 const NOT_IN_TABLE: Record<string, string> = {
 	ChartPanelExportShellLoading: 'the loading shell of a chart image export; no job picks it, the export renders it',
-	Tab: 'the tab of a Tabs provider; rows name it through `Tabs` / `TabPanel` and SegmentedControl semantics="tabs"',
 	SurfaceLoadingOverlay: 'the overlay a refetching surface lays over its last data; no job picks it on its own',
 	DialogSearchHeader: 'a piece of Dialog, shown on its own as the palette header; the Dialog row covers it',
 	DialogCloseButton: 'a piece of Dialog for a dialog that draws its own header row; the Dialog row covers it'

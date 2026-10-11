@@ -5,8 +5,7 @@ import { DARK_MODE, useDarkModeManager } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
 import { ComboboxSelectTrigger } from '~/ui/ComboboxSelectTrigger'
 import { Icon } from '~/ui/Icon'
-import { popoverMultiSelectCheckStyles, popoverRowWithBorderStyles } from '~/ui/Popover'
-import { ComboboxSurface } from '~/ui/PopoverSurface'
+import { ComboboxSurface, PopoverList, PopoverRow } from '~/ui/PopoverSurface'
 import { Tooltip } from '~/ui/Tooltip'
 
 const EMPTY_FILTERS: Array<{ name: string; key: string }> = []
@@ -39,31 +38,26 @@ export function Settings({ tvlOptions = EMPTY_FILTERS }: { tvlOptions?: Array<{ 
 			{/* Stays mounted: mobile nav control that must open instantly (#2640). */}
 			<ComboboxSurface variant="panel" heading="Settings" unmountOnHide={false}>
 				{rowsReady ? (
-					<>
+					<PopoverList divided>
 						{tvlOptions.map((option) => (
-							<Ariakit.ComboboxItem value={option.key} key={option.key} className={popoverRowWithBorderStyles}>
+							<PopoverRow
+								key={option.key}
+								render={<Ariakit.ComboboxItem value={option.key} />}
+								check="box"
+								checked={selectedValues.includes(option.key)}
+							>
 								{option.name}
-								<Ariakit.ComboboxItemSelected>
-									{(selected) => (
-										<span className={popoverMultiSelectCheckStyles(selected)} aria-hidden>
-											{selected ? <Icon name="check" className="size-3" aria-hidden /> : null}
-										</span>
-									)}
-								</Ariakit.ComboboxItemSelected>
-							</Ariakit.ComboboxItem>
+							</PopoverRow>
 						))}
-						<Ariakit.ComboboxItem
-							value={DARK_MODE}
-							selectValueOnClick={false}
+						<PopoverRow
+							render={<Ariakit.ComboboxItem value={DARK_MODE} selectValueOnClick={false} />}
 							onClick={() => toggleDarkMode()}
-							className={popoverRowWithBorderStyles}
+							check="box"
+							checked={darkMode}
 						>
 							Dark Mode
-							<span className={popoverMultiSelectCheckStyles(darkMode)} aria-hidden>
-								{darkMode ? <Icon name="check" className="size-3" aria-hidden /> : null}
-							</span>
-						</Ariakit.ComboboxItem>
-					</>
+						</PopoverRow>
+					</PopoverList>
 				) : null}
 			</ComboboxSurface>
 		</Ariakit.ComboboxProvider>

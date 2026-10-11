@@ -18,7 +18,6 @@ import { FieldGroup } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { OptionTile } from '~/ui/OptionTile'
-import { popoverMultiSelectCheckStyles } from '~/ui/Popover'
 import { EmptyState, InlineLoading, PanelLoadingStatus } from '~/ui/Status'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
@@ -409,7 +408,7 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 							const c = option.color
 							return (
 								<Ariakit.Checkbox
-									render={<OptionTile layout="row" selected={isSelected} aria-label={option.label} />}
+									render={<OptionTile layout="row" selected={isSelected} check="box" aria-label={option.label} />}
 									aria-description={option.description ?? undefined}
 									key={option.id}
 									checked={isSelected}
@@ -434,9 +433,6 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 									<span className="flex min-w-0 flex-col gap-0.5">
 										<span className="label-md">{option.label}</span>
 										{option.description ? <span className="label-sm text-tertiary">{option.description}</span> : null}
-									</span>
-									<span className={popoverMultiSelectCheckStyles(isSelected)} aria-hidden>
-										{isSelected ? <Icon name="check" className="size-3" aria-hidden /> : null}
 									</span>
 								</Ariakit.Checkbox>
 							)

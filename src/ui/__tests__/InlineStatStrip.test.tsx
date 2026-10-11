@@ -2,6 +2,7 @@
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { expect, test } from 'vitest'
+import { tabTo } from '~/utils/testing/keyboard'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { InlineStatStrip } from '../SummaryStats'
 
@@ -26,7 +27,7 @@ test('opens metric definitions on keyboard focus while preserving zero values', 
 		)!
 		expect(container.textContent).toContain('$0')
 		expect(document.body.textContent).not.toContain(definition)
-		await act(async () => trigger.focus())
+		await tabTo(trigger)
 		expect(document.activeElement).toBe(trigger)
 		await waitForUi(async () => {
 			await act(async () => {

@@ -87,7 +87,7 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled, t
 				<Icon name="chevron-down" className="size-3.5 shrink-0 text-tertiary" />
 			</Ariakit.PopoverDisclosure>
 
-			<PopoverSurface variant="panel" heading="Date range" className="w-80">
+			<PopoverSurface variant="panel" heading="Date range" width="lg">
 				<div className="flex flex-col gap-3 p-3">
 					<section className="flex flex-col gap-2">
 						<h3 className="label-sm text-secondary">Quick ranges</h3>

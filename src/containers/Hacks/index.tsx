@@ -15,7 +15,6 @@ import { VirtualTable } from '~/components/Table/VirtualTable'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { usePageClockSec } from '~/hooks/usePageClock'
 import { ChartPanelToolbar } from '~/ui/ChartPanel'
-import { searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
@@ -78,7 +77,7 @@ function HacksTable({ data }: { data: IHacksPageData['data'] }) {
 					value={projectName}
 					onChange={setProjectName}
 					placeholder="Search projects…"
-					className={searchFieldWrapperStyles}
+					width="standalone"
 				/>
 
 				<CSVDownloadButton prepareCsv={() => prepareTableCsv({ instance, filename: 'hacks' })} smol free size="md" />

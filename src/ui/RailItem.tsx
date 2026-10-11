@@ -1,8 +1,11 @@
 import type { ComponentPropsWithRef, ElementType } from 'react'
 
 /* ----------------------------------------------------------------------------
-   RailItem — one row of a vertical rail: a side nav, a table of contents or a
-   criteria list. It is the vertical twin of TabLink.
+   RailItem — one row of a vertical rail: a side nav, a table of contents, a
+   criteria list or a dialog's section tabs. It is the vertical twin of
+   TabLink. A section tab renders it from Tab
+   (`<Tab render={<RailItem as="button" type="button" />}>`), which sets
+   `data-active` and the tab semantics itself.
 
    Item: label-sm, px-3 py-1.5, rounded-md, full width. Rest text-secondary;
    hover and focus take the neutral wash and text-primary; the selected row

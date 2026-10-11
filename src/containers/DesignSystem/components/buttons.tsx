@@ -7,8 +7,7 @@ import { CopyHelper } from '~/ui/Copy'
 import { FileButton } from '~/ui/FileButton'
 import { Icon } from '~/ui/Icon'
 import { Menu } from '~/ui/Menu'
-import { popoverMenuItemStyles } from '~/ui/Popover'
-import { MenuSurface } from '~/ui/PopoverSurface'
+import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
 import { BusyGlyph } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { ImageReplaceTile, UploadTile } from '~/ui/UploadTile'
@@ -169,18 +168,11 @@ function SplitButtonDemo() {
 				<Ariakit.MenuButton aria-label="Choose download format" render={<Button variant="primary" size="md" square />}>
 					<Icon name="chevron-down" className="size-3.5" aria-hidden />
 				</Ariakit.MenuButton>
-				<MenuSurface variant="actions" className="min-w-32">
+				<MenuSurface variant="actions">
 					{FORMATS.map((option) => (
-						<Ariakit.MenuItemRadio
-							key={option}
-							name="format"
-							value={option}
-							hideOnClick
-							className={popoverMenuItemStyles}
-						>
-							<span className="mr-auto">{option}</span>
-							<Icon name="check" className={`size-3.5 ${format === option ? 'text-link' : 'invisible'}`} />
-						</Ariakit.MenuItemRadio>
+						<MenuItem kind="radio" key={option} name="format" value={option} hideOnClick>
+							{option}
+						</MenuItem>
 					))}
 				</MenuSurface>
 			</Ariakit.MenuProvider>

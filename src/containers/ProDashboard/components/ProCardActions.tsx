@@ -13,7 +13,6 @@ import {
 import { useIsClient } from '~/hooks/useIsClient'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { popoverMenuItemStyles } from '~/ui/Popover'
 import { MenuItem, MenuSeparator, MenuSurface } from '~/ui/PopoverSurface'
 import { ErrorLine } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
@@ -226,21 +225,17 @@ export function ProCardOverflowMenu({ image, csv, csvLevels, onDuplicate, disabl
 									<Ariakit.MenuGroup>
 										<Ariakit.MenuGroupLabel className={menuGroupLabelStyles}>Width</Ariakit.MenuGroupLabel>
 										{layout.colSpanOptions.map((option) => (
-											<Ariakit.MenuItemRadio
+											<MenuItem
+												kind="radio"
 												key={option}
 												name="dashboard-card-width"
 												value={String(option)}
 												checked={option === layout.colSpan}
 												onClick={() => layout.onColSpanChange(option)}
-												className={popoverMenuItemStyles}
 												data-umami-event="dashboard-card-width"
 											>
-												<span className="mr-auto">{COL_SPAN_LABELS[option]}</span>
-												<Icon
-													name="check"
-													className={option === layout.colSpan ? 'size-3.5 text-link' : 'invisible size-3.5'}
-												/>
-											</Ariakit.MenuItemRadio>
+												{COL_SPAN_LABELS[option]}
+											</MenuItem>
 										))}
 									</Ariakit.MenuGroup>
 								) : null}
@@ -248,21 +243,17 @@ export function ProCardOverflowMenu({ image, csv, csvLevels, onDuplicate, disabl
 									<Ariakit.MenuGroup>
 										<Ariakit.MenuGroupLabel className={menuGroupLabelStyles}>Height</Ariakit.MenuGroupLabel>
 										{layout.heightOptions.map((option) => (
-											<Ariakit.MenuItemRadio
+											<MenuItem
+												kind="radio"
 												key={option}
 												name="dashboard-card-height"
 												value={option}
 												checked={option === layout.height}
 												onClick={() => layout.onHeightChange(option)}
-												className={popoverMenuItemStyles}
 												data-umami-event="dashboard-card-height"
 											>
-												<span className="mr-auto">{DASHBOARD_CARD_HEIGHT_LABELS[option]}</span>
-												<Icon
-													name="check"
-													className={option === layout.height ? 'size-3.5 text-link' : 'invisible size-3.5'}
-												/>
-											</Ariakit.MenuItemRadio>
+												{DASHBOARD_CARD_HEIGHT_LABELS[option]}
+											</MenuItem>
 										))}
 									</Ariakit.MenuGroup>
 								) : null}

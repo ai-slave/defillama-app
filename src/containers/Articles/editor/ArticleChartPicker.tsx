@@ -19,12 +19,12 @@ import {
 import { CHAIN_CHART_TYPES, CHART_TYPES, PROTOCOL_CHART_TYPES } from '~/containers/ProDashboard/types'
 import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
-import { CheckboxIndicator } from '~/ui/Checkbox'
 import { Dialog, DialogCancelButton, DialogDiscardGuard, DialogFooter, DialogHeader, DialogToolbar } from '~/ui/Dialog'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
+import { ListRow } from '~/ui/ListRow'
 import { ListLoading, NoResults } from '~/ui/NoResults'
 import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -471,16 +471,15 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 								return (
 									<li key={`${entity.entityType}:${entity.slug}`}>
 										<Ariakit.Checkbox
-											render={<button type="button" aria-label={entity.name} />}
+											render={<ListRow aria-label={entity.name} selected={checked} check="box" className="gap-2.5" />}
 											onChange={() => toggleEntity(entity)}
+											// At the limit a row stays focusable, so a reader hears it is unavailable.
 											disabled={limitReached}
+											accessibleWhenDisabled
 											checked={checked}
-											className={`group flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
-												checked ? 'bg-brand-muted text-link' : 'text-primary hover:bg-hover-row'
-											}`}
 										>
-											<CheckboxIndicator checked={checked} />
-											<span className="relative flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full border border-medium bg-surface">
+											{/* A disabled row's text takes the disabled color; its logo dims with it. */}
+											<span className="relative flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full border border-medium bg-surface group-aria-disabled:opacity-40">
 												<img src={entityLogo(entity)} alt="" className="size-full object-cover" />
 											</span>
 											<span className="min-w-0 flex-1 truncate label-md">{entity.name}</span>

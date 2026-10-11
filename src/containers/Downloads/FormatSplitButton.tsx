@@ -1,8 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { Button, ButtonGroup } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { popoverMenuItemStyles } from '~/ui/Popover'
-import { MenuSurface } from '~/ui/PopoverSurface'
+import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
 import type { DownloadFormat } from '~/utils/download'
 import { ConfirmableContent } from './ActionFeedback'
 
@@ -60,19 +59,11 @@ export function FormatSplitButton({ onDownload, disabled, label, confirmed = fal
 				>
 					<Icon name="chevron-down" className="size-3.5" />
 				</Ariakit.MenuButton>
-				<MenuSurface variant="actions" className="min-w-32">
+				<MenuSurface variant="actions">
 					{DOWNLOAD_FORMATS.map((fmt) => (
-						<Ariakit.MenuItemRadio
-							key={fmt}
-							name="format"
-							value={fmt}
-							hideOnClick
-							onClick={() => onDownload(fmt)}
-							className={popoverMenuItemStyles}
-						>
-							<span className="mr-auto">{FORMAT_LABELS[fmt]}</span>
-							<Icon name="check" className={`size-3.5 ${format === fmt ? 'text-link' : 'invisible'}`} />
-						</Ariakit.MenuItemRadio>
+						<MenuItem kind="radio" key={fmt} name="format" value={fmt} hideOnClick onClick={() => onDownload(fmt)}>
+							{FORMAT_LABELS[fmt]}
+						</MenuItem>
 					))}
 				</MenuSurface>
 			</Ariakit.MenuProvider>

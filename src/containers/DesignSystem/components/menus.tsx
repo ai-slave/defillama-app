@@ -3,16 +3,18 @@ import { useState } from 'react'
 import { Button } from '~/ui/Button'
 import { Checkbox } from '~/ui/Checkbox'
 import { Field } from '~/ui/Field'
-import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
-import {
-	popoverMenuItemStyles,
-	popoverMultiSelectCheckStyles,
-	popoverRowStyles,
-	popoverScrollAreaStyles
-} from '~/ui/Popover'
 import { PopoverHeader } from '~/ui/PopoverHeader'
-import { ComboboxSurface, MenuItem, MenuSeparator, MenuSurface, PopoverSurface } from '~/ui/PopoverSurface'
+import {
+	ComboboxSurface,
+	MenuItem,
+	MenuSeparator,
+	MenuSurface,
+	PopoverFooterAction,
+	PopoverList,
+	PopoverRow,
+	PopoverSurface
+} from '~/ui/PopoverSurface'
 import { SearchField } from '~/ui/SearchField'
 import type { Family, KnobValues } from '../shared'
 
@@ -21,26 +23,23 @@ const PROTOCOLS = ['Aave', 'Lido', 'Uniswap']
 
 // Static options in the markup the app's lists render (an Ariakit option is a div, so each row spans the list).
 const CHAIN_ROWS = (
-	<div role="listbox" aria-label="Chains" aria-multiselectable className={popoverScrollAreaStyles}>
+	<PopoverList render={<div role="listbox" aria-label="Chains" aria-multiselectable />}>
 		{CHAINS.map((chain, index) => {
 			const selected = index < 2
 			return (
-				<div
+				<PopoverRow
 					key={chain}
-					role="option"
-					aria-selected={selected}
-					className={popoverRowStyles}
+					render={<div role="option" aria-selected={selected} />}
+					check="box"
+					checked={selected}
 					data-active-item={index === 1 ? '' : undefined}
 					aria-disabled={index === 3 || undefined}
 				>
-					<span>{chain}</span>
-					<span className={popoverMultiSelectCheckStyles(selected)} aria-hidden>
-						{selected ? <Icon name="check" className="size-2.5" /> : null}
-					</span>
-				</div>
+					{chain}
+				</PopoverRow>
 			)
 		})}
-	</div>
+	</PopoverList>
 )
 
 function ActionsMenu({ nested }: { nested: boolean }) {
@@ -55,24 +54,18 @@ function ActionsMenu({ nested }: { nested: boolean }) {
 				<MenuItem>Rename</MenuItem>
 				<MenuItem>Duplicate</MenuItem>
 				<MenuItem disabled>Move to folder</MenuItem>
-				<Ariakit.MenuItemCheckbox
+				<MenuItem
+					kind="checkbox"
 					name="fees"
 					checked={showFees}
 					onChange={(event) => setShowFees(event.currentTarget.checked)}
 					hideOnClick={false}
-					className={popoverMenuItemStyles}
 				>
-					<span className="mr-auto">Show fees</span>
-					<span className={popoverMultiSelectCheckStyles(showFees)} aria-hidden>
-						{showFees ? <Icon name="check" className="size-2.5" /> : null}
-					</span>
-				</Ariakit.MenuItemCheckbox>
+					Show fees
+				</MenuItem>
 				{nested ? (
 					<Ariakit.MenuProvider>
-						<MenuItem render={<Ariakit.MenuButton />}>
-							<span className="mr-auto">Export</span>
-							<Ariakit.MenuButtonArrow />
-						</MenuItem>
+						<MenuItem kind="submenu">Export</MenuItem>
 						<MenuSurface variant="nested" gutter={4}>
 							<MenuItem>.csv</MenuItem>
 							<MenuItem>.png</MenuItem>
@@ -114,7 +107,7 @@ function PopoverHeaderDemo({ values }: { values: KnobValues }) {
 				Chains
 				<Ariakit.PopoverDisclosureArrow />
 			</Ariakit.PopoverDisclosure>
-			<PopoverSurface variant="list" heading="Chains" className="w-64">
+			<PopoverSurface variant="list" heading="Chains" width="md">
 				<PopoverHeader
 					inset={values.inset as 'popover' | 'nested'}
 					search={
@@ -163,7 +156,7 @@ export const menus: Family = {
 							Save view
 							<Ariakit.PopoverDisclosureArrow />
 						</Ariakit.PopoverDisclosure>
-						<PopoverSurface variant="panel" heading="Save view" className="w-72">
+						<PopoverSurface variant="panel" heading="Save view" width="md">
 							<div className="flex flex-col gap-3 p-3">
 								<Field label="Name">{(control) => <Input {...control} defaultValue="My view" />}</Field>
 								<Button size="md" variant="primary">
@@ -178,8 +171,9 @@ export const menus: Family = {
 							Chains
 							<Ariakit.PopoverDisclosureArrow />
 						</Ariakit.PopoverDisclosure>
-						<PopoverSurface variant="list" heading="Chains" className="w-64">
+						<PopoverSurface variant="list" heading="Chains" width="md">
 							{CHAIN_ROWS}
+							<PopoverFooterAction inset="popover">Add chain</PopoverFooterAction>
 						</PopoverSurface>
 					</Ariakit.PopoverProvider>
 				)
@@ -195,7 +189,9 @@ export const menus: Family = {
 					/>
 					<ComboboxSurface variant="search-results" sameWidth>
 						{PROTOCOLS.map((name) => (
-							<Ariakit.ComboboxItem key={name} value={name} className={popoverRowStyles} />
+							<PopoverRow key={name} render={<Ariakit.ComboboxItem value={name} />}>
+								{name}
+							</PopoverRow>
 						))}
 					</ComboboxSurface>
 				</Ariakit.ComboboxProvider>

@@ -317,6 +317,8 @@ function CitationNodeView({ node, selected, deleteNode, updateAttributes, editor
 	}, [open])
 
 	const editable = editor?.isEditable !== false
+	// An inline citation chip in the article text: the tint marks it as a citation, and the editor's node selection
+	// only turns its border brand.
 	return (
 		<NodeViewWrapper
 			as="span"

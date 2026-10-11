@@ -8,6 +8,7 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 import { Icon } from '~/ui/Icon'
+import { Logo } from '~/ui/Logo'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { InlineStatStrip } from '~/ui/SummaryStats'
 import { Tag } from '~/ui/Tag'
@@ -262,7 +263,7 @@ function CardSection({
 	return (
 		<section aria-labelledby={headingId} className="flex flex-col gap-2">
 			<Card as="header" padding="md" className="flex flex-wrap items-center gap-4">
-				<TokenLogo
+				<Logo
 					src={card.logo ?? cryptoCardIconUrl(card.id)}
 					fallbackSrc={letterLogoDataUri(card.name)}
 					alt={`${card.name} logo`}

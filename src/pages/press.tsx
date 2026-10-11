@@ -1,13 +1,13 @@
-import { TokenLogo } from '~/components/TokenLogo'
 import { oldBlue } from '~/constants/colors'
 import Layout from '~/layout'
 import { Card } from '~/ui/Card'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
+import { Logo } from '~/ui/Logo'
 
 function PressPanel({ imageFilename }) {
 	return (
 		<Card padding="md" className="grid place-items-center">
-			<TokenLogo src={`/press/${imageFilename}`} alt={imageFilename} size={150} />
+			<Logo src={`/press/${imageFilename}`} alt={imageFilename} size={150} />
 		</Card>
 	)
 }

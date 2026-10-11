@@ -3,6 +3,7 @@ import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { Card } from '~/ui/Card'
 import { DividedGrid } from '~/ui/DividedGrid'
 import { Icon } from '~/ui/Icon'
+import { QuestionHelper } from '~/ui/QuestionHelper'
 import { Skeleton } from '~/ui/Skeleton'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
@@ -395,22 +396,15 @@ export function CompareBars({
 }
 
 /**
- * The circled "i" beside anything with more to say on hover. The shared Tooltip rather
- * than a `title` attribute: `title` never opens on touch and gives no sign it is there.
- * The padding buys a tap target; the negative margins keep the line height unchanged.
- * The text rides on `aria-label` too, since the tooltip only mounts while open.
+ * A QuestionHelper inside running text: a figure, a header label or a row name. QuestionHelper's own box is
+ * block-level, so a table cell can push it to the end; here an inline box keeps it on the text's line.
+ * The dashboards pass optional notes, so a missing one draws nothing.
  */
 export function InfoTip({ text, className = '' }: { text: string | undefined; className?: string }) {
 	if (!text) return null
 	return (
 		<span className={`inline-flex align-middle ${className}`}>
-			<Tooltip
-				content={text}
-				aria-label={text}
-				className="-m-1.5 cursor-help p-1.5 text-tertiary transition-colors hover:text-primary"
-			>
-				<Icon name="info" className="size-3" aria-hidden />
-			</Tooltip>
+			<QuestionHelper text={text} />
 		</span>
 	)
 }

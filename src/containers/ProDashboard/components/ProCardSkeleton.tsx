@@ -1,4 +1,4 @@
-import { tw } from '~/ui/tw'
+import { Skeleton } from '~/ui/Skeleton'
 import { previewSeries } from './dashboardPreview.utils'
 
 export type ProCardSkeletonVariant = 'chart' | 'metric' | 'table' | 'text' | 'pie'
@@ -6,8 +6,6 @@ export type ProCardSkeletonVariant = 'chart' | 'metric' | 'table' | 'text' | 'pi
 function svgCoordinate(value: number): number {
 	return Math.round(value * 100) / 100
 }
-
-const SHIMMER_OVERLAY = tw`pointer-events-none absolute inset-y-0 -right-1/2 -left-1/2 animate-shimmer bg-linear-[99.97deg] from-transparent via-hover-row to-transparent`
 
 const TABLE_KINDS = new Set(['unified-table', 'dataset-table', 'custom-data', 'sql'])
 
@@ -17,14 +15,6 @@ export function skeletonVariantForItemKind(kind: string | undefined): ProCardSke
 	if (kind === 'text') return 'text'
 	if (kind !== undefined && TABLE_KINDS.has(kind)) return 'table'
 	return 'chart'
-}
-
-export function SkeletonShimmer() {
-	return <div className={SHIMMER_OVERLAY} />
-}
-
-function SkeletonBlock({ className }: { className: string }) {
-	return <div className={`rounded-sm bg-surface-elevated-2 ${className}`} />
 }
 
 const WAVE_SEED = 20_260_914
@@ -56,7 +46,7 @@ function ChartSkeleton() {
 		<div className="flex flex-1 gap-2">
 			<div className="flex flex-col justify-between py-1">
 				{AXIS_TICKS.map((tick) => (
-					<SkeletonBlock key={tick} className="h-1 w-6" />
+					<Skeleton key={tick} className="h-1 w-6" />
 				))}
 			</div>
 			<div className="flex min-w-0 flex-1 flex-col gap-2">
@@ -68,7 +58,7 @@ function ChartSkeleton() {
 				</div>
 				<div className="flex justify-between">
 					{X_AXIS_TICKS.map((tick) => (
-						<SkeletonBlock key={tick} className="h-1 w-6" />
+						<Skeleton key={tick} className="h-1 w-6" />
 					))}
 				</div>
 			</div>
@@ -79,9 +69,9 @@ function ChartSkeleton() {
 function MetricSkeleton() {
 	return (
 		<div className="flex flex-1 flex-col justify-center gap-2">
-			<SkeletonBlock className="h-8 w-2/3" />
-			<SkeletonBlock className="h-3 w-1/3" />
-			<SkeletonBlock className="h-6 w-full" />
+			<Skeleton className="h-8 w-2/3" />
+			<Skeleton className="h-3 w-1/3" />
+			<Skeleton className="h-6 w-full" />
 		</div>
 	)
 }
@@ -91,13 +81,13 @@ function TableSkeleton() {
 		<div className="flex flex-1 flex-col gap-2">
 			<div className="flex gap-3">
 				{TABLE_COLUMNS.map((width) => (
-					<SkeletonBlock key={width} className={`h-3 ${width}`} />
+					<Skeleton key={width} className={`h-3 ${width}`} />
 				))}
 			</div>
 			{TABLE_ROWS.map((row) => (
 				<div key={row} className="flex gap-3">
 					{TABLE_COLUMNS.map((width) => (
-						<SkeletonBlock key={width} className={`h-2 ${width}`} />
+						<Skeleton key={width} className={`h-2 ${width}`} />
 					))}
 				</div>
 			))}
@@ -108,9 +98,9 @@ function TableSkeleton() {
 function TextSkeleton() {
 	return (
 		<div className="flex flex-1 flex-col gap-2">
-			<SkeletonBlock className="h-3 w-full" />
-			<SkeletonBlock className="h-3 w-11/12" />
-			<SkeletonBlock className="h-3 w-3/4" />
+			<Skeleton className="h-3 w-full" />
+			<Skeleton className="h-3 w-11/12" />
+			<Skeleton className="h-3 w-3/4" />
 		</div>
 	)
 }
@@ -118,7 +108,7 @@ function TextSkeleton() {
 function PieSkeleton() {
 	return (
 		<div className="flex flex-1 items-center justify-center">
-			<div className="size-24 rounded-full border-8 border-(--bg-surface-elevated-2)" />
+			<Skeleton className="size-24 rounded-full" />
 		</div>
 	)
 }
@@ -133,9 +123,8 @@ function skeletonBody(kind: ProCardSkeletonVariant) {
 
 export function ProCardSkeleton({ kind }: { kind: ProCardSkeletonVariant }) {
 	return (
-		<div aria-hidden data-skeleton={kind} className="relative isolate flex flex-1 overflow-hidden">
+		<div aria-hidden data-skeleton={kind} className="flex flex-1">
 			{skeletonBody(kind)}
-			<SkeletonShimmer />
 		</div>
 	)
 }

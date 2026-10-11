@@ -8,8 +8,7 @@ import { Field } from '~/ui/Field'
 import { showFieldErrors, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
-import { popoverRowStyles } from '~/ui/Popover'
-import { ComboboxSurface } from '~/ui/PopoverSurface'
+import { ComboboxSurface, PopoverRow } from '~/ui/PopoverSurface'
 import { Select } from '~/ui/Select'
 import { InlineLoading, InlineStatus } from '~/ui/Status'
 import { Tag } from '~/ui/Tag'
@@ -284,24 +283,18 @@ function GitHubConnectForm({
 												placeholder="owner/repo"
 												render={<Input className="w-full" />}
 											/>
-											<ComboboxSurface
-												variant="search-results"
-												sameWidth
-												className="max-h-[min(256px,var(--popover-available-height))]"
-											>
+											<ComboboxSurface variant="search-results" sameWidth maxHeight="md">
 												{filteredRepos.length === 0 ? (
 													<p className={EMPTY_RESULTS_STYLES}>No repositories match.</p>
 												) : (
 													filteredRepos.map((r) => (
-														<Ariakit.ComboboxItem
+														<PopoverRow
 															key={r.full_name}
-															value={r.full_name}
-															setValueOnClick={false}
-															className={popoverRowStyles}
+															render={<Ariakit.ComboboxItem value={r.full_name} setValueOnClick={false} />}
 														>
 															<span className="truncate">{r.full_name}</span>
-															{r.private ? <Tag className="shrink-0">private</Tag> : null}
-														</Ariakit.ComboboxItem>
+															{r.private ? <Tag className="ml-auto shrink-0">private</Tag> : null}
+														</PopoverRow>
 													))
 												)}
 											</ComboboxSurface>
@@ -340,28 +333,22 @@ function GitHubConnectForm({
 												placeholder="main"
 												render={<Input className="w-full" />}
 											/>
-											<ComboboxSurface
-												variant="search-results"
-												sameWidth
-												className="max-h-[min(256px,var(--popover-available-height))]"
-											>
+											<ComboboxSurface variant="search-results" sameWidth maxHeight="md">
 												{filteredBranches.length === 0 ? (
 													<p className={EMPTY_RESULTS_STYLES}>No branches match.</p>
 												) : (
 													filteredBranches.map((b) => (
-														<Ariakit.ComboboxItem
+														<PopoverRow
 															key={b.name}
-															value={b.name}
-															setValueOnClick={false}
-															className={popoverRowStyles}
+															render={<Ariakit.ComboboxItem value={b.name} setValueOnClick={false} />}
 														>
 															<span className="truncate">{b.name}</span>
 															{b.is_default ? (
-																<Tag className="shrink-0">default</Tag>
+																<Tag className="ml-auto shrink-0">default</Tag>
 															) : b.protected ? (
-																<Tag className="shrink-0">protected</Tag>
+																<Tag className="ml-auto shrink-0">protected</Tag>
 															) : null}
-														</Ariakit.ComboboxItem>
+														</PopoverRow>
 													))
 												)}
 											</ComboboxSurface>

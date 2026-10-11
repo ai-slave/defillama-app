@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { COMPARISON_SECTIONS, PLAN_ORDER } from '~/containers/Subscription/data'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { tabTo } from '~/utils/testing/keyboard'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { SubscriptionComparisonSection } from '../SubscriptionComparisonSection'
 
@@ -63,6 +64,6 @@ test('a Limited cell explains its limit to a keyboard reader', async () => {
 		(el) => el.textContent === 'Limited'
 	)
 	expect(limited).toBeDefined()
-	await act(async () => limited!.focus())
+	await tabTo(limited!)
 	await waitForUi(() => expect(document.querySelector('[role=tooltip]')?.textContent).toBe('1 report every 2 weeks'))
 })

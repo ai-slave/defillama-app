@@ -1,7 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
 import { type RefObject, useRef, useState } from 'react'
-import { TokenLogo } from '~/components/TokenLogo'
 import { searchTokens } from '~/containers/TokenSearch/search'
 import type { TokenSearchResult } from '~/containers/TokenSearch/types'
 import { useDebouncedValue } from '~/hooks/useDebounce'
@@ -20,9 +19,9 @@ import { Field, type FieldControlProps } from '~/ui/Field'
 import { keepFocus, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
+import { Logo } from '~/ui/Logo'
 import { ListLoading } from '~/ui/NoResults'
-import { popoverRowWithBorderStyles } from '~/ui/Popover'
-import { ComboboxSurface } from '~/ui/PopoverSurface'
+import { ComboboxSurface, PopoverList, PopoverRow } from '~/ui/PopoverSurface'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Select } from '~/ui/Select'
 import { ErrorLine, InlineStatus } from '~/ui/Status'
@@ -76,27 +75,20 @@ function TokenCombobox({
 				autoSelect
 				render={<Input className="w-full" />}
 			/>
-			<ComboboxSurface
-				variant="search-results"
-				sameWidth
-				className="max-h-[min(320px,var(--popover-available-height))]"
-			>
-				{tokens.map((token) => (
-					<Ariakit.ComboboxItem
-						key={token.searchId}
-						value={token.name}
-						setValueOnClick={false}
-						hideOnClick
-						onClick={() => onSelect(token)}
-						className={popoverRowWithBorderStyles}
-					>
-						<span className="flex min-w-0 items-center gap-2">
-							<TokenLogo src={token.logo} size={20} />
+			<ComboboxSurface variant="search-results" sameWidth maxHeight="md">
+				<PopoverList divided>
+					{tokens.map((token) => (
+						<PopoverRow
+							key={token.searchId}
+							render={<Ariakit.ComboboxItem value={token.name} setValueOnClick={false} hideOnClick />}
+							onClick={() => onSelect(token)}
+						>
+							<Logo src={token.logo} size={20} />
 							<span className="truncate">{token.name}</span>
 							<span className="shrink-0 text-tertiary">{token.symbol}</span>
-						</span>
-					</Ariakit.ComboboxItem>
-				))}
+						</PopoverRow>
+					))}
+				</PopoverList>
 				{debouncedQuery.trim().length === 0 ? (
 					<p className="px-3 py-6 text-center body-sm text-tertiary">Start typing to search tokens</p>
 				) : results.isPending ? (
@@ -108,14 +100,13 @@ function TokenCombobox({
 						No tokens found
 					</p>
 				) : null}
-				<Ariakit.ComboboxItem
-					setValueOnClick={false}
-					hideOnClick
+				<PopoverRow
+					variant="action"
+					render={<Ariakit.ComboboxItem setValueOnClick={false} hideOnClick />}
 					onClick={onManual}
-					className={`${popoverRowWithBorderStyles} text-link`}
 				>
 					My token does not appear in this list
-				</Ariakit.ComboboxItem>
+				</PopoverRow>
 			</ComboboxSurface>
 		</Ariakit.ComboboxProvider>
 	)
@@ -290,7 +281,7 @@ function ConnectForm({
 											readOnly
 											value={selectedToken.name}
 											className="w-full"
-											prefix={<TokenLogo src={selectedToken.logo} size={20} />}
+											prefix={<Logo src={selectedToken.logo} size={20} />}
 											suffix={
 												<span className="flex items-center gap-2">
 													{selectedToken.symbol}

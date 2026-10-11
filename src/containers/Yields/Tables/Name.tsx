@@ -6,7 +6,6 @@ import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatUsd } from '~/utils/numberFormat'
-import { TruncatedText } from './TruncatedText'
 import { DepegWarningIcon } from './YieldsCells'
 
 interface INameYield {
@@ -95,8 +94,22 @@ export function PoolNameLockup({
 				className="flex min-w-0 flex-col items-start leading-tight"
 				aria-label={`View ${value} pool`}
 			>
-				<TruncatedText text={value} className="font-medium text-link hover:underline" />
-				{poolMeta ? <TruncatedText text={poolMeta} className="body-sm text-secondary" /> : null}
+				<Tooltip
+					content={value}
+					onlyWhenClipped
+					render={<span className="block max-w-full truncate font-medium text-link hover:underline" />}
+				>
+					{value}
+				</Tooltip>
+				{poolMeta ? (
+					<Tooltip
+						content={poolMeta}
+						onlyWhenClipped
+						render={<span className="block max-w-full truncate body-sm text-secondary" />}
+					>
+						{poolMeta}
+					</Tooltip>
+				) : null}
 			</BasicLink>
 			<DepegWarningIcon deviation={pegDeviation} symbol={pegTokenSymbol} consequence={pegConsequence} />
 			{exploited || hasRiskData ? (
@@ -174,7 +187,9 @@ export function NameYield({ project, projectslug, airdrop, raiseValuationUsd }: 
 	const lockup = (
 		<>
 			<TokenLogo name={project} kind="token" alt={`Logo of ${project}`} size={22} />
-			<TruncatedText text={project} />
+			<Tooltip content={project} onlyWhenClipped render={<span className="block max-w-full truncate" />}>
+				{project}
+			</Tooltip>
 		</>
 	)
 

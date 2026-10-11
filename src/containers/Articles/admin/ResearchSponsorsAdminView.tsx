@@ -274,7 +274,14 @@ export function ResearchSponsorsAdminView() {
 					{/* Only the picker locks: a disabled fieldset would also disable the button that holds focus. */}
 					<fieldset disabled={createMutation.isPending} className="min-w-0">
 						<Field label="DefiLlama page" error={submitted && !selectedEntity ? 'Choose a DefiLlama page.' : null}>
-							{(control) => <SponsorEntityPicker {...control} value={selectedEntity} onChange={setSelectedEntity} />}
+							{(control) => (
+								<SponsorEntityPicker
+									{...control}
+									label="DefiLlama page"
+									value={selectedEntity}
+									onChange={setSelectedEntity}
+								/>
+							)}
 						</Field>
 					</fieldset>
 					<Button
@@ -350,7 +357,14 @@ function SponsorPageEditor({
 		>
 			<fieldset disabled={update.isPending} className="min-w-0">
 				<Field label="Replacement DefiLlama page" error={submitted && !replacement ? 'Choose a DefiLlama page.' : null}>
-					{(control) => <SponsorEntityPicker {...control} value={replacement} onChange={setReplacement} />}
+					{(control) => (
+						<SponsorEntityPicker
+							{...control}
+							label="Replacement DefiLlama page"
+							value={replacement}
+							onChange={setReplacement}
+						/>
+					)}
 				</Field>
 			</fieldset>
 			<Button

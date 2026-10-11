@@ -1,9 +1,9 @@
 import type { BlockExplorersResponse } from '~/api/types'
-import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
 import { Hovercard } from '~/ui/Hovercard'
+import { Logo } from '~/ui/Logo'
 import { StatusBadge } from '~/ui/StatusBadge'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition, Tooltip } from '~/ui/Tooltip'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import { formatVerified, guardianText } from '../format'
@@ -52,7 +52,7 @@ function SignersPopover({
 					aria-label={`Show the ${signers.length} signers of this ${m}-of-${n} multisig`}
 				/>
 			}
-			contentClassName="flex max-h-72 flex-col p-3 body-sm"
+			contentClassName="flex max-h-72 flex-col"
 			content={
 				<>
 					<span className="label-sm text-primary">{`Signers (${signers.length})`}</span>
@@ -174,13 +174,12 @@ export function AuditsBlock({ audits }: { audits: Array<Audit> }) {
 			<h4 className="label-lg text-primary">Audits</h4>
 			<div className="mt-1 flex items-baseline gap-2">
 				<span className="mono-xl text-primary">{audits.length}</span>
-				<Tooltip
+				<Definition
 					content={`Totals logged across all ${audits.length} audits. Audits surface issues so they get fixed — ${resolved} findings recorded resolved. Open each report for current status.`}
-					className="cursor-help body-sm text-secondary underline decoration-dotted"
-					tabIndex={0}
+					className="body-sm text-secondary"
 				>
 					{critical} critical, {high} high findings logged
-				</Tooltip>
+				</Definition>
 			</div>
 			<ul className="mt-2 flex flex-col divide-y divide-(--border-subtle)">
 				{keyedOccurrences(recent, (a) => JSON.stringify([a.report.value, a.scope, a.version, a.commit_hash])).map(
@@ -197,13 +196,9 @@ export function AuditsBlock({ audits }: { audits: Array<Audit> }) {
 							<li key={key} className="flex items-center justify-between gap-2 py-1.5 body-sm">
 								<span className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-secondary">
 									{meta ? (
-										<Tooltip
-											content={meta}
-											className="cursor-help text-primary underline decoration-dotted"
-											tabIndex={0}
-										>
+										<Definition content={meta} className="text-primary">
 											{a.firm}
-										</Tooltip>
+										</Definition>
 									) : (
 										<span className="text-primary">{a.firm}</span>
 									)}
@@ -317,10 +312,9 @@ export function GovernanceBlock({
 				{g?.quorum_min != null && g.quorum_min > 0 ? (
 					<LabelValueRow label="Quorum to pass">
 						<span className="inline-flex flex-wrap items-center justify-end gap-x-1.5 gap-y-0.5">
-							<Tooltip
+							<Definition
 								content="Voting power a proposal needs before it can execute — the bar a captured or concentrated voter base would have to clear."
-								className="cursor-help justify-end underline decoration-dotted"
-								tabIndex={0}
+								className="justify-end"
 							>
 								<span>
 									{g.quorum_max != null && g.quorum_max !== g.quorum_min
@@ -331,7 +325,7 @@ export function GovernanceBlock({
 											})}
 									{g.voting_token?.symbol ? ` ${g.voting_token.symbol}` : ''}
 								</span>
-							</Tooltip>
+							</Definition>
 							{g.top10_clears_quorum != null && g.voting_power_top10_tokens != null ? (
 								<Tooltip
 									content={
@@ -355,9 +349,7 @@ export function GovernanceBlock({
 				{guardian ? (
 					<LabelValueRow label="Guardian">
 						<span className="inline-flex flex-wrap items-center justify-end gap-x-2 gap-y-0.5">
-							<Tooltip content={guardian} className="cursor-help underline decoration-dotted" tabIndex={0}>
-								can veto proposals
-							</Tooltip>
+							<Definition content={guardian}>can veto proposals</Definition>
 							{guardianAddress ? (
 								<AddressActions
 									address={guardianAddress}
@@ -373,7 +365,7 @@ export function GovernanceBlock({
 						<span className="inline-flex flex-wrap items-center justify-end gap-x-2 gap-y-0.5">
 							<span className="inline-flex items-center gap-1.5">
 								{g.voting_token.address ? (
-									<TokenLogo
+									<Logo
 										src={tokenIconByAddress(explorers, g.voting_token.chain, g.voting_token.address)}
 										size={16}
 										alt=""

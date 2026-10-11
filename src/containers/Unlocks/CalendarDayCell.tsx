@@ -77,7 +77,7 @@ export function CalendarDayCell({ dayInfo, unlocksData, maxUnlockValue, isToday 
 	return (
 		<Hovercard
 			className="w-full"
-			contentClassName="w-max max-w-xs p-3"
+			width="md"
 			content={
 				<div className="flex flex-col gap-2">
 					<p className="title-sm text-primary">{formatDate(dateStr)}</p>

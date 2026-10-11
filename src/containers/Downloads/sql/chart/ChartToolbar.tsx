@@ -3,8 +3,7 @@ import { CHART_COLORS } from '~/constants/colors'
 import { selectTriggerStyles } from '~/ui/ComboboxSelectTrigger'
 import { focusNeighborOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { popoverRowStyles } from '~/ui/Popover'
-import { PopoverSurface } from '~/ui/PopoverSurface'
+import { PopoverRow, PopoverSurface } from '~/ui/PopoverSurface'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { VirtualizedSelect } from '~/ui/VirtualizedSelect'
 import { canUseChartType, type ChartConfig, type ChartType, type NumberFormat, type StackMode } from '../chartConfig'
@@ -213,13 +212,7 @@ function YSeriesPicker({
 					<span className="truncate text-link">{label}</span>
 					<Icon name="chevron-down" className="size-3 shrink-0 text-tertiary" />
 				</Ariakit.PopoverDisclosure>
-				<PopoverSurface
-					variant="panel"
-					heading="Y series"
-					aria-label="Y series settings"
-					gutter={4}
-					className="w-[280px]"
-				>
+				<PopoverSurface variant="panel" heading="Y series" aria-label="Y series settings" gutter={4} width="md">
 					<div className="flex flex-col gap-1 p-2">
 						{yCols.length > 0 ? (
 							<div className="flex flex-col gap-1">
@@ -253,20 +246,18 @@ function YSeriesPicker({
 								{available
 									.filter((n) => !yCols.includes(n))
 									.map((name) => (
-										<Ariakit.Button
+										<PopoverRow
 											// At the limit the rows stay focusable, so focus never drops to the page.
-											disabled={yCols.length >= 8}
-											accessibleWhenDisabled
+											render={<Ariakit.Button disabled={yCols.length >= 8} accessibleWhenDisabled />}
 											aria-label={`Add ${name}`}
 											key={name}
 											data-row
 											ref={focusNeighborOnLeave()}
 											onClick={() => onToggle(name)}
-											className={popoverRowStyles}
 										>
 											<Icon name="plus" className="size-3.5 shrink-0 text-tertiary" />
 											<span className="flex-1 truncate mono-sm">{name}</span>
-										</Ariakit.Button>
+										</PopoverRow>
 									))}
 							</div>
 						)}

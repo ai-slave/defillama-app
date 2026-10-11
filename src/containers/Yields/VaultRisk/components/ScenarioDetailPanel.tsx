@@ -33,6 +33,7 @@ function StatRow({
 	active?: boolean
 	muted?: boolean
 }) {
+	// A read-only stat line: the tint marks the one that matches the chosen stress, and nothing here is pressable.
 	return (
 		<div
 			className={`-mx-1.5 flex items-center justify-between gap-3 rounded-md px-1.5 py-1 ${active ? 'bg-brand-muted' : ''}`}

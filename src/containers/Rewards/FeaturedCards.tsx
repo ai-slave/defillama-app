@@ -1,6 +1,6 @@
-import { TokenLogo } from '~/components/TokenLogo'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
+import { Logo } from '~/ui/Logo'
 import { Tag } from '~/ui/Tag'
 import { lifecycleStyles } from './columns'
 import type { RewardProgram } from './types'
@@ -22,7 +22,7 @@ export function FeaturedCards({ programs }: { programs: Array<RewardProgram> }) 
 							{program.verification === 'Unverified' ? <span className="body-xs text-tertiary">Unverified</span> : null}
 						</div>
 						<div className="flex items-center gap-3">
-							<TokenLogo src={program.logo} size={40} />
+							<Logo src={program.logo} size={40} />
 							<div className="min-w-0">
 								<h2 className="label-lg text-primary">{program.protocol}</h2>
 								{program.programName ? <p className="body-xs text-tertiary">{program.programName}</p> : null}

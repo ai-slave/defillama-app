@@ -4,7 +4,6 @@ import { ResponsiveFilterLayout } from '~/components/Filters/ResponsiveFilterLay
 import { TablePager } from '~/components/Table/TablePager'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { SearchField } from '~/ui/SearchField'
 import { Select } from '~/ui/Select'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
@@ -25,7 +24,7 @@ function TableToolbarDemo({ divided }: { divided: boolean }) {
 						placeholder="Search protocols"
 						value={search}
 						onChange={setSearch}
-						className={searchFieldInlineWrapperStyles}
+						width="inline"
 					/>
 					<TableToolbarControlGroup>
 						<Select

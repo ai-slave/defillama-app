@@ -3,7 +3,7 @@ import { Button } from '~/ui/Button'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { QuestionHelper } from '~/ui/QuestionHelper'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition, Tooltip } from '~/ui/Tooltip'
 import { Cell, Example, type Family, NotApplicable, REST_HOVER_FOCUS, StateGrid } from '../shared'
 
 const DEFINITION = "Total value locked in the protocol's contracts."
@@ -31,9 +31,9 @@ function IconTooltip({ disabled }: { disabled?: boolean }) {
 
 function TextTooltip() {
 	return (
-		<Tooltip content={DEFINITION} tabIndex={0} className={DOTTED}>
+		<Definition content={DEFINITION} className="label-sm text-secondary">
 			Total value locked
-		</Tooltip>
+		</Definition>
 	)
 }
 

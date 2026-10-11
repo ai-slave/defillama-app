@@ -92,6 +92,7 @@ export function TerminalSplitter({
 				event.preventDefault()
 				nudge(direction)
 			}}
+			// The brand tint on hover shows the drag handle is live; a splitter has no selected state.
 			className="hidden w-3 flex-none cursor-col-resize touch-none items-center justify-center rounded-sm hover:bg-brand-muted lg:flex"
 		>
 			<Icon name="grip-vertical" className="size-3 text-tertiary" />

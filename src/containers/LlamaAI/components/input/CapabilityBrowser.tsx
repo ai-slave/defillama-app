@@ -4,10 +4,10 @@ import { CAPABILITIES } from '~/containers/LlamaAI/capabilities'
 import { useMedia } from '~/hooks/useMedia'
 import { Icon } from '~/ui/Icon'
 import { DrawerDismiss, PopoverSurface } from '~/ui/PopoverSurface'
+import { RailItem } from '~/ui/RailItem'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { Tab, TabPanel, Tabs } from '~/ui/Tabs'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
-import { RAIL_TAB } from '../tabRailStyles'
 
 const CATEGORY_OPTIONS = CAPABILITIES.map(({ key, name }) => ({ key, name }))
 const CATEGORY_KEYS = CAPABILITIES.map(({ key }) => key)
@@ -27,7 +27,7 @@ export function CapabilityBrowser({ onPromptSelect }: CapabilityBrowserProps) {
 			gutter={8}
 			flip
 			dismiss="own"
-			className="w-[600px] overflow-hidden"
+			width="xl"
 		>
 			<BrowserContent onPromptSelect={onPromptSelect} />
 		</PopoverSurface>
@@ -95,10 +95,11 @@ export function BrowserContent({
 							onClick={() => {
 								trackUmamiEvent('llamaai-capability-category-view', { category: cap.key })
 							}}
-							className={RAIL_TAB}
+							render={<RailItem as="button" type="button" />}
 						>
 							<Icon name={cap.icon} className="size-3.5 shrink-0" />
 							<span className="truncate">{cap.name}</span>
+							{/* A category badge (New, Beta) on the brand tint, not a selected state. */}
 							{cap.badge ? (
 								<span className="ml-auto shrink-0 rounded-sm bg-brand-muted px-1.5 py-px label-xs tracking-wide text-link uppercase">
 									{cap.badge}
@@ -119,6 +120,7 @@ export function BrowserContent({
 						<div className="hidden items-center gap-2 sm:flex">
 							<Icon name={activeCategory.icon} className="size-3.5 text-secondary" />
 							<h3 className="label-md text-primary">{activeCategory.name}</h3>
+							{/* The category badge again, a label on the brand tint, not a selected state. */}
 							{activeCategory.badge ? (
 								<span className="rounded-sm bg-brand-muted px-1.5 py-px label-xs tracking-wide text-link uppercase">
 									{activeCategory.badge}

@@ -6,9 +6,8 @@ import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { NoResults } from '~/ui/NoResults'
-import { popoverRowWithBorderStyles, popoverScrollAreaStyles, popoverSeeMoreStyles } from '~/ui/Popover'
 import { PopoverHeader } from '~/ui/PopoverHeader'
-import { MenuSurface } from '~/ui/PopoverSurface'
+import { MenuItem, MenuSurface, PopoverList, PopoverRow } from '~/ui/PopoverSurface'
 import { BusyGlyph } from '~/ui/Status'
 import { focusFirstNewItem } from '~/utils/focusFirstNewItem'
 
@@ -41,7 +40,7 @@ export function OtherLinks({ options, heading, name, keyPrefix = 'row-links', is
 	const rowsReady = useDeferredValue(true, false) || open
 	const comboboxRef = useRef<HTMLDivElement>(null)
 
-	const handleSeeMore = (e: React.MouseEvent<HTMLDivElement>) => {
+	const handleSeeMore = (e: React.MouseEvent) => {
 		e.preventDefault()
 		e.stopPropagation()
 		const previousCount = viewableMatches
@@ -76,22 +75,20 @@ export function OtherLinks({ options, heading, name, keyPrefix = 'row-links', is
 								search={<Ariakit.Combobox placeholder="Search…" render={<Input className="w-full" />} />}
 							/>
 							{matches.length > 0 ? (
-								<Ariakit.ComboboxList ref={comboboxRef} className={popoverScrollAreaStyles}>
+								<PopoverList divided render={<Ariakit.ComboboxList ref={comboboxRef} />}>
 									{matches.slice(0, viewableMatches).map((value) => (
 										<Item label={value.label} to={value.to} key={`${keyPrefix}:${value.label}:${value.to}`} />
 									))}
 									{matches.length > viewableMatches ? (
-										<Ariakit.ComboboxItem
-											value="__see_more__"
-											setValueOnClick={false}
-											hideOnClick={false}
-											className={popoverSeeMoreStyles}
+										<PopoverRow
+											variant="action"
+											render={<Ariakit.ComboboxItem value="__see_more__" setValueOnClick={false} hideOnClick={false} />}
 											onClick={handleSeeMore}
 										>
 											See more…
-										</Ariakit.ComboboxItem>
+										</PopoverRow>
 									) : null}
-								</Ariakit.ComboboxList>
+								</PopoverList>
 							) : (
 								<NoResults />
 							)}
@@ -107,7 +104,7 @@ function Item({ label, to }: { label: string; to: string }) {
 	const [loading, setLoading] = useState(false)
 	const router = useRouter()
 	return (
-		<Ariakit.MenuItem
+		<MenuItem
 			onClick={(e) => {
 				if (e.ctrlKey || e.metaKey) {
 					window.open(to)
@@ -120,10 +117,9 @@ function Item({ label, to }: { label: string; to: string }) {
 				}
 			}}
 			render={<Ariakit.ComboboxItem value={label} setValueOnClick={false} />}
-			className={`${popoverRowWithBorderStyles} group justify-start gap-4`}
 		>
 			<span>{label}</span>
 			{loading ? <BusyGlyph decorative size={12} /> : null}
-		</Ariakit.MenuItem>
+		</MenuItem>
 	)
 }

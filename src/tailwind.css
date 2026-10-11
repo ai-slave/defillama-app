@@ -68,7 +68,6 @@ html[data-ab-group='b'] [data-ab-variant='b'] {
 	--animate-wiggle: wiggle 300ms ease-out;
 	--animate-slidein: slidein 300ms ease-out;
 	--animate-fadein: fadein 180ms ease-out;
-	--animate-shimmer: shimmer 2s ease-in-out infinite;
 
 	/* Effect shadows; elevation (raised, overlay, dialog) lives in src/styles/semantics.css */
 	--shadow-brand-ring: 0 0 10px var(--bg-brand), 0 0 5px var(--bg-brand);
@@ -197,9 +196,9 @@ html[data-ab-group='b'] [data-ab-variant='b'] {
 }
 
 @media (prefers-reduced-motion: reduce) {
-	*:not(.animate-spin, .animate-shimmer, .animate-pulse, .animate-bounce),
-	*:not(.animate-spin, .animate-shimmer, .animate-pulse, .animate-bounce)::before,
-	*:not(.animate-spin, .animate-shimmer, .animate-pulse, .animate-bounce)::after {
+	*:not(.animate-spin, .animate-pulse, .animate-bounce),
+	*:not(.animate-spin, .animate-pulse, .animate-bounce)::before,
+	*:not(.animate-spin, .animate-pulse, .animate-bounce)::after {
 		animation-duration: 0.01ms !important;
 		animation-iteration-count: 1 !important;
 		transition-duration: 0.01ms !important;
@@ -587,7 +586,7 @@ html[data-ab-group='b'] [data-ab-variant='b'] {
 	/* ECharts HTML tooltips (renderMode html / default DOM tooltips). The chart
 	   option sets backgroundColor 'transparent' + borderWidth 0 and this class
 	   owns the chrome, so tooltips flip with the theme via tokens instead of
-	   per-chart resolved literals. Matches domChartTooltipStyles/tooltipSurfaceStyles. */
+	   per-chart resolved literals. Matches domChartTooltipStyles and the Tooltip surface (src/ui/Tooltip.tsx). */
 	/* ECharts creates the tooltip node at full chart width before it has content.
 	   Avoid turning that zero-height placeholder into a two-pixel bordered bar. */
 	.defillama-echarts-tooltip:not(:empty) {
@@ -608,6 +607,7 @@ html[data-ab-group='b'] [data-ab-variant='b'] {
 		user-select: none;
 	}
 
+	/* A text highlight behind the entity mentions in the LlamaAI prompt, not a selected state. */
 	.highlighted-text .highlight {
 		@apply bg-brand-muted;
 		color: transparent;

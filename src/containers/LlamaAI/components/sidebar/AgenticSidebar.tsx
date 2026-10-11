@@ -31,15 +31,17 @@ import { Button, StableLabel } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { ListLoading, NoResults } from '~/ui/NoResults'
+import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { BusyGlyph, InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatUsd } from '~/utils/numberFormat'
 
-/* One row recipe for every sidebar list item: 32px, body-sm, hover wash, brand tint when active. */
+/* One row recipe for every sidebar list item: 32px, body-sm, hover wash, brand tint when active.
+   Not RailItem: a session row is a container holding its link and hover actions, which one RailItem element cannot
+   hold, and every other sidebar row shares this recipe so the list reads as one. */
 export const SIDEBAR_ROW_SURFACE =
 	'flex items-center gap-1.5 rounded-md body-sm text-primary not-disabled:not-aria-disabled:hover:bg-hover-row focus-within:bg-hover-row data-[active=true]:bg-brand-muted data-[active=true]:text-link'
 export const SIDEBAR_ROW = `${SIDEBAR_ROW_SURFACE} px-2 py-1.5`
@@ -256,7 +258,7 @@ function SidebarPanel({
 		setSelectedSessionIds(new Set())
 		onSearchOpenChange?.(false)
 	}
-	// Clearing from the field (× or Escape) removes the field with its focus; the search toggle takes it.
+	// Escape in the field closes it with its focus; the search toggle takes it. The field's × only clears the text.
 	const clearSearchField = () => keepFocus(closeSearch, () => searchToggleRef.current)
 
 	const filteredSessions = useMemo(() => {
@@ -433,45 +435,22 @@ function SidebarPanel({
 					</div>
 
 					{isSearchShown ? (
-						<div className="relative w-full min-w-0">
-							<Icon name="search" className={searchFieldIconStyles} />
-							<Input
-								type="text"
-								autoFocus
-								data-autofocus
-								value={searchQuery}
-								onChange={(e) => {
-									setSearchQuery(e.target.value)
-									setSelectedSessionIds(new Set())
-								}}
-								onKeyDown={(e) => {
-									if (e.key !== 'Escape') return
-									e.stopPropagation()
-									clearSearchField()
-								}}
-								aria-label="Search sessions"
-								placeholder="Search"
-								className={`${searchFieldInputPlacementStyles} pr-9`}
-							/>
-							<span className="absolute top-0 right-1 bottom-0 my-auto flex items-center gap-1">
-								{isSearching ? (
-									<span className="flex size-6 items-center justify-center text-tertiary">
-										<BusyGlyph label="Searching" size={12} hideLabel />
-									</span>
-								) : (
-									<Button
-										type="button"
-										variant="ghost"
-										size="sm"
-										square
-										aria-label="Clear session search"
-										onClick={clearSearchField}
-									>
-										<Icon name="x" className="size-3.5" />
-									</Button>
-								)}
-							</span>
-						</div>
+						<SearchField
+							label="Search sessions"
+							autoFocus
+							data-autofocus
+							value={searchQuery}
+							onChange={(value) => {
+								setSearchQuery(value)
+								setSelectedSessionIds(new Set())
+							}}
+							onKeyDown={(e) => {
+								if (e.key !== 'Escape') return
+								e.stopPropagation()
+								clearSearchField()
+							}}
+							placeholder="Search"
+						/>
 					) : null}
 
 					<nav aria-label="LlamaAI menu" className="flex flex-col gap-2">

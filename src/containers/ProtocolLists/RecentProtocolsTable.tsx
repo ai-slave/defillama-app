@@ -11,7 +11,6 @@ import { UrlSelectWithCombobox } from '~/components/Select/UrlSelect'
 import { expandedFilteredTableFeatures } from '~/components/Table/features/expandedFiltering'
 import { TablePagesStatus } from '~/components/Table/TablePagesStatus'
 import { VirtualTable } from '~/components/Table/VirtualTable'
-import { TokenLogo } from '~/components/TokenLogo'
 import { removedCategoriesFromChainTvlSet } from '~/containers/ProtocolRankings/constants'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
 import { RaisesTotal } from '~/containers/Raises/RaisesTotal'
@@ -21,7 +20,7 @@ import { useTablePages } from '~/hooks/useTablePages'
 import { Button } from '~/ui/Button'
 import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
-import { searchFieldWrapperStyles } from '~/ui/Input'
+import { Logo } from '~/ui/Logo'
 import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { RelativeTime } from '~/ui/RelativeTime'
@@ -105,7 +104,7 @@ export function RecentlyListedProtocolsTable({
 					value={nameSearch}
 					onChange={(value) => void pushShallowQuery(router, { search: value })}
 					placeholder="Search protocols…"
-					className={searchFieldWrapperStyles}
+					width="standalone"
 				/>
 
 				<HideForkedProtocols />
@@ -185,7 +184,7 @@ const protocolsColumns = columnHelper.columns([
 
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 
-					<TokenLogo src={row.original.logo} data-lgonly alt={`Logo of ${value}`} />
+					<Logo size={24} src={row.original.logo} data-lgonly alt={`Logo of ${value}`} />
 
 					<span className="-my-2 flex flex-col">
 						{row.original?.deprecated ? (

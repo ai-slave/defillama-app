@@ -18,7 +18,6 @@ import { CHAINS_CATEGORY_GROUP_SETTINGS, useLocalStorageSettingsManager } from '
 import { Button } from '~/ui/Button'
 import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
-import { searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { SearchField } from '~/ui/SearchField'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
@@ -223,7 +222,7 @@ export function StablecoinsChainsTable({
 					value={projectName}
 					onChange={setProjectName}
 					placeholder="Search…"
-					className={searchFieldWrapperStyles}
+					width="standalone"
 				/>
 				<SelectWithCombobox
 					allValues={CHAINS_CATEGORY_GROUP_SETTINGS}

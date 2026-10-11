@@ -311,14 +311,7 @@ export function DesktopSearch({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boo
 						<Keycap>⌘K</Keycap>
 					</span>
 				</span>
-				<ComboboxSurface
-					variant="search-results"
-					hideOnInteractOutside
-					gutter={6}
-					sameWidth
-					className="max-h-[min(var(--popover-available-height),60vh)]"
-					portal
-				>
+				<ComboboxSurface variant="search-results" hideOnInteractOutside gutter={6} sameWidth maxHeight="screen" portal>
 					<Ariakit.ComboboxList alwaysVisible>
 						<SearchResults searchValue={searchValue} />
 					</Ariakit.ComboboxList>

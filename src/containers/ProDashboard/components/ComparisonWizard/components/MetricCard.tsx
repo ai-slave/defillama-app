@@ -1,4 +1,3 @@
-import { CheckboxIndicator } from '~/ui/Checkbox'
 import { OptionTile } from '~/ui/OptionTile'
 import type { MetricWithAvailability } from '../types'
 
@@ -19,10 +18,8 @@ export function MetricCard({ metric, isSelected, onToggle, itemLabel }: MetricCa
 			aria-checked={isSelected}
 			onClick={onToggle}
 			disabled={!metric.isValid}
-			className="group"
+			check="box"
 		>
-			<CheckboxIndicator checked={isSelected} className="group-disabled:border-disabled" />
-
 			<span className="min-w-0 flex-1">
 				<span className="block label-md text-primary group-disabled:text-disabled">{metric.title}</span>
 				<span className="flex items-center gap-1.5 body-sm text-tertiary group-disabled:text-disabled">

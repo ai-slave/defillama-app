@@ -7,7 +7,7 @@ import { divergingColor } from '~/constants/colors'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { QuestionHelper } from '~/ui/QuestionHelper'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition, Tooltip } from '~/ui/Tooltip'
 import { letterLogoDataUri } from '~/utils/icons'
 import {
 	formatNumber,
@@ -209,9 +209,9 @@ export function QualityHover({
 
 function linkedMetric(value: React.ReactNode, note: string | undefined) {
 	return note ? (
-		<Tooltip content={note} className="ms-auto w-fit cursor-help underline decoration-dotted" tabIndex={0}>
+		<Definition content={note} className="ms-auto w-fit">
 			{value}
-		</Tooltip>
+		</Definition>
 	) : (
 		value
 	)
@@ -626,15 +626,12 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 				// anything and invited arithmetic that does not hold. The split belongs in the
 				// tooltip, where it can say so.
 				return (
-					<Tooltip
+					<Definition
 						content={`Taker fee plus half the ${formatUsd(execution?.effectiveSpreadBps ?? null, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'} effective spread, from ${execution?.hoursCovered ?? 'n/a'}h of fills.`}
-						className="ms-auto w-fit cursor-help"
-						tabIndex={0}
+						className="ms-auto w-fit"
 					>
-						<span className="underline decoration-dotted">
-							{formatUsd(cost, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'}
-						</span>
-					</Tooltip>
+						{formatUsd(cost, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'}
+					</Definition>
 				)
 			},
 			meta: {
@@ -909,16 +906,14 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 			cell: ({ row, getValue }) => {
 				const nvol = scopedNvol(row.original)
 				return nvol ? (
-					<Tooltip
-						content={`${formatPercent(nvol.discountFraction, PERCENT_OPTIONS) ?? '–'} below reported · ${formatPercent(nvol.unverifiedFraction, PERCENT_OPTIONS) ?? '–'} judged against estimated depth${nvol.flag ? ` · ${nvol.flag}` : ''}`}
-						className="ms-auto w-fit cursor-help"
-						tabIndex={0}
-					>
-						<span className="underline decoration-dotted">
+					<span className="ms-auto flex w-fit items-center">
+						<Definition
+							content={`${formatPercent(nvol.discountFraction, PERCENT_OPTIONS) ?? '–'} below reported · ${formatPercent(nvol.unverifiedFraction, PERCENT_OPTIONS) ?? '–'} judged against estimated depth${nvol.flag ? ` · ${nvol.flag}` : ''}`}
+						>
 							{formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
-						</span>
+						</Definition>
 						{annotatedMetric('', normalizedVolumeGap(nvol))}
-					</Tooltip>
+					</span>
 				) : (
 					'–'
 				)
@@ -1093,13 +1088,9 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 			header: definitions.warnings.label,
 			cell: ({ row, getValue }) =>
 				getValue() > 0 ? (
-					<Tooltip
-						className="cursor-help underline decoration-dotted"
-						content={row.original.warnings.map((warning) => warning.text).join(' · ')}
-						tabIndex={0}
-					>
+					<Definition content={row.original.warnings.map((warning) => warning.text).join(' · ')}>
 						{getValue()}
-					</Tooltip>
+					</Definition>
 				) : (
 					'–'
 				),

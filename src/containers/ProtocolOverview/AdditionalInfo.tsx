@@ -16,7 +16,7 @@ import { Icon } from '~/ui/Icon'
 import { Menu } from '~/ui/Menu'
 import { MetricRow } from '~/ui/MetricPrimitives'
 import { QuestionHelper } from '~/ui/QuestionHelper'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { formatDate } from '~/utils/dateFormat'
 import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
@@ -103,15 +103,13 @@ export function UserActivity({
 
 	return (
 		<Card as="section" padding="sm" className="col-span-1 flex flex-col gap-3 body-md">
-			<h2 className="mr-auto heading-xs underline decoration-dotted">
-				<Tooltip
-					content="This only counts users that interact with protocol directly (so not through another contract, such as a DEX aggregator), and only on arbitrum, avax, bsc, ethereum, xdai, optimism, polygon."
-					className="mr-auto cursor-help heading-xs underline decoration-dotted"
-					tabIndex={0}
-				>
-					User Activity
-				</Tooltip>
-			</h2>
+			<Definition
+				as="h2"
+				content="This only counts users that interact with protocol directly (so not through another contract, such as a DEX aggregator), and only on arbitrum, avax, bsc, ethereum, xdai, optimism, polygon."
+				className="mr-auto heading-xs"
+			>
+				User Activity
+			</Definition>
 			<div className="flex flex-col">
 				{users.activeUsers != null ? (
 					<MetricRow

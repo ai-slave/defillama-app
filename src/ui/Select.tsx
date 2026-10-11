@@ -8,18 +8,17 @@ import {
 } from './ComboboxSelectTrigger'
 import { CountBadge } from './CountBadge'
 import { Icon } from './Icon'
+import { Check } from './internal/Check'
+import {
+	nestedMenuSelectRowStyles,
+	popoverRowStyles,
+	popoverRowWithBorderStyles,
+	popoverScrollAreaStyles
+} from './internal/Popover'
 import { getSelectAllState, SELECT_ALL_VALUE, SelectAllContent } from './internal/SelectAll'
 import { gridRowStyles, onlyItemStyles } from './internal/selectRowStyles'
 import { NestedMenu } from './NestedMenu'
-import {
-	nestedMenuSelectRowStyles,
-	popoverMultiSelectCheckStyles,
-	popoverRowStyles,
-	popoverRowWithBorderStyles,
-	popoverScrollAreaStyles,
-	popoverSingleSelectCheckStyles
-} from './Popover'
-import { ComboboxSurface } from './PopoverSurface'
+import { ComboboxSurface, type SurfaceWidth } from './PopoverSurface'
 import { Tooltip } from './Tooltip'
 
 /* Select — a single or multi picker for a short list. It never searches and shows every option, with no "See more",
@@ -59,8 +58,8 @@ interface ISelectBase {
 	/** The trigger's accessible name comes from `triggerProps`; a top-level `aria-label` was silently dropped. */
 	'aria-label'?: never
 	placement?: Ariakit.ComboboxProviderProps['placement']
-	/** Layout only, such as a width. */
-	popoverClassName?: string
+	/** Desktop width of the popover; phone drawers are full width. */
+	popoverWidth?: SurfaceWidth
 }
 
 /** Every Select prop but the selection. */
@@ -115,7 +114,7 @@ export function Select(props: ISelect) {
 		className,
 		triggerProps,
 		placement = 'bottom-start',
-		popoverClassName
+		popoverWidth
 	} = props
 	const selectedValues = props.selectedValues
 	// Nested menus share their parent's values, so each select needs its own field.
@@ -184,14 +183,7 @@ export function Select(props: ISelect) {
 	const renderCheck = (value: string) => {
 		const selected = typeof selectedValues === 'string' ? selectedValues === value : selectedValues.includes(value)
 
-		return (
-			<span
-				className={showCheckboxes ? popoverMultiSelectCheckStyles(selected) : popoverSingleSelectCheckStyles(selected)}
-				aria-hidden
-			>
-				{selected ? <Icon name="check" className="size-3" aria-hidden /> : null}
-			</span>
-		)
+		return <Check kind={showCheckboxes ? 'box' : 'tick'} checked={selected} className="ml-auto" />
 	}
 
 	if (nestedMenu) {
@@ -269,12 +261,7 @@ export function Select(props: ISelect) {
 				<Ariakit.ComboboxSelectArrow className="text-tertiary" />
 			</ComboboxSelectTrigger>
 			{/* Select has no search and holds short lists, so its phone drawer hugs its rows. */}
-			<ComboboxSurface
-				variant="panel"
-				hideOnInteractOutside
-				heading={heading ?? labelText}
-				className={popoverClassName}
-			>
+			<ComboboxSurface variant="panel" hideOnInteractOutside heading={heading ?? labelText} width={popoverWidth}>
 				{allValues.length > 0 ? (
 					<div className={popoverScrollAreaStyles}>
 						{showCheckboxes ? (

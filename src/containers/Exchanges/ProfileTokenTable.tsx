@@ -15,9 +15,8 @@ import { TableColumnSelect } from '~/components/Table/search/TableColumnSelect'
 import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
 import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
-import { TokenLogo } from '~/components/TokenLogo'
 import { Card } from '~/ui/Card'
-import { searchFieldInlineWrapperStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { Logo } from '~/ui/Logo'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { geckoTokenIconUrl, letterLogoDataUri } from '~/utils/icons'
@@ -82,7 +81,7 @@ const TOKEN_COLUMNS = columnHelper.columns([
 			const { marketCount, segments, maxLeverage } = row.original
 			return (
 				<span className="flex min-w-0 items-center gap-2">
-					<TokenLogo
+					<Logo
 						src={row.original.geckoId ? geckoTokenIconUrl(row.original.geckoId, 20) : null}
 						size={20}
 						fallbackSrc={letterLogoDataUri(token)}
@@ -267,7 +266,7 @@ export function ProfileTokenTable({
 					<TableSearchInput
 						columnId="token"
 						placeholder="Search tokens…"
-						className={leadingControls ? searchFieldInlineWrapperStyles : searchFieldWrapperStyles}
+						width={leadingControls ? 'inline' : 'standalone'}
 					/>
 					<TableColumnSelect />
 					<TableCsvExport filename={`${profile.slug}-tokens`} includeHiddenColumns />

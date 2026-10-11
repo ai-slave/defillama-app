@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { EntityTitleRow } from '~/ui/EntityTitleRow'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 import { Icon } from '~/ui/Icon'
+import { Logo } from '~/ui/Logo'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Select } from '~/ui/Select'
@@ -146,7 +146,7 @@ export const surfaces: Family = {
 			render: (values) => (
 				<div className="w-full max-w-md">
 					<EntityTitleStrip
-						media={values.media ? <TokenLogo src={DEMO_LOGO} size={28} /> : undefined}
+						media={values.media ? <Logo src={DEMO_LOGO} size={28} /> : undefined}
 						title="Ethereum"
 						headingAs="h4"
 						actions={
@@ -170,7 +170,7 @@ export const surfaces: Family = {
 					<Card padding="md">
 						<EntityTitleRow
 							as="h4"
-							logo={<TokenLogo src={DEMO_LOGO} size={24} />}
+							logo={<Logo src={DEMO_LOGO} size={24} />}
 							actions={
 								<>
 									<Tooltip content="Website" render={<Button variant="ghost" size="md" square aria-label="Website" />}>

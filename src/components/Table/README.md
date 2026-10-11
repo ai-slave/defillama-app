@@ -59,7 +59,7 @@ width = ceil(24 + max(header + 14 if sortable, widest body value))
 - 24 is the cell's `px-3` padding on both sides; 14 is the 10px `SortIcon` plus its 4px `gap-1`.
 - A long-label numeric column is header-bound; a short-label one (`P/E`, `Price`) is body-bound, so do not shrink it to its header.
 - A column of bounded vocabulary (sector) widens so values fit on one line. A free-text column (industry, description) takes a sensible width and truncates.
-- A truncated cell does not show its full value on hover. When the value must be readable, widen the column or give the cell a tooltip.
+- A truncated cell does not show its full value on hover. When the value must be readable, widen the column or give the cell a `Tooltip onlyWhenClipped` (`src/ui/Tooltip.tsx`), which shows the full value only while it is cut off.
 - Renaming a header changes a header-bound width; re-measure in the same change. When the new label would need a width out of proportion to its values, shorten it and put the detail in `headerHelperText`.
 
 Measure on a page that renders the table, with the widest values on screen (sort descending or show more rows):

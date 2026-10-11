@@ -12,7 +12,7 @@ export function HelpIcon({ content, label }: { content: ReactNode; label?: strin
 			// overflows onto the left nav when the icon sits near the page edge.
 			placement="top-start"
 			className="text-tertiary hover:text-secondary"
-			contentClassName="max-w-105 p-3"
+			width="lg"
 			render={<button type="button" aria-label={label} />}
 		>
 			<Icon name="help-circle" className="size-3.5" />

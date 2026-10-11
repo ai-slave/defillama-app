@@ -69,7 +69,7 @@ function UploadStatus({
 						</Tooltip>
 					) : null}
 				</div>
-				<PopoverSurface variant="panel" heading={`Upload error for ${name}`} className="sm:max-w-64">
+				<PopoverSurface variant="panel" heading={`Upload error for ${name}`} width="sm">
 					<p className="p-3 body-sm break-words text-primary">{upload.error}</p>
 				</PopoverSurface>
 			</Ariakit.PopoverProvider>

@@ -25,7 +25,7 @@ function ImageDetailsPopover({
 				{label}
 				<span aria-hidden className={`size-1.5 rounded-full ${hasValue ? 'bg-link' : 'bg-border-strong'}`} />
 			</Ariakit.PopoverDisclosure>
-			<PopoverSurface variant="panel" heading={title} fixed gutter={8} className="w-80">
+			<PopoverSurface variant="panel" heading={title} fixed gutter={8} width="lg">
 				<div className="p-3">{children}</div>
 			</PopoverSurface>
 		</Ariakit.PopoverProvider>

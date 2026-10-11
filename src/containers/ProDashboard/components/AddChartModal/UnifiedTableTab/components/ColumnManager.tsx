@@ -49,8 +49,7 @@ import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { NoResults } from '~/ui/NoResults'
-import { popoverRowStyles } from '~/ui/Popover'
-import { ComboboxSurface } from '~/ui/PopoverSurface'
+import { ComboboxSurface, PopoverRow } from '~/ui/PopoverSurface'
 import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { Select } from '~/ui/Select'
@@ -770,18 +769,12 @@ export function ColumnManager({
 												)}
 											</div>
 										) : null}
-										<ComboboxSurface
-											variant="search-results"
-											sameWidth
-											className="max-h-[min(160px,var(--popover-available-height))]"
-										>
+										<ComboboxSurface variant="search-results" sameWidth maxHeight="sm">
 											{filteredSuggestions.map((suggestion) => (
-												<Ariakit.ComboboxItem
+												<PopoverRow
 													key={`${suggestion.type}-${suggestion.value}`}
-													value={suggestion.value}
-													setValueOnClick={false}
 													onClick={() => insertSuggestion(suggestion.value)}
-													className={popoverRowStyles}
+													render={<Ariakit.ComboboxItem value={suggestion.value} setValueOnClick={false} />}
 												>
 													<span
 														className={`size-1.5 shrink-0 rounded-full ${
@@ -794,7 +787,7 @@ export function ColumnManager({
 													/>
 													<code className="shrink-0">{suggestion.display}</code>
 													<span className="ml-auto truncate text-tertiary">{suggestion.description}</span>
-												</Ariakit.ComboboxItem>
+												</PopoverRow>
 											))}
 										</ComboboxSurface>
 									</Ariakit.ComboboxProvider>
@@ -862,6 +855,8 @@ export function ColumnManager({
 
 				{customColumns.length > 0 ? (
 					<div className="mt-3 space-y-1.5 border-t border-subtle pt-3">
+						{/* The tint marks the column whose form is open above; the row holds its own Edit and Delete buttons,
+						    so it is a container, not a ListRow. */}
 						{customColumns.map((col) => (
 							<div
 								key={col.id}

@@ -2,11 +2,11 @@ import { Fragment, useMemo, useState, type CSSProperties } from 'react'
 import { BasicLink } from '~/components/Link'
 import { SortIcon } from '~/components/Table/SortIcon'
 import { TablePager } from '~/components/Table/TablePager'
-import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
+import { Logo } from '~/ui/Logo'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { geckoTokenIconUrl } from '~/utils/icons'
@@ -378,7 +378,7 @@ export function Leaderboard({
 											href={`/universal-token-rating/token/${row.asset}`}
 											className="flex items-center gap-2 hover:underline"
 										>
-											<TokenLogo src={row.coingeckoId ? geckoTokenIconUrl(row.coingeckoId) : null} size={22} />
+											<Logo src={row.coingeckoId ? geckoTokenIconUrl(row.coingeckoId) : null} size={22} />
 											<span className="flex flex-col">
 												<span className="flex items-center gap-1 text-primary">
 													{row.symbol}

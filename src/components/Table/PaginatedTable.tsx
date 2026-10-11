@@ -31,7 +31,7 @@ import {
 } from '~/components/Table/helpers'
 import { SortIcon } from '~/components/Table/SortIcon'
 import { SurfaceLoadingOverlay } from '~/ui/Status'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition, Tooltip } from '~/ui/Tooltip'
 import type {
 	PaginatedTableInstance,
 	PaginationFeatures,
@@ -106,11 +106,7 @@ function HeaderWithTooltip({
 
 	if (!content) return <>{children}</>
 
-	return (
-		<Tooltip content={content} className="cursor-help underline decoration-dotted" tabIndex={0}>
-			{children}
-		</Tooltip>
-	)
+	return <Definition content={content}>{children}</Definition>
 }
 
 export function usePaginatedTableDisplayRowNumber(rowId: string) {

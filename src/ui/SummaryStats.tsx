@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { Card } from '~/ui/Card'
 import { Change, type ChangeData } from '~/ui/Change'
 import { Skeleton } from '~/ui/Skeleton'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition } from '~/ui/Tooltip'
 
 /* ----------------------------------------------------------------------------
    Summary metric cards: the overview card beside a page's main chart.
@@ -91,22 +91,12 @@ interface StatItemProps {
 /** Headline stat: text-secondary label over a mono-xl value. */
 export function StatItem({ label, value, tooltip, labelAs = 'span', className, truncate }: StatItemProps) {
 	const Container = labelAs === 'span' ? 'p' : 'div'
-	const Label = labelAs
 
 	return (
 		<Container className={`flex flex-col ${className ?? ''}`.trim()}>
-			{tooltip ? (
-				<Tooltip
-					content={tooltip}
-					render={<Label />}
-					className="cursor-help text-secondary underline decoration-dotted"
-					tabIndex={0}
-				>
-					{label}
-				</Tooltip>
-			) : (
-				<Label className="text-secondary">{label}</Label>
-			)}
+			<Definition as={labelAs} content={tooltip} className="text-secondary">
+				{label}
+			</Definition>
 			<span className={`${truncate ? ' min-h-8 truncate' : ''} mono-xl`}>{value}</span>
 		</Container>
 	)
@@ -144,17 +134,9 @@ export function InlineStatStrip({ items, stacked }: { items: Array<InlineStatStr
 			{items.map((item) => (
 				<div key={item.label} className={stacked ? 'flex flex-col' : 'flex items-baseline gap-1.5'}>
 					<dt className={item.labelHidden ? 'sr-only' : 'body-md text-secondary'}>
-						{item.tooltip ? (
-							<Tooltip
-								content={item.tooltip}
-								tabIndex={0}
-								className="cursor-help underline decoration-dotted underline-offset-4"
-							>
-								{item.label}
-							</Tooltip>
-						) : (
-							item.label
-						)}
+						<Definition as="span" content={item.tooltip}>
+							{item.label}
+						</Definition>
 					</dt>
 					<dd className="label-md">{item.value}</dd>
 					{item.change ? (
@@ -188,17 +170,9 @@ export function StatTile({
 } & ({ loading: true } | { loading?: false; value: ReactNode })) {
 	return (
 		<Card padding="md" className="flex min-w-0 flex-col gap-1">
-			{tooltip ? (
-				<Tooltip
-					content={tooltip}
-					tabIndex={0}
-					className="w-fit cursor-help label-sm text-secondary underline decoration-dotted underline-offset-4"
-				>
-					{label}
-				</Tooltip>
-			) : (
-				<span className="label-sm text-secondary">{label}</span>
-			)}
+			<Definition content={tooltip} className="w-fit label-sm text-secondary">
+				{label}
+			</Definition>
 			{'value' in state ? (
 				<span className="flex flex-wrap items-baseline gap-x-2">
 					<span className="mono-xl break-words text-primary">{state.value}</span>

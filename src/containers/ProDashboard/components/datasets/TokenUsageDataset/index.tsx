@@ -7,7 +7,6 @@ import { normalizeProTokenSymbols } from '~/containers/ProDashboard/tableQueryKe
 import type { TokenUsageDatasetTableConfig } from '~/containers/ProDashboard/types'
 import type { ProtocolTokenUsageData } from '~/containers/TokenUsage/api.types'
 import { Checkbox } from '~/ui/Checkbox'
-import { searchFieldWrapperStyles } from '~/ui/Input'
 import { MultiSelectCombobox } from '~/ui/MultiSelectCombobox'
 import { SearchField } from '~/ui/SearchField'
 import type { CsvCell } from '~/utils/csvCell'
@@ -366,7 +365,7 @@ export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOn
 						value={search}
 						onChange={setSearch}
 						placeholder="Search protocols…"
-						className={searchFieldWrapperStyles}
+						width="standalone"
 					/>
 				</div>
 			</div>

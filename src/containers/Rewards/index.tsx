@@ -19,7 +19,6 @@ import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
 import { Button } from '~/ui/Button'
 import { Checkbox } from '~/ui/Checkbox'
-import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -144,7 +143,7 @@ export default function Rewards({ programs, popularityOrder, featuredCardIds }: 
 						value={search}
 						onChange={changeSearch}
 						placeholder="Search protocols or programs…"
-						className={searchFieldInlineWrapperStyles}
+						width="inline"
 					/>
 					{/* filter, not inline: it sits between the search field and Reset, so it
 					    takes the same 32px bordered control shape as the other toolbar controls. */}

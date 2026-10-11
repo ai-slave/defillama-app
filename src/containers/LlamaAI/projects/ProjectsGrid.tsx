@@ -7,7 +7,6 @@ import { BasicLink } from '~/components/Link'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
-import { searchFieldFlexibleWrapperStyles } from '~/ui/Input'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { SearchField } from '~/ui/SearchField'
 import { Select } from '~/ui/Select'
@@ -168,7 +167,7 @@ export function ProjectsGrid() {
 					value={query}
 					onChange={setQuery}
 					placeholder="Search projects"
-					className={searchFieldFlexibleWrapperStyles}
+					width="flexible"
 				/>
 			) : null}
 
@@ -208,6 +207,7 @@ export function ProjectsGrid() {
 						<li key={p.id}>
 							<Card padding="base" className="group hover-wash-card relative flex size-full flex-col gap-2">
 								<header className="flex items-center gap-2">
+									{/* An icon chip on the brand tint, not a selected state. */}
 									<div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-brand-muted text-link">
 										<Icon name="folder" className="size-3.5" />
 									</div>

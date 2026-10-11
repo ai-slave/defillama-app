@@ -184,7 +184,7 @@ export function MicaLicenseValue({
 		<ValueBadge
 			status={presentation.status}
 			ariaLabel={`${presentation.label} MiCA details for ${name}`}
-			contentClassName="w-72 p-3 text-primary"
+			width="md"
 			content={
 				<dl className="flex flex-col gap-1.5 body-sm">
 					<div className="flex justify-between gap-3">
@@ -231,7 +231,7 @@ function KycSummaryHovercard({ summary, name }: { summary: string; name: string 
 					className={`hover-wash border border-medium text-secondary ${KYC_CHIP_BOX}`}
 				/>
 			}
-			contentClassName="w-96 p-3 leading-snug text-primary"
+			width="lg"
 			content={<span className="block break-words whitespace-pre-wrap">{summary}</span>}
 		>
 			<Icon name="file-text" className="size-4" />

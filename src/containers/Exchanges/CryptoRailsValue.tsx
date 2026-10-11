@@ -74,7 +74,7 @@ export function CryptoRailsValue({ name, rails }: { name: string; rails: CryptoR
 		<ValueBadge
 			status="neutral"
 			ariaLabel={`${name} crypto routes: ${rails.deposit.length} deposit and ${rails.withdraw.length} withdrawal`}
-			contentClassName="w-[760px] p-3"
+			width="fit"
 			content={
 				<div className="flex flex-col gap-4">
 					<h3 className="heading-xs">{name} crypto deposit and withdrawal fees</h3>

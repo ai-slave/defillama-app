@@ -2,7 +2,7 @@
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { RelativeTime } from '~/ui/RelativeTime'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
 import type { VerifiedBlock, VerifiedConfidence } from '../data/types'
 import { splitMethod } from '../Tables/Measured'
@@ -138,18 +138,18 @@ export function VerifiedApyPanel({
 					</span>
 				) : null}
 				{confidence ? (
-					<Tooltip content={CONFIDENCE_HINT[confidence]} className="cursor-help" tabIndex={0}>
+					<Definition content={CONFIDENCE_HINT[confidence]}>
 						<span className="flex items-center gap-1.5 rounded-full border border-medium px-2.5 py-0.5 label-sm text-secondary">
 							<span
 								aria-hidden
 								className={`size-1.5 rounded-full ${confidence === 'high' ? 'text-success' : 'text-warning'}`}
 								style={{ backgroundColor: 'currentColor' }}
 							/>
-							<span className="underline decoration-dotted">
+							<span>
 								<span className="capitalize">{confidence}</span> confidence
 							</span>
 						</span>
-					</Tooltip>
+					</Definition>
 				) : null}
 				<span className="ml-auto">Reproducible: the same call at the same block returns the same result.</span>
 			</div>

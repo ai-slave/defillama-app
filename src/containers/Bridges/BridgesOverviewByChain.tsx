@@ -12,7 +12,6 @@ import { BridgeVolumeChart } from '~/containers/Bridges/BridgeVolumeChart'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { usePageClockSec } from '~/hooks/usePageClock'
 import { ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { ScopeNote } from '~/ui/ScopeNote'
 import { SearchField } from '~/ui/SearchField'
@@ -554,7 +553,7 @@ export function BridgesOverviewByChain({
 									value={searchValue}
 									onChange={setSearchValue}
 									placeholder="Search…"
-									className={searchFieldInlineWrapperStyles}
+									width="inline"
 								/>
 							)}
 							<CSVDownloadButton prepareCsv={prepareActiveTabCsv} smol size="md" />

@@ -28,7 +28,6 @@ import { Button, StableLabel } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
-import { searchFieldWrapperStyles } from '~/ui/Input'
 import { SearchField } from '~/ui/SearchField'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { TableToolbar } from '~/ui/Toolbar'
@@ -305,7 +304,7 @@ export function UnlocksTable({ protocols, showOnlyWatchlist, savedProtocols, ini
 					value={projectName}
 					onChange={setProjectName}
 					placeholder="Search projects…"
-					className={searchFieldWrapperStyles}
+					width="standalone"
 				/>
 
 				<Button

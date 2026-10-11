@@ -89,6 +89,8 @@ function ScenarioRow({
 	)
 	return (
 		<>
+			{/* A table row that expands its detail row below: the tint ties the open row to that detail. A tr cannot be a
+			    ListRow, and its disclosure button carries aria-expanded. */}
 			<tr
 				id={scenarioRowId(s.scenarioId)}
 				onClick={() => clickable && onToggle()}

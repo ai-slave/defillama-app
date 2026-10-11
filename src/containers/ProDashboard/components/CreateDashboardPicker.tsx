@@ -239,6 +239,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 						onClick={() => setView({ mode: 'scratch', from: null })}
 						className="hover-wash-card flex flex-col items-center gap-4 text-center aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
 					>
+						{/* An icon chip on the brand tint, not a selected state. */}
 						<span className="flex size-10 items-center justify-center rounded-md bg-brand-muted text-link">
 							<Icon name="file-plus" className="size-5" />
 						</span>
@@ -256,6 +257,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 						onClick={() => setView({ mode: 'comparison', from: null })}
 						className="hover-wash-card flex flex-col items-center gap-4 text-center aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
 					>
+						{/* An icon chip on the brand tint, not a selected state. */}
 						<span className="flex size-10 items-center justify-center rounded-md bg-brand-muted text-link">
 							<Icon name="bar-chart-2" className="size-5" />
 						</span>

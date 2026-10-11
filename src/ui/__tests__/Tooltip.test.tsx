@@ -3,9 +3,10 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { compile } from 'tailwindcss'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { tabTo } from '~/utils/testing/keyboard'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { Button } from '../Button'
-import { Tooltip } from '../Tooltip'
+import { Definition, Tooltip } from '../Tooltip'
 
 let container: HTMLDivElement
 let root: Root
@@ -69,7 +70,7 @@ test('leaves a tap on a link anchor to the link and still opens on focus', async
 	await act(async () => link.dispatchEvent(new Event('touchstart', { bubbles: true })))
 	await act(async () => new Promise((resolve) => setTimeout(resolve, 50)))
 	expect(tooltipText()).toBeUndefined()
-	await act(async () => link.focus())
+	await tabTo(link)
 	await waitForUi(() => expect(tooltipText()).toBe('Open the DEX dashboard'))
 })
 
@@ -127,4 +128,92 @@ test('a render anchor keeps its own layout, so a truncating link can shrink besi
 	const link = getComputedStyle(container.querySelector('a')!)
 	expect(link.display).not.toBe('flex')
 	expect(link.flexShrink).not.toBe('0')
+})
+
+let screenX = 0
+/** The pointer enters the element and moves over it: Ariakit opens a tooltip only on a move after an enter. */
+async function hover(element: Element) {
+	screenX += 10
+	await act(async () => {
+		element.dispatchEvent(new MouseEvent('mouseover', { bubbles: true, relatedTarget: document.body }))
+		element.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, screenX, screenY: 10 }))
+	})
+}
+
+test('an instant tooltip opens on the first hover move, where a plain one waits', async () => {
+	await act(async () =>
+		root.render(
+			<>
+				<Tooltip content="Waits for the pointer to settle">Plain</Tooltip>
+				<Tooltip instant content="$1.2m weighted">
+					12%
+				</Tooltip>
+			</>
+		)
+	)
+	const [plain, instant] = [...container.querySelectorAll('span')]
+	await hover(plain)
+	await act(async () => new Promise((resolve) => setTimeout(resolve, 50)))
+	expect(tooltipText()).toBeUndefined()
+	await act(async () =>
+		plain.dispatchEvent(new MouseEvent('mouseout', { bubbles: true, relatedTarget: document.body }))
+	)
+	await hover(instant)
+	expect(tooltipText()).toBe('$1.2m weighted')
+})
+
+const clippedCells = () => (
+	<>
+		{['ETH', 'Superstate Short Duration US Government Securities Fund'].map((text) => (
+			<Tooltip key={text} content={text} onlyWhenClipped render={<span className="block max-w-full truncate" />}>
+				{text}
+			</Tooltip>
+		))}
+	</>
+)
+
+/** happy-dom has no layout, so give each cell the widths a browser would measure. */
+function measureCells() {
+	const [fits, clipped] = [...container.querySelectorAll('span')]
+	Object.defineProperties(fits, { scrollWidth: { value: 30 }, clientWidth: { value: 110 } })
+	Object.defineProperties(clipped, { scrollWidth: { value: 380 }, clientWidth: { value: 190 } })
+	return { fits, clipped }
+}
+
+test('a tap shows the full value of clipped text and nothing for text that fits', async () => {
+	await act(async () => root.render(clippedCells()))
+	const { fits, clipped } = measureCells()
+	await act(async () => fits.dispatchEvent(new Event('touchstart', { bubbles: true })))
+	await act(async () => new Promise((resolve) => setTimeout(resolve, 50)))
+	expect(tooltipText()).toBeUndefined()
+	await act(async () => clipped.dispatchEvent(new Event('touchstart', { bubbles: true })))
+	await waitForUi(() => expect(tooltipText()).toBe('Superstate Short Duration US Government Securities Fund'))
+})
+
+test('a hover shows the full value of clipped text and nothing for text that fits', async () => {
+	await act(async () => root.render(clippedCells()))
+	const { fits, clipped } = measureCells()
+	await hover(fits)
+	await act(async () => new Promise((resolve) => setTimeout(resolve, 600)))
+	expect(tooltipText()).toBeUndefined()
+	await hover(clipped)
+	await waitForUi(() => expect(tooltipText()).toBe('Superstate Short Duration US Government Securities Fund'))
+})
+
+test('a definition is a tab stop that opens on focus, and text without one is not', async () => {
+	await act(async () =>
+		root.render(
+			<>
+				<Definition as="h2" content="Sum of value locked in DeFi">
+					Total Value Locked
+				</Definition>
+				<Definition content={null}>Fees</Definition>
+			</>
+		)
+	)
+	const heading = container.querySelector('h2')!
+	const fees = [...container.querySelectorAll('span')].find((el) => el.textContent === 'Fees')!
+	expect([heading.tabIndex, fees.tabIndex]).toEqual([0, -1])
+	await tabTo(heading)
+	await waitForUi(() => expect(tooltipText()).toBe('Sum of value locked in DeFi'))
 })

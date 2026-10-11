@@ -37,7 +37,7 @@ import { definitions } from '~/public/definitions'
 import { Button } from '~/ui/Button'
 import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
-import { searchFieldWrapperStyles } from '~/ui/Input'
+import { Logo } from '~/ui/Logo'
 import { MetricRow } from '~/ui/MetricPrimitives'
 import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
@@ -360,7 +360,7 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 						value={projectName}
 						onChange={setProjectName}
 						placeholder="Search…"
-						className={searchFieldWrapperStyles}
+						width="standalone"
 					/>
 					<SelectWithCombobox
 						allValues={columnsOptions}
@@ -563,7 +563,7 @@ const NameColumn = (type: IProps['type']) =>
 
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 
-					<TokenLogo src={row.original.logo} data-lgonly alt={`Logo of ${row.original.name}`} />
+					<Logo size={24} src={row.original.logo} data-lgonly alt={`Logo of ${row.original.name}`} />
 
 					<span className="-my-2 flex min-w-0 flex-col">
 						<span className="flex min-w-0 items-center gap-1">

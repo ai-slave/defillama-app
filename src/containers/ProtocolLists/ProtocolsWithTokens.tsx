@@ -12,10 +12,10 @@ import { SearchTableProvider } from '~/components/Table/search/SearchTableProvid
 import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
 import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
-import { TokenLogo } from '~/components/TokenLogo'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
+import { Logo } from '~/ui/Logo'
 import { TableToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
@@ -154,7 +154,7 @@ function defaultColumns(type: TokenMetricType) {
 						) : null}
 						<span className="vf-row-index shrink-0" aria-hidden="true" />
 
-						<TokenLogo src={row.original.logo} data-lgonly alt={`Logo of ${row.original.name}`} />
+						<Logo size={24} src={row.original.logo} data-lgonly alt={`Logo of ${row.original.name}`} />
 
 						{row.original.chains.length > 0 ? (
 							<span className="-my-2 flex flex-col">

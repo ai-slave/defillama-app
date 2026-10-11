@@ -30,6 +30,7 @@ import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey, DialogCa
 import { FieldGroup } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { Logo } from '~/ui/Logo'
 import { Menu } from '~/ui/Menu'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { EmptyState, InlineStatus, PanelLoadingStatus } from '~/ui/Status'
@@ -885,7 +886,7 @@ function TopMovers({ protocols, portfolio }: TopMoversProps) {
 											{mover.slug ? (
 												<TokenLogo name={mover.slug} kind="token" alt={`Logo of ${mover.name}`} size={20} />
 											) : (
-												<TokenLogo src={undefined} alt={`Logo of ${mover.name}`} size={20} />
+												<Logo src={undefined} alt={`Logo of ${mover.name}`} size={20} />
 											)}
 											{mover.slug ? (
 												<BasicLink

@@ -21,7 +21,6 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
 import { ChartPanelToolbar } from '~/ui/ChartPanel'
-import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { Select } from '~/ui/Select'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
@@ -132,7 +131,7 @@ export function ETFOverview({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 				<Card padding="none">
 					<TableToolbar>
 						<h2 className="mr-auto label-md">Exchange traded funds</h2>
-						<TableSearchInput columnId="ticker" placeholder="Search ETF…" className={searchFieldInlineWrapperStyles} />
+						<TableSearchInput columnId="ticker" placeholder="Search ETF…" width="inline" />
 						<TableCsvExport filename="etf-overview" />
 					</TableToolbar>
 					<VirtualSearchTableView />

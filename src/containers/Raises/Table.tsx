@@ -15,7 +15,6 @@ import { orderedFilteredTableFeatures } from '~/components/Table/features/ordere
 import type { ColumnOrdersByBreakpoint } from '~/components/Table/utils'
 import { prepareTableCsv, useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
-import { searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { SearchField } from '~/ui/SearchField'
 import { TableToolbar } from '~/ui/Toolbar'
@@ -205,7 +204,7 @@ export function RaisesTable({ raises }: { raises: Array<Raise> }) {
 					value={projectName}
 					onChange={setProjectName}
 					placeholder="Search projects…"
-					className={searchFieldWrapperStyles}
+					width="standalone"
 				/>
 				<ExternalLinkButton href="https://github.com/DefiLlama/DefiLlama-Adapters/discussions/7093">
 					Methodology & biases

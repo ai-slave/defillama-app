@@ -3,10 +3,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { ComboboxSelectTrigger, selectTriggerStyles } from '~/ui/ComboboxSelectTrigger'
-import { Icon } from '~/ui/Icon'
 import { ListLoading } from '~/ui/NoResults'
-import { popoverRowWithBorderStyles, popoverSingleSelectCheckStyles } from '~/ui/Popover'
-import { ComboboxSurface } from '~/ui/PopoverSurface'
+import { ComboboxSurface, PopoverList, PopoverRow } from '~/ui/PopoverSurface'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { InlineStatus } from '~/ui/Status'
 import { httpErrorMessage } from '~/utils/async'
@@ -81,17 +79,18 @@ export function ArticleClientField({
 					<Ariakit.ComboboxSelectArrow className="shrink-0 text-tertiary" />
 				</ComboboxSelectTrigger>
 				<ComboboxSurface variant="panel" heading="Client" sameWidth>
-					{[{ id: NO_CLIENT, displayName: 'No client' }, ...(sponsors.data ?? [])].map((option) => {
-						const selected = (client?.id ?? NO_CLIENT) === option.id
-						return (
-							<Ariakit.ComboboxItem key={option.id} value={option.id} className={popoverRowWithBorderStyles}>
+					<PopoverList divided>
+						{[{ id: NO_CLIENT, displayName: 'No client' }, ...(sponsors.data ?? [])].map((option) => (
+							<PopoverRow
+								key={option.id}
+								render={<Ariakit.ComboboxItem value={option.id} />}
+								check="tick"
+								checked={(client?.id ?? NO_CLIENT) === option.id}
+							>
 								<span className="truncate">{option.displayName}</span>
-								<span className={popoverSingleSelectCheckStyles(selected)} aria-hidden>
-									{selected ? <Icon name="check" className="size-3" aria-hidden /> : null}
-								</span>
-							</Ariakit.ComboboxItem>
-						)
-					})}
+							</PopoverRow>
+						))}
+					</PopoverList>
 					{sponsors.isPending && listOpen ? <ListLoading label="Loading clients" /> : null}
 				</ComboboxSurface>
 			</Ariakit.ComboboxProvider>

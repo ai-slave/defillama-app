@@ -1,8 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { ComboboxSelectTrigger, selectTriggerStyles } from '~/ui/ComboboxSelectTrigger'
-import { Icon } from '~/ui/Icon'
-import { popoverRowWithBorderStyles, popoverSingleSelectCheckStyles } from '~/ui/Popover'
-import { ComboboxSurface } from '~/ui/PopoverSurface'
+import { ComboboxSurface, PopoverList, PopoverRow } from '~/ui/PopoverSurface'
 import { THRESHOLDS, type Threshold } from '../constants'
 
 export function ThresholdSelect({ value, setValue }: { value: Threshold; setValue: (value: Threshold) => void }) {
@@ -13,19 +11,19 @@ export function ThresholdSelect({ value, setValue }: { value: Threshold; setValu
 				<span className="hidden min-[713px]:inline">Threshold</span>
 				<Ariakit.ComboboxSelectArrow />
 			</ComboboxSelectTrigger>
-			<ComboboxSurface variant="panel" heading="Threshold" className="min-w-[10rem]">
-				{THRESHOLDS.map((threshold) => (
-					<Ariakit.ComboboxItem key={threshold} value={threshold} className={popoverRowWithBorderStyles}>
-						<span>{threshold} Threshold</span>
-						<Ariakit.ComboboxItemSelected>
-							{(selected) => (
-								<span className={popoverSingleSelectCheckStyles(selected)}>
-									<Icon name="check" className="size-3" />
-								</span>
-							)}
-						</Ariakit.ComboboxItemSelected>
-					</Ariakit.ComboboxItem>
-				))}
+			<ComboboxSurface variant="panel" heading="Threshold">
+				<PopoverList divided>
+					{THRESHOLDS.map((threshold) => (
+						<PopoverRow
+							key={threshold}
+							render={<Ariakit.ComboboxItem value={threshold} />}
+							check="tick"
+							checked={threshold === value}
+						>
+							{threshold} Threshold
+						</PopoverRow>
+					))}
+				</PopoverList>
 			</ComboboxSurface>
 		</Ariakit.ComboboxProvider>
 	)

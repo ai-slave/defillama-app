@@ -1,9 +1,9 @@
 import { createColumnHelper, type Row } from '@tanstack/react-table'
 import Link from 'next/link'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
-import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { Logo } from '~/ui/Logo'
 import { Tag } from '~/ui/Tag'
 import type { tableFeaturesConfig } from './index'
 import type { RewardLifecycle, RewardProgram } from './types'
@@ -37,7 +37,7 @@ export const columns = helper.columns([
 				>
 					<Icon name={row.getIsExpanded() ? 'chevron-down' : 'chevron-right'} className="size-4" aria-hidden="true" />
 				</Button>
-				<TokenLogo src={row.original.logo} size={28} />
+				<Logo src={row.original.logo} size={28} />
 				<div className="flex min-w-0 flex-col gap-0.5">
 					{row.original.protocolHref ? (
 						<Link

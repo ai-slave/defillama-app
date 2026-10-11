@@ -26,7 +26,7 @@ import {
 	expandBannerCountrySelection
 } from '~/containers/Articles/bannerCountryGroups'
 import { articlePromoLinkUrl, landingPromoLinkUrl } from '~/containers/Articles/promoLinks'
-import type { ArticleSection, Banner } from '~/containers/Articles/types'
+import type { ArticleSection, Banner, BannerKind, BannerScope } from '~/containers/Articles/types'
 import {
 	ARTICLE_SECTIONS,
 	ARTICLE_SECTION_LABELS,
@@ -43,11 +43,10 @@ import { ComboboxSelectTrigger } from '~/ui/ComboboxSelectTrigger'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { Field, FieldGroup } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
-import { Icon } from '~/ui/Icon'
 import { Input, Textarea } from '~/ui/Input'
 import { MultiSelectCombobox } from '~/ui/MultiSelectCombobox'
-import { popoverRowWithBorderStyles, popoverSingleSelectCheckStyles } from '~/ui/Popover'
-import { ComboboxSurface } from '~/ui/PopoverSurface'
+import { OptionTile } from '~/ui/OptionTile'
+import { ComboboxSurface, PopoverList, PopoverRow } from '~/ui/PopoverSurface'
 import { StatusDot } from '~/ui/StatusBadge'
 import { httpErrorMessage } from '~/utils/async'
 
@@ -190,29 +189,16 @@ export function BannerForm({ banner }: Props) {
 				title="Kind"
 				description="Text shows as a dismissible strip at the top of the page. Desktop images are used by landing placements or the article right rail. Wide/mobile images are used by landing placements or the mobile article body. Promo is a shared placement below Latest on the landing page and on every article. Square landing banner shows inside Latest on the landing page in place of articles 4-6."
 			>
-				<div className="grid gap-2 sm:grid-cols-2">
-					{BANNER_KINDS.map((kind) => (
-						<label
-							key={kind}
-							className={`flex cursor-pointer items-start gap-3 rounded-md border px-4 py-3 transition-colors ${
-								state.kind === kind ? 'border-brand bg-brand-muted' : 'border-medium hover:bg-hover-row'
-							}`}
-						>
-							<input
-								type="radio"
-								name="kind"
-								value={kind}
-								checked={state.kind === kind}
-								onChange={() => update({ kind })}
-								className="mt-0.5 accent-link"
-							/>
-							<div className="grid gap-0.5">
-								<span className="label-md text-primary">{BANNER_KIND_LABELS[kind]}</span>
+				<Ariakit.RadioProvider value={state.kind} setValue={(kind) => update({ kind: kind as BannerKind })}>
+					<Ariakit.RadioGroup aria-label="Kind" className="grid gap-2 sm:grid-cols-2">
+						{BANNER_KINDS.map((kind) => (
+							<OptionTile key={kind} layout="stack" radio={kind}>
+								<span className="label-md">{BANNER_KIND_LABELS[kind]}</span>
 								<span className="body-sm text-tertiary">{BANNER_KIND_DESCRIPTIONS[kind]}</span>
-							</div>
-						</label>
-					))}
-				</div>
+							</OptionTile>
+						))}
+					</Ariakit.RadioGroup>
+				</Ariakit.RadioProvider>
 			</Section>
 
 			{state.kind === 'image-square' ? (
@@ -246,24 +232,11 @@ export function BannerForm({ banner }: Props) {
 				</Section>
 			) : (
 				<Section title="Scope" description="Where should this banner appear?">
-					<div className="grid gap-2">
-						{BANNER_SCOPES.map((scope) => (
-							<label
-								key={scope}
-								className={`flex cursor-pointer items-start gap-3 rounded-md border px-4 py-3 transition-colors ${
-									state.scope === scope ? 'border-brand bg-brand-muted' : 'border-medium hover:bg-hover-row'
-								}`}
-							>
-								<input
-									type="radio"
-									name="scope"
-									value={scope}
-									checked={state.scope === scope}
-									onChange={() => update({ scope })}
-									className="mt-0.5 accent-link"
-								/>
-								<div className="grid gap-0.5">
-									<span className="label-md text-primary">{BANNER_SCOPE_LABELS[scope]}</span>
+					<Ariakit.RadioProvider value={state.scope} setValue={(scope) => update({ scope: scope as BannerScope })}>
+						<Ariakit.RadioGroup aria-label="Scope" className="grid gap-2">
+							{BANNER_SCOPES.map((scope) => (
+								<OptionTile key={scope} layout="stack" radio={scope}>
+									<span className="label-md">{BANNER_SCOPE_LABELS[scope]}</span>
 									<span className="body-sm text-tertiary">
 										{scope === 'landing'
 											? 'Shows on /research'
@@ -273,10 +246,10 @@ export function BannerForm({ banner }: Props) {
 													? 'Shows on every article'
 													: 'Shows only on the chosen article'}
 									</span>
-								</div>
-							</label>
-						))}
-					</div>
+								</OptionTile>
+							))}
+						</Ariakit.RadioGroup>
+					</Ariakit.RadioProvider>
 
 					{state.scope === 'section' ? (
 						<Field label="Section" error={shown.section}>
@@ -304,14 +277,18 @@ export function BannerForm({ banner }: Props) {
 										<Ariakit.ComboboxSelectArrow className="shrink-0 text-tertiary" />
 									</ComboboxSelectTrigger>
 									<ComboboxSurface variant="panel" heading="Section" sameWidth>
-										{ARTICLE_SECTIONS.map((section) => (
-											<Ariakit.ComboboxItem key={section} value={section} className={popoverRowWithBorderStyles}>
-												<span className="truncate">{ARTICLE_SECTION_LABELS[section]}</span>
-												<span className={popoverSingleSelectCheckStyles(state.section === section)} aria-hidden>
-													{state.section === section ? <Icon name="check" className="size-3" aria-hidden /> : null}
-												</span>
-											</Ariakit.ComboboxItem>
-										))}
+										<PopoverList divided>
+											{ARTICLE_SECTIONS.map((section) => (
+												<PopoverRow
+													key={section}
+													render={<Ariakit.ComboboxItem value={section} />}
+													check="tick"
+													checked={state.section === section}
+												>
+													<span className="truncate">{ARTICLE_SECTION_LABELS[section]}</span>
+												</PopoverRow>
+											))}
+										</PopoverList>
 									</ComboboxSurface>
 								</Ariakit.ComboboxProvider>
 							)}
@@ -343,34 +320,21 @@ export function BannerForm({ banner }: Props) {
 				title="Audience"
 				description="Show this banner globally or only to visitors in selected regions and countries."
 			>
-				<div className="grid gap-2 sm:grid-cols-2">
-					{(
-						[
-							['global', 'Global', 'Show to every visitor'],
-							['selected', 'Selected locations', 'Show only when the visitor country matches']
-						] as const
-					).map(([mode, label, description]) => (
-						<label
-							key={mode}
-							className={`flex cursor-pointer items-start gap-3 rounded-md border px-4 py-3 transition-colors ${
-								state.audienceMode === mode ? 'border-brand bg-brand-muted' : 'border-medium hover:bg-hover-row'
-							}`}
-						>
-							<input
-								type="radio"
-								name="audience"
-								value={mode}
-								checked={state.audienceMode === mode}
-								onChange={() => update({ audienceMode: mode })}
-								className="mt-0.5 accent-link"
-							/>
-							<div className="grid gap-0.5">
-								<span className="label-md text-primary">{label}</span>
-								<span className="body-sm text-tertiary">{description}</span>
-							</div>
-						</label>
-					))}
-				</div>
+				<Ariakit.RadioProvider
+					value={state.audienceMode}
+					setValue={(mode) => update({ audienceMode: mode as BannerFormState['audienceMode'] })}
+				>
+					<Ariakit.RadioGroup aria-label="Audience" className="grid gap-2 sm:grid-cols-2">
+						<OptionTile layout="stack" radio="global">
+							<span className="label-md">Global</span>
+							<span className="body-sm text-tertiary">Show to every visitor</span>
+						</OptionTile>
+						<OptionTile layout="stack" radio="selected">
+							<span className="label-md">Selected locations</span>
+							<span className="body-sm text-tertiary">Show only when the visitor country matches</span>
+						</OptionTile>
+					</Ariakit.RadioGroup>
+				</Ariakit.RadioProvider>
 
 				{state.audienceMode === 'selected' ? (
 					<div className="grid gap-5">
@@ -379,33 +343,30 @@ export function BannerForm({ banner }: Props) {
 								{BANNER_COUNTRY_GROUPS.map((group) => {
 									const selected = state.targetGroups.includes(group.id)
 									return (
-										<label
+										<OptionTile
 											key={group.id}
-											className={`flex cursor-pointer items-start gap-3 rounded-md border px-4 py-3 transition-colors ${
-												selected ? 'border-brand bg-brand-muted' : 'border-medium hover:bg-hover-row'
-											}`}
+											layout="row"
+											check="box"
+											selected={selected}
+											role="checkbox"
+											aria-checked={selected}
+											onClick={() => {
+												if (selected) {
+													update({ targetGroups: state.targetGroups.filter((id) => id !== group.id) })
+													return
+												}
+												const groupCountries = new Set<string>(group.countries)
+												update({
+													targetGroups: [...state.targetGroups, group.id],
+													targetCountries: state.targetCountries.filter((country) => !groupCountries.has(country))
+												})
+											}}
 										>
-											<input
-												type="checkbox"
-												checked={selected}
-												onChange={(event) => {
-													if (event.target.checked) {
-														const groupCountries = new Set<string>(group.countries)
-														update({
-															targetGroups: [...state.targetGroups, group.id],
-															targetCountries: state.targetCountries.filter((country) => !groupCountries.has(country))
-														})
-													} else {
-														update({ targetGroups: state.targetGroups.filter((id) => id !== group.id) })
-													}
-												}}
-												className="mt-0.5 size-4 accent-link"
-											/>
-											<div className="grid gap-0.5">
-												<span className="label-md text-primary">{group.label}</span>
+											<span className="grid gap-0.5">
+												<span className="label-md">{group.label}</span>
 												<span className="body-sm text-tertiary">{group.description}</span>
-											</div>
-										</label>
+											</span>
+										</OptionTile>
 									)
 								})}
 							</div>

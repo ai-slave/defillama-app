@@ -13,6 +13,7 @@ import { Card } from '~/ui/Card'
 import { ChartPanelBody } from '~/ui/ChartPanel'
 import { DialogBody, DialogHeader, SideSheet } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
+import { Logo } from '~/ui/Logo'
 import { Panel } from '~/ui/Panel'
 import { StatusBadge } from '~/ui/StatusBadge'
 import { Tag } from '~/ui/Tag'
@@ -542,7 +543,7 @@ export function TokenPageLive({
 		<div className="flex flex-col gap-4">
 			<div className="flex flex-wrap items-center justify-between gap-3">
 				<div className="flex flex-wrap items-center gap-3">
-					<TokenLogo src={asset.coingeckoId ? geckoTokenIconUrl(asset.coingeckoId) : null} size={32} />
+					<Logo src={asset.coingeckoId ? geckoTokenIconUrl(asset.coingeckoId) : null} size={32} />
 					<h1 className="heading-sm">
 						{asset.projectName} <span className="text-tertiary">{asset.symbol}</span>
 					</h1>

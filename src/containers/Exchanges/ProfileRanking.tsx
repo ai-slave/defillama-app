@@ -2,7 +2,7 @@ import { Fragment } from 'react'
 import { BasicLink } from '~/components/Link'
 import { divergingColor } from '~/constants/colors'
 import { Card } from '~/ui/Card'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition, Tooltip } from '~/ui/Tooltip'
 import { formatUsd, formatNumber } from '~/utils/numberFormat'
 import { byRealPillarOrder, TIER_COLORS, TierBadge } from './directoryColumns'
 import type { ExchangeExecutionModel, ExchangeProfileModel, ExchangeProfileQualityModel } from './models'
@@ -56,16 +56,15 @@ function PillarRow({ pillar }: { pillar: ExchangeProfileQualityModel['components
 	const measured = score !== null
 	return (
 		<div className="flex items-center gap-3">
-			<Tooltip
+			<Definition
 				content={measured ? pillar.what : `Not measured, never counted as zero. ${pillar.na}`}
-				className="w-40 shrink-0 cursor-help"
-				tabIndex={0}
+				className="w-40"
 			>
-				<span className="flex items-baseline gap-1.5 underline decoration-dotted">
+				<span className="flex items-baseline gap-1.5">
 					<span className="label-sm">{pillar.label}</span>
 					<span className="body-sm text-tertiary">{pillar.weight}%</span>
 				</span>
-			</Tooltip>
+			</Definition>
 			<div className="h-2 flex-1 overflow-hidden rounded-full bg-surface-elevated-2">
 				<div
 					className="h-full rounded-full"
@@ -111,16 +110,14 @@ function ExecSubRow({
 	const measured = score !== null
 	return (
 		<div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 pl-3 sm:flex sm:gap-3 sm:pl-6">
-			<Tooltip
+			<Definition
+				as="span"
 				content={sub.what}
-				render={
-					<span className="flex min-w-0 cursor-help items-baseline gap-1.5 underline decoration-dotted sm:w-[8.5rem] sm:shrink-0" />
-				}
-				tabIndex={0}
+				className="flex min-w-0 items-baseline gap-1.5 sm:w-[8.5rem] sm:shrink-0"
 			>
 				<span className="body-sm">{sub.label}</span>
 				{share ? <span className="body-sm text-tertiary">{share}%</span> : null}
-			</Tooltip>
+			</Definition>
 			<div className="col-span-full row-start-2 h-1 flex-1 overflow-hidden rounded-full bg-surface-elevated-2">
 				<div
 					className="h-full rounded-full opacity-70"

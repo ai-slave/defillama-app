@@ -21,6 +21,9 @@ function firstFocusableIn(container: HTMLElement): HTMLElement {
    closes onto a trigger an update already removed.
    A dialog that knows a better target (the next row, a new step's field)
    moves focus there itself; the net only catches what nothing else handled.
+   The net, like a surface's autofocus on open, lands on the first focusable
+   control, and Tooltip ignores focus that code moved (./Tooltip.tsx), so a
+   tooltip anchor there stays closed and the next Escape closes the dialog.
 ---------------------------------------------------------------------------- */
 
 const WATCHED_CHANGES: MutationObserverInit = {

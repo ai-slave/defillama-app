@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition } from '~/ui/Tooltip'
 import {
 	formatCompactNumber,
 	formatNumber,
@@ -75,16 +75,9 @@ export function Change({
 	if (value == null) return null
 	const tone = changeTone(value)
 
-	return tooltip ? (
-		<Tooltip
-			content={tooltip}
-			render={<span />}
-			tabIndex={0}
-			className={`cursor-help underline decoration-dotted underline-offset-4 ${tone}`.trim()}
-		>
+	return (
+		<Definition as="span" content={tooltip} className={tone || undefined}>
 			{formatChange(value, unit)}
-		</Tooltip>
-	) : (
-		<span className={tone || undefined}>{formatChange(value, unit)}</span>
+		</Definition>
 	)
 }

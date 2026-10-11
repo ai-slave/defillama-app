@@ -69,26 +69,31 @@ function Harness() {
 const control = (name: string) =>
 	[...container.querySelectorAll<HTMLElement>('button, input')].find((element) => accessibleName(element) === name)
 
-test.each([
-	[
-		'the clear button',
-		() => {
-			const clear = control('Clear session search')!
-			clear.focus()
-			clear.click()
-		}
-	],
-	[
-		'Escape',
-		() => {
-			const field = control('Search sessions')!
-			field.focus()
-			field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
-		}
-	]
-])('closing session search with %s returns focus to the search toggle', async (_how, close) => {
+test('Escape in session search closes it and returns focus to the search toggle', async () => {
 	await act(async () => root.render(<Harness />))
-	await act(async () => close())
+	await act(async () => {
+		const field = control('Search sessions')!
+		field.focus()
+		field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+	})
 	expect(control('Search sessions')).toBeUndefined()
 	expect(document.activeElement).toBe(control('Search chats'))
+})
+
+test('the clear button empties session search and keeps it open with focus in the field', async () => {
+	await act(async () => root.render(<Harness />))
+	const field = control('Search sessions') as HTMLInputElement
+	await act(async () => {
+		field.focus()
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(field, 'gas fees')
+		field.dispatchEvent(new Event('input', { bubbles: true }))
+	})
+	await act(async () => {
+		const clear = control('Clear search')!
+		clear.focus()
+		clear.click()
+	})
+	expect(control('Search sessions')).toBe(field)
+	expect(field.value).toBe('')
+	expect(document.activeElement).toBe(field)
 })

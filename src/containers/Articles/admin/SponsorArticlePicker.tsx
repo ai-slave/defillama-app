@@ -5,11 +5,9 @@ import { useAuthContext } from '~/auth'
 import { searchResearchSponsorArticles } from '~/containers/Articles/api'
 import type { ResearchSponsorArticleSearchResult } from '~/containers/Articles/types'
 import { ARTICLE_SECTION_LABELS } from '~/containers/Articles/types'
-import { Icon } from '~/ui/Icon'
-import { Input } from '~/ui/Input'
 import { ListLoading } from '~/ui/NoResults'
-import { popoverMeasuredRowStyles } from '~/ui/Popover'
-import { ComboboxSurface } from '~/ui/PopoverSurface'
+import { ComboboxSurface, PopoverRow } from '~/ui/PopoverSurface'
+import { SearchField } from '~/ui/SearchField'
 
 type Props = {
 	excludedIds: ReadonlySet<string>
@@ -34,23 +32,16 @@ export function SponsorArticlePicker({ excludedIds, onSelect, disabled = false }
 
 	return (
 		<Ariakit.ComboboxProvider open={open} setOpen={setOpen} setInputValue={setSearchValue} resetValueOnHide>
-			<div className="relative flex items-center">
-				<Icon name="search" className="pointer-events-none absolute left-3 size-3.5 text-tertiary" />
-				<Ariakit.Combobox
-					aria-label="Research article to link"
-					placeholder="Search Research articles…"
-					autoSelect
-					// Focusable while a pick links: the pick disables the field that holds focus.
-					disabled={disabled}
-					accessibleWhenDisabled
-					render={<Input className="w-full pl-9" />}
-				/>
-			</div>
-			<ComboboxSurface
-				variant="search-results"
-				sameWidth
-				className="max-h-[min(320px,var(--popover-available-height))]"
-			>
+			<SearchField
+				combobox
+				label="Research article to link"
+				placeholder="Search Research articles…"
+				autoSelect
+				// Focusable while a pick links: the pick disables the field that holds focus.
+				disabled={disabled}
+				accessibleWhenDisabled
+			/>
+			<ComboboxSurface variant="search-results" sameWidth maxHeight="md">
 				{isFetching && items.length === 0 ? <ListLoading label="Searching" /> : null}
 				{!isFetching && items.length === 0 ? (
 					<p className="p-3 body-sm text-tertiary">
@@ -58,16 +49,14 @@ export function SponsorArticlePicker({ excludedIds, onSelect, disabled = false }
 					</p>
 				) : null}
 				{items.map((article) => (
-					<Ariakit.ComboboxItem
+					<PopoverRow
 						key={article.id}
-						value={article.title}
-						setValueOnClick={false}
 						onClick={() => {
 							onSelect(article)
 							setSearchValue('')
 							setOpen(false)
 						}}
-						className={popoverMeasuredRowStyles}
+						render={<Ariakit.ComboboxItem value={article.title} setValueOnClick={false} />}
 					>
 						<span className="grid min-w-0 gap-1">
 							<span className="line-clamp-2 label-md text-primary">{article.title}</span>
@@ -80,7 +69,7 @@ export function SponsorArticlePicker({ excludedIds, onSelect, disabled = false }
 								</span>
 							</span>
 						</span>
-					</Ariakit.ComboboxItem>
+					</PopoverRow>
 				))}
 			</ComboboxSurface>
 		</Ariakit.ComboboxProvider>

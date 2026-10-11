@@ -152,7 +152,6 @@ export function UtrGradeHovercard({
 			content={<UtrPopover name={name} utr={utr} rights={rights} />}
 			placement="right-start"
 			className={`h-5 w-fit min-w-8 justify-center rounded-sm px-1 label-xs font-semibold ${utrGradeColor(utr.grade).tinted} ${utrGradeColor(utr.grade).text}`}
-			contentClassName="p-2.5 sm:p-3"
 			// An impression is the card being seen: hovered open on desktop, tapped open on touch.
 			onOpen={() => trackUmamiEvent('utr-impression', { entity: name, grade: utr.grade })}
 			render={<button type="button" aria-label={`Universal Token Rating ${utr.grade}`} />}

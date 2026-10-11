@@ -26,7 +26,6 @@ import { selectTopProtocolsView } from '~/containers/ProtocolTaxonomy/topProtoco
 import { TVL_SETTINGS_KEYS } from '~/contexts/LocalStorage'
 import Layout from '~/layout'
 import { Card } from '~/ui/Card'
-import { searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { SearchField } from '~/ui/SearchField'
 import { TableToolbar } from '~/ui/Toolbar'
@@ -198,7 +197,7 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 						value={searchValue}
 						onChange={setSearchValue}
 						placeholder="Search chains…"
-						className={searchFieldWrapperStyles}
+						width="standalone"
 					/>
 
 					<UrlSelectWithCombobox

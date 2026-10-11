@@ -8,6 +8,7 @@ import { DialogBackButton, DialogBody, DialogHeader, SideSheet } from '~/ui/Dial
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Keycap } from '~/ui/Keycap'
+import { ListRow } from '~/ui/ListRow'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { StatusBadge } from '~/ui/StatusBadge'
@@ -222,6 +223,7 @@ function ActorAvatar({ name, url, size = 16 }: { name: string; url?: string | nu
 			/>
 		)
 	}
+	// An initials avatar on the brand tint, not a selected state.
 	return (
 		<span
 			style={{ width: size, height: size, fontSize: Math.max(8, size / 2.5) }}
@@ -241,6 +243,7 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, sav
 	// Below md one pane shows at a time: the list, or the picked revision with a back button.
 	const [narrowPane, setNarrowPane] = useState<'list' | 'detail'>('list')
 	const listRef = useRef<HTMLDivElement | null>(null)
+	const detailRef = useRef<HTMLElement | null>(null)
 	const restoreRef = useRef<HTMLButtonElement | null>(null)
 	// Not the mutation's own error: that one clears while a retry runs.
 	const [restoreError, setRestoreError] = useState<string | null>(null)
@@ -548,7 +551,8 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, sav
 											<header className="sticky top-0 z-10 flex items-baseline justify-between gap-2 border-b border-subtle bg-overlay px-5 py-2">
 												<span className="label-sm text-secondary">{group.label}</span>
 											</header>
-											<ul>
+											{/* The inset puts each row's 12px padding under the 20px of the day header. */}
+											<ul className="px-2">
 												{group.items.map((entry, index) => {
 													const isSelected = entry.id === selectedId
 													const isDeleting =
@@ -559,32 +563,33 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, sav
 															data-revision-id={entry.id}
 															className={`group relative ${isDeleting ? 'opacity-50' : ''}`}
 														>
-															<button
-																type="button"
-																onClick={() => {
-																	setSelectedIdState(entry.id)
-																	setNarrowPane('detail')
-																}}
+															<ListRow
+																selected={isSelected}
+																// Below md the list hides as the revision shows, so focus moves to the revision pane.
+																onClick={() =>
+																	keepFocus(
+																		() => {
+																			setSelectedIdState(entry.id)
+																			setNarrowPane('detail')
+																		},
+																		() => detailRef.current
+																	)
+																}
 																aria-current={isSelected}
-																className={`relative flex w-full items-start gap-3 px-5 py-3 text-left transition-colors ${
-																	isSelected ? 'bg-brand-muted' : 'hover:bg-hover-row'
-																}`}
+																className="relative items-start gap-3"
 															>
-																{isSelected ? (
-																	<span aria-hidden className="absolute top-0 bottom-0 left-0 w-0.5 bg-brand" />
-																) : null}
-																{/* The day's timeline: segments above and below each glyph, centered on it (the 20px inset
+																{/* The day's timeline: segments above and below each glyph, centered on it (the 12px inset
 																    plus half the 20px glyph), so no backdrop has to hide a line behind the glyph. */}
 																{index > 0 ? (
 																	<span
 																		aria-hidden
-																		className="absolute top-0 left-7.5 h-3 w-px -translate-x-1/2 bg-border-medium"
+																		className="absolute top-0 left-5.5 h-2 w-px -translate-x-1/2 bg-border-medium"
 																	/>
 																) : null}
 																{index < group.items.length - 1 ? (
 																	<span
 																		aria-hidden
-																		className="absolute top-9 bottom-0 left-7.5 w-px -translate-x-1/2 bg-border-medium"
+																		className="absolute top-8 bottom-0 left-5.5 w-px -translate-x-1/2 bg-border-medium"
 																	/>
 																) : null}
 																<span className="mt-0.5 grid size-5 shrink-0 place-items-center">
@@ -616,7 +621,7 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, sav
 																		</div>
 																	) : null}
 																</div>
-															</button>
+															</ListRow>
 														</li>
 													)
 												})}
@@ -644,7 +649,12 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, sav
 						</div>
 					</aside>
 
-					<section className={`flex min-h-0 min-w-0 flex-col bg-page ${narrowPane === 'list' ? 'max-md:hidden' : ''}`}>
+					<section
+						ref={detailRef}
+						tabIndex={-1}
+						aria-label="Selected revision"
+						className={`flex min-h-0 min-w-0 flex-col bg-page ${narrowPane === 'list' ? 'max-md:hidden' : ''}`}
+					>
 						{selectedId ? (
 							<PreviewSpecimenHeader
 								revision={selectedRevision}

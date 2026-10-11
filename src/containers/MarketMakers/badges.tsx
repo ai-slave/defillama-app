@@ -14,6 +14,7 @@ export function integrationStatus(level: string): Status {
 }
 
 export function AccentBadge({ children, className = '' }: { children: ReactNode; className?: string }) {
+	// A badge on the brand tint, not a selected state.
 	return (
 		<span
 			className={`inline-flex items-center justify-center gap-1.5 rounded-full border border-brand-muted bg-brand-muted px-2.5 label-sm text-link ${className}`}

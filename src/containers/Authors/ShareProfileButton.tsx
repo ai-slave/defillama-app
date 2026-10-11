@@ -23,7 +23,7 @@ export function ShareProfileButton({ slug, displayName }: { slug: string; displa
 				Share
 			</Ariakit.PopoverDisclosure>
 
-			<PopoverSurface variant="panel" heading="Share profile" gutter={8} className="w-70">
+			<PopoverSurface variant="panel" heading="Share profile" gutter={8} width="md">
 				<div className="flex flex-col gap-3 p-3">
 					<div className="flex flex-col gap-1.5">
 						<label htmlFor={linkId} className="label-sm text-secondary">

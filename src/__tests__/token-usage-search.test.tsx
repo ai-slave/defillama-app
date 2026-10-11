@@ -132,7 +132,11 @@ describe('TokenUsageSearch', () => {
 		root = createRoot(container)
 		await renderSearch()
 
-		await act(async () => container.querySelector('button')?.click())
+		const input = container.querySelector('input')!
+		await act(async () => {
+			input.focus()
+			input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }))
+		})
 		await waitForUi(() => expect(document.querySelector('[role="option"]')?.textContent).toContain('Ethereum'))
 		const option = document.querySelector<HTMLElement>('[role="option"]')
 

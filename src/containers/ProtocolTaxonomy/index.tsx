@@ -17,7 +17,6 @@ import { TableColumnSelect } from '~/components/Table/search/TableColumnSelect'
 import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
 import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
-import { TokenLogo } from '~/components/TokenLogo'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { usePageClockSec } from '~/hooks/usePageClock'
@@ -26,7 +25,7 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
-import { searchFieldInlineWrapperStyles } from '~/ui/Input'
+import { Logo } from '~/ui/Logo'
 import { MetricRow } from '~/ui/MetricPrimitives'
 import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
@@ -300,11 +299,7 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 				<Card padding="none">
 					<TableToolbar>
 						<h2 className="mr-auto label-md">{categoryPresentation.tableHeader}</h2>
-						<TableSearchInput
-							columnId="name"
-							placeholder={categoryPresentation.searchPlaceholder}
-							className={searchFieldInlineWrapperStyles}
-						/>
+						<TableSearchInput columnId="name" placeholder={categoryPresentation.searchPlaceholder} width="inline" />
 						<TableColumnSelect />
 						<TableCsvExport filename={`defillama-${namePrefix}${props.chain || 'all'}-protocols`} />
 					</TableToolbar>
@@ -377,7 +372,7 @@ const COLUMN_REGISTRY = {
 						</Button>
 					) : null}
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
-					<TokenLogo src={row.original.logo} data-lgonly alt={`Logo of ${row.original.name}`} />
+					<Logo size={24} src={row.original.logo} data-lgonly alt={`Logo of ${row.original.name}`} />
 					<span className="-my-2 flex flex-col">
 						<span className="flex items-center gap-1 overflow-hidden">
 							<BasicLink

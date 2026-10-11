@@ -23,7 +23,6 @@ import { definitions } from '~/public/definitions'
 import { Button } from '~/ui/Button'
 import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
-import { searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { SearchField } from '~/ui/SearchField'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
@@ -135,7 +134,7 @@ export function ChainsByCategoryTable({
 					value={projectName}
 					onChange={setProjectName}
 					placeholder="Search…"
-					className={searchFieldWrapperStyles}
+					width="standalone"
 				/>
 
 				{showByGroup ? (

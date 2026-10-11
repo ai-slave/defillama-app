@@ -58,7 +58,7 @@ export function RowLimitPicker({ value, totalRows, onChange, disabled }: RowLimi
 				<Icon name="chevron-down" className="size-3.5 shrink-0 text-tertiary" />
 			</Ariakit.PopoverDisclosure>
 
-			<PopoverSurface variant="panel" heading="Row limit" className="w-72">
+			<PopoverSurface variant="panel" heading="Row limit" width="md">
 				<div className="flex flex-col gap-3 p-3">
 					<section className="flex flex-col gap-2">
 						<h3 className="label-sm text-secondary">Top rows</h3>

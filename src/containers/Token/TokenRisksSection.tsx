@@ -47,7 +47,7 @@ function TableEntityCell({
 
 function ChainBreakdownTooltipContent({ chainBreakdowns }: { chainBreakdowns: Array<TokenRiskChainExposureSummary> }) {
 	return (
-		<div className="w-80 max-w-(--popover-available-width) space-y-2 body-sm">
+		<div className="space-y-2">
 			<p className="font-medium text-primary">Breakdown by chain</p>
 			<div className="space-y-1">
 				{chainBreakdowns.map((chain) => (
@@ -92,6 +92,7 @@ function ProtocolChainsLabel({ chainBreakdowns }: { chainBreakdowns: Array<Token
 	return (
 		<Hovercard
 			placement="bottom-start"
+			width="md"
 			render={
 				<button
 					type="button"

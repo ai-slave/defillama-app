@@ -1,9 +1,9 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import type { ReactNode } from 'react'
 import type { SortedTableFeatures } from '~/components/Table/features/sorting'
-import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { Logo } from '~/ui/Logo'
 import { StatusBadge } from '~/ui/StatusBadge'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber } from '~/utils/numberFormat'
@@ -105,7 +105,7 @@ export function buildPerformanceColumns({ onSelectMM, rankById }: IBuildPerforma
 				onClick={() => onSelectMM(row.original.marketMakerId, row.original.marketMakerName)}
 				className="flex items-center gap-2 text-link hover:underline"
 			>
-				<TokenLogo src={row.original.marketMakerImageUrl} size={24} />
+				<Logo src={row.original.marketMakerImageUrl} size={24} />
 				<span className="truncate">{row.original.marketMakerName}</span>
 			</button>
 		),

@@ -13,12 +13,11 @@ import { SearchTableProvider } from '~/components/Table/search/SearchTableProvid
 import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
 import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
-import { TokenLogo } from '~/components/TokenLogo'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { ChartPanelToolbar } from '~/ui/ChartPanel'
-import { searchFieldInlineWrapperStyles } from '~/ui/Input'
+import { Logo } from '~/ui/Logo'
 import { PanelTitle, PanelHeader, Panel } from '~/ui/Panel'
 import { FailedDataNote } from '~/ui/ScopeNote'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
@@ -48,7 +47,7 @@ const forksColumn = columnHelper.columns([
 			return (
 				<span className="relative flex items-center gap-2">
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
-					<TokenLogo src={row.original.logo} data-lgonly alt={`Logo of ${name}`} />
+					<Logo size={24} src={row.original.logo} data-lgonly alt={`Logo of ${name}`} />
 					<span className="flex items-center gap-1 overflow-hidden">
 						<BasicLink href={`/forks/${slug(name)}`} className="min-w-0 truncate label-md text-link hover:underline">
 							{name}
@@ -263,11 +262,7 @@ export function ForksOverview({
 							<PanelTitle as="h1" className="whitespace-nowrap">
 								Protocol rankings
 							</PanelTitle>
-							<TableSearchInput
-								columnId="name"
-								placeholder="Search protocols…"
-								className={searchFieldInlineWrapperStyles}
-							/>
+							<TableSearchInput columnId="name" placeholder="Search protocols…" width="inline" />
 							<TableCsvExport filename="forks-overview" />
 						</PanelHeader>
 						<VirtualSearchTableView />

@@ -1,6 +1,6 @@
 import { BasicLink } from '~/components/Link'
 import { Change } from '~/ui/Change'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition } from '~/ui/Tooltip'
 import { formatPercent, formatPercentChange } from '~/utils/numberFormat'
 import { formatRwaMultiple } from '../../kpi/format'
 import { getRwaPerpsTurnover } from '../../kpi/perpsKpi'
@@ -48,13 +48,12 @@ function ChangeWithDropsCell({ change, group }: { change: RWAPerpsChange; group:
 	if (!group || change.dropped === 0 || change.percent == null) return <Change value={change.percent} />
 	const markets = change.dropped === 1 ? '1 market' : `${change.dropped} markets`
 	return (
-		<Tooltip
+		<Definition
 			content={`Leaves out ${markets} that fell to zero in 24h: the value a day before cannot be rebuilt from zero.`}
-			className="cursor-help justify-end underline decoration-dotted"
-			tabIndex={0}
+			className="justify-end"
 		>
 			<Change value={change.percent} />*
-		</Tooltip>
+		</Definition>
 	)
 }
 
@@ -119,9 +118,9 @@ function PremiumCell({ row }: { row: RWATableRow }) {
 	if (formatted == null) return null
 	const detail = d.premium.description
 	return (
-		<Tooltip content={detail} className="cursor-help justify-end underline decoration-dotted" tabIndex={0}>
+		<Definition content={detail} className="justify-end">
 			{formatted}
-		</Tooltip>
+		</Definition>
 	)
 }
 
@@ -148,9 +147,9 @@ function FundingCell({ metrics }: { metrics: RWATableMetrics }) {
 	const payer = metrics.fundingRate > 0 ? ' Longs pay shorts.' : metrics.fundingRate < 0 ? ' Shorts pay longs.' : ''
 	const detail = formatFundingRateDetail(metrics.fundingRate, metrics.fundingIntervalHours) + payer
 	return (
-		<Tooltip content={detail} className="cursor-help justify-end underline decoration-dotted" tabIndex={0}>
+		<Definition content={detail} className="justify-end">
 			{formatted}
-		</Tooltip>
+		</Definition>
 	)
 }
 

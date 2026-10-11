@@ -1,7 +1,6 @@
-import * as Ariakit from '@ariakit/react'
 import type { ComponentPropsWithRef } from 'react'
 import { Button } from '~/ui/Button'
-import { nestedMenuActionStyles } from '~/ui/Popover'
+import { PopoverFooterAction } from '~/ui/PopoverSurface'
 
 /** In the phone filter menu the reset is the menu's closing action row; on desktop it is a toolbar button.
     Clearing the filters disables the reset itself, so it stays focusable while disabled and swallows presses. It
@@ -13,12 +12,7 @@ export function ResetFiltersButton({
 	...props
 }: { nestedMenu: boolean } & Omit<ComponentPropsWithRef<'button'>, 'type'>) {
 	return nestedMenu ? (
-		<Ariakit.Button
-			{...props}
-			disabled={disabled}
-			accessibleWhenDisabled
-			className={`${nestedMenuActionStyles} ${className ?? ''}`.trim()}
-		/>
+		<PopoverFooterAction {...props} inset="nested" disabled={disabled} accessibleWhenDisabled />
 	) : (
 		<Button {...props} size="md" disabled={disabled} accessibleWhenDisabled className={className} />
 	)

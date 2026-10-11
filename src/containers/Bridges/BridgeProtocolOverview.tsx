@@ -11,7 +11,6 @@ import {
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { useLocalSelection } from '~/components/Select/localSelection'
 import { LinkPreviewCard } from '~/components/SEO'
-import { TokenLogo } from '~/components/TokenLogo'
 import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
 import { chartColor } from '~/constants/colors'
 import { BridgeAddressesTable } from '~/containers/Bridges/BridgeAddressesTable'
@@ -23,6 +22,7 @@ import { Change } from '~/ui/Change'
 import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 import { Icon } from '~/ui/Icon'
+import { Logo } from '~/ui/Logo'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
@@ -231,7 +231,7 @@ export function BridgeInfo({
 	return (
 		<>
 			<EntityTitleStrip
-				media={<TokenLogo src={logo} size={28} alt={`Logo of ${displayName}`} />}
+				media={<Logo src={logo} size={28} alt={`Logo of ${displayName}`} />}
 				title={displayName}
 				actions={
 					<>

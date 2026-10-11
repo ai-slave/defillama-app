@@ -18,7 +18,7 @@ import {
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Input } from '~/ui/Input'
-import { popoverRowStyles } from '~/ui/Popover'
+import { PopoverRow } from '~/ui/PopoverSurface'
 import { Select } from '~/ui/Select'
 import { AVAILABLE_FIELDS, AVAILABLE_FUNCTIONS, replaceAliases } from './customColumnsUtils'
 import { evaluateFormula, formatCustomColumnValue, type FormulaValue } from './formula.service'
@@ -290,15 +290,13 @@ function CustomColumnForm({
 										className="absolute right-0 left-0 z-10 mt-1 max-h-40 overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay shadow-overlay"
 									>
 										{state.suggestions.map((s, i) => (
-											<div
+											<PopoverRow
 												key={s.name}
+												render={<div role="option" aria-selected={i === state.highlighted} />}
 												id={`${fieldId}-suggestion-${i}`}
-												role="option"
 												// Focus stays in the formula, which points at the highlighted option.
 												tabIndex={-1}
-												aria-selected={i === state.highlighted}
 												data-active-item={i === state.highlighted || undefined}
-												className={popoverRowStyles}
 												onMouseDown={(e) => {
 													// Keep focus in the formula while a suggestion is picked.
 													e.preventDefault()
@@ -309,7 +307,7 @@ function CustomColumnForm({
 													{s.type === 'function' || s.type === 'operator' ? <span className="text-link">ƒ</span> : null}
 													<span>{s.name}</span>
 												</span>
-											</div>
+											</PopoverRow>
 										))}
 									</div>
 								) : null}

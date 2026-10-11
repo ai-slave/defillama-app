@@ -1,7 +1,7 @@
-import { TokenLogo } from '~/components/TokenLogo'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import Layout from '~/layout'
 import { Card } from '~/ui/Card'
+import { Logo } from '~/ui/Logo'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
@@ -81,7 +81,7 @@ function DonationsPage({ protocols }) {
 								rel="noopener noreferrer"
 								href={p.url}
 							>
-								<TokenLogo src={p.logo} alt={`${p.name} logo`} size={24} />
+								<Logo src={p.logo} alt={`${p.name} logo`} size={24} />
 								<span className="truncate body-sm text-link">{p.name}</span>
 							</a>
 						))}

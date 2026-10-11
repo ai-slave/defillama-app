@@ -1,7 +1,7 @@
 import { useRouter } from 'next/router'
 import { useState } from 'react'
-import { TokenLogo } from '~/components/TokenLogo'
 import { Change } from '~/ui/Change'
+import { Logo } from '~/ui/Logo'
 import { Panel } from '~/ui/Panel'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { EmptyState } from '~/ui/Status'
@@ -63,7 +63,7 @@ function SummaryCard({ row, grading }: { row: UtrLeaderboardRow; grading?: UtrGr
 		<Panel>
 			<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
 				<span className="flex items-center gap-2">
-					<TokenLogo src={row.coingeckoId ? geckoTokenIconUrl(row.coingeckoId) : null} size={24} />
+					<Logo src={row.coingeckoId ? geckoTokenIconUrl(row.coingeckoId) : null} size={24} />
 					<span className="flex flex-col">
 						<span className="label-md">{row.symbol}</span>
 						<span className="body-xs text-tertiary">{row.name}</span>

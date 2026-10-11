@@ -5,7 +5,7 @@ import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StatusBadge } from '~/ui/StatusBadge'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition, Tooltip } from '~/ui/Tooltip'
 import { formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { MethodologyLink } from './docsLinks'
 import {
@@ -206,13 +206,9 @@ function FeedHealth({ feed }: { feed: ExchangeExecutionFeedHealth }) {
 		<Card padding="sm" className="flex flex-col gap-3">
 			<div className="flex flex-wrap items-center gap-2">
 				<h3 className="label-md">Order book feed speed</h3>
-				<Tooltip
-					content={`Latest measured day: ${feed.date}.`}
-					className="w-fit cursor-help body-sm text-secondary underline decoration-dotted"
-					tabIndex={0}
-				>
+				<Definition content={`Latest measured day: ${feed.date}.`} className="w-fit body-sm text-secondary">
 					BTC perp book
-				</Tooltip>
+				</Definition>
 				{feed.degraded ? (
 					<StatusBadge
 						status="caution"
@@ -225,13 +221,9 @@ function FeedHealth({ feed }: { feed: ExchangeExecutionFeedHealth }) {
 			<div className="grid grid-cols-2 gap-3 md:grid-cols-4">
 				{stats.map((stat) => (
 					<div key={stat.label} className="flex flex-col gap-0.5">
-						<Tooltip
-							content={stat.help}
-							className="w-fit cursor-help label-md text-secondary underline decoration-dotted"
-							tabIndex={0}
-						>
+						<Definition content={stat.help} className="w-fit label-md text-secondary">
 							{stat.label}
-						</Tooltip>
+						</Definition>
 						<span className="mono-xl">{stat.value}</span>
 					</div>
 				))}
@@ -481,13 +473,9 @@ export function ProfileExecution({ profile }: { profile: ExchangeProfileModel })
 										key={column.label}
 										className="px-2 pt-3 pb-2 text-right label-sm whitespace-nowrap text-secondary"
 									>
-										<Tooltip
-											content={column.help}
-											className="ms-auto w-fit cursor-help whitespace-nowrap underline decoration-dotted"
-											tabIndex={0}
-										>
+										<Definition content={column.help} className="ms-auto w-fit whitespace-nowrap">
 											{column.label}
-										</Tooltip>
+										</Definition>
 									</th>
 								))}
 							</tr>
@@ -499,13 +487,12 @@ export function ProfileExecution({ profile }: { profile: ExchangeProfileModel })
 										scope="row"
 										className="sticky left-0 z-10 border-t border-subtle bg-surface px-2 py-2 text-left label-sm whitespace-nowrap"
 									>
-										<Tooltip
+										<Definition
 											content={`The venue's figure: its tokens' markets merged by volume, tokens weighted by cross-venue ${segment === 'spot' ? 'spot volume' : 'open interest'}, the same weights for every venue.`}
-											className="w-fit cursor-help underline decoration-dotted"
-											tabIndex={0}
+											className="w-fit"
 										>
 											{`${profile.name} basket`}
-										</Tooltip>
+										</Definition>
 									</th>
 									{columns.map((column) => (
 										<td key={column.label} className={cellClass}>

@@ -22,12 +22,11 @@ import { SearchTableProvider } from '~/components/Table/search/SearchTableProvid
 import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
 import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
-import { TokenLogo } from '~/components/TokenLogo'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
 import { ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { searchFieldInlineWrapperStyles } from '~/ui/Input'
+import { Logo } from '~/ui/Logo'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
@@ -53,7 +52,7 @@ const LST_BASE_COLUMNS = columnHelper.columns([
 			return (
 				<span className="relative flex items-center gap-2">
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
-					<TokenLogo src={row.original.logo} alt={`Logo of ${row.original.name}`} data-lgonly />
+					<Logo size={24} src={row.original.logo} alt={`Logo of ${row.original.name}`} data-lgonly />
 					<span className="flex items-center gap-1 overflow-hidden">
 						<BasicLink
 							href={`/protocol/${row.original.protocolSlug}`}
@@ -534,11 +533,7 @@ export function LSTOverview({
 				<Card padding="none">
 					<TableToolbar>
 						<h2 className="mr-auto label-md">Liquid staking protocols</h2>
-						<TableSearchInput
-							columnId="name"
-							placeholder="Search protocols…"
-							className={searchFieldInlineWrapperStyles}
-						/>
+						<TableSearchInput columnId="name" placeholder="Search protocols…" width="inline" />
 						<TableCsvExport filename="liquid-staking" />
 					</TableToolbar>
 					<VirtualSearchTableView />

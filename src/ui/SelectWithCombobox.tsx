@@ -11,22 +11,21 @@ import {
 import { CountBadge } from './CountBadge'
 import { Icon } from './Icon'
 import { Input } from './Input'
+import { Check } from './internal/Check'
+import {
+	nestedMenuSeeMoreStyles,
+	nestedMenuSelectRowStyles,
+	popoverRowStyles,
+	popoverRowWithBorderStyles,
+	popoverScrollAreaStyles,
+	popoverSeeMoreStyles
+} from './internal/Popover'
 import { isSearchable } from './internal/searchThreshold'
 import { getSelectAllState, SELECT_ALL_VALUE, SelectAllContent } from './internal/SelectAll'
 import { gridRowStyles, onlyItemStyles } from './internal/selectRowStyles'
 import { NestedMenu } from './NestedMenu'
-import {
-	nestedMenuSeeMoreStyles,
-	nestedMenuSelectRowStyles,
-	popoverMultiSelectCheckStyles,
-	popoverRowStyles,
-	popoverRowWithBorderStyles,
-	popoverScrollAreaStyles,
-	popoverSeeMoreStyles,
-	popoverSingleSelectCheckStyles
-} from './Popover'
 import { PopoverHeader } from './PopoverHeader'
-import { ComboboxSurface } from './PopoverSurface'
+import { ComboboxSurface, type SurfaceWidth } from './PopoverSurface'
 import type { SelectOption, SelectValues } from './Select'
 import { Tooltip } from './Tooltip'
 
@@ -59,7 +58,7 @@ interface ISelectWithComboboxBase {
 	/** Rows under "Select all" that select a preset, e.g. only EVM chains. */
 	quickActions?: ReadonlyArray<{ label: string; onSelect: () => void }>
 	onValuesChange?: (values: Array<string>, label: string) => void
-	popoverClassName?: string
+	popoverWidth?: SurfaceWidth
 	searchPlaceholder?: string
 	visibleOptionLimit?: number | null
 	selectAllScope?: 'all' | 'matches'
@@ -132,7 +131,7 @@ export function SelectWithCombobox({
 	headerRow,
 	quickActions = EMPTY_QUICK_ACTIONS,
 	onValuesChange,
-	popoverClassName,
+	popoverWidth,
 	searchPlaceholder = 'Search…',
 	visibleOptionLimit = 20,
 	selectAllScope = 'all',
@@ -245,16 +244,7 @@ export function SelectWithCombobox({
 	const renderCheck = () => {
 		return (
 			<Ariakit.ComboboxItemSelected>
-				{(selected) => (
-					<span
-						className={
-							showCheckboxes ? popoverMultiSelectCheckStyles(selected) : popoverSingleSelectCheckStyles(selected)
-						}
-						aria-hidden
-					>
-						{selected ? <Icon name="check" className="size-3" aria-hidden /> : null}
-					</span>
-				)}
+				{(selected) => <Check kind={showCheckboxes ? 'box' : 'tick'} checked={selected} className="ml-auto" />}
 			</Ariakit.ComboboxItemSelected>
 		)
 	}
@@ -390,7 +380,7 @@ export function SelectWithCombobox({
 				variant={searchable ? 'list' : 'panel'}
 				hideOnInteractOutside
 				heading={heading ?? label}
-				className={popoverClassName}
+				width={popoverWidth}
 			>
 				<PopoverHeader
 					search={

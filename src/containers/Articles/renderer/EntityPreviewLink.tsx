@@ -1,7 +1,7 @@
-import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
 import { useState, type ReactNode } from 'react'
 import { Change } from '~/ui/Change'
+import { Hovercard } from '~/ui/Hovercard'
 import { Skeleton } from '~/ui/Skeleton'
 import { formatDate } from '~/utils/dateFormat'
 import { chainIconUrl, peggedAssetIconUrl, tokenIconUrl } from '~/utils/icons'
@@ -9,7 +9,6 @@ import { formatNumber, formatUsd, formatPercent } from '~/utils/numberFormat'
 import type { EntityPreview } from '../entityPreviewTypes'
 import { isPreviewableEntityType } from '../entityPreviewTypes'
 import type { ArticleEntityRef, ArticleEntityType } from '../types'
-import styles from './EntityPreviewLink.module.css'
 
 const TYPE_LABEL: Record<ArticleEntityType, string> = {
 	protocol: 'Protocol',
@@ -85,7 +84,7 @@ function PreviewBody({
 }) {
 	if (loading && !preview) {
 		return (
-			<span className="block px-3 pb-3">
+			<span className="block pb-3">
 				<Skeleton className="h-3 w-2/3" />
 				<Skeleton className="mt-2 h-3 w-1/2" />
 			</span>
@@ -93,7 +92,7 @@ function PreviewBody({
 	}
 	if (!preview) {
 		return (
-			<span className="block px-3 pb-3 body-sm text-secondary">
+			<span className="block pb-3 body-sm text-secondary">
 				{TYPE_HINT[entity.entityType] ?? 'Open the linked DefiLlama page.'}
 			</span>
 		)
@@ -102,7 +101,7 @@ function PreviewBody({
 		case 'protocol': {
 			const tvl = formatUsd(preview.tvl, { compact: true })
 			return (
-				<span className="flex flex-col gap-2 px-3 pb-3">
+				<span className="flex flex-col gap-2 pb-3">
 					{preview.category ? (
 						<span className="self-start rounded-full border border-medium px-2 py-0.5 body-xs tracking-wider text-tertiary uppercase">
 							{preview.category}
@@ -134,7 +133,7 @@ function PreviewBody({
 		case 'chain': {
 			const tvl = formatUsd(preview.tvl, { compact: true })
 			return (
-				<span className="flex flex-col gap-2 px-3 pb-3">
+				<span className="flex flex-col gap-2 pb-3">
 					{tvl ? (
 						<span className="flex items-baseline gap-2">
 							<span className="mono-xl text-primary tabular-nums">{tvl}</span>
@@ -154,7 +153,7 @@ function PreviewBody({
 		case 'stablecoin': {
 			const circ = formatUsd(preview.circulating, { compact: true })
 			return (
-				<span className="flex flex-col gap-2 px-3 pb-3">
+				<span className="flex flex-col gap-2 pb-3">
 					<span className="flex flex-wrap gap-1">
 						{preview.pegType ? (
 							<span className="rounded-full border border-medium px-2 py-0.5 body-xs tracking-wider text-tertiary uppercase">
@@ -187,7 +186,7 @@ function PreviewBody({
 		}
 		case 'category': {
 			return (
-				<span className="flex flex-col gap-2 px-3 pb-3">
+				<span className="flex flex-col gap-2 pb-3">
 					<span className="flex items-baseline gap-2">
 						<span className="mono-xl text-primary tabular-nums">
 							{formatUsd(preview.tvl, { compact: true }) ?? '—'}
@@ -222,7 +221,7 @@ function PreviewBody({
 					? Math.max(0, Math.min(1, preview.cleanAssetsTvl / preview.tvl))
 					: null
 			return (
-				<span className="flex flex-col gap-2 px-3 pb-3">
+				<span className="flex flex-col gap-2 pb-3">
 					{tvl ? (
 						<span className="flex items-baseline gap-2">
 							<span className="mono-xl text-primary tabular-nums">{tvl}</span>
@@ -257,7 +256,7 @@ function PreviewBody({
 		}
 		case 'bridge': {
 			return (
-				<span className="flex flex-col gap-2 px-3 pb-3">
+				<span className="flex flex-col gap-2 pb-3">
 					{preview.volume24h != null ? (
 						<span className="flex items-baseline gap-2">
 							<span className="mono-xl text-primary tabular-nums">
@@ -294,7 +293,7 @@ function PreviewBody({
 					? Math.min(1, preview.returnedFundsUsd / preview.amountUsd)
 					: null
 			return (
-				<span className="flex flex-col gap-2 px-3 pb-3">
+				<span className="flex flex-col gap-2 pb-3">
 					<span className="flex flex-wrap gap-1">
 						{preview.classification ? (
 							<span className="rounded-full border border-medium px-2 py-0.5 body-xs tracking-wider text-tertiary uppercase">
@@ -349,9 +348,7 @@ function PreviewBody({
 		}
 		case 'metric': {
 			return (
-				<span className="block px-3 pb-3 body-sm text-secondary">
-					{preview.description ?? TYPE_HINT[entity.entityType]}
-				</span>
+				<span className="block pb-3 body-sm text-secondary">{preview.description ?? TYPE_HINT[entity.entityType]}</span>
 			)
 		}
 		default:
@@ -371,32 +368,68 @@ export function EntityPreviewLink({
 	const logo = entityLogoUrl(entity)
 	const typeLabel = TYPE_LABEL[entity.entityType] ?? entity.entityType.toUpperCase()
 	const previewable = isPreviewableEntityType(entity.entityType)
-	const [open, setOpen] = useState(false)
+	// The live preview loads on the first open and stays cached for the next one.
+	const [opened, setOpened] = useState(false)
 
 	const { data: liveData, isFetching } = useQuery({
 		queryKey: ['article-entity-preview', entity.entityType, entity.slug],
 		queryFn: ({ signal }) => fetchEntityPreview(entity.entityType, entity.slug, signal),
-		enabled: previewable && open,
+		enabled: previewable && opened,
 		staleTime: 1000 * 60 * 5,
 		gcTime: 1000 * 60 * 30,
 		refetchOnWindowFocus: false
 	})
 
 	const preview = liveData ?? snapshot ?? null
-	const loading = previewable && open && isFetching && !preview
+	const loading = previewable && opened && isFetching && !preview
 
 	return (
-		<Ariakit.HovercardProvider open={open} setOpen={setOpen} showTimeout={120} hideTimeout={120} placement="top">
-			<Ariakit.HovercardAnchor
-				render={
+		<Hovercard
+			placement="top"
+			width="md"
+			// The link opens the page, so a tap follows it and keyboard readers reach the card through its disclosure.
+			showOnClick={false}
+			onOpen={() => setOpened(true)}
+			className="align-baseline"
+			render={
+				<a
+					href={entity.route}
+					target="_blank"
+					rel="noopener noreferrer"
+					className="article-entity-link font-medium text-link no-underline decoration-(--border-brand-muted) underline-offset-[3px] hover:underline"
+				/>
+			}
+			content={
+				<>
+					<div className="flex items-center gap-3 pb-2">
+						<span className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-medium bg-page">
+							{logo ? (
+								<img src={logo} alt="" height={36} width={36} className="size-full object-cover" />
+							) : (
+								<span className="body-xs text-tertiary">{entity.label.slice(0, 2).toUpperCase()}</span>
+							)}
+						</span>
+						<div className="flex min-w-0 flex-col">
+							<span className="truncate title-md text-primary">{entity.label}</span>
+							<span className="truncate body-sm text-tertiary">{typeLabel}</span>
+						</div>
+					</div>
+					<PreviewBody entity={entity} preview={preview} loading={loading} />
+					{/* Full-bleed footer row: its hover wash and divider reach the card's edges. */}
 					<a
 						href={entity.route}
 						target="_blank"
 						rel="noopener noreferrer"
-						className="article-entity-link inline-flex items-baseline gap-1 align-baseline font-medium text-link no-underline decoration-(--border-brand-muted) underline-offset-[3px] hover:underline"
-					/>
-				}
-			>
+						className="-mx-3 -mb-3 flex items-center justify-between gap-2 border-t border-medium px-3 py-2 body-sm no-underline hover:bg-page"
+					>
+						<span className="text-tertiary">Open page</span>
+						<span className="truncate text-link">{entity.route}</span>
+					</a>
+				</>
+			}
+		>
+			{/* Baseline-aligned inside the card's centered anchor, so the name sits on the prose line around it. */}
+			<span className="inline-flex items-baseline gap-1">
 				{logo ? (
 					<img
 						src={logo}
@@ -407,38 +440,7 @@ export function EntityPreviewLink({
 					/>
 				) : null}
 				{children}
-			</Ariakit.HovercardAnchor>
-			<Ariakit.Hovercard
-				portal
-				gutter={8}
-				overflowPadding={16}
-				unmountOnHide
-				className={`${styles.popover} z-50 max-h-(--popover-available-height) w-80 max-w-(--popover-available-width) overflow-y-auto rounded-md border border-medium bg-overlay shadow-overlay outline-hidden`}
-			>
-				<div className="flex items-center gap-3 px-3 pt-3 pb-2">
-					<span className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-medium bg-page">
-						{logo ? (
-							<img src={logo} alt="" height={36} width={36} className="size-full object-cover" />
-						) : (
-							<span className="body-xs text-tertiary">{entity.label.slice(0, 2).toUpperCase()}</span>
-						)}
-					</span>
-					<div className="flex min-w-0 flex-col">
-						<span className="truncate title-md text-primary">{entity.label}</span>
-						<span className="truncate body-sm text-tertiary">{typeLabel}</span>
-					</div>
-				</div>
-				<PreviewBody entity={entity} preview={preview} loading={loading} />
-				<a
-					href={entity.route}
-					target="_blank"
-					rel="noopener noreferrer"
-					className="flex items-center justify-between gap-2 border-t border-medium px-3 py-2 body-sm no-underline hover:bg-page"
-				>
-					<span className="text-tertiary">Open page</span>
-					<span className="truncate text-link">{entity.route}</span>
-				</a>
-			</Ariakit.Hovercard>
-		</Ariakit.HovercardProvider>
+			</span>
+		</Hovercard>
 	)
 }

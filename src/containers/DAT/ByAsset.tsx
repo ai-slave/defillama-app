@@ -22,7 +22,7 @@ import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition, Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
 import { formatCompactNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import type { IDATOverviewDataByAssetProps } from './types'
@@ -200,17 +200,16 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 				if (priceChange24h == null)
 					return <>{formatUsd(price, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</>
 				return (
-					<Tooltip
+					<Definition
 						content={
 							<>
 								24h change: <Change value={priceChange24h} />
 							</>
 						}
-						className="cursor-help justify-end underline decoration-dotted"
-						tabIndex={0}
+						className="justify-end"
 					>
 						{formatUsd(price, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
-					</Tooltip>
+					</Definition>
 				)
 			},
 			meta: {

@@ -3,8 +3,9 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, onTestFinished, test, vi } from 'vitest'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { applyBreakpointClasses } from '~/utils/testing/breakpoints'
 import { alertTexts } from '~/utils/testing/fieldErrors'
 import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -376,6 +377,23 @@ describe('RevisionHistoryDrawer', () => {
 
 		await press(button('Restore as pending'), 'ArrowDown')
 		expect(row('rev-3').getAttribute('aria-current')).toBe('true')
+	})
+
+	test.each([
+		[375, 'the revision pane, as the list hides'],
+		[1024, 'the row, beside the revision']
+	] as const)('picking a revision at %ipx leaves focus on %s', async (width, _target) => {
+		window.happyDOM.setViewport({ width, height: 800 })
+		onTestFinished(() => window.happyDOM.setViewport({ width: 1024, height: 768 }))
+		await applyBreakpointClasses(['max-md:hidden', 'md:hidden'])
+		await renderDrawer()
+		await waitForUi(() => expect(sheetText()).toContain('Revision 4'))
+		const row = document.querySelector<HTMLElement>('[data-revision-id="rev-2"] button')!
+		await act(async () => row.focus())
+		await click(row)
+		expect(document.activeElement).toBe(
+			width < 768 ? document.querySelector('section[aria-label="Selected revision"]') : row
+		)
 	})
 
 	test('a canceled delete hands focus back to Delete', async () => {

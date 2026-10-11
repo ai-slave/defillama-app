@@ -15,7 +15,6 @@ import { formatUnlockDate, formatUnlockTime } from '~/containers/Unlocks/dateFor
 import { getCliffEmissionAmount } from '~/containers/Unlocks/eventAmount'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import Layout from '~/layout'
-import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SearchField } from '~/ui/SearchField'
 import { slug } from '~/utils'
@@ -150,7 +149,7 @@ export default function Protocols({ emissions }: { emissions: Array<CalendarEmis
 						value={projectName}
 						onChange={setProjectName}
 						placeholder="Search events…"
-						className={searchFieldInlineWrapperStyles}
+						width="inline"
 					/>
 					{typeOptions.length > 1 ? (
 						<UrlSelectWithCombobox

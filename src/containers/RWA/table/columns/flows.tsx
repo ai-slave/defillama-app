@@ -1,5 +1,5 @@
 import { Change } from '~/ui/Change'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition } from '~/ui/Tooltip'
 import type { RWAFlowWindow } from '../../api.types'
 import { definitions } from '../../definitions'
 import { RWAFlowSummaryTooltip, RWAFlowValueShimmer, RWAFlowValueUnavailable } from '../../FlowPanelParts'
@@ -45,13 +45,12 @@ export function createFlowsColumnGroup(status: RWAFlowStatus, period: RWAChangeP
 						const leaf = getLeafRow(row.original)
 						const summary = leaf?.chainScope ? undefined : leaf?.flows[window]
 						return summary ? (
-							<Tooltip
+							<Definition
 								content={<RWAFlowSummaryTooltip description={description} summary={summary} />}
-								className="cursor-help justify-end underline decoration-dotted"
-								tabIndex={0}
+								className="justify-end"
 							>
 								{display}
-							</Tooltip>
+							</Definition>
 						) : (
 							display
 						)

@@ -27,9 +27,10 @@ import { policyTargetFiles } from '../lib/sourceFiles'
  * 7. A button disabled by its position (a pager at its first or last page, move up or down at an edge, undo with no
  *    history; STEP_LIMIT): pressing it is what moves it to that limit, so it disables itself while it has focus. Pass
  *    `accessibleWhenDisabled` (Button, ProButton or `Ariakit.Button`; a raw `button` cannot keep focus while disabled).
- * 8. A `Tooltip` without `render` whose `className` sets the anchor's own display, shrink or overflow (ANCHOR_BOX): the
- *    default span is `flex shrink-0`, so `min-w-0`, `flex-1` or `truncate` there never shrink it or draw an ellipsis,
- *    and a display class only wins by CSS order. Pass the anchor as `render` with the classes it needs.
+ * 8. A `Tooltip` without `render`, or a `Definition` without `as`, whose `className` sets the anchor's own display,
+ *    shrink or overflow (ANCHOR_BOX): the default span is `flex shrink-0`, so `min-w-0`, `flex-1` or `truncate` there
+ *    never shrink it or draw an ellipsis, and a display class only wins by CSS order. Pass the anchor as `render` (a
+ *    Definition's `as`) with the classes it needs.
  * 9. A native `title=` on a control (CONTROL_TAGS, any `Ariakit.*`): touch and keyboard readers never see it. Name the
  *    control with `aria-label` and show the text in a `Tooltip` (design.md → Icons).
  * 10. An icon-only `Button`/`ProButton` (`square`) that no Tooltip, Hovercard or menu renders as its anchor (it is not a
@@ -40,10 +41,10 @@ import { policyTargetFiles } from '../lib/sourceFiles'
  * 12. A row handoff built by hand: `neighborRowControl` feeding `keepFocus`, `passFocusOnLeave` or `.focus()`. Put
  *    `focusNeighborOnLeave(fallback)` on the control and `data-row` on its row. A neighbor read for another target
  *    (`neighborRowControl(…)?.querySelector(…)`, a confirm's `finalFocus`) is not checked.
- * 13. A definition anchor without `tabIndex` or `cursor-help`: a `Tooltip` whose anchor or text carries
- *    `decoration-dotted` and whose anchor is not a control (CONTROL_TAGS, `summary`). Ariakit never makes the anchor
- *    focusable, so without `tabIndex={0}` keyboard readers cannot open the definition; `cursor-help` tells mouse
- *    readers a hover explains it. A control anchor keeps its own focus and cursor.
+ * 13. A definition built by hand: a `Tooltip` whose anchor or text carries `decoration-dotted` and whose anchor is
+ *    not a control (CONTROL_TAGS, `summary`). Use `Definition` (src/ui/Tooltip.tsx), which owns the tab stop
+ *    keyboard readers need to open it, the help cursor and the underline. A control anchor keeps its own focus and
+ *    cursor, and its text may carry the underline as a mark.
  * 14. A help-circle definition built by hand, or put inside what it explains. A `Tooltip` whose only child is a
  *    `help-circle` Icon is `QuestionHelper` beside text; inside a control (CONTROL_TAGS, `ListRow`, `summary`) the
  *    control anchors the tooltip and the icon only marks it. `QuestionHelper` itself never sits inside a control, a
@@ -198,25 +199,22 @@ export function scanSource(relative: string, source: string): Array<string> {
 					`${at(opening)} wraps a Button in Ariakit.Button; Button is Ariakit's Button already, so pass its props to it`
 				)
 			}
-			const tooltipClassName = tag === 'Tooltip' && !render ? attribute(opening, 'className') : undefined
+			const tooltipClassName =
+				(tag === 'Tooltip' && !render) || (tag === 'Definition' && !attribute(opening, 'as'))
+					? attribute(opening, 'className')
+					: undefined
 			if (tooltipClassName && ANCHOR_BOX.test(tooltipClassName.getText())) {
 				violations.push(
-					`${at(opening)} sizes Tooltip's default span with className; pass the anchor as render with those classes`
+					`${at(opening)} sizes ${tag}'s default span with className; pass the anchor as ${tag === 'Tooltip' ? 'render' : 'as'} with those classes`
 				)
 			}
 			const renderTag = render ? /^<([\w.]+)/.exec(expressionText(render))?.[1] : undefined
 			if (tag === 'Tooltip' && !(renderTag && (CONTROL_TAGS.has(renderTag) || renderTag === 'summary'))) {
 				const anchorStyles = `${attribute(opening, 'className')?.getText() ?? ''} ${render?.getText() ?? ''}`
 				const text = ts.isJsxElement(node) ? node.children.map((child) => child.getText()).join(' ') : ''
-				if (/\bdecoration-dotted\b/.test(`${anchorStyles} ${text}`)) {
-					if (!attribute(opening, 'tabIndex') && !/\btabIndex=/.test(render?.getText() ?? '')) {
-						violations.push(
-							`${at(opening)} underlines a definition keyboard readers cannot open; pass tabIndex={0} to the Tooltip`
-						)
-					}
-					if (!/\bcursor-help\b/.test(anchorStyles)) {
-						violations.push(`${at(opening)} underlines a definition without cursor-help on its anchor`)
-					}
+				// Definition itself is the one Tooltip that draws the mark.
+				if (relative !== 'src/ui/Tooltip.tsx' && /\bdecoration-dotted\b/.test(`${anchorStyles} ${text}`)) {
+					violations.push(`${at(opening)} builds a definition by hand; use Definition from src/ui/Tooltip.tsx`)
 				}
 			}
 			if (tag === 'Tooltip' && !render && ts.isJsxElement(node)) {
@@ -486,6 +484,16 @@ if (process.argv.includes('--self-test')) {
 			violation: false
 		},
 		{
+			name: 'Definition truncating its default span',
+			source: 'export const F = () => <Definition content={v} className="min-w-0 truncate">{v}</Definition>',
+			violation: true
+		},
+		{
+			name: 'Definition truncating its own element',
+			source: 'export const F = () => <Definition as="span" content={v} className="min-w-0 truncate">{v}</Definition>',
+			violation: false
+		},
+		{
 			name: 'Tooltip truncating its render anchor',
 			source:
 				'export const F = () => <Tooltip content={v} render={<span className="min-w-0 truncate" />}>{v}</Tooltip>',
@@ -569,27 +577,20 @@ if (process.argv.includes('--self-test')) {
 			violation: false
 		},
 		{
-			name: 'definition the keyboard cannot reach',
-			source:
-				'export const F = () => <Tooltip content="Sum of value" className="cursor-help underline decoration-dotted">TVL</Tooltip>',
-			violation: true
-		},
-		{
-			name: 'definition without the help cursor',
-			source:
-				'export const F = () => <Tooltip content="Sum of value" render={<h2 />} tabIndex={0} className="underline decoration-dotted">TVL</Tooltip>',
-			violation: true
-		},
-		{
-			name: 'definition on a focusable anchor',
+			name: 'definition built on a Tooltip',
 			source:
 				'export const F = () => <Tooltip content="Sum of value" render={<h2 />} tabIndex={0} className="cursor-help underline decoration-dotted">TVL</Tooltip>',
-			violation: false
+			violation: true
 		},
 		{
-			name: 'definition underlined on its text',
+			name: 'definition underlined on its text by hand',
 			source:
 				'export const F = () => <Tooltip content="Sum of value" tabIndex={0} className="cursor-help"><span className="underline decoration-dotted">TVL</span></Tooltip>',
+			violation: true
+		},
+		{
+			name: 'definition part',
+			source: 'export const F = () => <Definition as="h2" content="Sum of value">TVL</Definition>',
 			violation: false
 		},
 		{

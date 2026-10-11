@@ -7,7 +7,6 @@ import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import { formatTooltipChartDate, formatTooltipValue } from '~/components/ECharts/shared/formatters'
 import { getTooltipAxisValue, getTooltipRawYValue, normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
-import { TokenLogo } from '~/components/TokenLogo'
 import {
 	getGeckoIdFromSearchId,
 	getTokenSearchFallback,
@@ -24,6 +23,7 @@ import { selectTriggerStyles } from '~/ui/ComboboxSelectTrigger'
 import { Field } from '~/ui/Field'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
+import { Logo } from '~/ui/Logo'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { EmptyState, PanelLoadingStatus, PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
@@ -452,7 +452,7 @@ export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: Array<T
 						>
 							{selectedCoinInfo != null ? (
 								<>
-									<TokenLogo src={selectedCoinInfo.logo} alt={selectedCoinInfo.name} size={20} />
+									<Logo src={selectedCoinInfo.logo} alt={selectedCoinInfo.name} size={20} />
 									<span className="min-w-0 truncate">{selectedCoinInfo.name}</span>
 								</>
 							) : (

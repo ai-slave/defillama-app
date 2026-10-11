@@ -2,7 +2,7 @@ import { createColumnHelper } from '@tanstack/react-table'
 import { Fragment, type ReactNode } from 'react'
 import { BasicLink } from '~/components/Link'
 import { Hovercard } from '~/ui/Hovercard'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition, Tooltip } from '~/ui/Tooltip'
 import { formatUsd } from '~/utils/numberFormat'
 import type { RWAOverviewDisplayRow } from '../../api.types'
 import { BreakdownTooltipContent } from '../../BreakdownTooltipContent'
@@ -55,20 +55,14 @@ export function UsdBreakdownCell({
 	if (formatted == null) return null
 
 	if (!breakdown || breakdown.length === 0) {
-		return unavailableReason ? (
-			<Tooltip content={unavailableReason} className="cursor-help underline decoration-dotted" tabIndex={0}>
-				{formatted}
-			</Tooltip>
-		) : (
-			formatted
-		)
+		return unavailableReason ? <Definition content={unavailableReason}>{formatted}</Definition> : formatted
 	}
 
 	return (
 		<Hovercard
 			placement="right-start"
 			content={<BreakdownTooltipContent breakdown={breakdown} description={description} />}
-			contentClassName="w-80 max-w-(--popover-available-width) p-3 whitespace-normal"
+			width="md"
 			className="underline decoration-dotted"
 		>
 			{formatted}

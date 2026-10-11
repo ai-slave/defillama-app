@@ -3,7 +3,6 @@ import { useDeferredValue, useMemo, useRef, useState } from 'react'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { CheckboxIndicator } from '~/ui/Checkbox'
 import { Field } from '~/ui/Field'
 import { keepFocus } from '~/ui/focus'
 import { ListRow } from '~/ui/ListRow'
@@ -160,6 +159,8 @@ export function EntityPickerList({
 											aria-pressed={isSelected}
 											onClick={() => onToggle(entity.value)}
 											nested={isChild}
+											check="box"
+											checked={isSelected}
 											className="gap-3"
 											style={{
 												position: 'absolute',
@@ -169,8 +170,6 @@ export function EntityPickerList({
 												transform: `translateY(${row.start}px)`
 											}}
 										>
-											<CheckboxIndicator checked={isSelected} />
-
 											{iconUrl ? (
 												<img
 													src={iconUrl}

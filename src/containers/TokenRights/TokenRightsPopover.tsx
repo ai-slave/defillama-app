@@ -134,7 +134,6 @@ export function TokenRightsPieHovercard({
 			content={<TokenRightsPopover name={name} rights={rights} fullRightsHref={fullRightsHref} utr={utr} />}
 			placement={placement}
 			className="w-fit"
-			contentClassName="p-2.5 sm:p-3"
 			// An impression is the card being seen: hovered open on desktop, tapped open on touch.
 			onOpen={() => trackUmamiEvent('token-rights-impression', { entity: name })}
 			render={<button type="button" />}

@@ -13,10 +13,9 @@ import { BasicLink } from '~/components/Link'
 import { searchTableFeatures } from '~/components/Table/features/search'
 import { prepareTableCsv, useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
-import { TokenLogo } from '~/components/TokenLogo'
 import { definitions } from '~/public/definitions'
 import { Icon } from '~/ui/Icon'
-import { searchFieldWrapperStyles } from '~/ui/Input'
+import { Logo } from '~/ui/Logo'
 import { Panel } from '~/ui/Panel'
 import { SearchField } from '~/ui/SearchField'
 import { TableToolbar } from '~/ui/Toolbar'
@@ -105,7 +104,7 @@ export function ChainsByAdapter(props: IProps) {
 						value={projectName}
 						onChange={setProjectName}
 						placeholder="Search…"
-						className={searchFieldWrapperStyles}
+						width="standalone"
 					/>
 					<CSVDownloadButton
 						prepareCsv={() => prepareTableCsv({ instance, filename: `${props.type}-chains-protocols` })}
@@ -134,7 +133,7 @@ const NameColumn = (route: string) =>
 				<span className="relative flex items-center gap-2">
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 
-					<TokenLogo src={row.original.logo} alt={`Logo of ${row.original.name}`} data-lgonly />
+					<Logo size={24} src={row.original.logo} alt={`Logo of ${row.original.name}`} data-lgonly />
 
 					<BasicLink
 						href={route ? `/${route}/chain/${slug(value)}` : `/chain/${slug(value)}`}

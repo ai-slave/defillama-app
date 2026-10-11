@@ -3,12 +3,12 @@ import { useQuery } from '@tanstack/react-query'
 import { matchSorter } from 'match-sorter'
 import { startTransition, useDeferredValue, useMemo, useState } from 'react'
 import type { IResponseCGMarketsAPI } from '~/api/coingecko.types'
-import { TokenLogo } from '~/components/TokenLogo'
 import { useDebouncedValue } from '~/hooks/useDebounce'
 import { useMedia } from '~/hooks/useMedia'
 import { Dialog, DialogBody, DialogHeader, DialogToolbar } from '~/ui/Dialog'
+import { ListRow } from '~/ui/ListRow'
+import { Logo } from '~/ui/Logo'
 import { ListLoading, NoResults } from '~/ui/NoResults'
-import { popoverRowStyles, popoverSeeMoreStyles } from '~/ui/Popover'
 import { SearchField } from '~/ui/SearchField'
 import { InlineStatus } from '~/ui/Status'
 import { geckoTokenIconUrl } from '~/utils/icons'
@@ -120,22 +120,18 @@ function TokenSearch({
 			</DialogToolbar>
 			<DialogBody kind="list">
 				{visibleTokens.map((token) => (
-					<button
-						type="button"
+					<ListRow
 						key={token.id}
 						onClick={() => {
 							selectToken(token)
 							setSearch('')
 						}}
-						className={`${popoverRowStyles} w-full rounded-md text-left`}
 					>
-						<span className="flex min-w-0 items-center gap-2">
-							<TokenLogo src={getOptionLogo(token)} size={24} />
-							<span className="truncate">
-								{token.name} ({getOptionSymbol(token)})
-							</span>
+						<Logo src={getOptionLogo(token)} size={24} />
+						<span className="truncate">
+							{token.name} ({getOptionSymbol(token)})
 						</span>
-					</button>
+					</ListRow>
 				))}
 				{isLoading ? (
 					<ListLoading label="Searching tokens" />
@@ -147,9 +143,9 @@ function TokenSearch({
 					<NoResults>No tokens found</NoResults>
 				) : null}
 				{hasMoreLocalResults ? (
-					<button type="button" className={`${popoverSeeMoreStyles} rounded-md`} onClick={showMoreLocalResults}>
-						See more…
-					</button>
+					<ListRow onClick={showMoreLocalResults}>
+						<span className="text-link">See more…</span>
+					</ListRow>
 				) : null}
 			</DialogBody>
 		</>

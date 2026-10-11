@@ -64,6 +64,7 @@ import { Field, FieldGroup } from '~/ui/Field'
 import { showFieldErrors, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, Textarea } from '~/ui/Input'
+import { OptionTile } from '~/ui/OptionTile'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus } from '~/ui/Status'
 import { VirtualizedSelect, type VirtualizedSelectOption } from '~/ui/VirtualizedSelect'
@@ -85,41 +86,27 @@ type CreateAlertMutation = UseMutationResult<
 >
 
 function AlertTypeCard({
-	active,
 	value,
 	icon,
 	title,
 	description
 }: {
-	active: boolean
 	value: TriggerType
 	icon: 'calendar' | 'trending-up'
 	title: string
 	description: string
 }) {
-	const id = useId()
 	return (
-		<label
-			htmlFor={id}
-			className={`relative flex cursor-pointer items-start gap-2.5 rounded-xl border p-2.5 text-left has-focus-visible:focus-ring ${
-				active
-					? 'border-brand bg-brand-muted'
-					: 'border-medium not-disabled:not-aria-disabled:hover:border-strong not-disabled:not-aria-disabled:hover:bg-hover-row'
-			}`}
-		>
-			<Ariakit.Radio id={id} value={value} aria-label={title} aria-description={description} className="sr-only" />
-			<span
-				className={`mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg ${
-					active ? 'bg-brand-muted text-link' : 'bg-page text-secondary'
-				}`}
-			>
+		<OptionTile layout="row" radio={value} aria-label={title} aria-description={description}>
+			{/* The icon chip follows its tile's pick; it is a decoration, not a selected control of its own. */}
+			<span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-page text-secondary group-has-checked:bg-brand-muted group-has-checked:text-link">
 				<Icon name={icon} className="size-3.5" />
 			</span>
 			<span className="flex min-w-0 flex-col gap-0.5">
-				<span className={`label-md ${active ? 'text-link' : 'text-primary'}`}>{title}</span>
+				<span className="label-md text-primary group-has-checked:text-link">{title}</span>
 				<span className="body-sm text-secondary">{description}</span>
 			</span>
-		</label>
+		</OptionTile>
 	)
 }
 
@@ -421,14 +408,12 @@ function CreateAlertModalForm({
 					>
 						<Ariakit.RadioGroup aria-label="Alert type" className="grid grid-cols-1 gap-2 sm:grid-cols-2">
 							<AlertTypeCard
-								active={triggerType === 'schedule'}
 								value="schedule"
 								icon="calendar"
 								title="Scheduled report"
 								description="Answers a question of yours every day or week"
 							/>
 							<AlertTypeCard
-								active={triggerType === 'price'}
 								value="price"
 								icon="trending-up"
 								title="Price alert"

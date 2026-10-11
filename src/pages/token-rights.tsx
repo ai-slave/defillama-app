@@ -6,7 +6,6 @@ import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { displayTableFeatures } from '~/components/Table/features/display'
 import { Table } from '~/components/Table/Table'
-import { TokenLogo } from '~/components/TokenLogo'
 import type { AdapterChainProtocol } from '~/containers/AdapterMetrics/api.types'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { TOKEN_RIGHTS_SECTION_ID } from '~/containers/Token/types'
@@ -20,7 +19,7 @@ import Layout from '~/layout'
 import { Button } from '~/ui/Button'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
-import { searchFieldWrapperStyles } from '~/ui/Input'
+import { Logo } from '~/ui/Logo'
 import { Panel } from '~/ui/Panel'
 import { SearchField } from '~/ui/SearchField'
 import { StatusBadge } from '~/ui/StatusBadge'
@@ -494,7 +493,7 @@ function TokenRightsPage({
 							value={searchValue}
 							onChange={setSearchValue}
 							placeholder="Search protocol…"
-							className={searchFieldWrapperStyles}
+							width="standalone"
 						/>
 						<ExternalLinkButton
 							href="https://docs.google.com/forms/d/e/1FAIpQLSdV1cCKiwQzzSlUIkPbfVHrTLFYaiDFpTR1cvXmuDiakORfuQ/viewform"
@@ -615,7 +614,7 @@ const columns = columnHelper.columns([
 			return (
 				<span className="flex items-center gap-2">
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
-					<TokenLogo src={row.original.logo} data-lgonly alt={`Logo of ${name}`} />
+					<Logo size={24} src={row.original.logo} data-lgonly alt={`Logo of ${name}`} />
 					{href ? (
 						<span className="flex items-center gap-1 overflow-hidden">
 							<Link href={href} className="min-w-0 truncate label-md text-link hover:underline">
@@ -750,7 +749,6 @@ function RightsDots({ rights, labels }: { rights: [boolean, boolean, boolean]; l
 					aria-label={labels.map((label, index) => `${label}: ${rights[index] ? 'Active' : 'Inactive'}`).join(', ')}
 				/>
 			}
-			contentClassName="w-max p-2"
 			content={content}
 		>
 			{rights.map((active, index) => (

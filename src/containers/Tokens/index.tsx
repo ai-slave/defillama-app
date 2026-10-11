@@ -8,7 +8,6 @@ import { BasicLink } from '~/components/Link'
 import { UrlSelectWithCombobox } from '~/components/Select/UrlSelect'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { UrlSearchInput } from '~/components/Table/search/UrlSearchInput'
-import { TokenLogo } from '~/components/TokenLogo'
 import { TokenRightsPieHovercard } from '~/containers/TokenRights/TokenRightsPopover'
 import type { TokenRightsPreview } from '~/containers/TokenRights/types'
 import { tokenTableFeatures, type TokenTableFeatures } from '~/containers/Tokens/tableFeatures'
@@ -16,6 +15,7 @@ import { Button } from '~/ui/Button'
 import { Change } from '~/ui/Change'
 import { Checkbox } from '~/ui/Checkbox'
 import { Icon } from '~/ui/Icon'
+import { Logo } from '~/ui/Logo'
 import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
@@ -116,7 +116,7 @@ function TokenCell({ row }: { row: { original: TokensTableRow } }) {
 				readableName={symbol}
 				className="absolute -left-1.5 hidden lg:flex"
 			/>
-			<TokenLogo src={logo} size={24} alt={`Logo of ${name}`} />
+			<Logo src={logo} size={24} alt={`Logo of ${name}`} />
 			{href ? (
 				<BasicLink href={href} className="min-w-0 text-link hover:underline">
 					{label}
