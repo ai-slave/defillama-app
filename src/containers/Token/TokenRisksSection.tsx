@@ -8,6 +8,7 @@ import { Card } from '~/ui/Card'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { DeferredPaginatedTable } from './deferred/DeferredPaginatedTable'
 import { DEFAULT_TABLE_PAGE_SIZE, resolveUpdater, TABLE_PAGE_SIZE_OPTIONS } from './tableUtils'
@@ -277,7 +278,7 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 						Each row is one protocol-chain exposure for {tokenSymbol} as collateral. Bad debt at $0 totals remain lower
 						bounds when a row is marked partial.
 					</p>
-					<Suspense fallback={<div className="min-h-[360px]" />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading exposure details" className="mt-3" />}>
 						<DeferredPaginatedTable table={exposureTable} pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS} className="mt-3" />
 					</Suspense>
 				</Card>

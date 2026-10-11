@@ -8,6 +8,7 @@ import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TokenLogo } from '~/components/TokenLogo'
 import { LiquidationsTableTabs } from '~/containers/LiquidationsV2/TableTabs'
 import { Panel } from '~/ui/Panel'
+import { PanelLoadingStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { formatUsd } from '~/utils/numberFormat'
 import { fetchTokenLiquidationsClient } from '../LiquidationsV2/api'
 import type { OverviewChainRow, OverviewProtocolRow } from '../LiquidationsV2/api.types'
@@ -23,7 +24,7 @@ const TABS = [
 const DeferredLiquidationsSummaryStats = dynamic(
 	() => import('~/containers/LiquidationsV2/Summary').then((mod) => mod.LiquidationsSummaryStats),
 	{
-		loading: () => <div className="min-h-24" />
+		loading: () => <PanelLoadingStatus label="Loading liquidation summary" className="min-h-24" />
 	}
 )
 
@@ -33,7 +34,7 @@ const DeferredLiquidationsDistributionChart = dynamic(
 			(mod) => mod.LiquidationsDistributionChart
 		),
 	{
-		loading: () => <div className="min-h-[360px]" />
+		loading: () => <PanelLoadingStatus label="Loading liquidation distribution" className="min-h-[400px]" />
 	}
 )
 
@@ -191,7 +192,7 @@ export function TokenLiquidationsSection({ tokenSymbol }: { tokenSymbol: string 
 					/>
 
 					<Panel padding="none">
-						<Suspense fallback={<div className="min-h-[360px]" />}>
+						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading liquidations table" />}>
 							<LiquidationsTableTabs
 								tabs={TABS}
 								activeTab={activeTab}

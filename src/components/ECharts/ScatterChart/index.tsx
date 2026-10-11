@@ -85,6 +85,7 @@ function ScatterChart({
 	yAxisLabel,
 	valueSymbol = '',
 	height = '600px',
+	containerClassName,
 	tooltipFormatter,
 	showLabels = false,
 	entityType = 'protocol',
@@ -489,7 +490,13 @@ function ScatterChart({
 		loadedIcons
 	])
 
-	return <div ref={containerRef} className="h-[360px]" style={height ? { height } : undefined} />
+	return (
+		<div
+			ref={containerRef}
+			className={containerClassName ?? 'h-[360px]'}
+			style={containerClassName ? undefined : { height }}
+		/>
+	)
 }
 
 export default withEChartsRenderVisibility(ScatterChart)

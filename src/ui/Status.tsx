@@ -26,7 +26,9 @@ import { Panel } from './Panel'
 
    - Loading always shows on the surface that holds the content, through
      these parts, with the quiet LoadingIndicator they render by default.
-     A loading state never sits on the bare page background.
+     A loading state never sits on the bare page background. A Suspense or
+     `dynamic()` fallback is a loading state too: the part for its surface
+     with a label naming what loads, never a blank min-h box.
    - Copy is text-center body-sm: loading and empty text-tertiary, error
      text-error with role="alert". InlineStatus draws its own box (below). Ad-hoc placeholders use the same
      tokens; never raw `text-red-*` or text-primary for "No results found".

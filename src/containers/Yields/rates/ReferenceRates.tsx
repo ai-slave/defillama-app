@@ -26,10 +26,10 @@ import {
 	ChartPanelBody,
 	ChartPanelBodyError,
 	ChartPanelBodyFallback,
+	ChartPanelBodyLoading,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
-import { LoadingIndicator } from '~/ui/Status'
 import { TableToolbar } from '~/ui/Toolbar'
 import {
 	formatCompactNumber,
@@ -38,11 +38,12 @@ import {
 	roundNumber,
 	USD_LOWERCASE_MILLIONS_OPTIONS
 } from '~/utils/numberFormat'
+import type { QueryRetry } from '~/utils/query'
 import { InstantTooltip } from '../InstantTooltip'
 import { YIELD_PERCENT_OPTIONS } from '../poolDetail/format'
 import { ProtocolIcon } from '../poolDetail/Icons'
-import { rangeCovers } from '../poolDetail/poolChartUtils'
 import { getChartTooltipItems, getChartTooltipValue } from '../poolDetail/tooltip'
+import { useWidestHistory } from '../poolDetail/useWidestHistory'
 import { YieldsTabs } from '../YieldsTabs'
 import {
 	fetchStablecoinRatesHistory,
@@ -141,13 +142,7 @@ function RatesChart({
 		)
 	}
 	return (
-		<Suspense
-			fallback={
-				<ChartPanelBodyFallback role="status" aria-live="polite">
-					<LoadingIndicator label="Loading rates chart" />
-				</ChartPanelBodyFallback>
-			}
-		>
+		<Suspense fallback={<ChartPanelBodyLoading label="Loading rates chart" />}>
 			<MultiSeriesChart
 				dataset={spec.dataset}
 				charts={spec.charts}
@@ -212,7 +207,6 @@ const RANGE_OPTIONS = [
 	{ value: '90d', label: '', shortLabel: '90d' },
 	{ value: 'max', label: '', shortLabel: 'Max' }
 ] as const satisfies ReadonlyArray<ChartGroupingOption<RateRange>>
-type ChartStatus = 'idle' | 'loading' | 'error'
 
 function ReferenceRatesSummary({
 	rates,
@@ -222,7 +216,8 @@ function ReferenceRatesSummary({
 	onAssetChange,
 	range,
 	onRangeChange,
-	chartStatus,
+	loading,
+	failedRead,
 	points
 }: {
 	rates: RefRateSet
@@ -232,7 +227,8 @@ function ReferenceRatesSummary({
 	onAssetChange: (asset: string) => void
 	range: RateRange
 	onRangeChange: (range: RateRange) => void
-	chartStatus: ChartStatus
+	loading: boolean
+	failedRead: QueryRetry | null
 	points: Array<RefRatePoint>
 }) {
 	const chartRef = useRef<echarts.ECharts | null>(null)
@@ -282,12 +278,10 @@ function ReferenceRatesSummary({
 				/>
 			</ChartPanelToolbar>
 			<ChartPanelBody>
-				{chartStatus === 'loading' ? (
-					<ChartPanelBodyFallback role="status" aria-live="polite">
-						<LoadingIndicator label={`Loading ${range} history`} />
-					</ChartPanelBodyFallback>
-				) : chartStatus === 'error' ? (
-					<ChartPanelBodyError>Couldn&apos;t load {range} history.</ChartPanelBodyError>
+				{failedRead ? (
+					<ChartPanelBodyError retry={failedRead}>Couldn&apos;t load {range} history.</ChartPanelBodyError>
+				) : loading ? (
+					<ChartPanelBodyLoading label={`Loading ${range} history`} />
 				) : (
 					<RatesChart
 						points={points}
@@ -469,13 +463,11 @@ export function ReferenceRates({
 	const [compSort, setCompSort] = useState<CompSortKey>('sup_wt')
 	const [compDir, setCompDir] = useState<SortDir>('desc')
 	const [range, setRange] = useState<RateRange>(initialRange)
-	// Widest loaded history; ranges nest (max covers 90d covers 30d) so narrower ranges slice it and we only fetch when a range wider than what's loaded is selected.
-	const [widest, setWidest] = useState<{ range: RateRange; history: StablecoinRatesHistory }>({
-		range: initialRange,
-		history: initialHistory
-	})
-	const [chartStatus, setChartStatus] = useState<ChartStatus>('idle')
-	const reqId = useRef(0)
+	const {
+		model: history,
+		loading,
+		failedRead
+	} = useWidestHistory(initialRange, initialHistory, range, fetchStablecoinRatesHistory)
 
 	function changeRange(next: RateRange) {
 		setRange(next)
@@ -485,22 +477,6 @@ export function ReferenceRates({
 			else url.searchParams.set('range', next)
 			window.history.replaceState(null, '', `${url.pathname}${url.search}`)
 		}
-		const id = ++reqId.current
-		if (rangeCovers(widest.range, next)) {
-			setChartStatus('idle')
-			return
-		}
-		setChartStatus('loading')
-		fetchStablecoinRatesHistory(next)
-			.then((h) => {
-				if (id !== reqId.current) return
-				setWidest({ range: next, history: h })
-				setChartStatus('idle')
-			})
-			.catch(() => {
-				if (id !== reqId.current) return
-				setChartStatus('error')
-			})
 	}
 
 	const assetOptions: Array<ChartGroupingOption<string>> = [
@@ -510,11 +486,11 @@ export function ReferenceRates({
 	const compAssetValues = ['All', ...current.assets]
 
 	const rates = ratesForAsset(current, asset)
-	const fullPoints = seriesForAsset(widest.history, asset)
+	const fullPoints = seriesForAsset(history, asset)
 	const points = range === 'max' ? fullPoints : fullPoints.slice(range === '30d' ? -30 : -90)
 
 	const delta = (() => {
-		const s = seriesForAsset(widest.history, asset)
+		const s = seriesForAsset(history, asset)
 		const n = s.length
 		if (n < 8) return null
 		const a = s[n - 1]!.rates
@@ -600,7 +576,8 @@ export function ReferenceRates({
 				onAssetChange={setAsset}
 				range={range}
 				onRangeChange={changeRange}
-				chartStatus={chartStatus}
+				loading={loading}
+				failedRead={failedRead}
 				points={points}
 			/>
 

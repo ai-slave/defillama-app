@@ -412,7 +412,9 @@ export function TokenMarketsSection({ geckoId, tokenSymbol, variant = 'section' 
 					/>
 				</div>
 				{/* Reset table state per venue/category without replacing the focused filter. */}
-				<Suspense fallback={<div className="col-span-full min-h-[360px]" />}>
+				<Suspense
+					fallback={<SurfaceBodyLoadingStatus label={`Loading ${tokenSymbol} markets`} className="col-span-full" />}
+				>
 					<DeferredTokenMarketsTable
 						key={`${selectedVenueTab}-${selectedCategoryTab}`}
 						pairs={tableRows}

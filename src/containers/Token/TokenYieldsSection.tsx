@@ -249,7 +249,7 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 							<SurfaceBodyStatus variant="empty">No pools match current filters</SurfaceBodyStatus>
 						) : (
 							<div className="relative flex flex-col gap-3">
-								<React.Suspense fallback={<div className="min-h-[360px]" />}>
+								<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading yield pools" />}>
 									<DeferredPaginatedYieldsPoolTable
 										key={`${fetchedRows ? 'full' : 'initial'}-${requestedPageIndex}`}
 										data={filteredPools}

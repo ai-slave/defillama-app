@@ -17,10 +17,9 @@ import {
 } from '~/components/ECharts/shared/tooltip'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
-import { ChartPanelBody, ChartPanelBodyError, ChartPanelBodyFallback, CHART_FILL } from '~/ui/ChartPanel'
+import { ChartPanelBody, ChartPanelBodyError, ChartPanelBodyLoading, CHART_FILL } from '~/ui/ChartPanel'
 import { metricSeriesToggleStyles } from '~/ui/MetricChip'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
-import { LoadingIndicator } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
@@ -540,7 +539,7 @@ export function PoolLiquidityChart({
 	const {
 		model: widestModel,
 		loading,
-		error
+		failedRead
 	} = useWidestHistory(
 		initialRange,
 		model,
@@ -638,29 +637,21 @@ export function PoolLiquidityChart({
 				/>
 			</PanelHeader>
 
-			{!loading && !error ? (
+			{!loading && !failedRead ? (
 				<WithdrawWhatIf model={currentModel} capacity={capacity} positionUsd={positionUsd} setQuery={setQuery} />
 			) : null}
 
 			{/* The key is its own row, so the body holds only the plot and stands as tall as the APY charts'. */}
-			{!loading && !error ? (
+			{!loading && !failedRead ? (
 				<LiquidityKey model={currentModel} blockedDays={blockedDays} partialDays={partialDays} isDark={isDark} />
 			) : null}
 			<ChartPanelBody>
-				{loading ? (
-					<ChartPanelBodyFallback role="status" aria-live="polite">
-						<LoadingIndicator label={`Loading ${range} history`} />
-					</ChartPanelBodyFallback>
-				) : error ? (
-					<ChartPanelBodyError>Couldn&apos;t load {range} history.</ChartPanelBodyError>
+				{failedRead ? (
+					<ChartPanelBodyError retry={failedRead}>Couldn&apos;t load {range} history.</ChartPanelBodyError>
+				) : loading ? (
+					<ChartPanelBodyLoading label={`Loading ${range} history`} />
 				) : (
-					<Suspense
-						fallback={
-							<ChartPanelBodyFallback role="status" aria-live="polite">
-								<LoadingIndicator label="Loading chart" />
-							</ChartPanelBodyFallback>
-						}
-					>
+					<Suspense fallback={<ChartPanelBodyLoading />}>
 						<MultiSeriesChart
 							dataset={dataset}
 							charts={charts}
@@ -679,7 +670,7 @@ export function PoolLiquidityChart({
 			</ChartPanelBody>
 
 			<div className="flex flex-col overflow-hidden border-t border-subtle">
-				{!loading && !error ? (
+				{!loading && !failedRead ? (
 					<LiquidityReadout
 						model={currentModel}
 						unit={unit}

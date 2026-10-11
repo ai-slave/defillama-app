@@ -85,6 +85,7 @@ describe('getTokenOverviewChartBody', () => {
 		isClient: true,
 		geckoId: 'bitcoin',
 		pendingChartCount: 0,
+		readFailed: false,
 		isLoading: false,
 		hasChartData: true,
 		activeChartCount: 1
@@ -95,6 +96,14 @@ describe('getTokenOverviewChartBody', () => {
 			'wait-for-client'
 		)
 		expect(getTokenOverviewChartBody({ ...base, pendingChartCount: 1, isLoading: true })).toBe('loading')
+	})
+
+	test('a failed read with nothing to draw is an error, kept while its retry loads', () => {
+		const failed = { ...base, pendingChartCount: 1, readFailed: true, hasChartData: false }
+		expect(getTokenOverviewChartBody(failed)).toBe('error')
+		expect(getTokenOverviewChartBody({ ...failed, isLoading: true })).toBe('error')
+		// A series that failed beside drawn ones keeps the chart.
+		expect(getTokenOverviewChartBody({ ...failed, hasChartData: true })).toBe('chart')
 	})
 
 	test('explains why there is no chart', () => {

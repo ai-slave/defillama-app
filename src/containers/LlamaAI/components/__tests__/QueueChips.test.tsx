@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { QueueChips } from '~/containers/LlamaAI/components/QueueChips'
 import type { QueueSurface, QueueServerRow } from '~/containers/LlamaAI/hooks/useChatQueueController'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 
 function named(within: ParentNode, name: string) {
 	return (
@@ -90,6 +91,30 @@ describe('QueueChips', () => {
 
 		expect(container.textContent).toContain('Adding…')
 		expect(container.querySelector('button')).toBeNull()
+	})
+
+	test('announces a local prompt that fails to queue once, and clears the alert when it is retried', async () => {
+		const local = (state: 'adding' | 'waiting' | 'failed') => ({
+			kind: 'local' as const,
+			id: 'temp-1',
+			state,
+			...(state === 'failed' ? { error: 'Could not add this prompt.' } : {}),
+			payload: { clientMutationId: 'mutation-1', message: 'Follow up', researchMode: false, client: 'web' as const }
+		})
+		await render(surface({ rows: [local('adding')] }))
+		expect(alertTexts(container)).toEqual([])
+
+		await render(surface({ rows: [local('failed')] }))
+		expect(alertTexts(container)).toEqual(['Could not add this prompt.'])
+		const alert = container.querySelector('[role=alert]')
+
+		// A re-render of the failed row keeps the same live node, so the failure is not announced again.
+		await render(surface({ rows: [local('failed'), pending({ id: 'q2', clientMutationId: 'c2' })] }))
+		expect(alertTexts(container)).toEqual(['Could not add this prompt.'])
+		expect(container.querySelector('[role=alert]')).toBe(alert)
+
+		await render(surface({ rows: [local('waiting')] }))
+		expect(alertTexts(container)).toEqual([])
 	})
 
 	test('offers one Continue action for a paused queue', async () => {

@@ -2,6 +2,7 @@ import { skipToken, useQuery } from '@tanstack/react-query'
 import type { CgChartResponse } from '~/api/coingecko.types'
 import { fetchJson } from '~/utils/async'
 import { DEFAULT_PRICE_CHART_TIMEFRAME, type PriceChartTimeframe } from '~/utils/priceChartTimeframes'
+import { mergeFailedReads, queryReadFailed } from '~/utils/query'
 import { buildTokenOverviewRawChartData, type TokenOverviewChartLabel, type TokenOverviewData } from './tokenOverview'
 
 async function fetchTokenOverviewChart(
@@ -42,12 +43,7 @@ export function useFetchTokenOverviewChartData({
 		overview.marketData.maxSupply == null &&
 		overview.marketData.totalSupply == null
 
-	const {
-		data: chartData = null,
-		isLoading: loadingChartData,
-		isError: isChartError,
-		isFetching: isFetchingChartData
-	} = useQuery({
+	const chartQuery = useQuery({
 		queryKey: ['token-overview', 'chart', geckoId, timeframe],
 		queryFn: geckoId ? () => fetchTokenOverviewChart(geckoId, timeframe) : skipToken,
 		staleTime: 60 * 60 * 1000,
@@ -56,12 +52,7 @@ export function useFetchTokenOverviewChartData({
 		enabled: shouldFetchChart
 	})
 
-	const {
-		data: totalSupply = null,
-		isLoading: loadingTotalSupply,
-		isError: isTotalSupplyError,
-		isFetching: isFetchingTotalSupply
-	} = useQuery({
+	const supplyQuery = useQuery({
 		queryKey: ['token-overview', 'total-supply', geckoId],
 		queryFn: geckoId ? () => fetchTokenOverviewTotalSupply(geckoId) : skipToken,
 		staleTime: 60 * 60 * 1000,
@@ -71,18 +62,22 @@ export function useFetchTokenOverviewChartData({
 	})
 
 	return {
-		rawChartData: chartData
+		rawChartData: chartQuery.data
 			? {
 					...prefetchedChartData,
 					...buildTokenOverviewRawChartData({
-						chart: chartData,
-						totalSupply: overview.marketData.maxSupply ?? overview.marketData.totalSupply ?? totalSupply,
+						chart: chartQuery.data,
+						totalSupply: overview.marketData.maxSupply ?? overview.marketData.totalSupply ?? supplyQuery.data ?? null,
 						includeCharts: missingCharts
 					})
 				}
 			: prefetchedChartData,
-		isLoading: loadingChartData || loadingTotalSupply,
-		isFetching: isFetchingChartData || isFetchingTotalSupply,
-		isError: isChartError || isTotalSupplyError
+		isLoading: chartQuery.isLoading || supplyQuery.isLoading,
+		// A disabled query keeps its last error, so only reads the current selection needs count: a supply failure for
+		// FDV must not stand in for Market Cap once the reader swaps one for the other.
+		failedRead: mergeFailedReads([
+			shouldFetchChart && queryReadFailed(chartQuery) ? chartQuery : null,
+			shouldFetchTotalSupply && queryReadFailed(supplyQuery) ? supplyQuery : null
+		])
 	}
 }

@@ -18,7 +18,14 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useIsClient } from '~/hooks/useIsClient'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import {
+	ChartPanel,
+	ChartPanelBody,
+	ChartPanelBodyError,
+	ChartPanelBodyFallback,
+	ChartPanelBodyLoading,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { EntityTitleRow } from '~/ui/EntityTitleRow'
 import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
@@ -27,7 +34,6 @@ import { metricChipStyles } from '~/ui/MetricChip'
 import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/MetricPrimitives'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { StaleText } from '~/ui/StaleText'
-import { LoadingIndicator } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryChange, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -86,7 +92,7 @@ const TOKEN_OVERVIEW_CHART_QUERY_KEY = 'chart'
 const TOKEN_OVERVIEW_TIMEFRAME_QUERY_KEY = 'timeframe'
 
 const DeferredProtocolChart = dynamic(() => import('~/containers/ProtocolOverview/Chart'), {
-	loading: () => <div className="min-h-[360px]" />
+	loading: () => <ChartPanelBodyLoading />
 })
 
 function formatSupply(value: number | null | undefined, symbol: string) {
@@ -489,7 +495,7 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 		() => resolveTokenOverviewCharts({ geckoId, rawChartData: overview.rawChartData, chartQuery: selectedChartsQuery }),
 		[geckoId, overview.rawChartData, selectedChartsQuery]
 	)
-	const { rawChartData, isLoading } = useFetchTokenOverviewChartData({
+	const { rawChartData, isLoading, failedRead } = useFetchTokenOverviewChartData({
 		geckoId,
 		overview,
 		activeCharts,
@@ -517,6 +523,7 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 		isClient,
 		geckoId,
 		pendingChartCount: pendingCharts.length,
+		readFailed: failedRead !== null,
 		isLoading,
 		hasChartData,
 		activeChartCount: activeCharts.length
@@ -589,10 +596,10 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 				/>
 			</ChartPanelToolbar>
 			<ChartPanelBody>
-				{chartBody === 'wait-for-client' ? null : chartBody === 'loading' ? (
-					<ChartPanelBodyFallback role="status" aria-live="polite">
-						<LoadingIndicator label={`fetching ${loadingLabel}`} />
-					</ChartPanelBodyFallback>
+				{chartBody === 'wait-for-client' ? null : chartBody === 'error' ? (
+					<ChartPanelBodyError retry={failedRead}>Couldn&apos;t load {loadingLabel}.</ChartPanelBodyError>
+				) : chartBody === 'loading' ? (
+					<ChartPanelBodyLoading label={`Loading ${loadingLabel}`} />
 				) : chartBody === 'chart' ? (
 					<DeferredProtocolChart
 						key={`${activeTimeframe}:${activeCharts.join('|')}`}

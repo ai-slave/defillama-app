@@ -399,7 +399,7 @@ export function TokenBorrowSection({
 								<SurfaceBodyStatus variant="empty">{`No ${tabLabel.toLowerCase()} routes match current filters.`}</SurfaceBodyStatus>
 							) : (
 								<div className="relative flex flex-col gap-3">
-									<React.Suspense fallback={<div className="min-h-[360px]" />}>
+									<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading borrow routes" />}>
 										<DeferredPaginatedBorrowRoutesTable
 											key={`${activeTab}-${data ? 'full' : 'initial'}-${requestedPageIndexByTab[activeTab]}`}
 											data={filteredRows}

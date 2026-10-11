@@ -113,20 +113,22 @@ export function ArticleEditorHeader({
 				isPublished ? 'border-success-muted' : 'border-medium'
 			}`}
 		>
+			{/* The slug is the one part that gives way on a narrow row: it truncates, and the crumbs and the status
+			    badge keep their width. */}
 			<nav className="flex min-w-0 items-center gap-2.5 body-md">
 				<Link
 					href="/research/admin"
-					className="inline-flex items-center gap-1 text-tertiary transition-colors hover:text-primary"
+					className="inline-flex shrink-0 items-center gap-1 text-tertiary transition-colors hover:text-primary"
 				>
 					Admin
 				</Link>
-				<span aria-hidden className="text-tertiary">
+				<span aria-hidden className="shrink-0 text-tertiary">
 					›
 				</span>
-				<Link href="/research/mine" className="text-tertiary hover:text-primary">
+				<Link href="/research/mine" className="shrink-0 text-tertiary hover:text-primary">
 					Articles
 				</Link>
-				<span aria-hidden className="text-tertiary">
+				<span aria-hidden className="shrink-0 text-tertiary">
 					›
 				</span>
 				{slugEditing ? (
@@ -156,6 +158,7 @@ export function ArticleEditorHeader({
 						size="sm"
 						onClick={beginSlugEdit}
 						aria-label={`Edit slug ${article.slug}`}
+						truncate
 						className="group"
 					>
 						<span
@@ -167,25 +170,27 @@ export function ArticleEditorHeader({
 						</span>
 						<span
 							aria-hidden
-							className="text-tertiary opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 pointer-coarse:opacity-100"
+							className="shrink-0 text-tertiary opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 pointer-coarse:opacity-100"
 						>
 							✎
 						</span>
 					</Button>
 				)}
-				<span aria-hidden className="text-tertiary">
+				<span aria-hidden className="shrink-0 text-tertiary">
 					·
 				</span>
 				{articleIsScheduled ? (
 					<Tooltip
 						content={`Scheduled for ${formatArticleDate(article.goLiveAt)}`}
 						tabIndex={0}
-						render={<span className="label-xs tracking-[0.22em] text-link uppercase" />}
+						render={<span className="shrink-0 label-xs tracking-[0.22em] whitespace-nowrap text-link uppercase" />}
 					>
 						draft · scheduled
 					</Tooltip>
 				) : (
-					<span className={`label-xs tracking-[0.22em] uppercase ${isPublished ? 'text-success' : 'text-warning'}`}>
+					<span
+						className={`shrink-0 label-xs tracking-[0.22em] uppercase ${isPublished ? 'text-success' : 'text-warning'}`}
+					>
 						{article.status}
 					</span>
 				)}

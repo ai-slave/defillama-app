@@ -17,10 +17,18 @@ import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { Table } from '~/components/Table/Table'
 import { TablePager } from '~/containers/Investors/TablePager'
-import { ChartPanel, ChartPanelBodyFallback, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { PanelLoadingStatus } from '~/ui/Status'
+import {
+	CHART_FILL,
+	ChartPanel,
+	ChartPanelBody,
+	ChartPanelBodyLoading,
+	ChartPanelTitle,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
+import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
+import { mergeFailedReads, queryReadFailed } from '~/utils/query'
 import {
 	type PerpMarket,
 	type PredictedFunding,
@@ -213,7 +221,7 @@ function FundingChart({ data }: { data: Array<{ name: string; value: number }> }
 	return (
 		<ChartPanel>
 			<ChartPanelToolbar leading={<ChartPanelTitle>Funding Rates (Annualized) — Top 20 by OI</ChartPanelTitle>} />
-			<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: height }} />}>
+			<Suspense fallback={<ChartPanelBodyLoading style={{ minHeight: height }} />}>
 				<HBarChart
 					categories={sorted.map((d) => d.name)}
 					values={sorted.map((d) => d.value)}
@@ -456,7 +464,7 @@ function OIDistributionChart({ data }: { data: Array<{ name: string; value: numb
 		<ChartPanel>
 			<ChartPanelToolbar leading={<ChartPanelTitle>Open Interest Distribution</ChartPanelTitle>} />
 			{/* A side tile beside the scatter, so the donut keeps its own height rather than the 360 body floor. */}
-			<Suspense fallback={<ChartPanelBodyFallback className="min-h-[400px]" />}>
+			<Suspense fallback={<ChartPanelBodyLoading className="min-h-[400px]" />}>
 				<PieChart chartData={data} stackColors={stackColors} radius={['45%', '70%']} height="400px" />
 			</Suspense>
 		</ChartPanel>
@@ -484,19 +492,21 @@ function VolumeOIScatter({ data }: { data: Array<PerpMarket> }) {
 			<ChartPanelToolbar
 				leading={<ChartPanelTitle>Volume vs Open Interest (bubble size = funding magnitude)</ChartPanelTitle>}
 			/>
-			<Suspense fallback={<ChartPanelBodyFallback className="min-h-[450px]" />}>
-				<ScatterChart
-					chartData={points}
-					xAxisLabel="24h Volume ($)"
-					yAxisLabel="Open Interest ($)"
-					valueSymbol="$"
-					logScale
-					height="450px"
-					tooltipFormatter={({ value: [volume, openInterest, name, funding] }) =>
-						`<b>${escapeHtml(String(name))}</b><br/>Volume: ${formatUsd(volume, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br/>OI: ${formatUsd(openInterest, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br/>Funding: ${formatPct(Number(funding))}`
-					}
-				/>
-			</Suspense>
+			<ChartPanelBody>
+				<Suspense fallback={<ChartPanelBodyLoading />}>
+					<ScatterChart
+						chartData={points}
+						xAxisLabel="24h Volume ($)"
+						yAxisLabel="Open Interest ($)"
+						valueSymbol="$"
+						logScale
+						containerClassName={CHART_FILL}
+						tooltipFormatter={({ value: [volume, openInterest, name, funding] }) =>
+							`<b>${escapeHtml(String(name))}</b><br/>Volume: ${formatUsd(volume, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br/>OI: ${formatUsd(openInterest, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br/>Funding: ${formatPct(Number(funding))}`
+						}
+					/>
+				</Suspense>
+			</ChartPanelBody>
 		</ChartPanel>
 	)
 }
@@ -573,8 +583,10 @@ function SpotTable({ data }: { data: Array<SpotMarket> }) {
 }
 
 export default function Stats() {
-	const { markets: perps, isLoading: perpsLoading } = useHyperliquidPerps()
-	const { markets: spot, isLoading: spotLoading } = useHyperliquidSpot()
+	const perpsQuery = useHyperliquidPerps()
+	const spotQuery = useHyperliquidSpot()
+	const perps = perpsQuery.markets
+	const spot = spotQuery.markets
 	const { fundings, isLoading: fundingsLoading } = useHyperliquidPredictedFundings()
 
 	const marketPresentation = useMemo(() => {
@@ -614,9 +626,19 @@ export default function Stats() {
 		[perps]
 	)
 
-	const isLoading = perpsLoading || spotLoading
-
-	if (isLoading) return <PanelLoadingStatus label="Loading market stats" />
+	// Without this, a failed read would draw its empty fallback as real zeros: $0 volume, 0 markets.
+	const failedRead = mergeFailedReads([
+		queryReadFailed(perpsQuery) ? perpsQuery : null,
+		queryReadFailed(spotQuery) ? spotQuery : null
+	])
+	if (failedRead) {
+		return (
+			<PanelStatus variant="error" retry={failedRead}>
+				Couldn&apos;t load Hyperliquid market stats.
+			</PanelStatus>
+		)
+	}
+	if (perpsQuery.isLoading || spotQuery.isLoading) return <PanelLoadingStatus label="Loading market stats" />
 
 	return (
 		<div className="flex flex-col gap-4">

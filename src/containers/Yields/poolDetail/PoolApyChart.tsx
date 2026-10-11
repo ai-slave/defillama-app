@@ -22,10 +22,10 @@ import {
 	ChartPanelBody,
 	ChartPanelBodyError,
 	ChartPanelBodyFallback,
+	ChartPanelBodyLoading,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
-import { LoadingIndicator } from '~/ui/Status'
 import { formatPercent, formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { writeStickyPref } from '../stickyQueryPrefs'
@@ -321,7 +321,7 @@ export function PoolApyChart({
 	const {
 		model: { chart: currentModel, clockMs },
 		loading,
-		error
+		failedRead
 	} = useWidestHistory(
 		initialRange,
 		{ chart: model, clockMs: modelClockMs },
@@ -492,24 +492,16 @@ export function PoolApyChart({
 			) : null}
 
 			<ChartPanelBody>
-				{loading ? (
-					<ChartPanelBodyFallback role="status" aria-live="polite">
-						<LoadingIndicator label={`Loading ${range} history`} />
-					</ChartPanelBodyFallback>
-				) : error ? (
-					<ChartPanelBodyError>Couldn&apos;t load {range} history.</ChartPanelBodyError>
+				{failedRead ? (
+					<ChartPanelBodyError retry={failedRead}>Couldn&apos;t load {range} history.</ChartPanelBodyError>
+				) : loading ? (
+					<ChartPanelBodyLoading label={`Loading ${range} history`} />
 				) : !hasData ? (
 					<ChartPanelBodyFallback role="status" className="body-sm text-tertiary">
 						No data in this range for the selected series and window.
 					</ChartPanelBodyFallback>
 				) : (
-					<Suspense
-						fallback={
-							<ChartPanelBodyFallback role="status" aria-live="polite">
-								<LoadingIndicator label="Loading chart" />
-							</ChartPanelBodyFallback>
-						}
-					>
+					<Suspense fallback={<ChartPanelBodyLoading />}>
 						<MultiSeriesChart
 							dataset={dataset}
 							charts={charts}

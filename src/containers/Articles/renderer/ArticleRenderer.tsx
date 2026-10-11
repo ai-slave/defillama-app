@@ -1,6 +1,6 @@
 import { common, createLowlight } from 'lowlight'
 import Link from 'next/link'
-import { createElement, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
+import { createElement, useEffect, useId, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { ResearchIcon } from '~/components/ResearchIcon'
 import { Button } from '~/ui/Button'
 import { useCopy } from '~/ui/Copy'
@@ -274,15 +274,36 @@ function renderCallout(node: TiptapJson, key: string, ctx: RenderContext) {
 	)
 }
 
-function renderTaskItem(node: TiptapJson, key: string, ctx: RenderContext) {
-	const checked = !!node.attrs?.checked
+// The read-only box takes its task's line as its name, so a screen reader hears "Ship v2, checkbox, checked".
+function ArticleTaskItem({ checked, line, children }: { checked: boolean; line: ReactNode; children: ReactNode }) {
+	const lineId = useId()
 	return (
-		<li key={key} className="article-task-item not-prose flex items-start gap-2 pl-0" data-checked={checked}>
-			<input type="checkbox" checked={checked} readOnly className="mt-1.5 size-3.5 shrink-0 accent-link" />
+		<li className="article-task-item not-prose flex items-start gap-2 pl-0" data-checked={checked}>
+			<input
+				type="checkbox"
+				checked={checked}
+				readOnly
+				aria-labelledby={lineId}
+				className="mt-1.5 size-3.5 shrink-0 accent-link"
+			/>
 			<div className={`min-w-0 flex-1 ${checked ? 'text-tertiary line-through' : 'text-primary'}`}>
-				{renderChildren(node, key, ctx)}
+				<div id={lineId}>{line}</div>
+				{children}
 			</div>
 		</li>
+	)
+}
+
+function renderTaskItem(node: TiptapJson, key: string, ctx: RenderContext) {
+	// The box is named by the task's own line, not by the subtasks nested under it.
+	return (
+		<ArticleTaskItem
+			key={key}
+			checked={!!node.attrs?.checked}
+			line={renderChildren({ ...node, content: node.content?.slice(0, 1) }, key, ctx)}
+		>
+			{renderChildren({ ...node, content: node.content?.slice(1) }, `${key}-subtasks`, ctx)}
+		</ArticleTaskItem>
 	)
 }
 

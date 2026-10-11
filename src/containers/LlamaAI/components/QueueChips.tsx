@@ -244,9 +244,13 @@ export function QueueChips({
 									<p id={`queue-row-${rowKey}`} className="m-0 truncate body-sm text-primary">
 										{item.payload.message}
 									</p>
-									<p className={`m-0 body-sm ${failed ? 'text-error' : 'text-tertiary'}`}>
-										{adding ? 'Adding…' : failed ? item.error : 'Waiting'}
-									</p>
+									{/* The failure mounts as its own alert in place of the waiting line, so it is announced once,
+									    when the row fails. */}
+									{failed ? (
+										<ErrorLine inset="none">{item.error}</ErrorLine>
+									) : (
+										<p className="m-0 body-sm text-tertiary">{adding ? 'Adding…' : 'Waiting'}</p>
+									)}
 								</div>
 								{!adding ? (
 									<div ref={focusRowOnLeave} className="flex shrink-0 items-center gap-1">

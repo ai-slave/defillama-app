@@ -29,7 +29,8 @@ import { LoadingIndicator, RetryButton } from './Status'
    (src/components/ECharts/shared/chartSpacing.ts), never DOM padding.
 
    Suspense fallbacks: a lazy chart inside a mounted body uses
-   ChartPanelBodyFallback (360px); a lazy chart that renders its own title
+   ChartPanelBodyLoading (360px, announced), never the bare
+   ChartPanelBodyFallback box; a lazy chart that renders its own title
    and export toolbar uses ChartPanelExportShellFallback (400px). Keep an
    external ChartPanelToolbar outside Suspense, so only the body waits.
 

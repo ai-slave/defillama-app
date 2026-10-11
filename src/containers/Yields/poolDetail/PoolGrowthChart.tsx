@@ -14,14 +14,19 @@ import { getTooltipAxisValue } from '~/components/ECharts/shared/tooltip'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
 import { Change } from '~/ui/Change'
-import { ChartPanelBody, ChartPanelBodyError, ChartPanelBodyFallback, CHART_FILL } from '~/ui/ChartPanel'
+import {
+	ChartPanelBody,
+	ChartPanelBodyError,
+	ChartPanelBodyFallback,
+	ChartPanelBodyLoading,
+	CHART_FILL
+} from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { metricSeriesToggleStyles } from '~/ui/MetricChip'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
 import { popoverRowStyles } from '~/ui/Popover'
 import { DrawerDismiss, PopoverSurface } from '~/ui/PopoverSurface'
-import { LoadingIndicator } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
 import { formatPercent, formatUsd, type FormatPercentOptions, type FormatUsdOptions } from '~/utils/numberFormat'
@@ -589,7 +594,7 @@ export function PoolGrowthChart({
 	const {
 		model: currentModel,
 		loading,
-		error
+		failedRead
 	} = useWidestHistory(
 		initialRange,
 		model,
@@ -702,24 +707,16 @@ export function PoolGrowthChart({
 			/>
 
 			<ChartPanelBody>
-				{loading ? (
-					<ChartPanelBodyFallback role="status" aria-live="polite">
-						<LoadingIndicator label={`Loading ${range} history`} />
-					</ChartPanelBodyFallback>
-				) : error ? (
-					<ChartPanelBodyError>Couldn&apos;t load {range} history.</ChartPanelBodyError>
+				{failedRead ? (
+					<ChartPanelBodyError retry={failedRead}>Couldn&apos;t load {range} history.</ChartPanelBodyError>
+				) : loading ? (
+					<ChartPanelBodyLoading label={`Loading ${range} history`} />
 				) : !anchoredOn ? (
 					<ChartPanelBodyFallback className="body-sm text-tertiary">
 						No measured redemptions in this range.
 					</ChartPanelBodyFallback>
 				) : (
-					<Suspense
-						fallback={
-							<ChartPanelBodyFallback role="status" aria-live="polite">
-								<LoadingIndicator label="Loading chart" />
-							</ChartPanelBodyFallback>
-						}
-					>
+					<Suspense fallback={<ChartPanelBodyLoading />}>
 						<MultiSeriesChart
 							dataset={dataset}
 							charts={charts}

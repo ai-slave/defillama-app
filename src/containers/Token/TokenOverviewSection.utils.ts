@@ -71,6 +71,7 @@ export function getTokenOverviewChartQuery(
 
 export type TokenOverviewChartBody =
 	| 'wait-for-client'
+	| 'error'
 	| 'loading'
 	| 'chart'
 	| 'unavailable'
@@ -82,6 +83,7 @@ export function getTokenOverviewChartBody({
 	isClient,
 	geckoId,
 	pendingChartCount,
+	readFailed,
 	isLoading,
 	hasChartData,
 	activeChartCount
@@ -89,12 +91,17 @@ export function getTokenOverviewChartBody({
 	isClient: boolean
 	geckoId: string | null
 	pendingChartCount: number
+	/** A client read failed; it stays true while its Try again runs. */
+	readFailed: boolean
 	isLoading: boolean
 	hasChartData: boolean
 	activeChartCount: number
 }): TokenOverviewChartBody {
 	if (geckoId != null && pendingChartCount > 0) {
 		if (!isClient) return 'wait-for-client'
+		// A failed series beside ones that drew (FDV without a supply figure) leaves the chart up without it, rather
+		// than an error in place of data the reader can use.
+		if (readFailed && !hasChartData) return 'error'
 		if (isLoading) return 'loading'
 	}
 	if (hasChartData) return 'chart'

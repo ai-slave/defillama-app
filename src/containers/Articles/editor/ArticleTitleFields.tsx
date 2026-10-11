@@ -40,6 +40,7 @@ export function ArticleTitleFields({ article, updateArticle }: ArticleTitleField
 				value={article.subtitle ?? ''}
 				onChange={(e) => updateArticle('subtitle', e.target.value)}
 				placeholder="Add a subtitle…"
+				aria-label="Article subtitle"
 				style={{ fontFamily: titleSerif }}
 				className="mt-3 w-full bg-transparent text-lg leading-snug text-secondary italic placeholder:text-tertiary focus:outline-hidden md:text-xl"
 			/>

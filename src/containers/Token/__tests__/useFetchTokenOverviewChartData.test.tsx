@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import type { PriceChartTimeframe } from '~/utils/priceChartTimeframes'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { waitForUi } from '~/utils/testing/waitForUi'
-import type { TokenOverviewData } from '../tokenOverview'
+import type { TokenOverviewChartLabel, TokenOverviewData } from '../tokenOverview'
 import { useFetchTokenOverviewChartData } from '../useFetchTokenOverviewChartData'
 const http = installFixtureFetch()
 
@@ -100,5 +100,39 @@ describe('useFetchTokenOverviewChartData', () => {
 		await render('24H')
 		expect(JSON.parse(container.textContent ?? '')).toEqual({ 'Token Price': [[1000, 100]] })
 		expect(http.requests).toHaveLength(1)
+	})
+
+	test('a failed supply read stops counting once FDV is no longer charted', async () => {
+		http.serve({
+			'/api/public/tokens/charts/coingecko/bitcoin': (url: URL) =>
+				url.searchParams.get('kind') === 'supply'
+					? new Response('', { status: 500 })
+					: { data: { prices: [[2_000_000_000_000, 200]] } }
+		})
+		let failedRead: ReturnType<typeof useFetchTokenOverviewChartData>['failedRead'] = null
+		function FailedReadProbe({ activeCharts }: { activeCharts: Array<TokenOverviewChartLabel> }) {
+			failedRead = useFetchTokenOverviewChartData({
+				geckoId: 'bitcoin',
+				overview,
+				activeCharts,
+				timeframe: '7D',
+				enabled: true
+			}).failedRead
+			return null
+		}
+		const show = (activeCharts: Array<TokenOverviewChartLabel>) =>
+			act(async () => {
+				root.render(
+					<QueryClientProvider client={client}>
+						<FailedReadProbe activeCharts={activeCharts} />
+					</QueryClientProvider>
+				)
+			})
+
+		await show(['FDV'])
+		await waitForUi(() => expect(failedRead).not.toBeNull())
+
+		await show(['Mcap'])
+		expect(failedRead).toBeNull()
 	})
 })
