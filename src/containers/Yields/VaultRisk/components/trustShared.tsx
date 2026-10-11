@@ -60,7 +60,8 @@ export function governanceMarker(reachesPrincipal: boolean | undefined): ReachMa
 		: { tone: 'good', label: "Can't touch principal" }
 }
 
-// A null marker renders an aligned blank so the addresses stay in their column.
+// A null marker renders an aligned blank so the addresses stay in their column. The dots take the risk section's own
+// tone scale (toneClasses), not StatusDot, so they match the risk colours around them; the legend names each tone.
 export function ReachDot({ marker }: { marker: ReachMarker | null }) {
 	if (!marker) return <span className="size-2 shrink-0" aria-hidden />
 	return (

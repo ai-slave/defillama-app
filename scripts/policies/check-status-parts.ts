@@ -613,10 +613,14 @@ export function scanSource(
 	sourceFile: ts.SourceFile,
 	queryHooks: ReadonlySet<string>
 ): Array<Violation> {
-	if (!isScanned(relative)) return []
+	// The shared parts build these shapes on purpose, but their copy reaches readers like any page's.
+	const copyOnly =
+		relative.startsWith('src/ui/') && !relative.includes('/__tests__/') && !/\.test\.tsx?$/.test(relative)
+	if (!copyOnly && !isScanned(relative)) return []
 	const violations: Array<Violation> = []
 	const reported = new Set<string>()
 	const report = (rule: RuleId, node: ts.Node) => {
+		if (copyOnly && rule !== 'error-copy') return
 		const line = sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1
 		if (reported.has(`${rule}:${line}`)) return
 		reported.add(`${rule}:${line}`)
@@ -1036,6 +1040,18 @@ if (process.argv.includes('--self-test')) {
 			name: 'Failed to toast',
 			source: "export const f = () => toast.error('Failed to save chart')",
 			rule: 'error-copy'
+		},
+		{
+			name: 'Failed to toast in a shared part',
+			relative: 'src/ui/PolicySelfTest.tsx',
+			source: "export const f = () => toast.error('Failed to copy content')",
+			rule: 'error-copy'
+		},
+		{
+			name: 'a shared part building a status shape',
+			relative: 'src/ui/PolicySelfTest.tsx',
+			source: 'export const F = () => <div role="status"><Spinner /></div>',
+			rule: null
 		},
 		{ name: 'Please in JSX', source: 'export const F = () => <p>Please sign in to continue.</p>', rule: 'error-copy' },
 		{

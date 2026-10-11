@@ -16,9 +16,10 @@ import type { ComponentPropsWithRef, ElementType } from 'react'
  * exception is a new primitive choice here, not a page-local `rounded-*`.
  *
  * `tone` is the featured fill: a card that offers something beside plain data cards (a builder, an upsell, a report
- * download). brand is the featured tint and warning a caution; each tone's border is its muted step, so the card stays
- * one object. A product's own colour comes from a scope that re-points the brand tokens around the card
- * (`.ai-violet-accent` for LlamaAI), never a product tone here. A plain data card never takes a tone.
+ * download). brand is the featured tint and warning a caution or a gold upsell (the MCP page's LlamaAI card); each
+ * tone's border is its muted step, so the card stays one object. A product's own colour comes from a scope that
+ * re-points the brand tokens around the card (`.ai-violet-accent` for LlamaAI), never a product tone here. Each
+ * featured card keeps its own tint; they are not unified onto one. A plain data card never takes a tone.
  *
  * `className` is for layout placement only (grid column, margins, flex behavior); never pass visual overrides (bg-*,
  * border-*, rounded-*, p-*, hover/focus colors, type styles). A hoverable or focusable card uses `.hover-wash-card`,

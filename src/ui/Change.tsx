@@ -22,8 +22,9 @@ import {
    text-data-down, zero takes its container's colour. Never colour a movement
    by hand (policy: hand-coloured-change); a headline, tile, strip or small
    card takes its change as `{ value, unit, comparison }` data and draws it
-   through Change with the window beside it. The type comes from the
-   container. formatChange is for text Change can't render (an aria label, a
+   through Change with the window beside it. A change with no earlier value
+   is left out: the container shows nothing there, never a "no prior" state.
+   The type comes from the container. formatChange is for text Change can't render (an aria label, a
    chart tooltip string); changeTone for an HTML string.
 
    A signed value that is not a movement (a funding rate, a share of a total)

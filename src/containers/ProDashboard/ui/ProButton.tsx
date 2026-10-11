@@ -5,7 +5,8 @@ import { tw } from '~/ui/tw'
 /* ProButton exists only for Pro's create and generate CTAs: the soft light-blue `primary` tint (create a
    dashboard or card) and the soft purple `ai` tint (generate with LlamaAI). Every other Pro control is
    src/ui Button. Like Button's tints, each rests on ramp step 3, hovers to step 4 and goes to step 5 while
-   held, with no scale or movement. */
+   held, with no scale or movement. It has no disabled look on purpose: no create or generate CTA disables
+   itself, so the recipe gains one only with the first caller that does. */
 
 const PRO_BUTTON_BASE = tw`inline-flex shrink-0 cursor-pointer items-center justify-center rounded-lg border border-transparent whitespace-nowrap`
 

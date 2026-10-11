@@ -314,6 +314,7 @@ export function ImageUpload({
 							)
 						}
 
+						// A failed upload keeps the 80px tile: its Failed and Retry row fits the width, and a wider tile would shift the attachments beside it.
 						return (
 							<div key={id} data-attachment className="relative w-20 overflow-hidden rounded-lg">
 								<button

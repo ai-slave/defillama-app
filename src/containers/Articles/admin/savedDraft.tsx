@@ -75,6 +75,9 @@ type DraftState<S, F extends Fields> = {
  * fields in `stored` are acknowledged: those still equal to what was sent adopt the stored value (trimmed
  * text, server-filled metadata), fields edited since the save stay edits, and the stored values become the
  * baseline for later refetches. Other fields are untouched, so a single-field save keeps unrelated edits.
+ *
+ * The admin forms have no leave guard, unlike the article editor: leaving with unsaved edits drops them without
+ * asking. Their fields are short and quick to redo, so a prompt on every navigation costs more than it saves.
  */
 export function useSavedDraft<S, F extends Fields>(
 	saved: S,

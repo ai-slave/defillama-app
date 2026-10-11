@@ -243,6 +243,8 @@ function ResultCard({ article }: { article: ArticleDocument }) {
 	)
 }
 
+// Keeps the public research pages' editorial look (a tracked uppercase range, Previous and Next) instead of TablePager,
+// like the rest of their chrome (design.md, "Product surfaces").
 function Pagination({
 	searchQuery,
 	pathname,

@@ -64,6 +64,7 @@ export function RankTable({
 				<PanelTitle>Rank</PanelTitle>
 				{threshold && setThreshold ? <ThresholdSelect value={threshold} setValue={setThreshold} /> : null}
 				<div className="ml-auto flex flex-wrap items-center gap-1.5">
+					{/* One control: Value, Percentile and Rank are three readings of the same cells, so they stay one switch. */}
 					<SegmentedControl
 						value={mode}
 						onValueChange={setMode}

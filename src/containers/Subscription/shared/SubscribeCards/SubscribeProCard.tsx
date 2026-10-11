@@ -62,6 +62,8 @@ export function SubscribeProModal({ dialogStore, source, placement }: SubscribeP
 		})
 	})
 
+	// The dialog stays open when the reader signs in on another tab: closing it under them would take away the plan
+	// they are reading, and its checkout works signed in.
 	return (
 		<>
 			<Dialog size="sm" store={dialogStore} portal unmountOnHide>

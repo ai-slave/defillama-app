@@ -458,6 +458,8 @@ function EmptyDashboards({ isOwnProfile }: { isOwnProfile: boolean }) {
 	)
 }
 
+// Keeps the author page's editorial look (Previous and Next around "Page X of Y") instead of TablePager: on the public
+// page each step is a link a reader can share, not a client page switch.
 function Pagination({
 	page,
 	totalPages,

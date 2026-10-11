@@ -12,7 +12,7 @@ function firstFocusableIn(container: HTMLElement): HTMLElement {
 
 /* ----------------------------------------------------------------------------
    catchLostFocus — the dialog surface's ref (Dialog, SideSheet, and raw
-   Ariakit dialogs that cannot use them yet). When an update removes, disables
+   Ariakit dialogs the raw-dialog-surface rule lists). When an update removes, disables
    or hides the control that has focus, the browser drops focus to the page
    and fires no event, so a keyboard reader starts over from the top. This
    watches the dialog and hands focus to its first focusable control instead,

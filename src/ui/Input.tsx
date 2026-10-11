@@ -9,7 +9,9 @@ import { tw } from './tw'
    border-medium 1px like the controls beside it, darkening to border-strong
    on hover; bg-clip-padding keeps the darker field fill from showing through
    the translucent border, so the edge matches its neighbours exactly;
-   8px radius, px-3. The outline is faint, so a field is identified
+   8px radius, px-3. Beside panel-coloured buttons the field keeps its darker
+   bg-page fill, and the same border then reads a little different on the
+   two fills; that is accepted, because the fill marks where to type. The outline is faint, so a field is identified
    by what it carries: a visible label above it, or a search icon with a
    placeholder; never ship a bare box. Inside a phone sheet's rows the floor
    is 44px (`sheet:`), matching the sheet's footer buttons. Entered text and

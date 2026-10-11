@@ -230,6 +230,8 @@ export function HomeDailyBrief({ brief }: { brief: DailyBrief }) {
 					<div
 						className={`flex scrollbar-none items-center gap-1.5 overflow-x-auto ${isExpanded === null ? hideWhenBriefOpenByDefault : ''}`}
 					>
+						{/* Question pills are md secondary Buttons, the brief's main action rather than an sm suggestion pill. They
+						    share one row, so each truncates to one line and keeps the full question in its tooltip. */}
 						{chips.map((question) => (
 							<Tooltip
 								key={question}

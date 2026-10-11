@@ -7,7 +7,9 @@ interface CopyHelperProps extends React.ButtonHTMLAttributes<HTMLButtonElement> 
 	size?: `size-${number}`
 }
 
-/** Copies text and says so for 2 seconds; a failed write says why in a toast. */
+/** Copies text and says so for 2 seconds; a failed write says so in a toast. A failure opens no fallback dialog with
+    the text to select by hand: the write fails only where the browser denies the clipboard, which is rare enough that
+    the toast is the whole answer. */
 export function useCopy() {
 	const [copied, setCopied] = useState(false)
 	const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -24,7 +26,7 @@ export function useCopy() {
 			copiedTimeoutRef.current = setTimeout(() => setCopied(false), 2000)
 		} catch (error) {
 			console.error('Failed to copy content:', error)
-			toast.error('Failed to copy content')
+			toast.error("Couldn't copy to the clipboard. Try again.")
 		}
 	}
 	return { copied, copy }

@@ -21,6 +21,8 @@ export function LikedDashboards() {
 		return <LoadingSkeleton viewMode="grid" items={8} />
 	}
 
+	// Unstarring the last dashboard on a later page lands here, not on the page before, and the pager goes with the list.
+	// Accepted: it takes emptying a whole later page, and stepping back would mean holding the page count through a refetch.
 	if (dashboards.length === 0) {
 		return (
 			<EmptyState

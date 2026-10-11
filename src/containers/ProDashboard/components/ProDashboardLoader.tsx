@@ -1,6 +1,9 @@
 import Image from 'next/image'
 import { LoadingDots } from '~/ui/Loaders'
 
+// The Pro route's full-page loader keeps its branded llama, the one listed exception to the shared loading parts
+// (check-status-parts, check-design-tokens). Its rings spin only under motion-safe, so reduced motion holds them still,
+// and the one status line announces "Loading" once.
 export function ProDashboardLoader({ heading }: { heading?: string | null }) {
 	return (
 		<div className="isolate flex flex-1 flex-col items-center justify-center gap-6 rounded-md border border-subtle bg-surface p-1">

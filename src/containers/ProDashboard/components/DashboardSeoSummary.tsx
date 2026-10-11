@@ -74,6 +74,8 @@ export function DashboardSeoSummary({ dashboard, seo }: { dashboard: DashboardSe
 					) : null}
 				</div>
 
+				{/* One dl whose groups are the grid cells. DividedGrid's grid is its own div, so this dl keeps its own dividers
+				    per breakpoint. */}
 				<dl className="grid grid-cols-2 overflow-hidden rounded-md border border-subtle bg-surface-elevated-1 body-md sm:grid-cols-4 xl:grid-cols-2">
 					{metrics.map((metric, index) => (
 						<div

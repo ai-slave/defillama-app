@@ -222,7 +222,8 @@ export default function Account() {
 						</div>
 					</DialogBody>
 					<DialogFooter>
-						{/* The same button across steps keeps focus in place when the outcome arrives. */}
+						{/* The same button across steps keeps focus in place when the outcome arrives. A confirmed payment waits
+						    on Done with no timed redirect: the reader reads the outcome and stays on the page that shows the plan. */}
 						<Ariakit.DialogDismiss
 							autoFocus
 							render={<Button variant={paymentStep === 'confirming' ? 'secondary' : 'primary'} size="md" />}

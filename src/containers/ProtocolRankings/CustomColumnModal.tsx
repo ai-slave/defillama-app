@@ -98,6 +98,8 @@ function CustomColumnForm({
 	const initialName = column?.name ?? ''
 	const initialFormula = column?.formula ?? ''
 	const initialFormatType = column?.formatType ?? 'auto'
+	// The draft copies the column once, when the dialog opens: an edit to the same column in another tab never reaches
+	// an open dialog, and saving here replaces it. Two tabs editing one column is rare, so the last save wins.
 	const [state, setState] = useState<CustomColumnState>({
 		name: initialName,
 		formula: initialFormula,

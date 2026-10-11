@@ -25,6 +25,8 @@ An action that removes, replaces or disables the control that has focus drops fo
 
 Inside a dialog or popover, a handoff that only reproduces the net is redundant, but a row's neighbour is nearer than the net's first control; outside one, a control that removes itself always hands focus on. Focus never lands on `<body>`, and `<main>` (`pageContent()`) is the last resort, not the default target.
 
+Each recipe above is a call or two at the site, so it stays inline: a dismiss's `keepFocus(dismiss, pageContent)`, a row delete's confirm with `finalFocus`, a mutation's own Try again, an inline rename, a field's clear ×. A part that only wraps one of them adds an API without removing a mistake. A shared part earns its place when copies drift or carry their own look, as `focusNeighbourOnLeave` and the status parts' `retry` do. The raw `Ariakit.Dialog`s in the `raw-dialog-surface` exceptions (`check-design-tokens.mjs`) wire `catchLostFocus` themselves; each exception says why it is not a `Dialog`.
+
 A dialog records the control that opened it, and a click inside a dialog focuses the pressed button first, as Chrome does, so Safari and Firefox return focus to the right place too. Never read `Ariakit.useDialogContext()` to find "the dialog": inside a `TabPanel` it returns the panel's store. Use what the surface provides (`DialogCancelButton`, `DialogBackButton`, `useDialogLeave`).
 
 ## Errors and retries
@@ -82,6 +84,7 @@ A submit button that stays disabled until the input is valid hides what is wrong
 - A submit may still disable for something that is not the input: a request running (`pendingLabel`), a security check that has not answered, a cooldown, nothing to act on, a missing permission. Its reason shows in visible text.
 - Typing a name to confirm a destructive action is friction on purpose, not validation: its button stays disabled until the name matches.
 - An empty chat composer disables its send arrow, as every chat does.
+- The submit pattern (`submitted` state, `preventDefault`, `showFieldErrors`, `noValidate`) stays inline at each form. There is no shared `Form` part: a reset after success, a server refusal and a region check each differ per form, and each would need its own escape hatch in it.
 - Copy: "Enter …" for missing text, "Choose …" for a missing pick, "Enter a valid …" for a malformed value; one sentence, no "Please".
 
 ## Inside a dialog

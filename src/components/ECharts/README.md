@@ -9,7 +9,7 @@ A prop that does the same job on two renderers has the same name on both.
 - **Header:** only `MultiSeriesChart` and `PieChart` draw a header row, from `title` (`MultiSeriesChart` adds `subtitle`, `titleTooltip` and `headingAs`). Leave `title` out rather than passing `""`. The other renderers draw no header: their `ChartPanelToolbar` holds a `ChartPanelTitle` and `ChartExportButtons`, which reach the chart through `onReady`.
 - **Exports:** `exportButtons` on the renderers with a header: `'auto'`, `'hidden'`, or an object choosing `csv`, `png`, `filename`, `pngTitle` and `pngIconUrl`. Under a `ChartPanelToolbar` it is `'hidden'`, and the buttons go in the toolbar.
 - **Legend:** `showLegend`, off by default.
-- **Size:** `containerClassName={CHART_FILL}` inside a `ChartPanelBody` (src/ui/ChartPanel.tsx). `height` is for a fixed tile only, such as a side donut, a sparkline or a Pro dashboard card.
+- **Size:** `containerClassName={CHART_FILL}` inside a `ChartPanelBody` (src/ui/ChartPanel.tsx). `height` is for a fixed tile, such as a side donut or a sparkline, and for a height the code computes. Pro dashboard charts keep their own card system, sized by the height the user picks for each card (compact, default, tall), so they pass `height` and never move onto the chart shell.
 - **Tooltip:** `tooltipFormatter` on the renderers that take one; `MultiSeriesChart` reads `chartOptions.tooltip`.
 
 ## What a chart must show
@@ -36,7 +36,7 @@ A prop that does the same job on two renderers has the same name on both.
 
 ## Event rail
 
-`MultiSeriesChart` draws hallmarks on a rail under the plot (`MultiSeriesChart/eventRail.ts`). Events from every source, Pro dashboard notes and LlamaAI included, draw here.
+`MultiSeriesChart` draws hallmarks on a rail under the plot (`MultiSeriesChart/eventRail.ts`). Events from every source, Pro dashboard notes and LlamaAI annotations included, draw here; no chart offers a switch to draw them as lines instead.
 
 - `hallmarks` and `rangeHallmarks` are unix seconds, the unit the API sends. A source that builds dates in milliseconds converts them before passing them in.
 - `referenceLines` is not an event: it draws a dated divider across the plot, such as Today on an unlock schedule, where the line itself splits past from future.

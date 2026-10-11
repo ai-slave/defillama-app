@@ -11,6 +11,7 @@ import {
 
 const EXPERIMENT_ID: ExperimentId = 'llamaai-free-label-v1'
 
+// The experiment tests the word, not the look: its classes only show or hide, and the B badge is PromoBadge's brand tint.
 export const freeLabelAOnly = '[html[data-ab-llamaai-free-label-v1=b]_&]:hidden'
 export const freeLabelBOnly = 'hidden [html[data-ab-llamaai-free-label-v1=b]_&]:inline'
 export const freeBadgeBOnly = `hidden ${promoBadgeStyles} [html[data-ab-llamaai-free-label-v1=b]_&]:inline-flex`

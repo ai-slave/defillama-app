@@ -11,7 +11,8 @@ export type TreemapNode = {
 	children?: Array<TreemapNode>
 }
 
-/** 'flat': one level of tiles, each labelled with its name and `valueSymbol` value; no drill or roam. */
+/** 'flat': one level of tiles, each labelled with its name and `valueSymbol` value; no drill or roam. Sonic FeeM's
+    rewards leaderboard draws through it, so a one-level share stays a treemap here rather than a page-local chart. */
 export type TreemapVariant = 'narrative' | 'rwa' | 'flat'
 
 export interface TreemapChartProps {
