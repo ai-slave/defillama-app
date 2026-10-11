@@ -3,8 +3,14 @@ import * as Ariakit from '@ariakit/react'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test } from 'vitest'
-import { MenuItem, MenuSurface } from '../MenuSurface'
-import { ComboboxSurface, DrawerDismiss, PopoverSurface, type SurfaceOwnProps } from '../PopoverSurface'
+import {
+	ComboboxSurface,
+	DrawerDismiss,
+	PopoverSurface,
+	type SurfaceOwnProps,
+	MenuItem,
+	MenuSurface
+} from '../PopoverSurface'
 
 let root: Root
 let container: HTMLDivElement

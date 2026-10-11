@@ -13,7 +13,7 @@ import {
 import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
-import { ChartPanelBodyEmpty, ChartPanelBodyError, ChartPanelBodyLoading } from '~/ui/ChartPanel'
+import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { formatCompactNumber } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
 import { buildApiUsageChartData, rankRoutesByTotal } from './apiUsageChart'
@@ -207,15 +207,17 @@ export function ApiUsageBreakdown({ usageStatsQuery }: { usageStatsQuery: UseQue
 
 			{/* Chart */}
 			{queryReadFailed(usageStatsQuery) ? (
-				<ChartPanelBodyError retry={usageStatsQuery} className="min-h-[200px]">
+				<SurfaceBodyStatus variant="error" retry={usageStatsQuery} className="min-h-[200px]">
 					Couldn't load usage stats.
-				</ChartPanelBodyError>
+				</SurfaceBodyStatus>
 			) : usageStatsQuery.isLoading ? (
-				<ChartPanelBodyLoading label="Loading usage stats" className="min-h-[200px]" />
+				<SurfaceBodyLoadingStatus label="Loading usage stats" className="min-h-[200px]" />
 			) : sortedStats.length === 0 ? (
-				<ChartPanelBodyEmpty className="min-h-[200px]">No usage data yet.</ChartPanelBodyEmpty>
+				<SurfaceBodyStatus variant="empty" className="min-h-[200px]">
+					No usage data yet.
+				</SurfaceBodyStatus>
 			) : (
-				<Suspense fallback={<ChartPanelBodyLoading label="Loading usage stats" className="min-h-[200px]" />}>
+				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading usage stats" className="min-h-[200px]" />}>
 					<MultiSeriesChart
 						dataset={dataset}
 						charts={charts}

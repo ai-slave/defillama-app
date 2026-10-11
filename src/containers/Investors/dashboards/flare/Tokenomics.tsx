@@ -4,16 +4,10 @@ import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
-import {
-	CHART_FILL,
-	ChartPanel,
-	ChartPanelBodyLoading,
-	ChartPanelExportShellLoading,
-	ChartPanelTitle,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelExportShellLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { PanelLoadingStatus, PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatusBadge } from '~/ui/StatusBadge'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatNumber } from '~/utils/numberFormat'
@@ -133,7 +127,7 @@ export default function Tokenomics() {
 						<StatTile label="Burned (Last Month)" value={inf.kpis.lastMonthBurned} />
 					</div>
 					{inf.pctChart && (
-						<ChartPanel>
+						<Panel>
 							<Suspense fallback={<ChartPanelExportShellLoading />}>
 								<MultiSeriesChart
 									dataset={inf.pctChart.dataset}
@@ -147,11 +141,11 @@ export default function Tokenomics() {
 									chartOptions={inf.pctChart.chartOptions}
 								/>
 							</Suspense>
-						</ChartPanel>
+						</Panel>
 					)}
 					<div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
 						{inf.circulatingChart && (
-							<ChartPanel>
+							<Panel>
 								<Suspense fallback={<ChartPanelExportShellLoading />}>
 									<MultiSeriesChart
 										dataset={inf.circulatingChart.dataset}
@@ -165,10 +159,10 @@ export default function Tokenomics() {
 										chartOptions={inf.circulatingChart.chartOptions}
 									/>
 								</Suspense>
-							</ChartPanel>
+							</Panel>
 						)}
 						{protocolChart && (
-							<ChartPanel>
+							<Panel>
 								<ChartPanelToolbar
 									leading={
 										<ChartPanelTitle subtitle={protocolChart.subtitle}>
@@ -194,7 +188,7 @@ export default function Tokenomics() {
 										csvSource={{ type: 'dataset', prepare: () => protocolChart.dataset }}
 									/>
 								</ChartPanelToolbar>
-								<Suspense fallback={<ChartPanelBodyLoading />}>
+								<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 									<MultiSeriesChart
 										dataset={protocolChart.dataset}
 										charts={protocolChart.charts}
@@ -205,7 +199,7 @@ export default function Tokenomics() {
 										chartOptions={protocolChart.chartOptions}
 									/>
 								</Suspense>
-							</ChartPanel>
+							</Panel>
 						)}
 					</div>
 				</>
@@ -220,7 +214,7 @@ export default function Tokenomics() {
 				<StatTile label="Total Burned" value={bk.totalGasBurned} />
 			</div>
 
-			<ChartPanel>
+			<Panel>
 				<ChartPanelToolbar
 					leading={
 						<ChartPanelTitle subtitle="FLR removed from supply by transaction fees, net of the FTSO/FDC voter gas refund. Daily and cumulative.">
@@ -249,7 +243,7 @@ export default function Tokenomics() {
 						}}
 					/>
 				</ChartPanelToolbar>
-				<Suspense fallback={<ChartPanelBodyLoading />}>
+				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 					{burnView === 'daily' ? (
 						<MultiSeriesChart
 							key="daily"
@@ -274,7 +268,7 @@ export default function Tokenomics() {
 						/>
 					)}
 				</Suspense>
-			</ChartPanel>
+			</Panel>
 
 			<h2 className="heading-xs">FLR Emissions</h2>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
@@ -285,7 +279,7 @@ export default function Tokenomics() {
 				<StatTile label="Epochs Tracked" value={ek.epochsTracked} />
 				<StatTile label="Latest Epoch Burn" value={ek.latestEpochBurn} />
 			</div>
-			<ChartPanel>
+			<Panel>
 				<Suspense fallback={<ChartPanelExportShellLoading />}>
 					<MultiSeriesChart
 						dataset={e.perEpochDataset}
@@ -298,7 +292,7 @@ export default function Tokenomics() {
 						chartOptions={e.perEpochChartOptions}
 					/>
 				</Suspense>
-			</ChartPanel>
+			</Panel>
 
 			<h2 className="heading-xs">Burn vs. Emit & Net Inflation</h2>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -323,7 +317,7 @@ export default function Tokenomics() {
 					tooltip="FLR emitted minus FLR burned, over the trailing 30 days."
 				/>
 			</div>
-			<ChartPanel>
+			<Panel>
 				<Suspense fallback={<ChartPanelExportShellLoading />}>
 					<MultiSeriesChart
 						dataset={e.burnVsEmitDataset}
@@ -337,7 +331,7 @@ export default function Tokenomics() {
 						chartOptions={e.burnVsEmitChartOptions}
 					/>
 				</Suspense>
-			</ChartPanel>
+			</Panel>
 			{e.burnVsEmitSubtitle && <p className="body-sm text-secondary">{e.burnVsEmitSubtitle}</p>}
 
 			<h2 className="heading-xs">FIRE (FIP.16)</h2>
@@ -365,7 +359,7 @@ export default function Tokenomics() {
 						)}
 						<StatTile label="Tag Fees" value={fire.kpis.tagsCollectedUsd} tooltip="Fees from Flare's Tags product." />
 					</div>
-					<ChartPanel>
+					<Panel>
 						<ChartPanelToolbar
 							leading={
 								<ChartPanelTitle subtitle={fire.subtitle ?? 'Daily fees collected by source and cumulative total.'}>
@@ -381,7 +375,7 @@ export default function Tokenomics() {
 								csvSource={{ type: 'dataset', prepare: () => fire.dataset }}
 							/>
 						</ChartPanelToolbar>
-						<Suspense fallback={<ChartPanelBodyLoading />}>
+						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<MultiSeriesChart
 								dataset={fire.dataset}
 								charts={fire.charts}
@@ -393,7 +387,7 @@ export default function Tokenomics() {
 								chartOptions={fire.chartOptions}
 							/>
 						</Suspense>
-					</ChartPanel>
+					</Panel>
 					{fire.wallets.length > 0 && (
 						<Card padding="none" className="overflow-x-auto">
 							<table className="w-full text-left body-md">

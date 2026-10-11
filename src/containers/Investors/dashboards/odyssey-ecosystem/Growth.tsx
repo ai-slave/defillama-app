@@ -2,15 +2,10 @@ import { lazy, Suspense, useMemo, useState } from 'react'
 import { buildSparseCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
-import {
-	CHART_FILL,
-	ChartPanel,
-	ChartPanelBodyLoading,
-	ChartPanelExportShellLoading,
-	ChartPanelTitle,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelExportShellLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatPercent } from '~/utils/numberFormat'
 import { useTab, chartToModel, type LooprDailyRow, type GrowthResponse } from './api'
@@ -284,7 +279,7 @@ export default function Growth() {
 
 			<h2 className="heading-xs">Loopr · Daily Activity (Combined)</h2>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-				<ChartPanel>
+				<Panel>
 					{isLoading || looprTotalDatasets.activeAccounts.source.length === 0 ? (
 						<ChartPanelExportShellLoading />
 					) : (
@@ -301,8 +296,8 @@ export default function Growth() {
 							/>
 						</Suspense>
 					)}
-				</ChartPanel>
-				<ChartPanel>
+				</Panel>
+				<Panel>
 					{isLoading || looprTotalDatasets.activePositions.source.length === 0 ? (
 						<ChartPanelExportShellLoading />
 					) : (
@@ -319,12 +314,12 @@ export default function Growth() {
 							/>
 						</Suspense>
 					)}
-				</ChartPanel>
+				</Panel>
 			</div>
 
 			<h2 className="heading-xs">Loopr · Cumulative Onboarding</h2>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-				<ChartPanel>
+				<Panel>
 					{isLoading ? (
 						<ChartPanelExportShellLoading />
 					) : (
@@ -341,8 +336,8 @@ export default function Growth() {
 							/>
 						</Suspense>
 					)}
-				</ChartPanel>
-				<ChartPanel>
+				</Panel>
+				<Panel>
 					{isLoading ? (
 						<ChartPanelExportShellLoading />
 					) : (
@@ -359,15 +354,15 @@ export default function Growth() {
 							/>
 						</Suspense>
 					)}
-				</ChartPanel>
+				</Panel>
 			</div>
 
 			<h2 className="heading-xs">Loopr · Per-Chain Activity</h2>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				{perChainModels?.activeUsers && (
-					<ChartPanel>
+					<Panel>
 						<ChartPanelToolbar leading={<ChartPanelTitle>Active Users by Chain</ChartPanelTitle>} />
-						<Suspense fallback={<ChartPanelBodyLoading />}>
+						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<MultiSeriesChart
 								dataset={perChainModels.activeUsers.dataset}
 								charts={perChainModels.activeUsers.charts}
@@ -377,12 +372,12 @@ export default function Growth() {
 								exportButtons="hidden"
 							/>
 						</Suspense>
-					</ChartPanel>
+					</Panel>
 				)}
 				{perChainModels?.activePositions && (
-					<ChartPanel>
+					<Panel>
 						<ChartPanelToolbar leading={<ChartPanelTitle>Active Positions by Chain</ChartPanelTitle>} />
-						<Suspense fallback={<ChartPanelBodyLoading />}>
+						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<MultiSeriesChart
 								dataset={perChainModels.activePositions.dataset}
 								charts={perChainModels.activePositions.charts}
@@ -392,18 +387,18 @@ export default function Growth() {
 								exportButtons="hidden"
 							/>
 						</Suspense>
-					</ChartPanel>
+					</Panel>
 				)}
 			</div>
 
 			{depositsModel && (
 				<>
 					<h2 className="heading-xs">Loopr · Deposits by Chain</h2>
-					<ChartPanel>
+					<Panel>
 						<ChartPanelToolbar
 							leading={<ChartPanelTitle subtitle="USD deposits per chain">Total deposits over time</ChartPanelTitle>}
 						/>
-						<Suspense fallback={<ChartPanelBodyLoading />}>
+						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<MultiSeriesChart
 								dataset={depositsModel.dataset}
 								charts={depositsModel.charts}
@@ -413,7 +408,7 @@ export default function Growth() {
 								exportButtons="hidden"
 							/>
 						</Suspense>
-					</ChartPanel>
+					</Panel>
 				</>
 			)}
 
@@ -458,7 +453,7 @@ export default function Growth() {
 			<h2 className="heading-xs">Token Prices</h2>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				{tokenPriceDatasets.met.source.length > 0 && (
-					<ChartPanel>
+					<Panel>
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								title="MET Price"
@@ -471,10 +466,10 @@ export default function Growth() {
 								containerClassName={CHART_FILL}
 							/>
 						</Suspense>
-					</ChartPanel>
+					</Panel>
 				)}
 				{tokenPriceDatasets.vsp.source.length > 0 && (
-					<ChartPanel>
+					<Panel>
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								title="VSP Price"
@@ -487,14 +482,14 @@ export default function Growth() {
 								containerClassName={CHART_FILL}
 							/>
 						</Suspense>
-					</ChartPanel>
+					</Panel>
 				)}
 			</div>
 
 			{marketComboModel && (
 				<>
 					<h2 className="heading-xs">Ecosystem TVL Change vs ETH (cumulative)</h2>
-					<ChartPanel>
+					<Panel>
 						<ChartPanelToolbar
 							leading={
 								<ChartPanelTitle subtitle="Combined ecosystem TVL change vs ETH/USD change — 2y window">
@@ -502,7 +497,7 @@ export default function Growth() {
 								</ChartPanelTitle>
 							}
 						/>
-						<Suspense fallback={<ChartPanelBodyLoading />}>
+						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<MultiSeriesChart
 								dataset={marketComboModel.dataset}
 								charts={marketComboModel.charts}
@@ -512,20 +507,20 @@ export default function Growth() {
 								exportButtons="hidden"
 							/>
 						</Suspense>
-					</ChartPanel>
+					</Panel>
 				</>
 			)}
 
 			{morphoMarketModel && (
 				<>
 					<h2 className="heading-xs">Morpho Market · Supply / Borrow / Utilization</h2>
-					<ChartPanel>
+					<Panel>
 						<ChartPanelToolbar
 							leading={
 								<ChartPanelTitle subtitle="Daily supply / borrow / utilization">Featured Morpho market</ChartPanelTitle>
 							}
 						/>
-						<Suspense fallback={<ChartPanelBodyLoading />}>
+						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<MultiSeriesChart
 								dataset={morphoMarketModel.dataset}
 								charts={morphoMarketModel.charts}
@@ -535,7 +530,7 @@ export default function Growth() {
 								exportButtons="hidden"
 							/>
 						</Suspense>
-					</ChartPanel>
+					</Panel>
 				</>
 			)}
 
@@ -545,7 +540,7 @@ export default function Growth() {
 					<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 						{morphoMarkets.map(({ market, model }) => {
 							return (
-								<ChartPanel key={market.id}>
+								<Panel key={market.id}>
 									<ChartPanelToolbar
 										leading={
 											<ChartPanelTitle subtitle="Daily supply / borrow / utilization">
@@ -553,7 +548,7 @@ export default function Growth() {
 											</ChartPanelTitle>
 										}
 									/>
-									<Suspense fallback={<ChartPanelBodyLoading />}>
+									<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 										<MultiSeriesChart
 											dataset={model.dataset}
 											charts={model.charts}
@@ -563,7 +558,7 @@ export default function Growth() {
 											exportButtons="hidden"
 										/>
 									</Suspense>
-								</ChartPanel>
+								</Panel>
 							)
 						})}
 					</div>
@@ -573,7 +568,7 @@ export default function Growth() {
 			{spendVsTvl && (
 				<>
 					<h2 className="heading-xs">Incentive Spend vs Pool TVL · Efficiency</h2>
-					<ChartPanel>
+					<Panel>
 						<ChartPanelToolbar
 							leading={
 								<ChartPanelTitle subtitle="Compare incentive outlay against the TVL it attracted">{`${spendVenue} — weekly spend vs pool TVL`}</ChartPanelTitle>
@@ -588,7 +583,7 @@ export default function Growth() {
 								onValueChange={setSpendVenue}
 							/>
 						</ChartPanelToolbar>
-						<Suspense fallback={<ChartPanelBodyLoading />}>
+						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<MultiSeriesChart
 								key={spendVenue}
 								dataset={spendVsTvl.model.dataset}
@@ -599,7 +594,7 @@ export default function Growth() {
 								exportButtons="hidden"
 							/>
 						</Suspense>
-					</ChartPanel>
+					</Panel>
 				</>
 			)}
 		</div>

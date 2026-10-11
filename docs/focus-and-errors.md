@@ -57,7 +57,7 @@ Never call `mutation.reset()` while a newer request may be pending: it detaches 
 
 A retry that hides its error removes the button that has focus, never shows its pending label, and moves the layout twice. Keep the error until the retry succeeds.
 
-A failed read's Try again comes from the status part: pass the query as `retry` to `PanelStatus`, `SurfaceBodyStatus`, `ChartPanelBodyError` or `InlineStatus`, and the part draws it with the focus handoff. Place one by hand only when it hands focus somewhere better (a search field that stays).
+A failed read's Try again comes from the status part: pass the query as `retry` to `PanelStatus`, `SurfaceBodyStatus` or `InlineStatus`, and the part draws it with the focus handoff. Place one by hand only when it hands focus somewhere better (a search field that stays).
 
 `scripts/policies/check-status-parts.ts` fails a retry gated on a query's `isError`, `isLoadingError` or `error`, a loading test of the same query placed before its failed read, and a read's Try again placed by hand inside a status part.
 

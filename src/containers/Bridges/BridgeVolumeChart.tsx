@@ -6,9 +6,10 @@ import {
 	type LowercaseDwmGrouping
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
-import { ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { DataFreshness } from '~/ui/DataFreshness'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import type { BridgeVolumePoint } from './api.types'
 import {
 	BRIDGE_VOLUME_METRIC_TYPES,
@@ -86,7 +87,7 @@ export function BridgeVolumeChart({
 				</div>
 			) : null}
 
-			<Suspense fallback={<ChartPanelBodyLoading style={{ minHeight: height }} />}>
+			<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" style={{ minHeight: height }} />}>
 				<MultiSeriesChart
 					dataset={deferredChartData.dataset}
 					charts={deferredChartData.charts}

@@ -21,13 +21,8 @@ import type { ChartBuilderConfig } from '~/containers/ProDashboard/types'
 import { getAdapterBuilderMetric } from '~/containers/ProDashboard/utils/adapterChartMapping'
 import { generateItemId } from '~/containers/ProDashboard/utils/dashboardUtils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import {
-	CHART_FILL,
-	ChartPanelBodyError,
-	ChartPanelBodyLoading,
-	ChartPanelExportShellLoading,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelExportShellLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { tokenIconUrl } from '~/utils/icons'
@@ -194,7 +189,11 @@ export function DimensionProtocolChartByType({
 	})
 
 	if (queryReadFailed(query)) {
-		return <ChartPanelBodyError retry={query}>Couldn&apos;t load the {title} chart.</ChartPanelBodyError>
+		return (
+			<SurfaceBodyStatus variant="error" retry={query}>
+				Couldn&apos;t load the {title} chart.
+			</SurfaceBodyStatus>
+		)
 	}
 
 	if (query.isLoading) {
@@ -350,7 +349,7 @@ function ChartByType({
 					}}
 				/>
 			</ChartPanelToolbar>
-			<React.Suspense fallback={<ChartPanelBodyLoading />}>
+			<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<MultiSeriesChart
 					dataset={deferredMainChartData.dataset}
 					charts={deferredMainChartData.charts}

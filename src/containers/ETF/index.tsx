@@ -21,8 +21,10 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
-import { CHART_FILL, ChartPanel, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
+import { Panel } from '~/ui/Panel'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
 import { tokenIconUrl } from '~/utils/icons'
@@ -86,7 +88,7 @@ export function ETFOverview({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 						})}
 					</div>
 				</SummaryStatsCard>
-				<ChartPanel className="col-span-2">
+				<Panel className="col-span-2">
 					<ChartPanelToolbar>
 						<h2 className="mr-auto heading-xs">Flows (Source: Farside)</h2>
 						<ChartGroupingSelector value={groupBy} setValue={setGroupBy} options={DWMC_GROUPING_OPTIONS_LOWERCASE} />
@@ -115,7 +117,7 @@ export function ETFOverview({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 							}}
 						/>
 					</ChartPanelToolbar>
-					<React.Suspense fallback={<ChartPanelBodyLoading />}>
+					<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={finalCharts.dataset}
 							charts={finalCharts.charts}
@@ -125,7 +127,7 @@ export function ETFOverview({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 							onReady={handleChartReady}
 						/>
 					</React.Suspense>
-				</ChartPanel>
+				</Panel>
 			</SummaryCardGrid>
 			<SearchTableProvider options={{ data: snapshot, columns, initialState: { sorting: DEFAULT_SORTING_STATE } }}>
 				<Card padding="none">

@@ -5,7 +5,8 @@ import type { paginatedTableFeatures } from '~/components/Table/features/paginat
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { Table } from '~/components/Table/Table'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import {
@@ -180,7 +181,7 @@ export default function PoolsOverview() {
 				{isLoading ? (
 					<PanelLoadingStatus className="min-h-[400px]" />
 				) : (
-					<ChartPanel>
+					<Panel>
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								title="TVL by Pool"
@@ -193,13 +194,13 @@ export default function PoolsOverview() {
 								exportButtons={MAPLE_CSV_ONLY_EXPORT}
 							/>
 						</Suspense>
-					</ChartPanel>
+					</Panel>
 				)}
 
 				{isLoading ? (
 					<PanelLoadingStatus className="min-h-[400px]" />
 				) : data.utilization.source.length > 0 ? (
-					<ChartPanel>
+					<Panel>
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								title="Pool Utilization"
@@ -212,14 +213,14 @@ export default function PoolsOverview() {
 								exportButtons={MAPLE_CSV_ONLY_EXPORT}
 							/>
 						</Suspense>
-					</ChartPanel>
+					</Panel>
 				) : null}
 			</div>
 
 			{isLoading ? (
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : data.apy.source.length > 0 ? (
-				<ChartPanel>
+				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Spot APY by Pool"
@@ -232,7 +233,7 @@ export default function PoolsOverview() {
 							exportButtons={MAPLE_CSV_ONLY_EXPORT}
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			) : null}
 
 			{isLoading ? <CardSkeleton title="Active Pools" /> : <PoolsTable data={poolRows} />}

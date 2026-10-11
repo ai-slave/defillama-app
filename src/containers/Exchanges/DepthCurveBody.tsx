@@ -8,7 +8,8 @@
  */
 import * as React from 'react'
 import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChart/categoryOptions'
-import { CHART_FILL, ChartPanelBody, ChartPanelBodyEmpty, ChartPanelBodyLoading } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelBody } from '~/ui/ChartPanel'
+import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { depthCurveAriaLabel, depthCurveDataset, type DepthCurveEntry } from './depthCurve'
 
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
@@ -36,12 +37,12 @@ export function DepthCurveBody({ entries }: { entries: Array<DepthCurveEntry> })
 	)
 
 	if (!dataset) {
-		return <ChartPanelBodyEmpty>No fully measured order-book depth to chart yet.</ChartPanelBodyEmpty>
+		return <SurfaceBodyStatus variant="empty">No fully measured order-book depth to chart yet.</SurfaceBodyStatus>
 	}
 
 	return (
 		<ChartPanelBody role="img" aria-label={ariaLabel}>
-			<React.Suspense fallback={<ChartPanelBodyLoading />}>
+			<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<MultiSeriesChart
 					dataset={{ source: dataset.source, dimensions: dataset.dimensions }}
 					charts={charts}

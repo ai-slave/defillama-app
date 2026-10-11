@@ -19,8 +19,10 @@ import { VirtualTable } from '~/components/Table/VirtualTable'
 import { TokenLogo } from '~/components/TokenLogo'
 import { CHART_SERIES_LIMIT, chartColor } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { ChartPanel, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { MetricRow } from '~/ui/MetricPrimitives'
+import { Panel } from '~/ui/Panel'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
@@ -216,7 +218,7 @@ export function BridgedTVLByChain({
 						)}
 					</div>
 				</SummaryStatsCard>
-				<ChartPanel className="col-span-2">
+				<Panel className="col-span-2">
 					<ChartPanelToolbar>
 						<div className="mr-auto">
 							<Select
@@ -262,7 +264,7 @@ export function BridgedTVLByChain({
 							}}
 						/>
 					</ChartPanelToolbar>
-					<React.Suspense fallback={<ChartPanelBodyLoading />}>
+					<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<PieChart
 							chartData={deferredPiePresentation.chartData}
 							stackColors={deferredPiePresentation.stackColors}
@@ -271,7 +273,7 @@ export function BridgedTVLByChain({
 							onReady={onChartReady}
 						/>
 					</React.Suspense>
-				</ChartPanel>
+				</Panel>
 			</SummaryCardGrid>
 			<VirtualTable table={instance} />
 		</>

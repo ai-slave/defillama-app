@@ -15,16 +15,12 @@ import { EmbedChart } from '~/components/EmbedChart'
 import { serializeChainChartToMultiChart } from '~/containers/ProDashboard/utils/chartSerializer'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useIsClient } from '~/hooks/useIsClient'
-import {
-	ChartPanel,
-	ChartPanelBody,
-	ChartPanelBodyEmpty,
-	ChartPanelBodyLoading,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { MetricChip } from '~/ui/MetricChip'
+import { Panel } from '~/ui/Panel'
 import { FailedDataNote } from '~/ui/ScopeNote'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import { pushShallowQuery } from '~/utils/routerQuery'
@@ -196,10 +192,10 @@ export function ChainChartPanel({
 
 	const selectedChartLabel = (chart: ChainChartLabels) => getChainMetricLabel(chart, chainTokenInfo?.token_symbol)
 	// The data request and the lazy chart chunk wait behind the same indicator.
-	const chartLoading = <ChartPanelBodyLoading />
+	const chartLoading = <SurfaceBodyLoadingStatus label="Loading chart" />
 
 	return (
-		<ChartPanel className="col-span-2">
+		<Panel className="col-span-2">
 			<ChartPanelToolbar
 				leading={
 					<>
@@ -267,9 +263,9 @@ export function ChainChartPanel({
 				{loadingCharts.length > 0 ? (
 					chartLoading
 				) : toggledCharts.length === 0 ? (
-					<ChartPanelBodyEmpty>
+					<SurfaceBodyStatus variant="empty">
 						{charts.length > 0 ? 'Pick metrics to plot.' : 'No chart data for this chain.'}
-					</ChartPanelBodyEmpty>
+					</SurfaceBodyStatus>
 				) : isActiveAddressesHidden && toggledCharts.length === 1 ? (
 					<CumulativeUnavailableNotice metric="Active Addresses" fill onShowDaily={() => updateGroupBy('daily')} />
 				) : (
@@ -292,6 +288,6 @@ export function ChainChartPanel({
 					</Suspense>
 				)}
 			</ChartPanelBody>
-		</ChartPanel>
+		</Panel>
 	)
 }

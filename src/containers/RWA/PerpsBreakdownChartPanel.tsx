@@ -4,15 +4,10 @@ import { ChartCsvExportButton } from '~/components/ChartExport/ChartCsvExportBut
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { Select } from '~/components/Select/Select'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import {
-	CHART_FILL,
-	ChartPanel,
-	ChartPanelBodyEmpty,
-	ChartPanelBodyError,
-	ChartPanelBodyLoading,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type { RWAOverviewDisplayRow } from './api.types'
 import {
@@ -217,7 +212,7 @@ export function RWAPerpsBreakdownChartPanel({
 
 	const plotsSeries = !failedRead && !isLoading && !deferredChart.isEmpty
 	return (
-		<ChartPanel className="flex flex-1 flex-col">
+		<Panel className="flex flex-1 flex-col">
 			<ChartPanelToolbar leading={metricSwitch}>
 				{periodSwitch}
 				{viewSwitch}
@@ -234,13 +229,15 @@ export function RWAPerpsBreakdownChartPanel({
 				) : null}
 			</ChartPanelToolbar>
 			{failedRead ? (
-				<ChartPanelBodyError retry={failedRead}>Couldn&apos;t load chart data.</ChartPanelBodyError>
+				<SurfaceBodyStatus variant="error" retry={failedRead}>
+					Couldn&apos;t load chart data.
+				</SurfaceBodyStatus>
 			) : isLoading ? (
-				<ChartPanelBodyLoading />
+				<SurfaceBodyLoadingStatus label="Loading chart" />
 			) : deferredChart.isEmpty ? (
-				<ChartPanelBodyEmpty>No data for this view.</ChartPanelBodyEmpty>
+				<SurfaceBodyStatus variant="empty">No data for this view.</SurfaceBodyStatus>
 			) : (
-				<Suspense fallback={<ChartPanelBodyLoading />}>
+				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 					<MultiSeriesChart
 						dataset={deferredChart.dataset}
 						charts={deferredChart.charts}
@@ -254,6 +251,6 @@ export function RWAPerpsBreakdownChartPanel({
 					/>
 				</Suspense>
 			)}
-		</ChartPanel>
+		</Panel>
 	)
 }

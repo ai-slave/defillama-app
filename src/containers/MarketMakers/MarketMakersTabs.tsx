@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { BasicLink } from '~/components/Link'
 import { Card } from '~/ui/Card'
 import { RailItem } from '~/ui/RailItem'
-import { tabTrackStyles, TabLink } from '~/ui/Tab'
+import { tabTrackStyles, TabLink } from '~/ui/Tabs'
 import { DepthIcon, DocumentationIcon, KpiIcon, PerformanceIndexIcon, SpreadIcon, VolumeIcon } from './TabIcons'
 
 type TabIcon = ComponentType<{ className?: string }>

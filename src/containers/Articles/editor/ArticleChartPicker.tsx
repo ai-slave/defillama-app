@@ -20,7 +20,6 @@ import {
 import { CHAIN_CHART_TYPES, CHART_TYPES, PROTOCOL_CHART_TYPES } from '~/containers/ProDashboard/types'
 import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
-import { ChartPanelBodyEmpty, ChartPanelBodyError, ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { CheckboxIndicator } from '~/ui/Checkbox'
 import { Dialog, DialogCancelButton, DialogDiscardGuard, DialogFooter, DialogHeader, DialogToolbar } from '~/ui/Dialog'
 import { Field } from '~/ui/Field'
@@ -30,7 +29,7 @@ import { Input } from '~/ui/Input'
 import { ListLoading, NoResults } from '~/ui/NoResults'
 import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { EmptyState, LoadingIndicator } from '~/ui/Status'
+import { EmptyState, LoadingIndicator, SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { tokenIconUrl, chainIconUrl } from '~/utils/icons'
 import { formatUsd } from '~/utils/numberFormat'
@@ -175,15 +174,19 @@ function MultiPreview({
 	// The preview is 300px tall, under the fallback's 360px default minimum.
 	if (allFailed) {
 		return (
-			<ChartPanelBodyError retry={failedReads} className="h-[300px] min-h-0">
+			<SurfaceBodyStatus variant="error" retry={failedReads} className="h-[300px] min-h-0">
 				Couldn&apos;t load chart data.
-			</ChartPanelBodyError>
+			</SurfaceBodyStatus>
 		)
 	}
-	const loading = <ChartPanelBodyLoading className="h-[300px] min-h-0" />
+	const loading = <SurfaceBodyLoadingStatus label="Loading chart" className="h-[300px] min-h-0" />
 	if (isLoading) return loading
 	if (chartModel.charts.length === 0) {
-		return <ChartPanelBodyEmpty className="h-[300px] min-h-0">No data available.</ChartPanelBodyEmpty>
+		return (
+			<SurfaceBodyStatus variant="empty" className="h-[300px] min-h-0">
+				No data available.
+			</SurfaceBodyStatus>
+		)
 	}
 	return (
 		<Suspense fallback={loading}>

@@ -15,17 +15,16 @@ import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
 import {
 	CHART_FILL,
-	ChartPanel,
 	ChartPanelBody,
-	ChartPanelBodyEmpty,
-	ChartPanelBodyLoading,
 	ChartPanelExportShellLoading,
 	ChartPanelTitle,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { MetricRow, MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
+import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
@@ -226,7 +225,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 						Report incorrect data
 					</Button>
 				</SummaryStatsCard>
-				<ChartPanel className="col-span-2">
+				<Panel className="col-span-2">
 					<ChartPanelToolbar leading={<ChartPanelTitle headingAs="h2">Cumulative Holdings Over Time</ChartPanelTitle>}>
 						{props.assets.length > 1 ? (
 							<SegmentedControl
@@ -245,7 +244,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 							csvSource={chartData ? { type: 'dataset', prepare: () => chartData.holdingsChart.dataset } : null}
 						/>
 					</ChartPanelToolbar>
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						{chartData != null ? (
 							<MultiSeriesChart
 								containerClassName={CHART_FILL}
@@ -257,14 +256,14 @@ export function DATCompany(props: IDATCompanyPageProps) {
 								onReady={handleChartReady}
 							/>
 						) : (
-							<ChartPanelBodyEmpty>No holdings recorded.</ChartPanelBodyEmpty>
+							<SurfaceBodyStatus variant="empty">No holdings recorded.</SurfaceBodyStatus>
 						)}
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			</SummaryCardGrid>
 			<div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
 				{props.mNAVChart != null ? (
-					<ChartPanel className="col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+					<Panel className="col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								dataset={props.mNAVChart.dataset}
@@ -281,10 +280,10 @@ export function DATCompany(props: IDATCompanyPageProps) {
 								}}
 							/>
 						</Suspense>
-					</ChartPanel>
+					</Panel>
 				) : null}
 				{props.fdChart != null ? (
-					<ChartPanel className="col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+					<Panel className="col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								dataset={props.fdChart.dataset}
@@ -301,22 +300,22 @@ export function DATCompany(props: IDATCompanyPageProps) {
 								}}
 							/>
 						</Suspense>
-					</ChartPanel>
+					</Panel>
 				) : null}
 				{props.ohlcvChartData != null ? (
-					<ChartPanel className="col-span-full">
+					<Panel className="col-span-full">
 						<ChartPanelToolbar leading={<ChartPanelTitle headingAs="h2">Share Price</ChartPanelTitle>} />
 						{/* The candlestick sets its own height: 480px plus any indicator panels. */}
 						<ChartPanelBody className="min-h-[480px]">
-							<Suspense fallback={<ChartPanelBodyLoading className="min-h-[480px]" />}>
+							<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="min-h-[480px]" />}>
 								<CandlestickChart data={props.ohlcvChartData} />
 							</Suspense>
 						</ChartPanelBody>
 						<p className="p-2 pt-0 body-sm text-tertiary">Source: Yahoo Finance</p>
-					</ChartPanel>
+					</Panel>
 				) : null}
 				{props.totalAssetValueChart != null ? (
-					<ChartPanel className="col-span-full">
+					<Panel className="col-span-full">
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								dataset={props.totalAssetValueChart.dataset}
@@ -331,7 +330,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 								}}
 							/>
 						</Suspense>
-					</ChartPanel>
+					</Panel>
 				) : null}
 			</div>
 			<SearchTableProvider

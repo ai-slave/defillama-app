@@ -8,7 +8,7 @@ import { LazySubscribeProModal } from '~/containers/Subscription/shared/Subscrib
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
-import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
+import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 

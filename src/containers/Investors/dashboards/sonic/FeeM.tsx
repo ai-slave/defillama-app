@@ -6,15 +6,9 @@ import type { paginatedTableFeatures } from '~/components/Table/features/paginat
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { TablePager } from '~/components/Table/TablePager'
 import { Card } from '~/ui/Card'
-import {
-	CHART_FILL,
-	ChartPanel,
-	ChartPanelBody,
-	ChartPanelBodyLoading,
-	ChartPanelTitle,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
-import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
+import { CHART_FILL, ChartPanelBody, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
+import { PanelStatus, PanelLoadingStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatusBadge } from '~/ui/StatusBadge'
 import { StatTile } from '~/ui/SummaryStats'
 import { queryReadFailed } from '~/utils/query'
@@ -34,7 +28,7 @@ function FeeMTreemap({ leaderboard }: { leaderboard: Array<FeeMLeaderboardEntry>
 	}
 	return (
 		<ChartPanelBody>
-			<Suspense fallback={<ChartPanelBodyLoading />}>
+			<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<TreemapChart
 					treeData={treeData}
 					variant="flat"
@@ -193,9 +187,9 @@ export default function FeeM() {
 			{/* Daily Stats Chart */}
 			<div className="flex flex-col gap-4">
 				<h2 className="heading-xs">Daily Activity</h2>
-				<ChartPanel>
+				<Panel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>{data.dailyStatsTitle}</ChartPanelTitle>} />
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={data.dailyStatsModel.dataset}
 							charts={data.dailyStatsModel.charts}
@@ -206,16 +200,16 @@ export default function FeeM() {
 							exportButtons="hidden"
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			</div>
 
 			{/* Rewards Treemap */}
 			<div className="flex flex-col gap-4">
 				<h2 className="heading-xs">Rewards Distribution</h2>
-				<ChartPanel>
+				<Panel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>Collected Rewards by Protocol</ChartPanelTitle>} />
 					<FeeMTreemap leaderboard={data.leaderboard} />
-				</ChartPanel>
+				</Panel>
 			</div>
 
 			{/* FeeM Leaderboard */}

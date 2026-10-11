@@ -7,8 +7,8 @@ import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import defs from '~/public/equities-definitions.json'
-import { ChartPanelBodyEmpty, ChartPanelBodyError, ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { queryReadFailed } from '~/utils/query'
 import { pushShallowQuery } from '~/utils/routerQuery'
@@ -214,18 +214,18 @@ export function EquitiesTreemapSection({
 			</TableToolbar>
 			{filterPills}
 			{queryReadFailed(datasetQuery) ? (
-				<ChartPanelBodyError retry={datasetQuery} style={{ height: CHART_HEIGHT }}>
+				<SurfaceBodyStatus variant="error" retry={datasetQuery} style={{ height: CHART_HEIGHT }}>
 					Couldn&apos;t load chart data.
-				</ChartPanelBodyError>
+				</SurfaceBodyStatus>
 			) : data == null ? (
-				<ChartPanelBodyLoading style={{ height: CHART_HEIGHT }} />
+				<SurfaceBodyLoadingStatus label="Loading chart" style={{ height: CHART_HEIGHT }} />
 			) : rankedRows.length === 0 ? (
-				<ChartPanelBodyEmpty style={{ height: CHART_HEIGHT }}>
+				<SurfaceBodyStatus variant="empty" style={{ height: CHART_HEIGHT }}>
 					No companies match the current filters.
-				</ChartPanelBodyEmpty>
+				</SurfaceBodyStatus>
 			) : (
 				<>
-					<Suspense fallback={<ChartPanelBodyLoading style={{ height: CHART_HEIGHT }} />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" style={{ height: CHART_HEIGHT }} />}>
 						<MarketTreemapChart
 							treeData={treeData}
 							leaves={leaves}

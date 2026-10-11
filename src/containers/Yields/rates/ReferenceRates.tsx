@@ -20,16 +20,9 @@ import { SortIcon } from '~/components/Table/SortIcon'
 import { OTHERS_COLOR } from '~/constants/colors'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { Change } from '~/ui/Change'
-import {
-	CHART_FILL,
-	ChartPanel,
-	ChartPanelBody,
-	ChartPanelBodyEmpty,
-	ChartPanelBodyError,
-	ChartPanelBodyLoading,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { TableToolbar } from '~/ui/Toolbar'
 import {
 	formatCompactNumber,
@@ -135,10 +128,10 @@ function RatesChart({
 	const [isDark] = useDarkModeManager()
 	const spec = buildRatesChart(points, isDark)
 	if (!spec) {
-		return <ChartPanelBodyEmpty>No rate history is available.</ChartPanelBodyEmpty>
+		return <SurfaceBodyStatus variant="empty">No rate history is available.</SurfaceBodyStatus>
 	}
 	return (
-		<Suspense fallback={<ChartPanelBodyLoading label="Loading rates chart" />}>
+		<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading rates chart" />}>
 			<MultiSeriesChart
 				dataset={spec.dataset}
 				charts={spec.charts}
@@ -229,7 +222,7 @@ function ReferenceRatesSummary({
 }) {
 	const chartRef = useRef<echarts.ECharts | null>(null)
 	return (
-		<ChartPanel role="region" aria-labelledby="reference-rates-title">
+		<Panel role="region" aria-labelledby="reference-rates-title">
 			<PanelHeader className="items-start">
 				<div className="mr-auto flex min-w-0 flex-col gap-0.5">
 					<PanelTitle as="h1" id="reference-rates-title">
@@ -275,9 +268,11 @@ function ReferenceRatesSummary({
 			</ChartPanelToolbar>
 			<ChartPanelBody>
 				{failedRead ? (
-					<ChartPanelBodyError retry={failedRead}>Couldn&apos;t load {range} history.</ChartPanelBodyError>
+					<SurfaceBodyStatus variant="error" retry={failedRead}>
+						Couldn&apos;t load {range} history.
+					</SurfaceBodyStatus>
 				) : loading ? (
-					<ChartPanelBodyLoading label={`Loading ${range} history`} />
+					<SurfaceBodyLoadingStatus label={`Loading ${range} history`} />
 				) : (
 					<RatesChart
 						points={points}
@@ -287,7 +282,7 @@ function ReferenceRatesSummary({
 					/>
 				)}
 			</ChartPanelBody>
-		</ChartPanel>
+		</Panel>
 	)
 }
 

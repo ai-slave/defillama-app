@@ -6,15 +6,10 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { CHART_SERIES_LIMIT } from '~/constants/colors'
 import { Card } from '~/ui/Card'
-import {
-	CHART_FILL,
-	ChartPanel,
-	ChartPanelBodyLoading,
-	ChartPanelExportShellLoading,
-	ChartPanelTitle,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelExportShellLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { Skeleton } from '~/ui/Skeleton'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatUsd } from '~/utils/numberFormat'
 import { aggregateBreakdown, channelsToBars, lastSeriesValue, singleSeriesDataset } from './chartData'
@@ -270,12 +265,12 @@ export default function Ecosystem() {
 				)}
 			</div>
 
-			<ChartPanel>
+			<Panel>
 				<ChartPanelToolbar leading={<ChartPanelTitle>NEAR Intents Daily Volume</ChartPanelTitle>} />
 				{isLoading || !intentModels.volume ? (
-					<ChartPanelBodyLoading />
+					<SurfaceBodyLoadingStatus label="Loading chart" />
 				) : (
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={intentModels.volume.dataset}
 							charts={intentModels.volume.charts}
@@ -287,15 +282,15 @@ export default function Ecosystem() {
 						/>
 					</Suspense>
 				)}
-			</ChartPanel>
+			</Panel>
 
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-				<ChartPanel>
+				<Panel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>NEAR Intents Fees</ChartPanelTitle>} />
 					{isLoading || !intentModels.fees ? (
-						<ChartPanelBodyLoading />
+						<SurfaceBodyLoadingStatus label="Loading chart" />
 					) : (
-						<Suspense fallback={<ChartPanelBodyLoading />}>
+						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<MultiSeriesChart
 								dataset={intentModels.fees.dataset}
 								charts={intentModels.fees.charts}
@@ -307,13 +302,13 @@ export default function Ecosystem() {
 							/>
 						</Suspense>
 					)}
-				</ChartPanel>
-				<ChartPanel>
+				</Panel>
+				<Panel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>NEAR Intents Swap Activity</ChartPanelTitle>} />
 					{isLoading || !intentModels.activity ? (
-						<ChartPanelBodyLoading />
+						<SurfaceBodyLoadingStatus label="Loading chart" />
 					) : (
-						<Suspense fallback={<ChartPanelBodyLoading />}>
+						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<MultiSeriesChart
 								dataset={intentModels.activity.dataset}
 								charts={intentModels.activity.charts}
@@ -325,16 +320,16 @@ export default function Ecosystem() {
 							/>
 						</Suspense>
 					)}
-				</ChartPanel>
+				</Panel>
 			</div>
 
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-				<ChartPanel>
+				<Panel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>Volume by Token (All-Time, Top 10)</ChartPanelTitle>} />
 					{isLoading || !tokenPie ? (
-						<ChartPanelBodyLoading />
+						<SurfaceBodyLoadingStatus label="Loading chart" />
 					) : (
-						<Suspense fallback={<ChartPanelBodyLoading />}>
+						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<PieChart
 								chartData={tokenPie}
 								valueSymbol="$"
@@ -348,13 +343,13 @@ export default function Ecosystem() {
 							/>
 						</Suspense>
 					)}
-				</ChartPanel>
-				<ChartPanel>
+				</Panel>
+				<Panel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>Volume by Blockchain (All-Time)</ChartPanelTitle>} />
 					{isLoading || !blockchainPie ? (
-						<ChartPanelBodyLoading />
+						<SurfaceBodyLoadingStatus label="Loading chart" />
 					) : (
-						<Suspense fallback={<ChartPanelBodyLoading />}>
+						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<PieChart
 								chartData={blockchainPie}
 								valueSymbol="$"
@@ -368,15 +363,15 @@ export default function Ecosystem() {
 							/>
 						</Suspense>
 					)}
-				</ChartPanel>
+				</Panel>
 			</div>
 
-			<ChartPanel>
+			<Panel>
 				<ChartPanelToolbar leading={<ChartPanelTitle>Fees by Referral Channel</ChartPanelTitle>} />
 				{isLoading || !channelBars ? (
-					<ChartPanelBodyLoading />
+					<SurfaceBodyLoadingStatus label="Loading chart" />
 				) : (
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<HBarChart
 							categories={channelBars.categories}
 							values={channelBars.values}
@@ -385,7 +380,7 @@ export default function Ecosystem() {
 						/>
 					</Suspense>
 				)}
-			</ChartPanel>
+			</Panel>
 
 			{/* Base-Chain Activity */}
 			<h2 className="heading-xs">Base-Chain Activity</h2>
@@ -423,7 +418,7 @@ export default function Ecosystem() {
 			</div>
 
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-				<ChartPanel>
+				<Panel>
 					{isLoading || !areaDatasets.transactions ? (
 						<ChartPanelExportShellLoading />
 					) : (
@@ -439,8 +434,8 @@ export default function Ecosystem() {
 							/>
 						</Suspense>
 					)}
-				</ChartPanel>
-				<ChartPanel>
+				</Panel>
+				<Panel>
 					{isLoading || !areaDatasets.activeAccounts ? (
 						<ChartPanelExportShellLoading />
 					) : (
@@ -456,8 +451,8 @@ export default function Ecosystem() {
 							/>
 						</Suspense>
 					)}
-				</ChartPanel>
-				<ChartPanel>
+				</Panel>
+				<Panel>
 					{isLoading || !areaDatasets.newAccounts ? (
 						<ChartPanelExportShellLoading />
 					) : (
@@ -473,8 +468,8 @@ export default function Ecosystem() {
 							/>
 						</Suspense>
 					)}
-				</ChartPanel>
-				<ChartPanel>
+				</Panel>
+				<Panel>
 					{isLoading || !areaDatasets.gasFees ? (
 						<ChartPanelExportShellLoading />
 					) : (
@@ -490,7 +485,7 @@ export default function Ecosystem() {
 							/>
 						</Suspense>
 					)}
-				</ChartPanel>
+				</Panel>
 			</div>
 
 			{/* Token Overview */}
@@ -515,7 +510,7 @@ export default function Ecosystem() {
 				)}
 			</div>
 
-			<ChartPanel>
+			<Panel>
 				{isLoading || !areaDatasets.nearPrice ? (
 					<ChartPanelExportShellLoading />
 				) : (
@@ -531,14 +526,14 @@ export default function Ecosystem() {
 						/>
 					</Suspense>
 				)}
-			</ChartPanel>
+			</Panel>
 
-			<ChartPanel>
+			<Panel>
 				<ChartPanelToolbar leading={<ChartPanelTitle>Token Supply</ChartPanelTitle>} />
 				{isLoading || !supplyModel ? (
-					<ChartPanelBodyLoading />
+					<SurfaceBodyLoadingStatus label="Loading chart" />
 				) : (
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={supplyModel.dataset}
 							charts={supplyModel.charts}
@@ -549,7 +544,7 @@ export default function Ecosystem() {
 						/>
 					</Suspense>
 				)}
-			</ChartPanel>
+			</Panel>
 
 			{/* Protocol */}
 			<h2 className="heading-xs">Protocol</h2>

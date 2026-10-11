@@ -8,8 +8,9 @@ import {
 	normalizeTooltipItems,
 	TOOLTIP_POINTED_ROW_STYLE
 } from '~/components/ECharts/shared/tooltip'
-import { CHART_FILL, ChartPanel, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { PanelLoadingStatus } from '~/ui/Status'
+import { CHART_FILL, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
+import { PanelLoadingStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { formatUsd } from '~/utils/numberFormat'
 import type { Chart, Kpi as KpiT } from './transform'
@@ -107,7 +108,7 @@ function VoteTurnoutChart({ chart }: { chart: VoteTurnoutData }) {
 	}, [chart])
 
 	return (
-		<Suspense fallback={<ChartPanelBodyLoading />}>
+		<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 			<MultiSeriesChart
 				dataset={dataset}
 				charts={charts}
@@ -280,7 +281,7 @@ export default function Security() {
 						['avgVoteTurnoutUni', 'Avg Vote Turnout (UNI)', undefined]
 					]}
 				/>
-				<ChartPanel>
+				<Panel>
 					<ChartPanelToolbar
 						leading={
 							<CardTitle
@@ -290,7 +291,7 @@ export default function Security() {
 						}
 					/>
 					{data.voteTurnout ? <VoteTurnoutChart chart={data.voteTurnout} /> : null}
-				</ChartPanel>
+				</Panel>
 				<TimeAreaCard
 					chart={data.delegatedUni}
 					valueSymbol=""

@@ -2,15 +2,9 @@ import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
-import {
-	CHART_FILL,
-	ChartPanel,
-	ChartPanelBodyLoading,
-	ChartPanelExportShellLoading,
-	ChartPanelTitle,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
-import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { CHART_FILL, ChartPanelExportShellLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
+import { PanelLoadingStatus, PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { queryReadFailed } from '~/utils/query'
 import { readInvestorApiJson } from '../../api.types'
@@ -72,7 +66,7 @@ export default function FAssets() {
 			</div>
 
 			{charts.locked && (
-				<ChartPanel>
+				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							dataset={charts.locked.dataset}
@@ -86,12 +80,12 @@ export default function FAssets() {
 							chartOptions={charts.locked.chartOptions}
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			)}
 
 			<div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
 				{charts.dist && (
-					<ChartPanel>
+					<Panel>
 						<ChartPanelToolbar
 							leading={
 								<ChartPanelTitle subtitle={charts.dist.subtitle} titleTooltip={charts.dist.titleTooltip}>
@@ -99,7 +93,7 @@ export default function FAssets() {
 								</ChartPanelTitle>
 							}
 						/>
-						<Suspense fallback={<ChartPanelBodyLoading />}>
+						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<PieChart
 								chartData={charts.dist.data}
 								stackColors={charts.dist.colors}
@@ -114,11 +108,11 @@ export default function FAssets() {
 								containerClassName={CHART_FILL}
 							/>
 						</Suspense>
-					</ChartPanel>
+					</Panel>
 				)}
 
 				{charts.allNetworksDist && (
-					<ChartPanel>
+					<Panel>
 						<ChartPanelToolbar
 							leading={
 								<ChartPanelTitle
@@ -129,7 +123,7 @@ export default function FAssets() {
 								</ChartPanelTitle>
 							}
 						/>
-						<Suspense fallback={<ChartPanelBodyLoading />}>
+						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<PieChart
 								chartData={charts.allNetworksDist.data}
 								stackColors={charts.allNetworksDist.colors}
@@ -144,7 +138,7 @@ export default function FAssets() {
 								containerClassName={CHART_FILL}
 							/>
 						</Suspense>
-					</ChartPanel>
+					</Panel>
 				)}
 			</div>
 

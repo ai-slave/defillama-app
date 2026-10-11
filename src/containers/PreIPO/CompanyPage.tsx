@@ -4,10 +4,12 @@ import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
 import { FundingRoundsTable } from '~/containers/PreIPO/FundingRoundsTable'
 import { PerpetualMarketsTable, TokenIssuersTable } from '~/containers/PreIPO/IntegrationTables'
 import { Card } from '~/ui/Card'
-import { ChartPanel, ChartPanelBodyEmpty, ChartPanelExportShellLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { EntityTitleRow } from '~/ui/EntityTitleRow'
 import { MetricRow } from '~/ui/MetricPrimitives'
+import { Panel } from '~/ui/Panel'
 import { StaleText } from '~/ui/StaleText'
+import { SurfaceBodyStatus } from '~/ui/Status'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { formatDate, formatDateTime } from '~/utils/dateFormat'
 import { preIpoIconUrl } from '~/utils/icons'
@@ -84,7 +86,7 @@ export function PreIpoCompanyPage({
 						/>
 					</div>
 				</SummaryStatsCard>
-				<ChartPanel className="col-span-2">
+				<Panel className="col-span-2">
 					{chart ? (
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
@@ -107,10 +109,10 @@ export function PreIpoCompanyPage({
 							<ChartPanelToolbar>
 								<h2 className="mr-auto heading-xs">{HISTORY_CHART_TITLE}</h2>
 							</ChartPanelToolbar>
-							<ChartPanelBodyEmpty>No valuation history available.</ChartPanelBodyEmpty>
+							<SurfaceBodyStatus variant="empty">No valuation history available.</SurfaceBodyStatus>
 						</>
 					)}
-				</ChartPanel>
+				</Panel>
 			</SummaryCardGrid>
 
 			<Card as="section" padding="sm" className="flex flex-col gap-3 body-md">

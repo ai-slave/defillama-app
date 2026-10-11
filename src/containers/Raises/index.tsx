@@ -3,7 +3,8 @@ import * as React from 'react'
 import { Announcement } from '~/components/Announcement'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { RaisesFilters } from '~/containers/Raises/Filters'
-import { ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { useRaisesData } from './hooks'
 import type { Raise } from './model'
@@ -75,7 +76,7 @@ function RaisesContainer({ raises, investors, rounds, sectors, chains, investorN
 					<StatItem label="Total Funding Amount" value={<RaisesTotal {...fundingSummary} />} />
 				</SummaryStatsCard>
 
-				<ChartPanel className="col-span-2">
+				<Panel className="col-span-2">
 					<React.Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							dataset={deferredMonthlyInvestmentChart.dataset}
@@ -90,7 +91,7 @@ function RaisesContainer({ raises, investors, rounds, sectors, chains, investorN
 							}}
 						/>
 					</React.Suspense>
-				</ChartPanel>
+				</Panel>
 			</SummaryCardGrid>
 
 			<RaisesTable raises={filteredRaisesList} />

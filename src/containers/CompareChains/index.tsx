@@ -15,7 +15,8 @@ import type { IAdapterChainOverview, IAdapterProtocolOverview } from '~/containe
 import { Stats } from '~/containers/ChainOverview/Stats'
 import type { IChainOverviewData } from '~/containers/ChainOverview/types'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
-import { ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { FailedDataNote } from '~/ui/ScopeNote'
 import { PanelStatus } from '~/ui/Status'
 import { fetchJson } from '~/utils/async'
@@ -345,11 +346,11 @@ export function CompareChains({ chains }: { chains: Array<ChainOption> }) {
 			{selectedChains.length > 1 ? (
 				<div className="relative flex flex-col gap-1">
 					{isChartLoading || !router.isReady ? (
-						<ChartPanel>
+						<Panel>
 							<ChartPanelExportShellLoading />
-						</ChartPanel>
+						</Panel>
 					) : (
-						<ChartPanel>
+						<Panel>
 							<FailedDataNote labels={failedChains} shows="The chart shows the other chains." />
 							<React.Suspense fallback={<ChartPanelExportShellLoading />}>
 								<MultiSeriesChart
@@ -364,7 +365,7 @@ export function CompareChains({ chains }: { chains: Array<ChainOption> }) {
 									}}
 								/>
 							</React.Suspense>
-						</ChartPanel>
+						</Panel>
 					)}
 
 					<div className="grid grow grid-cols-1 gap-1 xl:grid-cols-2">

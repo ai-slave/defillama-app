@@ -16,8 +16,10 @@ import { Table } from '~/components/Table/Table'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Change } from '~/ui/Change'
-import { CHART_FILL, ChartPanel, ChartPanelBodyEmpty, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
+import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { slug } from '~/utils'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { buildProtocolBreakdownDominance } from './breakdownDominance'
@@ -135,7 +137,7 @@ export function BreakdownSnapshotTable({
 	})
 
 	if (rows.length === 0) {
-		return <ChartPanelBodyEmpty>No data for the selection.</ChartPanelBodyEmpty>
+		return <SurfaceBodyStatus variant="empty">No data for the selection.</SurfaceBodyStatus>
 	}
 
 	return (
@@ -227,7 +229,7 @@ export function BreakdownChartCard({
 	const exportsDominance = view !== 'table' && deferredChart.isDominance
 
 	return (
-		<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+		<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 			<ChartPanelToolbar>
 				<h2 className="mr-auto heading-xs">{title}</h2>
 				{viewOptions.length > 1 ? (
@@ -265,7 +267,7 @@ export function BreakdownChartCard({
 			{view === 'table' ? (
 				<BreakdownSnapshotTable rows={tableRows} kind={seriesLabel} shareHeader={shareHeader} />
 			) : (
-				<React.Suspense fallback={<ChartPanelBodyLoading />}>
+				<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 					<MultiSeriesChart
 						dataset={deferredChart.dataset}
 						charts={deferredChart.charts}
@@ -281,7 +283,7 @@ export function BreakdownChartCard({
 					/>
 				</React.Suspense>
 			)}
-		</ChartPanel>
+		</Panel>
 	)
 }
 
@@ -331,7 +333,7 @@ export function TokensBreakdownPieChartCard({
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
 	return (
-		<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+		<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 			<ChartPanelToolbar>
 				<h2 className="mr-auto heading-xs">{title}</h2>
 				<SegmentedControl<TokensBreakdownView>
@@ -367,7 +369,7 @@ export function TokensBreakdownPieChartCard({
 			{view === 'table' ? (
 				<BreakdownSnapshotTable rows={tableRows} kind="Token" shareHeader={shareHeader} />
 			) : (
-				<React.Suspense fallback={<ChartPanelBodyLoading />}>
+				<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 					<PieChart
 						chartData={deferredPresentation.chartData}
 						stackColors={deferredPresentation.stackColors}
@@ -376,6 +378,6 @@ export function TokensBreakdownPieChartCard({
 					/>
 				</React.Suspense>
 			)}
-		</ChartPanel>
+		</Panel>
 	)
 }

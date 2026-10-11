@@ -2,8 +2,9 @@ import { lazy, Suspense } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { CHART_FILL, ChartPanel, ChartPanelBodyLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { PanelStatus } from '~/ui/Status'
+import { CHART_FILL, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
+import { PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { queryReadFailed } from '~/utils/query'
 import { DOLLAR_SCROLL_CHART_OPTIONS, DOLLAR_STACKED_SCROLL_CHART_OPTIONS, HIDDEN_EXPORT } from './chartDefaults'
 import { useDistributionData } from './distributionApi'
@@ -36,7 +37,7 @@ export default function DistributionRewards() {
 
 	return (
 		<div className="flex flex-col gap-4">
-			<ChartPanel>
+			<Panel>
 				<ChartPanelToolbar leading={<ChartPanelTitle>Actual Revenue - User</ChartPanelTitle>}>
 					<ChartPngExportButton
 						chartInstance={actualRev.chartInstance}
@@ -46,7 +47,7 @@ export default function DistributionRewards() {
 					/>
 				</ChartPanelToolbar>
 				{data ? (
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={data.actualRevenue.dataset}
 							charts={data.actualRevenue.charts}
@@ -59,11 +60,11 @@ export default function DistributionRewards() {
 						/>
 					</Suspense>
 				) : (
-					<ChartPanelBodyLoading />
+					<SurfaceBodyLoadingStatus label="Loading chart" />
 				)}
-			</ChartPanel>
+			</Panel>
 
-			<ChartPanel>
+			<Panel>
 				<ChartPanelToolbar leading={<ChartPanelTitle>Revenue Projection - User</ChartPanelTitle>}>
 					<ChartPngExportButton
 						chartInstance={revProjection.chartInstance}
@@ -73,7 +74,7 @@ export default function DistributionRewards() {
 					/>
 				</ChartPanelToolbar>
 				{data ? (
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={data.revenueProjection.dataset}
 							charts={data.revenueProjection.charts}
@@ -87,11 +88,11 @@ export default function DistributionRewards() {
 						/>
 					</Suspense>
 				) : (
-					<ChartPanelBodyLoading />
+					<SurfaceBodyLoadingStatus label="Loading chart" />
 				)}
-			</ChartPanel>
+			</Panel>
 
-			<ChartPanel>
+			<Panel>
 				<ChartPanelToolbar leading={<ChartPanelTitle>sUSDS & sUSDC TVL by Spark Referrals</ChartPanelTitle>}>
 					<ChartPngExportButton
 						chartInstance={susdsTvl.chartInstance}
@@ -101,7 +102,7 @@ export default function DistributionRewards() {
 					/>
 				</ChartPanelToolbar>
 				{data ? (
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={data.susdsTvl.dataset}
 							charts={data.susdsTvl.charts}
@@ -115,11 +116,11 @@ export default function DistributionRewards() {
 						/>
 					</Suspense>
 				) : (
-					<ChartPanelBodyLoading />
+					<SurfaceBodyLoadingStatus label="Loading chart" />
 				)}
-			</ChartPanel>
+			</Panel>
 
-			<ChartPanel>
+			<Panel>
 				<ChartPanelToolbar leading={<ChartPanelTitle>XR Rewards - sUSDS Crosschain</ChartPanelTitle>}>
 					<ChartPngExportButton
 						chartInstance={xrSusds.chartInstance}
@@ -129,7 +130,7 @@ export default function DistributionRewards() {
 					/>
 				</ChartPanelToolbar>
 				{data ? (
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={data.xrSusds.dataset}
 							charts={data.xrSusds.charts}
@@ -142,11 +143,11 @@ export default function DistributionRewards() {
 						/>
 					</Suspense>
 				) : (
-					<ChartPanelBodyLoading />
+					<SurfaceBodyLoadingStatus label="Loading chart" />
 				)}
-			</ChartPanel>
+			</Panel>
 
-			<ChartPanel>
+			<Panel>
 				<ChartPanelToolbar leading={<ChartPanelTitle>XR Rewards - sUSDC Crosschain</ChartPanelTitle>}>
 					<ChartPngExportButton
 						chartInstance={xrSusdc.chartInstance}
@@ -156,7 +157,7 @@ export default function DistributionRewards() {
 					/>
 				</ChartPanelToolbar>
 				{data ? (
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={data.xrSusdc.dataset}
 							charts={data.xrSusdc.charts}
@@ -169,11 +170,11 @@ export default function DistributionRewards() {
 						/>
 					</Suspense>
 				) : (
-					<ChartPanelBodyLoading />
+					<SurfaceBodyLoadingStatus label="Loading chart" />
 				)}
-			</ChartPanel>
+			</Panel>
 
-			<ChartPanel>
+			<Panel>
 				<ChartPanelToolbar leading={<ChartPanelTitle>Staked USDS TVL by Spark Referrals</ChartPanelTitle>}>
 					<ChartPngExportButton
 						chartInstance={stakedUsds.chartInstance}
@@ -183,7 +184,7 @@ export default function DistributionRewards() {
 					/>
 				</ChartPanelToolbar>
 				{data ? (
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={data.stakedUsdsTvl.dataset}
 							charts={data.stakedUsdsTvl.charts}
@@ -197,9 +198,9 @@ export default function DistributionRewards() {
 						/>
 					</Suspense>
 				) : (
-					<ChartPanelBodyLoading />
+					<SurfaceBodyLoadingStatus label="Loading chart" />
 				)}
-			</ChartPanel>
+			</Panel>
 		</div>
 	)
 }

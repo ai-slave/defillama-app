@@ -6,16 +6,9 @@ import { usePaginatedTableDisplayRowNumber } from '~/components/Table/PaginatedT
 import { OTHERS_COLOR, SECTOR_COLORS } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Change } from '~/ui/Change'
-import {
-	CHART_FILL,
-	ChartPanel,
-	ChartPanelBody,
-	ChartPanelBodyLoading,
-	ChartPanelTitle,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelBody, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
-import { InlineStatus } from '~/ui/Status'
+import { InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { formatDate } from '~/utils/dateFormat'
 import { formatCompactNumber, formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { RETURN_PERIODS, type AggregateReturnMatrixRow } from './aggregateData'
@@ -96,7 +89,7 @@ export function AggregateTreemap({
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
 	return (
-		<ChartPanel>
+		<Panel>
 			<ChartPanelToolbar
 				leading={
 					<ChartPanelTitle headingAs="h2" subtitle={subtitle}>
@@ -110,7 +103,7 @@ export function AggregateTreemap({
 				</div>
 			</ChartPanelToolbar>
 			<ChartPanelBody className="min-h-[420px]">
-				<Suspense fallback={<ChartPanelBodyLoading className="min-h-[420px]" />}>
+				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="min-h-[420px]" />}>
 					<TreemapChart
 						treeData={nodes}
 						variant="rwa"
@@ -122,7 +115,7 @@ export function AggregateTreemap({
 					/>
 				</Suspense>
 			</ChartPanelBody>
-		</ChartPanel>
+		</Panel>
 	)
 }
 

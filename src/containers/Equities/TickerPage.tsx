@@ -11,18 +11,13 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import defs from '~/public/equities-definitions.json'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
-import {
-	ChartPanel,
-	ChartPanelBodyEmpty,
-	ChartPanelBodyError,
-	ChartPanelBodyLoading,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
 import { MetricRow } from '~/ui/MetricPrimitives'
+import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StaleText } from '~/ui/StaleText'
-import { PanelLoadingStatus } from '~/ui/Status'
+import { PanelLoadingStatus, SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Tabs, TabPanel } from '~/ui/Tabs'
 import { formatDate, formatDateTime } from '~/utils/dateFormat'
@@ -359,7 +354,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 				</SummaryStatsCard>
 
 				<div className="col-span-2 grid grid-cols-2 gap-2">
-					<ChartPanel className="col-span-full">
+					<Panel className="col-span-full">
 						{/* Mobile: name + market cap */}
 						<div className="flex flex-col gap-6 p-2 pb-0 xl:hidden">
 							<EquityTitle
@@ -400,11 +395,13 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 								}}
 							/>
 						</ChartPanelToolbar>
-						<Suspense fallback={<ChartPanelBodyLoading />}>
+						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							{queryReadFailed(priceHistory) ? (
-								<ChartPanelBodyError retry={priceHistory}>Couldn&apos;t load price history.</ChartPanelBodyError>
+								<SurfaceBodyStatus variant="error" retry={priceHistory}>
+									Couldn&apos;t load price history.
+								</SurfaceBodyStatus>
 							) : priceHistory.isPending ? (
-								<ChartPanelBodyLoading label="Loading price history" />
+								<SurfaceBodyLoadingStatus label="Loading price history" />
 							) : activePriceHistoryChart ? (
 								<MultiSeriesChart
 									dataset={activePriceHistoryChart.dataset}
@@ -415,10 +412,10 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 									onReady={handlePriceChartReady}
 								/>
 							) : (
-								<ChartPanelBodyEmpty>No price history available for this timeframe.</ChartPanelBodyEmpty>
+								<SurfaceBodyStatus variant="empty">No price history available for this timeframe.</SurfaceBodyStatus>
 							)}
 						</Suspense>
-					</ChartPanel>
+					</Panel>
 
 					{/* Mobile: key metrics below chart */}
 					<Card padding="sm" className="col-span-full flex flex-col gap-6 xl:hidden">
@@ -426,7 +423,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 					</Card>
 				</div>
 
-				<ChartPanel className="col-span-full">
+				<Panel className="col-span-full">
 					<ChartPanelToolbar
 						leading={
 							<SegmentedControl
@@ -460,7 +457,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 							}}
 						/>
 					</ChartPanelToolbar>
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={activeFundamentalsChart.dataset}
 							charts={activeFundamentalsChart.charts}
@@ -470,7 +467,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 							onReady={handleFundamentalsChartReady}
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			</SummaryCardGrid>
 
 			<Tabs value={activeTab} onValueChange={setActiveTab} values={availableTabs}>

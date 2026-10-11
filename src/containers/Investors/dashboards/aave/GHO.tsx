@@ -4,7 +4,8 @@ import { lazy, Suspense, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { displayTableFeatures } from '~/components/Table/features/display'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { InlineStatStrip } from '~/ui/SummaryStats'
@@ -212,7 +213,7 @@ export default function GHO() {
 				{apyLoading ? (
 					<PanelLoadingStatus className="min-h-[400px]" />
 				) : borrowApyDataset.source.length > 0 ? (
-					<ChartPanel>
+					<Panel>
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								dataset={borrowApyDataset}
@@ -223,7 +224,7 @@ export default function GHO() {
 								exportButtons={AAVE_AREA_EXPORT}
 							/>
 						</Suspense>
-					</ChartPanel>
+					</Panel>
 				) : (
 					<PanelStatus variant="empty" className="min-h-[400px]">
 						No GHO borrow APY history for this window.

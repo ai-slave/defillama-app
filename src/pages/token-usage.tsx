@@ -30,7 +30,7 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useIsClient } from '~/hooks/useIsClient'
 import Layout from '~/layout'
 import { Button } from '~/ui/Button'
-import { ChartPanel, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Checkbox } from '~/ui/Checkbox'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
@@ -182,7 +182,7 @@ export default function Tokens() {
 					No protocols found
 				</PanelStatus>
 			) : (
-				<ChartPanel className="w-full flex-1">
+				<Panel className="w-full flex-1">
 					<ChartPanelToolbar>
 						<div className="mr-auto flex flex-col">
 							<h2 className="heading-xs">{`${tokenSymbol.toUpperCase()} usage in protocols`}</h2>
@@ -265,7 +265,7 @@ export default function Tokens() {
 					>
 						<VirtualTable table={tableInstance} />
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			)}
 			<SignInModal store={signInDialogStore} />
 		</Layout>

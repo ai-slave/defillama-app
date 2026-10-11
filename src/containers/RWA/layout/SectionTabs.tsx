@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router'
 import { BasicLink } from '~/components/Link'
-import { TabLink, tabTrackStyles } from '~/ui/Tab'
+import { TabLink, tabTrackStyles } from '~/ui/Tabs'
 import { readyAsPath } from '~/utils/routerQuery'
 import type { RWAPageKind } from './pageLayout'
 import { getRwaPageTabRow } from './pageTabs'

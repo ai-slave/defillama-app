@@ -16,9 +16,11 @@ import { CHART_COLORS } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
-import { CHART_FILL, ChartPanel, ChartPanelBody, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
+import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { TableToolbar } from '~/ui/Toolbar'
 import { formatUsd } from '~/utils/numberFormat'
 import {
@@ -246,7 +248,7 @@ export function CategoryPerformanceContainer({
 				) : null}
 			</Card>
 
-			<ChartPanel>
+			<Panel>
 				<ChartPanelToolbar
 					leading={
 						<SegmentedControl<NarrativeChartType>
@@ -306,7 +308,7 @@ export function CategoryPerformanceContainer({
 				</ChartPanelToolbar>
 
 				<ChartPanelBody className="min-h-[533px]">
-					<React.Suspense fallback={<ChartPanelBodyLoading className="min-h-[533px]" />}>
+					<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="min-h-[533px]" />}>
 						{chartType === 'barchart' ? (
 							<MultiSeriesChart
 								dataset={deferredChartData.dataset}
@@ -342,7 +344,7 @@ export function CategoryPerformanceContainer({
 						)}
 					</React.Suspense>
 				</ChartPanelBody>
-			</ChartPanel>
+			</Panel>
 
 			<SearchTableProvider
 				options={{

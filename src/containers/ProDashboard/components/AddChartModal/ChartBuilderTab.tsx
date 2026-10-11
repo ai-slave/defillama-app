@@ -808,7 +808,7 @@ export function ChartBuilderTab({
 								Couldn't load the preview.
 							</InlineStatus>
 						) : previewLoading ? (
-							<SurfaceBodyLoadingStatus label="Loading preview" className="self-stretch" />
+							<SurfaceBodyLoadingStatus label="Loading preview" />
 						) : previewData && previewData.series.length > 0 ? (
 							<div className="absolute inset-0 p-2">
 								<Suspense fallback={<Skeleton className="size-full rounded-md" />}>

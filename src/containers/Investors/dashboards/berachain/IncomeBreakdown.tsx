@@ -5,7 +5,8 @@ import type {
 	MultiSeriesChartSeriesConfig
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { useCustomServerData } from '~/containers/Investors/CustomServerDataContext'
-import { CHART_FILL, ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatUsd } from '~/utils/numberFormat'
@@ -202,7 +203,7 @@ export default function IncomeBreakdown() {
 			{isLoading ? (
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartPanel>
+				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Cumulative Revenue (all sources)"
@@ -216,13 +217,13 @@ export default function IncomeBreakdown() {
 							solidChartAreaStyle
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			)}
 
 			{isLoading ? (
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartPanel>
+				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Monthly Breakdown"
@@ -236,13 +237,13 @@ export default function IncomeBreakdown() {
 							valueSymbol="$"
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			)}
 
 			{isLoading ? (
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartPanel>
+				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Cumulative Chain Fees"
@@ -255,7 +256,7 @@ export default function IncomeBreakdown() {
 							valueSymbol="$"
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			)}
 
 			{/* BEX Section */}
@@ -277,7 +278,7 @@ export default function IncomeBreakdown() {
 			{isLoading ? (
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartPanel>
+				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Monthly Revenue"
@@ -290,13 +291,13 @@ export default function IncomeBreakdown() {
 							valueSymbol="$"
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			)}
 
 			{isLoading ? (
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartPanel>
+				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Cumulative Revenue"
@@ -309,7 +310,7 @@ export default function IncomeBreakdown() {
 							valueSymbol="$"
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			)}
 
 			{/* Bend Section */}
@@ -331,7 +332,7 @@ export default function IncomeBreakdown() {
 			{isLoading ? (
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartPanel>
+				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Monthly Breakdown"
@@ -345,13 +346,13 @@ export default function IncomeBreakdown() {
 							valueSymbol="$"
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			)}
 
 			{isLoading ? (
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartPanel>
+				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Cumulative Fees"
@@ -364,13 +365,13 @@ export default function IncomeBreakdown() {
 							valueSymbol="$"
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			)}
 
 			{isLoading ? (
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartPanel>
+				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Cumulative Revenue"
@@ -383,7 +384,7 @@ export default function IncomeBreakdown() {
 							valueSymbol="$"
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			)}
 		</div>
 	)

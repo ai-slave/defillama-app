@@ -28,11 +28,11 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
-import { CHART_FILL, ChartPanelBody, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { QuestionHelper } from '~/ui/QuestionHelper'
-import { tabTrackStyles, TabLink } from '~/ui/Tab'
-import { Tab, TabPanel, Tabs } from '~/ui/Tabs'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { Tab, TabPanel, Tabs, tabTrackStyles, TabLink } from '~/ui/Tabs'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatCompactNumber, formatPercent, formatPercentChange, formatRatio, formatUsd } from '~/utils/numberFormat'
@@ -421,7 +421,7 @@ export function LSTOverview({
 										/>
 									</ChartPanelToolbar>
 									<ChartPanelBody>
-										<React.Suspense fallback={<ChartPanelBodyLoading />}>
+										<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 											<PieChart
 												chartData={deferredPiePresentation.chartData}
 												stackColors={deferredPiePresentation.stackColors}
@@ -452,7 +452,7 @@ export function LSTOverview({
 										/>
 									</ChartPanelToolbar>
 									<ChartPanelBody>
-										<React.Suspense fallback={<ChartPanelBodyLoading />}>
+										<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 											<MultiSeriesChart
 												dataset={chartPresentation.dataset}
 												charts={chartPresentation.charts}
@@ -512,7 +512,7 @@ export function LSTOverview({
 								</ChartPanelToolbar>
 
 								<ChartPanelBody>
-									<React.Suspense fallback={<ChartPanelBodyLoading />}>
+									<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 										<MultiSeriesChart
 											dataset={chartPresentation.dataset}
 											charts={chartPresentation.charts}

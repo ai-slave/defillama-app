@@ -18,10 +18,11 @@ import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchT
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
-import { ChartPanel, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { PanelTitle, PanelHeader, Panel } from '~/ui/Panel'
 import { FailedDataNote } from '~/ui/ScopeNote'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
 import { getEnabledExtraTvlApiKeys, getEnabledForkOracleExtraTvlChartApiKeys } from '~/utils/tvlOverlap'
@@ -115,7 +116,7 @@ export function OraclesByChain({
 			<RowLinksWithDropdown heading="Chains" links={chainLinks} activeLink={activeLink} />
 
 			<div className="flex flex-col gap-2 xl:flex-row">
-				<ChartPanel className="isolate flex-1">
+				<Panel className="isolate flex-1">
 					<ChartPanelToolbar>
 						{pieSelectableSeries.length > 1 ? (
 							<SelectWithCombobox
@@ -142,15 +143,15 @@ export function OraclesByChain({
 							}}
 						/>
 					</ChartPanelToolbar>
-					<React.Suspense fallback={<ChartPanelBodyLoading />}>
+					<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<PieChart
 							chartData={piePresentation.chartData}
 							stackColors={piePresentation.stackColors}
 							onReady={handlePieChartReady}
 						/>
 					</React.Suspense>
-				</ChartPanel>
-				<ChartPanel className="flex-1">
+				</Panel>
+				<Panel className="flex-1">
 					<ChartPanelToolbar>
 						<h2 className="mr-auto heading-xs">Oracle Dominance</h2>
 						{oracleSeries.length > 1 ? (
@@ -178,9 +179,9 @@ export function OraclesByChain({
 						/>
 					) : null}
 					{isFetchingExtraBreakdowns ? (
-						<ChartPanelBodyLoading />
+						<SurfaceBodyLoadingStatus label="Loading chart" />
 					) : (
-						<React.Suspense fallback={<ChartPanelBodyLoading />}>
+						<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<MultiSeriesChart
 								dataset={selectedDominance.dataset}
 								charts={selectedDominance.charts}
@@ -192,7 +193,7 @@ export function OraclesByChain({
 							/>
 						</React.Suspense>
 					)}
-				</ChartPanel>
+				</Panel>
 			</div>
 
 			<React.Suspense fallback={<Panel style={{ minHeight: `${tableAndPieData.tableData.length * 50 + 200}px` }} />}>

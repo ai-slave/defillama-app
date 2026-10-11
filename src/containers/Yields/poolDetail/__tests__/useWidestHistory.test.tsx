@@ -3,7 +3,7 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { ChartPanelBodyError } from '~/ui/ChartPanel'
+import { SurfaceBodyStatus } from '~/ui/Status'
 import { alertTexts } from '~/utils/testing/fieldErrors'
 import type { PoolHistoryRange } from '../types'
 import { useWidestHistory } from '../useWidestHistory'
@@ -54,7 +54,11 @@ describe('useWidestHistory', () => {
 	function Chart({ range, load }: { range: PoolHistoryRange; load: (range: PoolHistoryRange) => Promise<string> }) {
 		const { model, loading, failedRead } = useWidestHistory('30d', 'initial-model', range, load)
 		if (failedRead)
-			return <ChartPanelBodyError retry={failedRead}>Couldn&apos;t load {range} history.</ChartPanelBodyError>
+			return (
+				<SurfaceBodyStatus variant="error" retry={failedRead}>
+					Couldn&apos;t load {range} history.
+				</SurfaceBodyStatus>
+			)
 		if (loading) return <p role="status">Loading</p>
 		return <p>{model}</p>
 	}

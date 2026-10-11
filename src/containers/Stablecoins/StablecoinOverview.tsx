@@ -44,17 +44,13 @@ import { calcCirculating, groupBridgeData } from '~/containers/Stablecoins/hooks
 import { useStablecoinChartSeriesData, useStablecoinVolumeChartData } from '~/containers/Stablecoins/queries.client'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
-import {
-	ChartPanel,
-	ChartPanelBodyEmpty,
-	ChartPanelBodyError,
-	ChartPanelBodyLoading,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Checkbox } from '~/ui/Checkbox'
 import { EntityTitleRow } from '~/ui/EntityTitleRow'
+import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { capitalizeFirstLetter, slug } from '~/utils'
 import { peggedAssetIconUrl } from '~/utils/icons'
@@ -481,7 +477,7 @@ export function PeggedAssetInfo({
 				</SummaryStatsCard>
 
 				{/* Chart */}
-				<ChartPanel className="col-span-2">
+				<Panel className="col-span-2">
 					<ChartPanelToolbar>
 						<SegmentedControl
 							value={chartType}
@@ -530,7 +526,7 @@ export function PeggedAssetInfo({
 						/>
 					</ChartPanelToolbar>
 					{chartType === 'marketCap' && chartView === 'pie' ? (
-						<React.Suspense fallback={<ChartPanelBodyLoading className="w-full" />}>
+						<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="w-full" />}>
 							<PieChart
 								chartData={marketCapPresentation?.kind === 'pie' ? marketCapPresentation.chartData : []}
 								{...(marketCapPresentation?.kind === 'pie' ? { stackColors: marketCapPresentation.stackColors } : {})}
@@ -558,7 +554,7 @@ export function PeggedAssetInfo({
 							onReady={handleChartReady}
 						/>
 					)}
-				</ChartPanel>
+				</Panel>
 
 				{/* Additional info cards */}
 				{hasInfo ? (
@@ -656,16 +652,24 @@ function SelectedAssetChart({
 	onReady: (instance: echarts.ECharts | null) => void
 }) {
 	if (failedRead) {
-		return <ChartPanelBodyError retry={failedRead}>Couldn&apos;t load chart data.</ChartPanelBodyError>
+		return (
+			<SurfaceBodyStatus variant="error" retry={failedRead}>
+				Couldn&apos;t load chart data.
+			</SurfaceBodyStatus>
+		)
 	}
 	if (isLoading) {
-		return <ChartPanelBodyLoading className="w-full" />
+		return <SurfaceBodyLoadingStatus label="Loading chart" className="w-full" />
 	}
 	if (!data || data.charts.length === 0 || data.dataset.source.length === 0) {
-		return <ChartPanelBodyEmpty className="w-full">Chart unavailable.</ChartPanelBodyEmpty>
+		return (
+			<SurfaceBodyStatus variant="empty" className="w-full">
+				Chart unavailable.
+			</SurfaceBodyStatus>
+		)
 	}
 	return (
-		<React.Suspense fallback={<ChartPanelBodyLoading className="w-full" />}>
+		<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="w-full" />}>
 			<MultiSeriesChart
 				dataset={data.dataset}
 				charts={data.charts}

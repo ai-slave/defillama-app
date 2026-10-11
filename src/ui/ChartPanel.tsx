@@ -1,12 +1,10 @@
-import type { ComponentProps, ComponentPropsWithoutRef, CSSProperties, ReactNode } from 'react'
-import type { QueryRetry } from '~/utils/query'
-import { Panel } from './Panel'
+import type { ComponentPropsWithoutRef, ReactNode } from 'react'
 import { QuestionHelper } from './QuestionHelper'
-import { LoadingIndicator, RetryButton } from './Status'
+import { SurfaceBodyLoadingStatus } from './Status'
 
 /* ----------------------------------------------------------------------------
-   ChartPanel — the chart shell: a `Panel`, an optional
-   ChartPanelToolbar, and a ChartPanelBody. The shell owns chrome and space
+   Chart panel parts — the chart shell is a `Panel` (./Panel.tsx) holding
+   an optional ChartPanelToolbar and a ChartPanelBody. The shell owns chrome and space
    reservation; the route owns metrics, queries, exports and chart logic.
 
    Toolbar: px-2 pt-2, 32px (md) controls, 6px gaps. What the chart shows
@@ -28,32 +26,31 @@ import { LoadingIndicator, RetryButton } from './Status'
    Body: flush; the cartesian plot inset comes from the ECharts grid
    (src/components/ECharts/shared/chartSpacing.ts), never DOM padding.
 
+   Loading, empty and error states in the body's place are the surface body
+   parts from ./Status.tsx, SurfaceBodyLoadingStatus and SurfaceBodyStatus;
+   a chart's loading part says `label="Loading chart"` or names what loads.
    Suspense fallbacks: a lazy chart inside a mounted body uses
-   ChartPanelBodyLoading (360px, announced); a lazy chart that renders its
+   SurfaceBodyLoadingStatus (360px, announced); a lazy chart that renders its
    own title and export toolbar uses ChartPanelExportShellLoading (400px).
    Keep an external ChartPanelToolbar outside Suspense, so only the body
    waits. check-status-parts.ts refuses a fallback that renders a
    childless ChartPanelBody or div.
 
    A chart with nothing to plot (no data in the range, no metric picked, a
-   filter that matches nothing) renders ChartPanelBodyEmpty with a sentence
-   naming what is missing. It announces itself, so a reader who changes a
+   filter that matches nothing) renders SurfaceBodyStatus variant="empty"
+   with a sentence naming what is missing. It announces itself, so a reader who changes a
    range or filter hears the chart empty. A branch with nothing to show
    renders one of these parts, never an empty box: the body's 360px floor
    would stand blank and silent.
 
-   A failed read renders ChartPanelBodyError where the chart would be: the
-   red message and, when the chart's data comes from a query in the browser,
+   A failed read renders SurfaceBodyStatus variant="error" where the chart
+   would be: the red message and, when the chart's data comes from a query in the browser,
    that query's Try again (`retry`). Check `queryReadFailed` (nothing to draw
    and the read failed) before loading, so the error and its button stay on
    screen while the retry runs. A refetch that fails under a drawn chart keeps
    the chart (`queryRefreshFailed`). Data the server rendered has nothing to
    retry and passes no `retry`.
 ---------------------------------------------------------------------------- */
-
-export function ChartPanel({ className, ...props }: ComponentProps<'div'>) {
-	return <Panel className={className} {...props} />
-}
 
 type ChartPanelToolbarProps = ComponentPropsWithoutRef<'div'> & {
 	/** What the chart shows: a title, a view switch, or the metric picker and its chips. It stays on the
@@ -114,82 +111,14 @@ export function ChartPanelBody({ className, ...props }: ComponentPropsWithoutRef
 	return <div className={`relative flex flex-1 flex-col initial:min-h-[360px] ${className ?? ''}`.trim()} {...props} />
 }
 
-/** The body-sized centring box the loading, empty and error parts draw in. */
-function ChartPanelBodyFallback({ className, ...props }: ComponentPropsWithoutRef<'div'>) {
-	return (
-		<div
-			className={`m-auto flex items-center justify-center initial:min-h-[360px] ${className ?? ''}`.trim()}
-			{...props}
-		/>
-	)
-}
-
-/** A chart loading in its slot (a ChartPanelBody, a chart's Suspense fallback, a preview tile): the quiet indicator,
-    announced. `className` and `style` take the slot's size where it is smaller than the 360px default (min-h-0, h-*). */
-export function ChartPanelBodyLoading({
+/** A lazy chart that draws its own title and export row, loading: SurfaceBodyLoadingStatus over the 400px the toolbar
+    and body take together. `className` is grid placement only (col-span-*). */
+export function ChartPanelExportShellLoading({
 	label = 'Loading chart',
-	className,
-	style
+	className
 }: {
 	label?: string
 	className?: string
-	style?: CSSProperties
 }) {
-	return (
-		<ChartPanelBodyFallback role="status" aria-live="polite" className={className} style={style}>
-			<LoadingIndicator label={label} />
-		</ChartPanelBodyFallback>
-	)
-}
-
-/** Nothing to plot, in the body's place: one sentence naming what is missing ("No data in this range."), announced.
-    `className` and `style` take the slot's size where it is smaller than the 360px default. */
-export function ChartPanelBodyEmpty({
-	children,
-	className,
-	style
-}: {
-	children: ReactNode
-	className?: string
-	style?: CSSProperties
-}) {
-	return (
-		<ChartPanelBodyFallback
-			role="status"
-			className={`p-4 text-center body-sm text-tertiary ${className ?? ''}`.trim()}
-			style={style}
-		>
-			{children}
-		</ChartPanelBodyFallback>
-	)
-}
-
-/** A chart's failed read, in the body's place. Its Try again waits while the query refetches; when the chart replaces
-    it, focus moves to the page content rather than dropping to the document. `className` and `style` take the loading
-    state's size where the chart sets its own, so the page does not jump when the error replaces it. */
-export function ChartPanelBodyError({
-	children,
-	retry,
-	className,
-	style
-}: {
-	children: ReactNode
-	retry?: QueryRetry
-	className?: string
-	style?: CSSProperties
-}) {
-	return (
-		<ChartPanelBodyFallback className={`flex-col gap-2 p-4 text-center ${className ?? ''}`} style={style}>
-			<p role="alert" className="body-sm text-error">
-				{children}
-			</p>
-			{retry ? <RetryButton retry={retry} /> : null}
-		</ChartPanelBodyFallback>
-	)
-}
-
-/** A lazy chart that draws its own title and export row, loading: ChartPanelBodyLoading over the 400px the toolbar
-    and body take together. `className` is grid placement only (col-span-*). */
-export function ChartPanelExportShellLoading({ label, className }: { label?: string; className?: string }) {
-	return <ChartPanelBodyLoading label={label} className={`min-h-[400px] ${className ?? ''}`.trim()} />
+	return <SurfaceBodyLoadingStatus label={label} className={`min-h-[400px] ${className ?? ''}`.trim()} />
 }

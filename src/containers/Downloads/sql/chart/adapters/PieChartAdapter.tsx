@@ -3,8 +3,7 @@ import { lazy, Suspense, useMemo } from 'react'
 import type { PieTooltipParams } from '~/components/ECharts/PieChart/types'
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { CHART_SERIES_LIMIT, chartColor, OTHERS_COLOR } from '~/constants/colors'
-import { ChartPanelBodyLoading } from '~/ui/ChartPanel'
-import { EmptyState } from '~/ui/Status'
+import { EmptyState, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { formatPercent } from '~/utils/numberFormat'
 import type { ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
@@ -54,7 +53,9 @@ export function PieChartAdapter({ config, result, classified, onReady, height }:
 
 	return (
 		<div className="flex flex-col gap-1.5">
-			<Suspense fallback={<ChartPanelBodyLoading className="min-h-0 w-full" style={{ height }} />}>
+			<Suspense
+				fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="min-h-0 w-full" style={{ height }} />}
+			>
 				<PieChart
 					chartData={chartData}
 					stackColors={stackColors}

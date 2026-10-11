@@ -1,5 +1,5 @@
 // The receipts behind the Verified APY: the method, the confidence and the exact calls.
-import { ChartPanel } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
@@ -65,7 +65,7 @@ export function VerifiedApyPanel({
 	}
 
 	return (
-		<ChartPanel id={HOW_WE_VERIFY_ID} ref={scrollIntoViewIfHashed} className="scroll-mt-4">
+		<Panel id={HOW_WE_VERIFY_ID} ref={scrollIntoViewIfHashed} className="scroll-mt-4">
 			<div className="flex flex-col gap-2 border-t border-subtle px-4 py-3">
 				<div className="flex flex-wrap items-center gap-x-3 gap-y-2">
 					<h3 className="flex items-center gap-1.5 label-lg text-primary">
@@ -152,6 +152,6 @@ export function VerifiedApyPanel({
 				) : null}
 				<span className="ml-auto">Reproducible: the same call at the same block returns the same result.</span>
 			</div>
-		</ChartPanel>
+		</Panel>
 	)
 }

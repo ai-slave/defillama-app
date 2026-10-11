@@ -8,12 +8,12 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { CHART_COLORS } from '~/constants/colors'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanelBody, ChartPanelBodyLoading } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelBody } from '~/ui/ChartPanel'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SearchField } from '~/ui/SearchField'
-import { InlineStatus, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { InlineStatus, PanelLoadingStatus, PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Switch } from '~/ui/Switch'
 import { formatDate, formatMonthYear } from '~/utils/dateFormat'
 import { formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
@@ -172,7 +172,7 @@ function SeasonsChart({ summary }: { summary: Pick<IEarningsCalendarBootstrap, '
 	return (
 		// Compact beside the "At stake this week" panel, which holds about 180px of content.
 		<ChartPanelBody className="min-h-[220px]">
-			<Suspense fallback={<ChartPanelBodyLoading className="min-h-[220px]" />}>
+			<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="min-h-[220px]" />}>
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={[{ type: 'bar', name: 'Reports', encode: { x: 'Period', y: 'Reports' }, barMaxWidth: 48 }]}

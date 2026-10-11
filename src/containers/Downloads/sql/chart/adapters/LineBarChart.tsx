@@ -16,7 +16,7 @@ import {
 	TOOLTIP_POINTED_ROW_STYLE
 } from '~/components/ECharts/shared/tooltip'
 import { CHART_COLORS } from '~/constants/colors'
-import { ChartPanelBodyLoading } from '~/ui/ChartPanel'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { SPLIT_TOP_N, type ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
 import type { QueryResult } from '../../exportResults'
@@ -68,7 +68,9 @@ export function LineBarChart({
 
 	return (
 		<div className="relative">
-			<Suspense fallback={<ChartPanelBodyLoading className="min-h-0 w-full" style={{ height }} />}>
+			<Suspense
+				fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="min-h-0 w-full" style={{ height }} />}
+			>
 				<MultiSeriesChart
 					dataset={chartModel.dataset}
 					charts={chartModel.charts}

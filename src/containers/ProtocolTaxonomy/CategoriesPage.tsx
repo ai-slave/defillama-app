@@ -16,9 +16,10 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
-import { ChartPanel, ChartPanelBodyError, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
+import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { TableToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
@@ -211,7 +212,7 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 
 	return (
 		<>
-			<ChartPanel>
+			<Panel>
 				<ChartPanelToolbar>
 					<h1 className="mr-auto heading-xs">TVL by Category</h1>
 					{categories.length > 1 ? (
@@ -233,11 +234,13 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 					/>
 				</ChartPanelToolbar>
 				{queryReadFailed(chartDataQuery) ? (
-					<ChartPanelBodyError retry={chartDataQuery}>Couldn&apos;t load chart data.</ChartPanelBodyError>
+					<SurfaceBodyStatus variant="error" retry={chartDataQuery}>
+						Couldn&apos;t load chart data.
+					</SurfaceBodyStatus>
 				) : shouldFetchChartData && chartDataQuery.isLoading ? (
-					<ChartPanelBodyLoading />
+					<SurfaceBodyLoadingStatus label="Loading chart" />
 				) : (
-					<React.Suspense fallback={<ChartPanelBodyLoading />}>
+					<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={selectedPresentation.dataset}
 							charts={selectedPresentation.charts}
@@ -250,7 +253,7 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 						/>
 					</React.Suspense>
 				)}
-			</ChartPanel>
+			</Panel>
 
 			<React.Suspense fallback={<Panel style={{ minHeight: `${categories.length * 50 + 200}px` }} />}>
 				<SearchTableProvider

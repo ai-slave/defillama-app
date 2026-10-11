@@ -1,8 +1,7 @@
 import type * as echarts from 'echarts/core'
 import { lazy, Suspense, useMemo } from 'react'
 import type { TreemapNode } from '~/components/ECharts/TreemapChart/types'
-import { ChartPanelBodyLoading } from '~/ui/ChartPanel'
-import { EmptyState } from '~/ui/Status'
+import { EmptyState, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import type { ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
 import type { QueryResult } from '../../exportResults'
@@ -43,7 +42,9 @@ export function TreemapChartAdapter({ config, result, classified, onReady, heigh
 		)
 
 	return (
-		<Suspense fallback={<ChartPanelBodyLoading className="min-h-0 w-full" style={{ height }} />}>
+		<Suspense
+			fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="min-h-0 w-full" style={{ height }} />}
+		>
 			<TreemapChart
 				treeData={treeData}
 				variant="narrative"

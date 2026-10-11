@@ -29,20 +29,21 @@ import { readFilePreview, readUrlPreview, type AttachmentPreview } from '~/conta
 import { getOwnRegistryValue } from '~/containers/LlamaAI/utils/getOwnRegistryValue'
 import { wrapLegacyUrlCitations } from '~/containers/LlamaAI/utils/markdownHelpers'
 import { Button } from '~/ui/Button'
-import { ChartPanel, ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Keycap } from '~/ui/Keycap'
+import { Panel } from '~/ui/Panel'
 import { Skeleton } from '~/ui/Skeleton'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { ArtifactCard } from './ArtifactCard'
 
 // Every state of a chart takes the finished chart's box (its card and 360px body), so nothing jumps when it lands.
 function StreamingChartPlaceholder() {
 	return (
-		<ChartPanel>
-			<ChartPanelBodyLoading />
-		</ChartPanel>
+		<Panel>
+			<SurfaceBodyLoadingStatus label="Loading chart" />
+		</Panel>
 	)
 }
 

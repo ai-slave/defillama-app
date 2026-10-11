@@ -24,15 +24,10 @@ import {
 	type TvlSettingsKey
 } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import {
-	ChartPanel,
-	ChartPanelBodyError,
-	ChartPanelBodyLoading,
-	ChartPanelExportShellLoading,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { ScopeNote, ignoredFiltersPhrase } from '~/ui/ScopeNote'
+import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { getPercentChange } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { queryReadFailed } from '~/utils/query'
@@ -172,17 +167,19 @@ export function ChainsByCategory({
 
 			{showSharedChartState ? (
 				<div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
-					<ChartPanel className="relative isolate col-span-full">
+					<Panel className="relative isolate col-span-full">
 						{chartReadFailed ? (
-							<ChartPanelBodyError retry={chartDataQuery}>Couldn&apos;t load chart data.</ChartPanelBodyError>
+							<SurfaceBodyStatus variant="error" retry={chartDataQuery}>
+								Couldn&apos;t load chart data.
+							</SurfaceBodyStatus>
 						) : (
 							<ChartPanelExportShellLoading label="Loading chart data" />
 						)}
-					</ChartPanel>
+					</Panel>
 				</div>
 			) : (
 				<div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
-					<ChartPanel className="relative isolate">
+					<Panel className="relative isolate">
 						<ChartPanelToolbar>
 							{pieSelectableSeries.length > 1 ? (
 								<SelectWithCombobox
@@ -210,15 +207,15 @@ export function ChainsByCategory({
 							/>
 						</ChartPanelToolbar>
 						{chartScopeNote}
-						<React.Suspense fallback={<ChartPanelBodyLoading />}>
+						<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<PieChart
 								chartData={piePresentation.chartData}
 								stackColors={piePresentation.stackColors}
 								onReady={handlePieChartReady}
 							/>
 						</React.Suspense>
-					</ChartPanel>
-					<ChartPanel className="relative isolate">
+					</Panel>
+					<Panel className="relative isolate">
 						<ChartPanelToolbar>
 							{chainSeries.length > 1 ? (
 								<SelectWithCombobox
@@ -239,7 +236,7 @@ export function ChainsByCategory({
 							/>
 						</ChartPanelToolbar>
 						{chartScopeNote}
-						<React.Suspense fallback={<ChartPanelBodyLoading />}>
+						<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<MultiSeriesChart
 								dataset={selectedDominance.dataset}
 								charts={selectedDominance.charts}
@@ -250,7 +247,7 @@ export function ChainsByCategory({
 								onReady={handleChartReady}
 							/>
 						</React.Suspense>
-					</ChartPanel>
+					</Panel>
 				</div>
 			)}
 

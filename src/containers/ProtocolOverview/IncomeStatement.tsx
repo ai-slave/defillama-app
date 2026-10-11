@@ -15,15 +15,10 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
-import {
-	ChartPanelBody,
-	ChartPanelBodyEmpty,
-	ChartPanelBodyLoading,
-	ChartPanelTitle,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { ChartPanelBody, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { TableToolbarControlGroup } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatMonthYear } from '~/utils/dateFormat'
@@ -811,7 +806,10 @@ export function IncomeStatement({
 							>
 								<Suspense
 									fallback={
-										<ChartPanelBodyLoading className="min-h-(--sankey-height) max-[37.5rem]:min-h-(--sankey-mobile-height)" />
+										<SurfaceBodyLoadingStatus
+											label="Loading chart"
+											className="min-h-(--sankey-height) max-[37.5rem]:min-h-(--sankey-mobile-height)"
+										/>
 									}
 								>
 									<SankeyChart
@@ -824,9 +822,9 @@ export function IncomeStatement({
 							</ChartPanelBody>
 						</>
 					) : (
-						<ChartPanelBodyEmpty className="min-h-[200px]">
+						<SurfaceBodyStatus variant="empty" className="min-h-[200px]">
 							No data available for the selected period.
-						</ChartPanelBodyEmpty>
+						</SurfaceBodyStatus>
 					)}
 				</div>
 			) : null}

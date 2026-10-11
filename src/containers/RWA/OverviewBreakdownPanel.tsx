@@ -41,7 +41,7 @@ export type RWAOverviewBreakdownPanelProps = {
 	leading: ReactNode
 	/** The view select, shared with the time series panel. */
 	viewSwitch: ReactNode
-	/** Follows the treemap's Nested by: the ChartPanel toolbar puts grouping before Add to dashboard. */
+	/** Follows the treemap's Nested by: ChartPanelToolbar puts grouping before Add to dashboard. */
 	addToDashboard: ReactNode
 }
 

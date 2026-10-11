@@ -8,8 +8,10 @@ import {
 	DWMC_GROUPING_OPTIONS_LOWERCASE
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { CHART_FILL, ChartPanel, ChartPanelBodyError, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { MetricChip } from '~/ui/MetricChip'
+import { Panel } from '~/ui/Panel'
+import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import { parseRWAFlowGrouping, type RWAFlowGrouping } from '../flows'
 import {
@@ -72,7 +74,7 @@ export function RWAEntityChartPanel<K extends string>({
 	const colorByName = new Map(deferredChart.series.map((entry) => [entry.name, entry.color]))
 
 	return (
-		<ChartPanel className="flex-1">
+		<Panel className="flex-1">
 			<ChartPanelToolbar
 				leading={
 					<>
@@ -127,11 +129,13 @@ export function RWAEntityChartPanel<K extends string>({
 				<ChartPngExportButton chartInstance={chartInstance} filename={filename} title={title} />
 			</ChartPanelToolbar>
 			{failedRead ? (
-				<ChartPanelBodyError retry={failedRead}>Couldn&apos;t load chart data.</ChartPanelBodyError>
+				<SurfaceBodyStatus variant="error" retry={failedRead}>
+					Couldn&apos;t load chart data.
+				</SurfaceBodyStatus>
 			) : isLoading && deferredChart.series.every((series) => (series.data?.length ?? 0) === 0) ? (
-				<ChartPanelBodyLoading />
+				<SurfaceBodyLoadingStatus label="Loading chart" />
 			) : (
-				<Suspense fallback={<ChartPanelBodyLoading />}>
+				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 					<MultiSeriesChart
 						dataset={EMPTY_DATASET}
 						charts={deferredChart.series}
@@ -144,6 +148,6 @@ export function RWAEntityChartPanel<K extends string>({
 					/>
 				</Suspense>
 			)}
-		</ChartPanel>
+		</Panel>
 	)
 }

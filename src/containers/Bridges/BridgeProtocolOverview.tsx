@@ -21,11 +21,12 @@ import { BRIDGES_SHOWING_ADDRESSES, useLocalStorageSettingsManager } from '~/con
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { usePageClockSec } from '~/hooks/usePageClock'
 import { Change } from '~/ui/Change'
-import { ChartPanel, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TabPanel, Tabs } from '~/ui/Tabs'
 import { TableToolbar } from '~/ui/Toolbar'
@@ -331,7 +332,7 @@ export function BridgeInfo({
 					) : null}
 				</SummaryStatsCard>
 
-				<ChartPanel className="col-span-2">
+				<Panel className="col-span-2">
 					<ChartPanelToolbar>
 						<SegmentedControl
 							variant="default"
@@ -366,7 +367,7 @@ export function BridgeInfo({
 					</ChartPanelToolbar>
 					<>
 						{chartType === 'Volume' && isAllChains && volumeDataset.source.length > 0 ? (
-							<React.Suspense fallback={<ChartPanelBodyLoading />}>
+							<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 								<MultiSeriesChart
 									dataset={volumeDataset}
 									charts={VOLUME_CHARTS}
@@ -377,7 +378,7 @@ export function BridgeInfo({
 							</React.Suspense>
 						) : null}
 						{chartType === 'Inflows' && !isAllChains && inflowsDataset.source.length > 0 ? (
-							<React.Suspense fallback={<ChartPanelBodyLoading />}>
+							<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 								<MultiSeriesChart
 									dataset={inflowsDataset}
 									charts={INFLOW_CHARTS}
@@ -388,7 +389,7 @@ export function BridgeInfo({
 							</React.Suspense>
 						) : null}
 						{chartType === 'Tokens To' && tokenWithdrawals && tokenWithdrawals.peers.length > 0 ? (
-							<React.Suspense fallback={<ChartPanelBodyLoading />}>
+							<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 								<PieChart
 									chartData={visibleTokenPresentation.chartData}
 									stackColors={visibleTokenPresentation.stackColors}
@@ -397,7 +398,7 @@ export function BridgeInfo({
 							</React.Suspense>
 						) : null}
 						{chartType === 'Tokens From' && tokenDeposits && tokenDeposits.peers.length > 0 ? (
-							<React.Suspense fallback={<ChartPanelBodyLoading />}>
+							<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 								<PieChart
 									chartData={visibleTokenPresentation.chartData}
 									stackColors={visibleTokenPresentation.stackColors}
@@ -406,7 +407,7 @@ export function BridgeInfo({
 							</React.Suspense>
 						) : null}
 					</>
-				</ChartPanel>
+				</Panel>
 			</SummaryCardGrid>
 			<BridgeTablePanel tokensTableData={tokensTableData} addressesTableData={addressesTableData} />
 		</>

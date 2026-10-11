@@ -25,11 +25,13 @@ import { usePageClockSec } from '~/hooks/usePageClock'
 import { definitions } from '~/public/definitions'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { ChartPanel, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { MetricRow } from '~/ui/MetricPrimitives'
+import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
 import { chainIconUrl } from '~/utils/icons'
@@ -235,7 +237,7 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 						) : null}
 					</div>
 				</SummaryStatsCard>
-				<ChartPanel className="col-span-2">
+				<Panel className="col-span-2">
 					<ChartPanelToolbar>
 						{chartBreakdownOptions.length > 1 ? (
 							<div className="mr-auto">
@@ -275,7 +277,7 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 							}}
 						/>
 					</ChartPanelToolbar>
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={deferredGroupedCharts.dataset}
 							charts={deferredGroupedCharts.charts}
@@ -285,7 +287,7 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 							onReady={handleChartReady}
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			</SummaryCardGrid>
 			<SearchTableProvider
 				options={{

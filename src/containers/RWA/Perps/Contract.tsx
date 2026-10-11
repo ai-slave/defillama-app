@@ -12,10 +12,11 @@ import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
-import { ChartPanelBodyEmpty, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { MetricChip } from '~/ui/MetricChip'
 import { MetricRow, MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
 import { Panel } from '~/ui/Panel'
+import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatItem, SummaryChange } from '~/ui/SummaryStats'
 import { formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery, readyAsPath } from '~/utils/routerQuery'
@@ -361,7 +362,7 @@ function RWAPerpsContractChartPanel({ contract }: { contract: IRWAPerpsContractD
 			</ChartPanelToolbar>
 
 			{hasChartData ? (
-				<Suspense fallback={<ChartPanelBodyLoading />}>
+				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 					<MultiSeriesChart
 						dataset={deferredChartSpec.dataset}
 						charts={deferredChartSpec.charts}
@@ -372,9 +373,9 @@ function RWAPerpsContractChartPanel({ contract }: { contract: IRWAPerpsContractD
 					/>
 				</Suspense>
 			) : enabledMetrics.length === 0 ? (
-				<ChartPanelBodyEmpty>Select at least one metric.</ChartPanelBodyEmpty>
+				<SurfaceBodyStatus variant="empty">Select at least one metric.</SurfaceBodyStatus>
 			) : (
-				<ChartPanelBodyEmpty>No chart data available for the selected metrics.</ChartPanelBodyEmpty>
+				<SurfaceBodyStatus variant="empty">No chart data available for the selected metrics.</SurfaceBodyStatus>
 			)}
 		</div>
 	)

@@ -5,7 +5,8 @@ import type { paginatedTableFeatures } from '~/components/Table/features/paginat
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { Table } from '~/components/Table/Table'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import {
@@ -185,7 +186,7 @@ export default function Loans() {
 			{isLoading ? (
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : data.principalByPool.source.length > 0 ? (
-				<ChartPanel>
+				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Principal by Pool"
@@ -198,14 +199,14 @@ export default function Loans() {
 							exportButtons={MAPLE_CSV_ONLY_EXPORT}
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			) : null}
 
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				{isLoading ? (
 					<PanelLoadingStatus className="min-h-[400px]" />
 				) : data.rateDistribution.source.length > 0 ? (
-					<ChartPanel>
+					<Panel>
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								title="Interest Rate Distribution"
@@ -218,13 +219,13 @@ export default function Loans() {
 								exportButtons={MAPLE_CSV_ONLY_EXPORT}
 							/>
 						</Suspense>
-					</ChartPanel>
+					</Panel>
 				) : null}
 
 				{isLoading ? (
 					<PanelLoadingStatus className="min-h-[400px]" />
 				) : data.ageDistribution.source.length > 0 ? (
-					<ChartPanel>
+					<Panel>
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								title="Loan Age Distribution"
@@ -237,7 +238,7 @@ export default function Loans() {
 								exportButtons={MAPLE_CSV_ONLY_EXPORT}
 							/>
 						</Suspense>
-					</ChartPanel>
+					</Panel>
 				) : null}
 			</div>
 

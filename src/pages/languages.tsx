@@ -15,8 +15,10 @@ import { SERVER_URL } from '~/constants'
 import { chartColor } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import Layout from '~/layout'
-import { ChartPanel, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
+import { Panel } from '~/ui/Panel'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { fetchJson } from '~/utils/async'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -185,7 +187,7 @@ function LanguageSeriesChart({
 		.replaceAll(/(^-|-$)/g, '')
 
 	return (
-		<ChartPanel className="relative">
+		<Panel className="relative">
 			<ChartPanelToolbar>
 				<h2 className="mr-auto heading-xs">{title}</h2>
 				{series.length > 1 ? (
@@ -206,7 +208,7 @@ function LanguageSeriesChart({
 					csvSource={selectedPercentage.csvSource}
 				/>
 			</ChartPanelToolbar>
-			<React.Suspense fallback={<ChartPanelBodyLoading />}>
+			<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<MultiSeriesChart
 					dataset={selectedPercentage.dataset}
 					charts={selectedPercentage.charts}
@@ -219,7 +221,7 @@ function LanguageSeriesChart({
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
-		</ChartPanel>
+		</Panel>
 	)
 }
 

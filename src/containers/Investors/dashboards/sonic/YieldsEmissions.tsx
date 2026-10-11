@@ -5,7 +5,8 @@ import type { paginatedTableFeatures } from '~/components/Table/features/paginat
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { TablePager } from '~/components/Table/TablePager'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatPercent, PERCENT_POINTS_TWO_DECIMALS_OPTIONS } from '~/utils/numberFormat'
@@ -85,7 +86,7 @@ export default function YieldsEmissions() {
 			{/* Emissions */}
 			<div className="flex flex-col gap-4">
 				<h2 className="heading-xs">S Token Emissions</h2>
-				<ChartPanel>
+				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title={data.emissions.title}
@@ -99,7 +100,7 @@ export default function YieldsEmissions() {
 							chartOptions={STACKED_UNITLESS_TIME_CHART_OPTIONS}
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			</div>
 
 			{/* Burns */}

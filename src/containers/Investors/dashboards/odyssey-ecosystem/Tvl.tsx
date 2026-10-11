@@ -1,7 +1,9 @@
 import { lazy, Suspense, useMemo } from 'react'
 import { buildAlignedCartesianChartModel, type CartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
-import { CHART_FILL, ChartPanel, ChartPanelBodyLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatPercent } from '~/utils/numberFormat'
 import {
@@ -195,7 +197,7 @@ export default function Tvl() {
 			</div>
 
 			<h2 className="heading-xs">Total Ecosystem TVL</h2>
-			<ChartPanel>
+			<Panel>
 				<ChartPanelToolbar
 					leading={
 						<ChartPanelTitle subtitle="Metronome, Vesper, Odyssey and Morpho markets — drag the slider for full history">
@@ -204,9 +206,9 @@ export default function Tvl() {
 					}
 				/>
 				{isLoading || !ecoModel ? (
-					<ChartPanelBodyLoading />
+					<SurfaceBodyLoadingStatus label="Loading chart" />
 				) : (
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={ecoModel.dataset}
 							charts={ecoModel.charts}
@@ -218,17 +220,17 @@ export default function Tvl() {
 						/>
 					</Suspense>
 				)}
-			</ChartPanel>
+			</Panel>
 
 			<h2 className="heading-xs">TVL vs ETH Price</h2>
-			<ChartPanel>
+			<Panel>
 				<ChartPanelToolbar
 					leading={<ChartPanelTitle subtitle="Correlation overlay">Ecosystem TVL vs ETH/USD</ChartPanelTitle>}
 				/>
 				{isLoading || !ethOverlay ? (
-					<ChartPanelBodyLoading />
+					<SurfaceBodyLoadingStatus label="Loading chart" />
 				) : (
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={ethOverlay.dataset}
 							charts={ethOverlay.charts}
@@ -240,17 +242,17 @@ export default function Tvl() {
 						/>
 					</Suspense>
 				)}
-			</ChartPanel>
+			</Panel>
 
 			<h2 className="heading-xs">TVL by Chain</h2>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
 				{protocolByChainModels.map(({ protocol, model, zoom }) => {
 					return (
-						<ChartPanel key={protocol.protocol}>
+						<Panel key={protocol.protocol}>
 							<ChartPanelToolbar
 								leading={<ChartPanelTitle subtitle="Stacked by chain">{protocol.protocol}</ChartPanelTitle>}
 							/>
-							<Suspense fallback={<ChartPanelBodyLoading />}>
+							<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 								<MultiSeriesChart
 									dataset={model.dataset}
 									charts={model.charts}
@@ -261,7 +263,7 @@ export default function Tvl() {
 									exportButtons="hidden"
 								/>
 							</Suspense>
-						</ChartPanel>
+						</Panel>
 					)
 				})}
 			</div>
@@ -361,7 +363,7 @@ export default function Tvl() {
 					<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 						{morphoHistoryModels.map(({ market, model }) => {
 							return (
-								<ChartPanel key={market.marketId}>
+								<Panel key={market.marketId}>
 									<ChartPanelToolbar
 										leading={
 											<ChartPanelTitle subtitle={`${market.chain}${market.source ? ` · ${market.source}` : ''}`}>
@@ -369,7 +371,7 @@ export default function Tvl() {
 											</ChartPanelTitle>
 										}
 									/>
-									<Suspense fallback={<ChartPanelBodyLoading />}>
+									<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 										<MultiSeriesChart
 											dataset={model.dataset}
 											charts={model.charts}
@@ -379,7 +381,7 @@ export default function Tvl() {
 											exportButtons="hidden"
 										/>
 									</Suspense>
-								</ChartPanel>
+								</Panel>
 							)
 						})}
 					</div>

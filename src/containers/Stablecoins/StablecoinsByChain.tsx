@@ -53,18 +53,12 @@ import { useStablecoinChartSeriesData, useStablecoinVolumeChartData } from '~/co
 import type { FormattedStablecoinAsset } from '~/containers/Stablecoins/utils'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import {
-	CHART_FILL,
-	ChartPanel,
-	ChartPanelBody,
-	ChartPanelBodyEmpty,
-	ChartPanelBodyError,
-	ChartPanelBodyLoading,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { DataFreshness } from '~/ui/DataFreshness'
+import { Panel } from '~/ui/Panel'
 import { ScopeNote } from '~/ui/ScopeNote'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
@@ -527,7 +521,7 @@ export function StablecoinsByChain({
 						/>
 					) : null}
 				</SummaryStatsCard>
-				<ChartPanel className="col-span-2">
+				<Panel className="col-span-2">
 					<ChartPanelToolbar>
 						<SegmentedControl
 							value={chartType}
@@ -588,7 +582,7 @@ export function StablecoinsByChain({
 						<ScopeNote>This chart ignores the filters above and shows volume for every stablecoin.</ScopeNote>
 					) : null}
 					{chartType === 'marketCap' && chartView === 'pie' ? (
-						<React.Suspense fallback={<ChartPanelBodyLoading />}>
+						<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<PieChart
 								chartData={marketCapPresentation?.kind === 'pie' ? marketCapPresentation.chartData : EMPTY_PIE_DATA}
 								{...(marketCapPresentation?.kind === 'pie' ? { stackColors: marketCapPresentation.stackColors } : {})}
@@ -596,7 +590,7 @@ export function StablecoinsByChain({
 							/>
 						</React.Suspense>
 					) : chartType === 'marketCap' && chartView === 'hbar' ? (
-						<React.Suspense fallback={<ChartPanelBodyLoading />}>
+						<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<HBarChart
 								categories={
 									marketCapPresentation?.kind === 'hbar' ? marketCapPresentation.categories : EMPTY_HBAR_CATEGORIES
@@ -609,7 +603,7 @@ export function StablecoinsByChain({
 						</React.Suspense>
 					) : chartType === 'marketCap' && chartView === 'treemap' ? (
 						<ChartPanelBody className="min-h-[600px]">
-							<React.Suspense fallback={<ChartPanelBodyLoading className="min-h-[600px]" />}>
+							<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="min-h-[600px]" />}>
 								<TreemapChart
 									treeData={
 										marketCapPresentation?.kind === 'treemap' ? marketCapPresentation.treeData : EMPTY_TREEMAP_DATA
@@ -631,7 +625,7 @@ export function StablecoinsByChain({
 							onReady={handleChartReady}
 						/>
 					)}
-				</ChartPanel>
+				</Panel>
 			</SummaryCardGrid>
 
 			<NewsletterSignup layout="strip" />
@@ -657,16 +651,20 @@ function MultiSeriesChartPanel({
 	onReady: (instance: echarts.ECharts | null) => void
 }) {
 	if (state.status === 'error') {
-		return <ChartPanelBodyError retry={state.retry}>Couldn&apos;t load chart data.</ChartPanelBodyError>
+		return (
+			<SurfaceBodyStatus variant="error" retry={state.retry}>
+				Couldn&apos;t load chart data.
+			</SurfaceBodyStatus>
+		)
 	}
 	if (state.status === 'loading') {
-		return <ChartPanelBodyLoading />
+		return <SurfaceBodyLoadingStatus label="Loading chart" />
 	}
 	if (state.status === 'unavailable' || state.data.charts.length === 0 || state.data.dataset.source.length === 0) {
-		return <ChartPanelBodyEmpty>Chart unavailable.</ChartPanelBodyEmpty>
+		return <SurfaceBodyStatus variant="empty">Chart unavailable.</SurfaceBodyStatus>
 	}
 	return (
-		<React.Suspense fallback={<ChartPanelBodyLoading />}>
+		<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 			<MultiSeriesChart
 				dataset={state.data.dataset}
 				charts={state.data.charts}

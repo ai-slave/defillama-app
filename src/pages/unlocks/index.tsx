@@ -44,11 +44,13 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import Layout from '~/layout'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { ChartPanel, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { MetricRow, MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
+import { Panel } from '~/ui/Panel'
 import { ScopeNote } from '~/ui/ScopeNote'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -259,7 +261,7 @@ function UpcomingUnlockVolumeChart({
 				<ScopeNote>This chart ignores the table filters and shows upcoming unlocks for every protocol.</ScopeNote>
 			) : null}
 			{deferredChartData.dataset.source.length > 0 ? (
-				<React.Suspense fallback={<ChartPanelBodyLoading />}>
+				<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 					<MultiSeriesChart
 						dataset={selectedBreakdown?.dataset ?? deferredChartData.dataset}
 						charts={selectedBreakdown?.charts ?? deferredChartData.charts}
@@ -332,9 +334,9 @@ export default function Protocols({
 						<Icon name="arrow-right" className="size-3.5" />
 					</Button>
 				</SummaryStatsCard>
-				<ChartPanel className="col-span-2">
+				<Panel className="col-span-2">
 					<UpcomingUnlockVolumeChart series={unlockChartSeries} ignoresTableFilters={chartIgnoresTableFilters} />
-				</ChartPanel>
+				</Panel>
 			</SummaryCardGrid>
 
 			<div className="isolate grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">

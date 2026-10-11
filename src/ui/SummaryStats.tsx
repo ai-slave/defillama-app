@@ -13,7 +13,7 @@ import { Tooltip } from '~/ui/Tooltip'
        <SummaryChange … />      the headline's change beside its StatItem
        <KeyMetricsPanel>…       rows (./KeyMetricsCard.tsx, ./MetricPrimitives.tsx)
      </SummaryStatsCard>
-     <ChartPanel className="col-span-2">…                     (route-owned)
+     <Panel className="col-span-2">…                          (route-owned)
    </SummaryCardGrid>
 
    Three variants; pick one, never a hybrid:

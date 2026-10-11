@@ -51,9 +51,8 @@ import { buildRenderPlan, type ChartRenderPlan } from '~/containers/LlamaAI/util
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
-import { InlineStatus } from '~/ui/Status'
+import { InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Tab, TabPanel, Tabs } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -660,7 +659,7 @@ function ActiveSingleChart({
 		return (
 			<div className="flex flex-col p-2" data-chart-id={config.id}>
 				{addToDashboardButton ? <div className="flex justify-end">{addToDashboardButton}</div> : null}
-				<Suspense fallback={<ChartPanelBodyLoading className="min-h-[480px]" />}>
+				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="min-h-[480px]" />}>
 					<CandlestickChart {...candlestickProps} />
 				</Suspense>
 			</div>
@@ -800,11 +799,11 @@ function ChartLoadingPlaceholder({ chartTypes }: { chartTypes: Array<string> | u
 	const label = chartTypes?.length
 		? `Creating ${chartTypes.join(', ')} visualization${chartTypes.length > 1 ? 's' : ''}`
 		: 'Creating visualization'
-	return <ChartPanelBodyLoading label={label} className="px-4 text-center" />
+	return <SurfaceBodyLoadingStatus label={label} className="px-4 text-center" />
 }
 
 // Readers see one plain sentence; a builder's exception text ("Cannot read properties of undefined") is not for them.
-// The notice box, not ChartPanelBodyError's red line: a chart that failed to draw reads like the chat's other failures.
+// The notice box, not SurfaceBodyStatus's red line: a chart that failed to draw reads like the chat's other failures.
 function ChartErrorPlaceholder({ message = 'This chart couldn’t be drawn.' }: { message?: string }) {
 	return (
 		<div className="m-auto flex items-center justify-center px-4 initial:min-h-[360px]">

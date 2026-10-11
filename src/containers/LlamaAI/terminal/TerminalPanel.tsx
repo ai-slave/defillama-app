@@ -5,7 +5,7 @@ import { getChartTheme } from '~/components/ECharts/shared/chartTheme'
 import { authorizedFetchAsFetch } from '~/containers/LlamaAI/authorizedFetchAdapter'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
-import { ChartPanel } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { SurfaceBodyStatus } from '~/ui/Status'
 import { scheduleTerminalChatSave } from './terminalChatState'
 import {
@@ -260,7 +260,7 @@ export function TerminalPanel() {
 	return (
 		<section aria-label="Terminal" className="hidden min-w-0 flex-1 flex-col gap-2 lg:flex">
 			<TerminalMarketStrip symbol={symbol} fetchFn={fetchFn} />
-			<ChartPanel className="min-h-0 flex-1 overflow-hidden">
+			<Panel className="min-h-0 flex-1 overflow-hidden">
 				{status === 'missing' ? (
 					<SurfaceBodyStatus variant="error">
 						Couldn't load the charting library from public/assets/charting_library and public/assets/datafeeds.
@@ -268,7 +268,7 @@ export function TerminalPanel() {
 				) : (
 					<div ref={containerRef} className="min-h-0 flex-1 bg-surface" />
 				)}
-			</ChartPanel>
+			</Panel>
 		</section>
 	)
 }

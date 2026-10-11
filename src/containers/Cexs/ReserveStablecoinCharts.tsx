@@ -24,8 +24,8 @@ import { fetchProtocolTvlTokenBreakdownChart } from '~/containers/ProtocolOvervi
 import type { IProtocolTokenBreakdownChart } from '~/containers/ProtocolOverview/api.types'
 import { fetchStablecoinAssetsApi } from '~/containers/Stablecoins/api'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { CHART_FILL, ChartPanelBodyLoading } from '~/ui/ChartPanel'
-import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { CHART_FILL } from '~/ui/ChartPanel'
+import { PanelLoadingStatus, PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { InlineStatStrip } from '~/ui/SummaryStats'
 import { slug } from '~/utils'
 import { exchangeIconUrl } from '~/utils/icons'
@@ -108,7 +108,7 @@ function MultiSeriesChartCard({
 				</>
 			}
 		>
-			<React.Suspense fallback={<ChartPanelBodyLoading />}>
+			<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<MultiSeriesChart
 					dataset={presentation.dataset}
 					charts={presentation.charts}
@@ -178,7 +178,7 @@ function PieChartCard({
 				</>
 			}
 		>
-			<React.Suspense fallback={<ChartPanelBodyLoading />}>
+			<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<PieChart
 					chartData={presentation.chartData}
 					stackColors={presentation.stackColors}

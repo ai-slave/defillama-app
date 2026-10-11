@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useRef } from 'react'
 import { Icon } from '~/ui/Icon'
-import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
+import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
 import { UploadSelectionNotice } from '../components/UploadSelectionNotice'
 import { AddTextContentModal } from './AddTextContentModal'
 import { GitHubConnectModal } from './GitHubConnectModal'

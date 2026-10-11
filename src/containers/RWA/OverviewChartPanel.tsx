@@ -5,15 +5,10 @@ import { ChartCsvExportButton } from '~/components/ChartExport/ChartCsvExportBut
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { Select } from '~/components/Select/Select'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import {
-	CHART_FILL,
-	ChartPanel,
-	ChartPanelBodyEmpty,
-	ChartPanelBodyError,
-	ChartPanelBodyLoading,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { mergeFailedReads } from '~/utils/query'
 import { pushShallowQuery, toNonEmptyArrayParam } from '~/utils/routerQuery'
@@ -487,7 +482,7 @@ export function RWAOverviewChartPanel({
 	})
 	const addToDashboardButton = dashboardChart ? <AddToDashboardButton chartConfig={dashboardChart} smol /> : null
 	const isFlowChartLoading = isFlowLoading || (isFlowVsPrice && isFlowMcapLoading)
-	/* .csv and .png render only while the chart plots a series (ChartPanel header). */
+	/* .csv and .png render only while the chart plots a series (ChartPanel.tsx header). */
 	const plotsSeries = isFlowMetric
 		? !flowChartFailedRead && !isFlowChartLoading && (groupedFlowChart != null || flowChart != null)
 		: !chartFailedRead && !isChartLoading
@@ -495,7 +490,7 @@ export function RWAOverviewChartPanel({
 	return (
 		<>
 			{isTimeSeriesView ? (
-				<ChartPanel className="flex flex-1 flex-col">
+				<Panel className="flex flex-1 flex-col">
 					<ChartPanelToolbar leading={chartTypeSwitch}>
 						{isFlowMetric ? periodSwitch : null}
 						{isFlowMetric ? null : chartViewSwitch}
@@ -539,11 +534,13 @@ export function RWAOverviewChartPanel({
 					) : null}
 					{isFlowMetric ? (
 						flowChartFailedRead ? (
-							<ChartPanelBodyError retry={flowChartFailedRead}>Couldn&apos;t load flow data.</ChartPanelBodyError>
+							<SurfaceBodyStatus variant="error" retry={flowChartFailedRead}>
+								Couldn&apos;t load flow data.
+							</SurfaceBodyStatus>
 						) : isFlowChartLoading ? (
-							<ChartPanelBodyLoading />
+							<SurfaceBodyLoadingStatus label="Loading chart" />
 						) : groupedFlowChart ? (
-							<Suspense fallback={<ChartPanelBodyLoading />}>
+							<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 								<MultiSeriesChart
 									dataset={groupedFlowChart.dataset}
 									charts={groupedFlowChart.charts}
@@ -555,7 +552,7 @@ export function RWAOverviewChartPanel({
 								/>
 							</Suspense>
 						) : flowChart ? (
-							<Suspense fallback={<ChartPanelBodyLoading />}>
+							<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 								<RWAFlowsChart
 									chart={flowChart}
 									containerClassName={CHART_FILL}
@@ -567,14 +564,16 @@ export function RWAOverviewChartPanel({
 								/>
 							</Suspense>
 						) : (
-							<ChartPanelBodyEmpty>No flow data available.</ChartPanelBodyEmpty>
+							<SurfaceBodyStatus variant="empty">No flow data available.</SurfaceBodyStatus>
 						)
 					) : chartFailedRead ? (
-						<ChartPanelBodyError retry={chartFailedRead}>Couldn&apos;t load chart data.</ChartPanelBodyError>
+						<SurfaceBodyStatus variant="error" retry={chartFailedRead}>
+							Couldn&apos;t load chart data.
+						</SurfaceBodyStatus>
 					) : isChartLoading ? (
-						<ChartPanelBodyLoading />
+						<SurfaceBodyLoadingStatus label="Loading chart" />
 					) : (
-						<Suspense fallback={<ChartPanelBodyLoading />}>
+						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<MultiSeriesChart
 								dataset={deferredTimeSeriesChart.dataset}
 								charts={deferredTimeSeriesChart.charts}
@@ -589,7 +588,7 @@ export function RWAOverviewChartPanel({
 							/>
 						</Suspense>
 					)}
-				</ChartPanel>
+				</Panel>
 			) : null}
 			{isTimeSeriesView ? null : (
 				<RWAOverviewBreakdownPanel

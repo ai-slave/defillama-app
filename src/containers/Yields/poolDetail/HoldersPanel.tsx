@@ -14,10 +14,10 @@ import {
 import { childColors, OTHERS_COLOR } from '~/constants/colors'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
-import { ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { CopyHelper } from '~/ui/Copy'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatItem, SummaryChange } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
@@ -140,7 +140,7 @@ function HolderDistribution({
 
 	return (
 		<div className="flex min-w-0 flex-col">
-			<Suspense fallback={<ChartPanelBodyLoading className="min-h-[300px]" />}>
+			<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="min-h-[300px]" />}>
 				<PieChart
 					height="300px"
 					chartData={pieData}

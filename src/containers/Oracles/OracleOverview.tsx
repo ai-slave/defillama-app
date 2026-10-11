@@ -14,7 +14,7 @@ import { CHART_COLORS } from '~/constants/colors'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
@@ -293,7 +293,7 @@ export function OracleOverview({
 					/>
 				</SummaryStatsCard>
 
-				<ChartPanel className="col-span-2">
+				<Panel className="col-span-2">
 					{!isFetchingExtraSeries ? (
 						<FailedDataNote
 							labels={failedApiKeys.map((key) => tvlOptionNames[key])}
@@ -318,7 +318,7 @@ export function OracleOverview({
 							/>
 						</Suspense>
 					)}
-				</ChartPanel>
+				</Panel>
 			</SummaryCardGrid>
 
 			<Suspense fallback={<Panel style={{ minHeight: `${tableData.length * 50 + 200}px` }} />}>

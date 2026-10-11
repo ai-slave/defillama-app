@@ -47,8 +47,7 @@ import Layout from '~/layout'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { PanelStatus } from '~/ui/Status'
-import { TabLink } from '~/ui/Tab'
-import { Tab, TabPanel, Tabs } from '~/ui/Tabs'
+import { Tab, TabPanel, Tabs, TabLink } from '~/ui/Tabs'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 const CreateDashboardPicker = lazy(() =>
 	import('~/containers/ProDashboard/components/CreateDashboardPicker').then((m) => ({

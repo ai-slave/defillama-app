@@ -2,16 +2,11 @@ import { useRouter } from 'next/router'
 import * as React from 'react'
 import { buildAlignedCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import { chartColor } from '~/constants/colors'
-import {
-	CHART_FILL,
-	ChartPanel,
-	ChartPanelBody,
-	ChartPanelBodyError,
-	ChartPanelBodyLoading,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { ScopeNote, ignoredFiltersPhrase } from '~/ui/ScopeNote'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { formatUsd } from '~/utils/numberFormat'
 import type { QueryRetry } from '~/utils/query'
 import { pushShallowQuery } from '~/utils/routerQuery'
@@ -175,7 +170,7 @@ export function DirectoryChart({ chart, range, failedRead, country }: DirectoryC
 	)
 
 	return (
-		<ChartPanel>
+		<Panel>
 			<ChartPanelToolbar>
 				<h2 className="mr-auto heading-xs">Trading activity</h2>
 				<ChartRangeControl range={range} />
@@ -201,7 +196,7 @@ export function DirectoryChart({ chart, range, failedRead, country }: DirectoryC
 			{/* Toolbar plus a 320px body matches the 360px summary card beside the chart. */}
 			{chart ? (
 				/* key forces a fresh chart per tab so series/axes are replaced, not merged. */
-				<React.Suspense fallback={<ChartPanelBodyLoading className="min-h-[320px]" />}>
+				<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="min-h-[320px]" />}>
 					<ChartPanelBody className="min-h-[320px]" role="img" aria-label={overviewAriaLabel(chart, resolved)}>
 						<MultiSeriesChart
 							key={tab}
@@ -216,13 +211,13 @@ export function DirectoryChart({ chart, range, failedRead, country }: DirectoryC
 					</ChartPanelBody>
 				</React.Suspense>
 			) : failedRead ? (
-				<ChartPanelBodyError retry={failedRead} style={{ minHeight: '320px' }}>
+				<SurfaceBodyStatus variant="error" retry={failedRead} style={{ minHeight: '320px' }}>
 					Couldn&apos;t load the exchange overview.
-				</ChartPanelBodyError>
+				</SurfaceBodyStatus>
 			) : (
-				<ChartPanelBodyLoading className="min-h-[320px]" />
+				<SurfaceBodyLoadingStatus label="Loading chart" className="min-h-[320px]" />
 			)}
 			{/* The blurb and the last-updated stamp were dropped to keep the table above the fold. */}
-		</ChartPanel>
+		</Panel>
 	)
 }

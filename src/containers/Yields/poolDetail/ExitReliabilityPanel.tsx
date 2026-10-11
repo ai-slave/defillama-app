@@ -5,8 +5,8 @@ import {
 	TokenPageTableHeaderCell,
 	TokenPageTableScroller
 } from '~/components/Table/helpers'
-import { ChartPanel } from '~/ui/ChartPanel'
 import { keepFocus } from '~/ui/focus'
+import { Panel } from '~/ui/Panel'
 import { StatusBadge, type Status } from '~/ui/StatusBadge'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
@@ -84,9 +84,9 @@ export function ExitReliabilityPanel({
 	holders: DetailHolders | null
 }) {
 	return (
-		<ChartPanel id={EXIT_STATUS_ID} ref={scrollIntoViewIfHashed} className="@container scroll-mt-4">
+		<Panel id={EXIT_STATUS_ID} ref={scrollIntoViewIfHashed} className="@container scroll-mt-4">
 			<ExitLedger model={model} verified={verified} holders={holders} />
-		</ChartPanel>
+		</Panel>
 	)
 }
 

@@ -12,10 +12,9 @@ import { prepareTableCsv } from '~/components/Table/utils'
 import { childColors } from '~/constants/colors'
 import { Button } from '~/ui/Button'
 import { Change } from '~/ui/Change'
-import { ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { PanelStatus } from '~/ui/Status'
+import { PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { isTrueQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import {
@@ -397,7 +396,7 @@ function IndustriesReadyPage({
 							</p>
 						</div>
 					</PanelHeader>
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={companyCountDataset}
 							charts={[

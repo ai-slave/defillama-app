@@ -16,14 +16,10 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
-import {
-	CHART_FILL,
-	ChartPanel,
-	ChartPanelBodyLoading,
-	ChartPanelExportShellLoading,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelExportShellLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { MetricRow } from '~/ui/MetricPrimitives'
+import { Panel } from '~/ui/Panel'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
@@ -88,7 +84,7 @@ export function DATByAsset({
 						Report incorrect data
 					</Button>
 				</SummaryStatsCard>
-				<ChartPanel className="col-span-2">
+				<Panel className="col-span-2">
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							containerClassName={CHART_FILL}
@@ -110,7 +106,7 @@ export function DATByAsset({
 							}}
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			</SummaryCardGrid>
 			<div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
 				<MNAVChart
@@ -346,7 +342,7 @@ function MNAVChart({
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
 	return (
-		<ChartPanel className="col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+		<Panel className="col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 			<ChartPanelToolbar>
 				<h2 className="mr-auto heading-xs">{title}</h2>
 				{institutionsNames.length > 1 ? (
@@ -374,7 +370,7 @@ function MNAVChart({
 					}}
 				/>
 			</ChartPanelToolbar>
-			<Suspense fallback={<ChartPanelBodyLoading />}>
+			<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<MultiSeriesChart
 					charts={data.charts}
 					selectedCharts={selectedCharts}
@@ -385,6 +381,6 @@ function MNAVChart({
 					onReady={handleChartReady}
 				/>
 			</Suspense>
-		</ChartPanel>
+		</Panel>
 	)
 }

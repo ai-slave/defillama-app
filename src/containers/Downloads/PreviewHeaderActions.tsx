@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
+import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
 import { Tooltip } from '~/ui/Tooltip'
 import type { DownloadFormat } from '~/utils/download'
 import { ConfirmableContent } from './ActionFeedback'

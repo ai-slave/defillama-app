@@ -14,8 +14,9 @@ import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
-import { ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
+import { Panel } from '~/ui/Panel'
 import { StatItem, SummaryCardGrid, SummaryChange, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
@@ -79,11 +80,11 @@ export function ExtraTvlByChain(props: IExtraTvlByChainPageData) {
 						{props.change24h != null ? <SummaryChange value={props.change24h} comparison="over 24h" /> : null}
 					</div>
 				</SummaryStatsCard>
-				<ChartPanel className="col-span-2">
+				<Panel className="col-span-2">
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart exportButtons={exportButtons} dataset={props.dataset} charts={props.charts} />
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			</SummaryCardGrid>
 			<SearchTableProvider
 				options={{

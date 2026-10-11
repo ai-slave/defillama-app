@@ -40,17 +40,11 @@ import { useCalcCirculating, useGroupChainsPegged } from '~/containers/Stablecoi
 import { useStablecoinChartSeriesData, useStablecoinVolumeChartData } from '~/containers/Stablecoins/queries.client'
 import { getStablecoinDominance, type IFormattedStablecoinChainRow } from '~/containers/Stablecoins/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import {
-	CHART_FILL,
-	ChartPanel,
-	ChartPanelBody,
-	ChartPanelBodyEmpty,
-	ChartPanelBodyError,
-	ChartPanelBodyLoading,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { DataFreshness } from '~/ui/DataFreshness'
+import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { queryReadFailed, type QueryRetry } from '~/utils/query'
@@ -322,7 +316,7 @@ export function ChainsWithStablecoins({
 						<DataFreshness timestamp={dataTimestamp} label="Market cap data last updated" className="mt-auto" />
 					) : null}
 				</SummaryStatsCard>
-				<ChartPanel className="col-span-2">
+				<Panel className="col-span-2">
 					<ChartPanelToolbar>
 						<SegmentedControl
 							value={chartType}
@@ -378,7 +372,7 @@ export function ChainsWithStablecoins({
 						/>
 					</ChartPanelToolbar>
 					{chartType === 'marketCap' && chartView === 'pie' ? (
-						<React.Suspense fallback={<ChartPanelBodyLoading />}>
+						<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<PieChart
 								chartData={marketCapPresentation?.kind === 'pie' ? marketCapPresentation.chartData : EMPTY_PIE_DATA}
 								{...(marketCapPresentation?.kind === 'pie' ? { stackColors: marketCapPresentation.stackColors } : {})}
@@ -386,7 +380,7 @@ export function ChainsWithStablecoins({
 							/>
 						</React.Suspense>
 					) : chartType === 'marketCap' && chartView === 'hbar' ? (
-						<React.Suspense fallback={<ChartPanelBodyLoading />}>
+						<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<HBarChart
 								categories={
 									marketCapPresentation?.kind === 'hbar' ? marketCapPresentation.categories : EMPTY_HBAR_CATEGORIES
@@ -399,7 +393,7 @@ export function ChainsWithStablecoins({
 						</React.Suspense>
 					) : chartType === 'marketCap' && chartView === 'treemap' ? (
 						<ChartPanelBody className="min-h-[600px]">
-							<React.Suspense fallback={<ChartPanelBodyLoading className="min-h-[600px]" />}>
+							<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="min-h-[600px]" />}>
 								<TreemapChart
 									treeData={
 										marketCapPresentation?.kind === 'treemap' ? marketCapPresentation.treeData : EMPTY_TREEMAP_DATA
@@ -431,7 +425,7 @@ export function ChainsWithStablecoins({
 							onReady={handleChartReady}
 						/>
 					)}
-				</ChartPanel>
+				</Panel>
 			</SummaryCardGrid>
 
 			<StablecoinsChainsTable data={groupedChains} deprecatedChains={deprecatedChains} />
@@ -457,16 +451,20 @@ function SelectedChainsChart({
 	onReady: (instance: echarts.ECharts | null) => void
 }) {
 	if (failedRead) {
-		return <ChartPanelBodyError retry={failedRead}>Couldn&apos;t load chart data.</ChartPanelBodyError>
+		return (
+			<SurfaceBodyStatus variant="error" retry={failedRead}>
+				Couldn&apos;t load chart data.
+			</SurfaceBodyStatus>
+		)
 	}
 	if (isLoading) {
-		return <ChartPanelBodyLoading />
+		return <SurfaceBodyLoadingStatus label="Loading chart" />
 	}
 	if (!data || data.charts.length === 0 || data.dataset.source.length === 0) {
-		return <ChartPanelBodyEmpty>Chart unavailable.</ChartPanelBodyEmpty>
+		return <SurfaceBodyStatus variant="empty">Chart unavailable.</SurfaceBodyStatus>
 	}
 	return (
-		<React.Suspense fallback={<ChartPanelBodyLoading />}>
+		<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 			<MultiSeriesChart
 				dataset={data.dataset}
 				charts={data.charts}

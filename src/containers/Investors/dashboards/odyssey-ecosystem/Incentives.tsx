@@ -1,15 +1,10 @@
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { createCappedRemainderTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
-import {
-	CHART_FILL,
-	ChartPanel,
-	ChartPanelBodyEmpty,
-	ChartPanelBodyLoading,
-	ChartPanelTitle,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatRatio } from '~/utils/numberFormat'
 import { useTab, chartToModel, type EpochRow, type SpendWindowRow, type IncentivesResponse } from './api'
@@ -179,7 +174,7 @@ export default function Incentives() {
 			</ChartCard>
 
 			<h2 className="heading-xs">Weekly Spend per Pool</h2>
-			<ChartPanel>
+			<Panel>
 				<ChartPanelToolbar leading={<ChartPanelTitle>Per-pool weekly spend</ChartPanelTitle>}>
 					<SegmentedControl<VenueId>
 						variant="default"
@@ -191,9 +186,9 @@ export default function Incentives() {
 					/>
 				</ChartPanelToolbar>
 				{!data ? (
-					<ChartPanelBodyLoading />
+					<SurfaceBodyLoadingStatus label="Loading chart" />
 				) : poolModel?.dataset.source.length ? (
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							key={poolTab}
 							dataset={poolModel.dataset}
@@ -206,9 +201,9 @@ export default function Incentives() {
 						/>
 					</Suspense>
 				) : (
-					<ChartPanelBodyEmpty>No weekly pool data.</ChartPanelBodyEmpty>
+					<SurfaceBodyStatus variant="empty">No weekly pool data.</SurfaceBodyStatus>
 				)}
-			</ChartPanel>
+			</Panel>
 
 			<h2 className="heading-xs">Epochs & Spend</h2>
 			<ChartCard title="Epoch breakdown">

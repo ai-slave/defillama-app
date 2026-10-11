@@ -1,5 +1,5 @@
 import { BasicLink } from '~/components/Link'
-import { TabLink, tabTrackStyles } from '~/ui/Tab'
+import { TabLink, tabTrackStyles } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
 import { withCountryParam } from './queryState'
 

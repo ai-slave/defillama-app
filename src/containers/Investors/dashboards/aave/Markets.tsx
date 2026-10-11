@@ -5,7 +5,8 @@ import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/componen
 import { displayTableFeatures } from '~/components/Table/features/display'
 import { TablePager } from '~/components/Table/TablePager'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { InlineStatStrip } from '~/ui/SummaryStats'
 import {
@@ -279,7 +280,7 @@ export default function Markets() {
 			)}
 
 			<div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-				<ChartPanel>
+				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							dataset={marketSizeDataset}
@@ -292,10 +293,10 @@ export default function Markets() {
 							exportButtons={AAVE_BAR_EXPORT}
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 
 				{utilizationDataset.source.length > 0 && (
-					<ChartPanel>
+					<Panel>
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								dataset={utilizationDataset}
@@ -308,7 +309,7 @@ export default function Markets() {
 								exportButtons={AAVE_BAR_EXPORT}
 							/>
 						</Suspense>
-					</ChartPanel>
+					</Panel>
 				)}
 			</div>
 

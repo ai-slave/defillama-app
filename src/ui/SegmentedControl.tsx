@@ -63,8 +63,8 @@ import { Tooltip } from './Tooltip'
      focus and Enter or Space selects. Panels stay mounted while hidden
      unless the caller unmounts them.
    Never convert a value picker to tabs to make controls uniform. Page-level
-   route navigation is `TabLink` in ./Tab.tsx, never this control; its
-   header says which tab look goes where.
+   route navigation is `TabLink` in ./Tabs.tsx, never this control; that
+   file's header says which tab look goes where.
    A phone-only pane switch (Configure | Preview in a workspace dialog)
    stays a radio: on desktop both panes show side by side, so they are not
    tab panels, and the switch only picks which one fills a phone screen.

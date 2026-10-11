@@ -15,16 +15,10 @@ import { columnVisibilityFeature } from '~/components/Table/features/display'
 import { sortingFeatures } from '~/components/Table/features/sorting'
 import { TablePager } from '~/components/Table/TablePager'
 import { Card } from '~/ui/Card'
-import {
-	CHART_FILL,
-	ChartPanel,
-	ChartPanelBodyLoading,
-	ChartPanelExportShellLoading,
-	ChartPanelTitle,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelExportShellLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
-import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { Panel } from '~/ui/Panel'
+import { PanelLoadingStatus, PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatPercent } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
@@ -203,11 +197,11 @@ function AssetBreakdownSection({
 	}
 
 	return (
-		<ChartPanel>
+		<Panel>
 			<ChartPanelToolbar leading={<ChartPanelTitle>{title}</ChartPanelTitle>} />
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 				<div className="min-h-[320px]">
-					<Suspense fallback={<ChartPanelBodyLoading style={{ minHeight: '320px' }} />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" style={{ minHeight: '320px' }} />}>
 						<PieChart
 							chartData={categories}
 							stackColors={pieColors}
@@ -276,7 +270,7 @@ function AssetBreakdownSection({
 					</div>
 				</div>
 			</div>
-		</ChartPanel>
+		</Panel>
 	)
 }
 
@@ -299,7 +293,7 @@ export default function Ecosystem() {
 			<div className="flex flex-col gap-4">
 				<h2 className="heading-xs">Total Value Locked</h2>
 				<StatTile label="Current TVL" value={data.tvl.currentFormatted} />
-				<ChartPanel>
+				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title={data.tvl.title}
@@ -311,7 +305,7 @@ export default function Ecosystem() {
 							chartOptions={data.tvl.chartOptions}
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			</div>
 
 			{/* Fees */}
@@ -327,7 +321,7 @@ export default function Ecosystem() {
 					<StatTile label="30d Fees" value={data.fees.kpis.total30d.formatted} />
 					<StatTile label="All-Time Fees" value={data.fees.kpis.totalAllTime.formatted} />
 				</div>
-				<ChartPanel>
+				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title={data.fees.title}
@@ -342,7 +336,7 @@ export default function Ecosystem() {
 							exportButtons={CSV_ONLY_EXPORT}
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 				<h2 className="heading-xs">Top Protocols by Fees</h2>
 				<ProtocolTable data={data.fees.topProtocols} valueLabel="Fees" />
 			</div>
@@ -360,7 +354,7 @@ export default function Ecosystem() {
 					<StatTile label="30d Volume" value={data.dexVolume.kpis.total30d.formatted} />
 					<StatTile label="All-Time Volume" value={data.dexVolume.kpis.totalAllTime.formatted} />
 				</div>
-				<ChartPanel>
+				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title={data.dexVolume.title}
@@ -375,7 +369,7 @@ export default function Ecosystem() {
 							exportButtons={CSV_ONLY_EXPORT}
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 				<h2 className="heading-xs">Top DEXes by Volume</h2>
 				<ProtocolTable data={data.dexVolume.topDexes} valueLabel="Volume" />
 			</div>
@@ -388,7 +382,7 @@ export default function Ecosystem() {
 					<StatTile label="Minted (Native)" value={data.stablecoins.kpis.currentMinted.formatted} />
 					<StatTile label="Bridged" value={data.stablecoins.kpis.currentBridged.formatted} />
 				</div>
-				<ChartPanel>
+				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title={data.stablecoins.title}
@@ -402,16 +396,16 @@ export default function Ecosystem() {
 							chartOptions={data.stablecoins.chartOptions}
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			</div>
 
 			{/* Stablecoin Supply Breakdown */}
 			{data.stablecoins.breakdown.length > 0 && (
-				<ChartPanel>
+				<Panel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>Stablecoin Supply Breakdown</ChartPanelTitle>} />
 					<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 						<div className="min-h-[320px]">
-							<Suspense fallback={<ChartPanelBodyLoading style={{ minHeight: '320px' }} />}>
+							<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" style={{ minHeight: '320px' }} />}>
 								<PieChart
 									chartData={data.stablecoins.breakdown}
 									stackColors={data.stablecoins.pieColors}
@@ -446,7 +440,7 @@ export default function Ecosystem() {
 							</div>
 						</div>
 					</div>
-				</ChartPanel>
+				</Panel>
 			)}
 
 			{/* Chain Assets */}

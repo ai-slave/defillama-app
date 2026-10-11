@@ -2,7 +2,8 @@ import { lazy, Suspense, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { formatPercent } from '~/utils/numberFormat'
@@ -155,7 +156,7 @@ export function CompositionSection({
 			    table width on every tab, sized to the longest names (the overview's lines), so
 			    the chart and table line up as you switch tabs. */}
 			<div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
-				<ChartPanel className="min-w-0">
+				<Panel className="min-w-0">
 					{model ? (
 						<>
 							<Suspense fallback={<ChartPanelExportShellLoading />}>
@@ -180,7 +181,7 @@ export function CompositionSection({
 					) : (
 						<SurfaceBodyLoadingStatus className="min-h-[400px]" />
 					)}
-				</ChartPanel>
+				</Panel>
 				{/* min-w-0: a wide table scrolls inside the card instead of widening the grid track. */}
 				<Card padding="md" className="min-w-0">
 					{/* The payload's own title, the same string the chip above carries. A hard space

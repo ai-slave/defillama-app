@@ -9,14 +9,9 @@ import { fetchAdapterProtocolChartData } from '~/containers/AdapterMetrics/api'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useMedia } from '~/hooks/useMedia'
-import {
-	CHART_FILL,
-	ChartPanel,
-	ChartPanelBodyEmpty,
-	ChartPanelBodyLoading,
-	ChartPanelTitle,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
+import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
@@ -250,13 +245,15 @@ export function PlaceholderCard({
 	note?: string
 }) {
 	return (
-		<ChartPanel>
+		<Panel>
 			<ChartPanelToolbar leading={<ChartPanelTitle subtitle={subtitle}>{title}</ChartPanelTitle>} />
-			<ChartPanelBodyEmpty className="flex-col gap-2">
-				<span>Awaiting data</span>
-				{note ? <code className="rounded-sm bg-page px-2 py-0.5 mono-sm">{note}</code> : null}
-			</ChartPanelBodyEmpty>
-		</ChartPanel>
+			<SurfaceBodyStatus variant="empty">
+				<div className="flex flex-col items-center gap-2">
+					<span>Awaiting data</span>
+					{note ? <code className="rounded-sm bg-page px-2 py-0.5 mono-sm">{note}</code> : null}
+				</div>
+			</SurfaceBodyStatus>
+		</Panel>
 	)
 }
 
@@ -303,7 +300,7 @@ export function TimeAreaCard({
 	if (chart.series.length === 0)
 		return <PlaceholderCard title={chart.title ?? ''} subtitle={subtitle} note="empty series" />
 	return (
-		<ChartPanel>
+		<Panel>
 			<ChartPanelToolbar
 				leading={<ChartPanelTitle subtitle={subtitle ?? chart.subtitle}>{chart.title ?? ''}</ChartPanelTitle>}
 			>
@@ -316,7 +313,7 @@ export function TimeAreaCard({
 					csvSource={{ type: 'dataset', prepare: () => dataset }}
 				/>
 			</ChartPanelToolbar>
-			<Suspense fallback={<ChartPanelBodyLoading />}>
+			<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
@@ -327,7 +324,7 @@ export function TimeAreaCard({
 					onReady={handleChartReady}
 				/>
 			</Suspense>
-		</ChartPanel>
+		</Panel>
 	)
 }
 
@@ -371,7 +368,7 @@ export function TimeBarCard({
 	if (chart.series.length === 0)
 		return <PlaceholderCard title={chart.title ?? ''} subtitle={subtitle} note="empty series" />
 	return (
-		<ChartPanel>
+		<Panel>
 			<ChartPanelToolbar
 				leading={<ChartPanelTitle subtitle={subtitle ?? chart.subtitle}>{chart.title ?? ''}</ChartPanelTitle>}
 			>
@@ -384,7 +381,7 @@ export function TimeBarCard({
 					csvSource={{ type: 'dataset', prepare: () => ({ ...dataset, groupBy }) }}
 				/>
 			</ChartPanelToolbar>
-			<Suspense fallback={<ChartPanelBodyLoading />}>
+			<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
@@ -397,7 +394,7 @@ export function TimeBarCard({
 					{...(groupBy ? { groupBy } : {})}
 				/>
 			</Suspense>
-		</ChartPanel>
+		</Panel>
 	)
 }
 
@@ -412,11 +409,11 @@ export function CategoryBarCard({
 	valueSymbol?: string
 }) {
 	return (
-		<ChartPanel>
+		<Panel>
 			<ChartPanelToolbar
 				leading={<ChartPanelTitle subtitle={subtitle ?? chart.subtitle}>{chart.title ?? ''}</ChartPanelTitle>}
 			/>
-			<Suspense fallback={<ChartPanelBodyLoading />}>
+			<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<HBarChart
 					categories={chart.dates}
 					values={chart.series[0]?.data ?? []}
@@ -425,7 +422,7 @@ export function CategoryBarCard({
 					containerClassName={CHART_FILL}
 				/>
 			</Suspense>
-		</ChartPanel>
+		</Panel>
 	)
 }
 
@@ -442,9 +439,9 @@ export function DonutCard({
 	// drop the legend below the chart instead.
 	const isSmall = useMedia('(max-width: 640px)')
 	return (
-		<ChartPanel>
+		<Panel>
 			<ChartPanelToolbar leading={<ChartPanelTitle subtitle={subtitle}>{dist.title ?? ''}</ChartPanelTitle>} />
-			<Suspense fallback={<ChartPanelBodyLoading />}>
+			<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<PieChart
 					chartData={dist.data}
 					stackColors={colorMap(dist.data.map((d) => d.name))}
@@ -459,7 +456,7 @@ export function DonutCard({
 					}
 				/>
 			</Suspense>
-		</ChartPanel>
+		</Panel>
 	)
 }
 

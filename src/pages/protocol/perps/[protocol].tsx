@@ -26,7 +26,9 @@ import { getProtocolMetricFlags } from '~/containers/ProtocolOverview/queries'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { CHART_FILL, ChartPanel, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { slug } from '~/utils'
 import { buildHallmarksWithGenuineSpikes } from '~/utils/hallmarks'
@@ -205,7 +207,7 @@ export default function Protocols(props: PerpsProtocolPageProps) {
 						}
 					/>
 				</SummaryStatsCard>
-				<ChartPanel className="col-span-2">
+				<Panel className="col-span-2">
 					<ChartPanelToolbar>
 						<ChartGroupingSelector value={groupBy} setValue={setGroupBy} options={DWMC_GROUPING_OPTIONS_LOWERCASE} />
 						<ChartExportButtons
@@ -219,7 +221,7 @@ export default function Protocols(props: PerpsProtocolPageProps) {
 							}}
 						/>
 					</ChartPanelToolbar>
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={deferredFinalCharts.dataset}
 							charts={deferredFinalCharts.charts}
@@ -230,11 +232,11 @@ export default function Protocols(props: PerpsProtocolPageProps) {
 							onReady={handleChartReady}
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			</SummaryCardGrid>
 			<div className="grid grid-cols-2 gap-2">
 				{props.protocolChains.length > 1 ? (
-					<ChartPanel className="col-span-full xl:col-span-1 xl:only:col-span-full">
+					<Panel className="col-span-full xl:col-span-1 xl:only:col-span-full">
 						<DimensionProtocolChartByType
 							chartType="chain"
 							protocolName={slug(props.name)}
@@ -244,10 +246,10 @@ export default function Protocols(props: PerpsProtocolPageProps) {
 							{...(props.hallmarks ? { hallmarks: props.hallmarks } : {})}
 							title="Perp Volume by chain"
 						/>
-					</ChartPanel>
+					</Panel>
 				) : null}
 				{props.protocolVersions.length > 1 ? (
-					<ChartPanel className="col-span-full xl:col-span-1 xl:only:col-span-full">
+					<Panel className="col-span-full xl:col-span-1 xl:only:col-span-full">
 						<DimensionProtocolChartByType
 							chartType="version"
 							protocolName={slug(props.name)}
@@ -257,7 +259,7 @@ export default function Protocols(props: PerpsProtocolPageProps) {
 							{...(props.hallmarks ? { hallmarks: props.hallmarks } : {})}
 							title="Perp Volume by protocol version"
 						/>
-					</ChartPanel>
+					</Panel>
 				) : null}
 			</div>
 		</ProtocolOverviewLayout>

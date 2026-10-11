@@ -17,10 +17,11 @@ import {
 } from '~/components/ECharts/shared/tooltip'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
-import { ChartPanelBody, ChartPanelBodyError, ChartPanelBodyLoading, CHART_FILL } from '~/ui/ChartPanel'
+import { ChartPanelBody, CHART_FILL } from '~/ui/ChartPanel'
 import { DividedGrid } from '~/ui/DividedGrid'
 import { metricSeriesToggleStyles } from '~/ui/MetricChip'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
+import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
@@ -648,11 +649,13 @@ export function PoolLiquidityChart({
 			) : null}
 			<ChartPanelBody>
 				{failedRead ? (
-					<ChartPanelBodyError retry={failedRead}>Couldn&apos;t load {range} history.</ChartPanelBodyError>
+					<SurfaceBodyStatus variant="error" retry={failedRead}>
+						Couldn&apos;t load {range} history.
+					</SurfaceBodyStatus>
 				) : loading ? (
-					<ChartPanelBodyLoading label={`Loading ${range} history`} />
+					<SurfaceBodyLoadingStatus label={`Loading ${range} history`} />
 				) : (
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={dataset}
 							charts={charts}

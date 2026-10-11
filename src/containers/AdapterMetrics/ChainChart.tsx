@@ -18,15 +18,10 @@ import type { MultiChartConfig } from '~/containers/ProDashboard/types'
 import { getAdapterDashboardType } from '~/containers/ProDashboard/utils/adapterChartMapping'
 import { generateItemId } from '~/containers/ProDashboard/utils/dashboardUtils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import {
-	CHART_FILL,
-	ChartPanel,
-	ChartPanelBody,
-	ChartPanelBodyError,
-	ChartPanelBodyLoading,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { ScopeNote } from '~/ui/ScopeNote'
+import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import { queryReadFailed, type QueryRetry } from '~/utils/query'
@@ -509,7 +504,7 @@ export function AdapterByChainChart({
 		}
 	}, [breakdownChartState, chain, chartName])
 	return (
-		<ChartPanel className="col-span-2">
+		<Panel className="col-span-2">
 			<ChartPanelToolbar
 				leading={
 					<>
@@ -638,14 +633,16 @@ export function AdapterByChainChart({
 				</ScopeNote>
 			) : null}
 			{chartViewMode === 'Breakdown' && breakdownChartDataState.kind === 'error' ? (
-				<ChartPanelBodyError retry={breakdownChartDataState.retry}>
+				<SurfaceBodyStatus variant="error" retry={breakdownChartDataState.retry}>
 					Couldn&apos;t load the protocol breakdown.
-				</ChartPanelBodyError>
+				</SurfaceBodyStatus>
 			) : chartViewMode === 'Breakdown' && breakdownChartDataState.kind === 'loading' ? (
-				<ChartPanelBodyLoading label="Loading chart data" />
+				<SurfaceBodyLoadingStatus label="Loading chart data" />
 			) : chartViewMode === 'Breakdown' ? (
 				<ChartPanelBody className={breakdownChartBodyClassName}>
-					<React.Suspense fallback={<ChartPanelBodyLoading className={breakdownChartBodyClassName} />}>
+					<React.Suspense
+						fallback={<SurfaceBodyLoadingStatus label="Loading chart" className={breakdownChartBodyClassName} />}
+					>
 						{deferredBreakdownPresentation.kind === 'treemap' ? (
 							<BuilderTreemapChart
 								data={deferredBreakdownPresentation.data}
@@ -688,7 +685,7 @@ export function AdapterByChainChart({
 				</ChartPanelBody>
 			) : (
 				<ChartPanelBody>
-					<React.Suspense fallback={<ChartPanelBodyLoading />}>
+					<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={deferredCombinedFinalCharts.dataset}
 							charts={deferredCombinedFinalCharts.charts}
@@ -707,7 +704,7 @@ export function AdapterByChainChart({
 					</React.Suspense>
 				</ChartPanelBody>
 			)}
-		</ChartPanel>
+		</Panel>
 	)
 }
 
@@ -947,7 +944,7 @@ export function ChainsByAdapterChart({
 		(deferredChartPresentation.kind !== 'treemap' && deferredChartPresentation.kind !== 'hbar') ||
 		deferredChartPresentation.data.length > 0
 	return (
-		<ChartPanel className="col-span-2">
+		<Panel className="col-span-2">
 			<ChartPanelToolbar
 				leading={
 					<>
@@ -1024,11 +1021,13 @@ export function ChainsByAdapterChart({
 			</ChartPanelToolbar>
 			<ChartPanelBody className={chartBodyClassName}>
 				{queryReadFailed(baseChartQuery) ? (
-					<ChartPanelBodyError retry={baseChartQuery}>Couldn&apos;t load chart data.</ChartPanelBodyError>
+					<SurfaceBodyStatus variant="error" retry={baseChartQuery}>
+						Couldn&apos;t load chart data.
+					</SurfaceBodyStatus>
 				) : baseChartQuery.isLoading ? (
-					<ChartPanelBodyLoading label="Loading chart data" className={chartBodyClassName} />
+					<SurfaceBodyLoadingStatus label="Loading chart data" className={chartBodyClassName} />
 				) : (
-					<React.Suspense fallback={<ChartPanelBodyLoading className={chartBodyClassName} />}>
+					<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" className={chartBodyClassName} />}>
 						{deferredChartPresentation.kind === 'treemap' ? (
 							<BuilderTreemapChart
 								data={deferredChartPresentation.data}
@@ -1068,6 +1067,6 @@ export function ChainsByAdapterChart({
 					</React.Suspense>
 				)}
 			</ChartPanelBody>
-		</ChartPanel>
+		</Panel>
 	)
 }

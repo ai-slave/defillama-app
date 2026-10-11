@@ -5,15 +5,9 @@ import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import { buildTreemapCsvDataset } from '~/components/ECharts/TreemapChart/csv'
 import { CHART_COLORS, OTHERS_COLOR } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import {
-	CHART_FILL,
-	ChartPanel,
-	ChartPanelBody,
-	ChartPanelBodyEmpty,
-	ChartPanelBodyError,
-	ChartPanelBodyLoading,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
+import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import type { QueryRetry } from '~/utils/query'
 import { limitRwaHorizontalBarData, type RwaNamedValue } from './chartDataset'
 import { RWA_MAX_CHART_SERIES } from './chartFold'
@@ -51,7 +45,7 @@ type RWASnapshotChartPanelProps = {
 	failedRead: QueryRetry | null
 	/** What the chart shows, such as the metric switch: the toolbar's left group in every view. */
 	leading: ReactNode
-	/** The rest of the toolbar in ChartPanel order (filters and grouping, then Add to dashboard), before the exports. */
+	/** The rest of the toolbar in ChartPanelToolbar order (filters and grouping, then Add to dashboard), before the exports. */
 	controls: ReactNode
 	/** Slices the flat treemap keeps, Others included; every slice by default. */
 	treemapLimit?: number
@@ -109,7 +103,7 @@ export function RWASnapshotChartPanel({
 	const bodyClassName = view === 'treemap' ? 'min-h-[600px]' : undefined
 
 	return (
-		<ChartPanel>
+		<Panel>
 			<ChartPanelToolbar leading={leading}>
 				{controls}
 				{plotsSlices ? (
@@ -141,13 +135,15 @@ export function RWASnapshotChartPanel({
 			</ChartPanelToolbar>
 			<ChartPanelBody className={bodyClassName}>
 				{failedRead ? (
-					<ChartPanelBodyError retry={failedRead}>Couldn&apos;t load chart data.</ChartPanelBodyError>
+					<SurfaceBodyStatus variant="error" retry={failedRead}>
+						Couldn&apos;t load chart data.
+					</SurfaceBodyStatus>
 				) : isLoading ? (
-					<ChartPanelBodyLoading />
+					<SurfaceBodyLoadingStatus label="Loading chart" />
 				) : deferredSlices.length === 0 ? (
-					<ChartPanelBodyEmpty>No data for this view.</ChartPanelBodyEmpty>
+					<SurfaceBodyStatus variant="empty">No data for this view.</SurfaceBodyStatus>
 				) : (
-					<Suspense fallback={<ChartPanelBodyLoading className={bodyClassName} />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" className={bodyClassName} />}>
 						{view === 'pie' ? (
 							<PieChart
 								chartData={presentation.pie}
@@ -181,6 +177,6 @@ export function RWASnapshotChartPanel({
 					</Suspense>
 				)}
 			</ChartPanelBody>
-		</ChartPanel>
+		</Panel>
 	)
 }

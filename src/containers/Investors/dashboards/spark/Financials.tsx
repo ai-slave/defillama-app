@@ -5,10 +5,11 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanel, ChartPanelBodyLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
+import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
+import { PanelStatus, PanelLoadingStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatPercent } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
@@ -85,7 +86,7 @@ function AllocatedAssetsSection({
 	return (
 		<div className="flex flex-col gap-4">
 			<h2 className="heading-xs">SLL Allocated Assets</h2>
-			<ChartPanel>
+			<Panel>
 				<ChartPanelToolbar leading={<ChartPanelTitle>{allocatedAssets.title}</ChartPanelTitle>}>
 					<SegmentedControl<typeof view>
 						variant="default"
@@ -117,7 +118,7 @@ function AllocatedAssetsSection({
 					/* The donut is a side tile beside its list, so it keeps its own height rather than the 360 body floor. */
 					<div className="grid grid-cols-1 gap-4 px-2 pb-2 md:grid-cols-2">
 						<div className="min-h-[320px]">
-							<Suspense fallback={<ChartPanelBodyLoading className="min-h-[320px]" />}>
+							<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="min-h-[320px]" />}>
 								<PieChart
 									chartData={currentEntries}
 									stackColors={pieColors}
@@ -186,7 +187,7 @@ function AllocatedAssetsSection({
 						</div>
 					</div>
 				) : (
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={hist.dataset}
 							charts={hist.charts}
@@ -200,7 +201,7 @@ function AllocatedAssetsSection({
 						/>
 					</Suspense>
 				)}
-			</ChartPanel>
+			</Panel>
 		</div>
 	)
 }
@@ -213,7 +214,7 @@ function MonthlyReturnsSection({ data }: { data: NonNullable<ReturnType<typeof u
 		<div className="flex flex-col gap-4">
 			<h2 className="heading-xs">Monthly Returns</h2>
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-				<ChartPanel>
+				<Panel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>{data.monthlyGross.title}</ChartPanelTitle>}>
 						<ChartPngExportButton
 							chartInstance={gross.chartInstance}
@@ -222,7 +223,7 @@ function MonthlyReturnsSection({ data }: { data: NonNullable<ReturnType<typeof u
 							smol
 						/>
 					</ChartPanelToolbar>
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={data.monthlyGross.dataset}
 							charts={data.monthlyGross.charts}
@@ -234,8 +235,8 @@ function MonthlyReturnsSection({ data }: { data: NonNullable<ReturnType<typeof u
 							onReady={gross.handleChartReady}
 						/>
 					</Suspense>
-				</ChartPanel>
-				<ChartPanel>
+				</Panel>
+				<Panel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>{data.monthlyNet.title}</ChartPanelTitle>}>
 						<ChartPngExportButton
 							chartInstance={net.chartInstance}
@@ -244,7 +245,7 @@ function MonthlyReturnsSection({ data }: { data: NonNullable<ReturnType<typeof u
 							smol
 						/>
 					</ChartPanelToolbar>
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={data.monthlyNet.dataset}
 							charts={data.monthlyNet.charts}
@@ -256,7 +257,7 @@ function MonthlyReturnsSection({ data }: { data: NonNullable<ReturnType<typeof u
 							onReady={net.handleChartReady}
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			</div>
 		</div>
 	)
@@ -270,7 +271,7 @@ function SusdsDistributionSection({ data }: { data: NonNullable<ReturnType<typeo
 		<div className="flex flex-col gap-4">
 			<h2 className="heading-xs">sUSDS Distribution</h2>
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-				<ChartPanel>
+				<Panel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>Spark-distributed USDS</ChartPanelTitle>}>
 						<ChartPngExportButton
 							chartInstance={total.chartInstance}
@@ -279,7 +280,7 @@ function SusdsDistributionSection({ data }: { data: NonNullable<ReturnType<typeo
 							smol
 						/>
 					</ChartPanelToolbar>
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={data.supplyTotal.dataset}
 							charts={data.supplyTotal.charts}
@@ -290,8 +291,8 @@ function SusdsDistributionSection({ data }: { data: NonNullable<ReturnType<typeo
 							onReady={total.handleChartReady}
 						/>
 					</Suspense>
-				</ChartPanel>
-				<ChartPanel>
+				</Panel>
+				<Panel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>{data.supplyByChain.title}</ChartPanelTitle>}>
 						<ChartPngExportButton
 							chartInstance={byChain.chartInstance}
@@ -300,7 +301,7 @@ function SusdsDistributionSection({ data }: { data: NonNullable<ReturnType<typeo
 							smol
 						/>
 					</ChartPanelToolbar>
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={data.supplyByChain.dataset}
 							charts={data.supplyByChain.charts}
@@ -313,7 +314,7 @@ function SusdsDistributionSection({ data }: { data: NonNullable<ReturnType<typeo
 							onReady={byChain.handleChartReady}
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			</div>
 		</div>
 	)
@@ -327,7 +328,7 @@ function TvlSection({ data }: { data: FinData }) {
 		<div className="flex flex-col gap-4">
 			<h2 className="heading-xs">Total Value Locked</h2>
 			<StatTile label="Current TVL" value={data.tvl.currentFormatted} />
-			<ChartPanel>
+			<Panel>
 				<ChartPanelToolbar leading={<ChartPanelTitle>{data.tvl.title}</ChartPanelTitle>}>
 					<ChartPngExportButton
 						chartInstance={tvl.chartInstance}
@@ -336,7 +337,7 @@ function TvlSection({ data }: { data: FinData }) {
 						smol
 					/>
 				</ChartPanelToolbar>
-				<Suspense fallback={<ChartPanelBodyLoading />}>
+				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 					<MultiSeriesChart
 						dataset={data.tvl.dataset}
 						charts={data.tvl.charts}
@@ -349,7 +350,7 @@ function TvlSection({ data }: { data: FinData }) {
 						onReady={tvl.handleChartReady}
 					/>
 				</Suspense>
-			</ChartPanel>
+			</Panel>
 		</div>
 	)
 }
@@ -361,7 +362,7 @@ function DepositsAndBorrowsSection({ data }: { data: FinData }) {
 		<div className="flex flex-col gap-4">
 			<h2 className="heading-xs">SparkLend Deposits &amp; Borrows</h2>
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-				<ChartPanel>
+				<Panel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>{data.deposits.title}</ChartPanelTitle>}>
 						<ChartPngExportButton
 							chartInstance={deposits.chartInstance}
@@ -370,7 +371,7 @@ function DepositsAndBorrowsSection({ data }: { data: FinData }) {
 							smol
 						/>
 					</ChartPanelToolbar>
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={data.deposits.dataset}
 							charts={data.deposits.charts}
@@ -381,8 +382,8 @@ function DepositsAndBorrowsSection({ data }: { data: FinData }) {
 							onReady={deposits.handleChartReady}
 						/>
 					</Suspense>
-				</ChartPanel>
-				<ChartPanel>
+				</Panel>
+				<Panel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>{data.borrows.title}</ChartPanelTitle>}>
 						<ChartPngExportButton
 							chartInstance={borrows.chartInstance}
@@ -391,7 +392,7 @@ function DepositsAndBorrowsSection({ data }: { data: FinData }) {
 							smol
 						/>
 					</ChartPanelToolbar>
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={data.borrows.dataset}
 							charts={data.borrows.charts}
@@ -402,7 +403,7 @@ function DepositsAndBorrowsSection({ data }: { data: FinData }) {
 							onReady={borrows.handleChartReady}
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			</div>
 		</div>
 	)
@@ -413,7 +414,7 @@ function SllTvlSection({ data }: { data: FinData }) {
 	return (
 		<div className="flex flex-col gap-4">
 			<h2 className="heading-xs">SLL TVL by Chain</h2>
-			<ChartPanel>
+			<Panel>
 				<ChartPanelToolbar leading={<ChartPanelTitle>{data.sllTvl.title}</ChartPanelTitle>}>
 					<ChartPngExportButton
 						chartInstance={sllTvl.chartInstance}
@@ -422,7 +423,7 @@ function SllTvlSection({ data }: { data: FinData }) {
 						smol
 					/>
 				</ChartPanelToolbar>
-				<Suspense fallback={<ChartPanelBodyLoading />}>
+				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 					<MultiSeriesChart
 						dataset={data.sllTvl.dataset}
 						charts={data.sllTvl.charts}
@@ -435,7 +436,7 @@ function SllTvlSection({ data }: { data: FinData }) {
 						onReady={sllTvl.handleChartReady}
 					/>
 				</Suspense>
-			</ChartPanel>
+			</Panel>
 		</div>
 	)
 }
@@ -445,7 +446,7 @@ function SavingsTvlSection({ data }: { data: FinData }) {
 	return (
 		<div className="flex flex-col gap-4">
 			<h2 className="heading-xs">Spark Savings TVL by Chain</h2>
-			<ChartPanel>
+			<Panel>
 				<ChartPanelToolbar leading={<ChartPanelTitle>{data.savingsTvl.title}</ChartPanelTitle>}>
 					<ChartPngExportButton
 						chartInstance={savingsTvl.chartInstance}
@@ -454,7 +455,7 @@ function SavingsTvlSection({ data }: { data: FinData }) {
 						smol
 					/>
 				</ChartPanelToolbar>
-				<Suspense fallback={<ChartPanelBodyLoading />}>
+				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 					<MultiSeriesChart
 						dataset={data.savingsTvl.dataset}
 						charts={data.savingsTvl.charts}
@@ -467,7 +468,7 @@ function SavingsTvlSection({ data }: { data: FinData }) {
 						onReady={savingsTvl.handleChartReady}
 					/>
 				</Suspense>
-			</ChartPanel>
+			</Panel>
 		</div>
 	)
 }
@@ -517,7 +518,7 @@ function TreasurySection({ data }: { data: FinData }) {
 				</Card>
 			</div>
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-				<ChartPanel>
+				<Panel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>Total Treasury</ChartPanelTitle>}>
 						<ChartPngExportButton
 							chartInstance={treasury.chartInstance}
@@ -526,7 +527,7 @@ function TreasurySection({ data }: { data: FinData }) {
 							smol
 						/>
 					</ChartPanelToolbar>
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={data.treasuryModel.dataset}
 							charts={data.treasuryModel.charts}
@@ -537,8 +538,8 @@ function TreasurySection({ data }: { data: FinData }) {
 							exportButtons="hidden"
 						/>
 					</Suspense>
-				</ChartPanel>
-				<ChartPanel>
+				</Panel>
+				<Panel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>SPK Buybacks</ChartPanelTitle>}>
 						<ChartPngExportButton
 							chartInstance={buybacks.chartInstance}
@@ -547,7 +548,7 @@ function TreasurySection({ data }: { data: FinData }) {
 							smol
 						/>
 					</ChartPanelToolbar>
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={data.buybacksModel.dataset}
 							charts={data.buybacksModel.charts}
@@ -558,7 +559,7 @@ function TreasurySection({ data }: { data: FinData }) {
 							exportButtons="hidden"
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			</div>
 		</div>
 	)
@@ -589,12 +590,12 @@ export default function Financials() {
 			{/* Section 2: Projected Returns Breakdown */}
 			<div className="flex flex-col gap-4">
 				<h2 className="heading-xs">Projected Returns Breakdown</h2>
-				<ChartPanel>
+				<Panel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>{data.projectedBreakdown.title}</ChartPanelTitle>} />
 					{/* The donut is a side tile beside its table, so it keeps its own height rather than the 360 body floor. */}
 					<div className="grid grid-cols-1 gap-4 px-2 pb-2 md:grid-cols-2">
 						<div className="min-h-[300px]">
-							<Suspense fallback={<ChartPanelBodyLoading className="min-h-[300px]" />}>
+							<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="min-h-[300px]" />}>
 								<PieChart
 									chartData={data.projectedBreakdown.series}
 									stackColors={data.breakdownColors}
@@ -637,7 +638,7 @@ export default function Financials() {
 							</div>
 						</div>
 					</div>
-				</ChartPanel>
+				</Panel>
 			</div>
 
 			{/* Section 3: Monthly Returns */}

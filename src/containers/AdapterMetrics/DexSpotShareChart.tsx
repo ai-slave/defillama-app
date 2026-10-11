@@ -11,14 +11,9 @@ import {
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { CHART_COLORS } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import {
-	CHART_FILL,
-	ChartPanel,
-	ChartPanelBody,
-	ChartPanelBodyEmpty,
-	ChartPanelBodyLoading,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
+import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { formatDate } from '~/utils/dateFormat'
 import { formatPercent } from '~/utils/numberFormat'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
@@ -85,7 +80,7 @@ export function DexSpotShareChart({
 	const hasData = dataset.source.some((row) => row[1] != null)
 
 	return (
-		<ChartPanel>
+		<Panel>
 			<ChartPanelToolbar className="items-start">
 				<div className="mr-auto flex min-w-0 flex-col">
 					<h2 className="heading-xs">{CHART_TITLE}</h2>
@@ -108,7 +103,7 @@ export function DexSpotShareChart({
 				/>
 			</ChartPanelToolbar>
 			{hasData ? (
-				<React.Suspense fallback={<ChartPanelBodyLoading />}>
+				<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 					<ChartPanelBody role="img" aria-label={chartAriaLabel(dataset, methodology)}>
 						<MultiSeriesChart
 							dataset={dataset}
@@ -123,8 +118,10 @@ export function DexSpotShareChart({
 					</ChartPanelBody>
 				</React.Suspense>
 			) : (
-				<ChartPanelBodyEmpty>DEX and CEX spot volume do not have overlapping data for this chart.</ChartPanelBodyEmpty>
+				<SurfaceBodyStatus variant="empty">
+					DEX and CEX spot volume do not have overlapping data for this chart.
+				</SurfaceBodyStatus>
 			)}
-		</ChartPanel>
+		</Panel>
 	)
 }

@@ -14,7 +14,7 @@ import { useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
 import { CHART_SERIES_LIMIT } from '~/constants/colors'
 import { RaisesFilters } from '~/containers/Raises/Filters'
-import { CHART_FILL, ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { searchFieldWrapperStyles } from '~/ui/Input'
 import { MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
 import { Panel } from '~/ui/Panel'
@@ -156,7 +156,7 @@ export function InvestorContainer({
 						))}
 					</MetricSection>
 				</SummaryStatsCard>
-				<ChartPanel className="col-span-2">
+				<Panel className="col-span-2">
 					<React.Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							containerClassName={CHART_FILL}
@@ -172,11 +172,11 @@ export function InvestorContainer({
 							}}
 						/>
 					</React.Suspense>
-				</ChartPanel>
+				</Panel>
 			</SummaryCardGrid>
 
 			<div className="grid grid-cols-2 gap-1">
-				<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+				<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 					<React.Suspense fallback={<ChartPanelExportShellLoading />}>
 						<PieChart
 							chartData={buildRuntimePieChartPresentation({ series: deferredInvestmentByRounds }).chartData}
@@ -195,8 +195,8 @@ export function InvestorContainer({
 							}}
 						/>
 					</React.Suspense>
-				</ChartPanel>
-				<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+				</Panel>
+				<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 					<React.Suspense fallback={<ChartPanelExportShellLoading />}>
 						<PieChart
 							chartData={buildRuntimePieChartPresentation({ series: deferredRaisesByCategory }).chartData}
@@ -215,7 +215,7 @@ export function InvestorContainer({
 							}}
 						/>
 					</React.Suspense>
-				</ChartPanel>
+				</Panel>
 			</div>
 			<RaisesByInvestorTable raises={filteredRaisesList} />
 		</>

@@ -1,8 +1,8 @@
 import * as Ariakit from '@ariakit/react'
 import { type ReactElement, useMemo } from 'react'
 import { Button } from '~/ui/Button'
-import { MenuSurface } from '~/ui/MenuSurface'
 import { popoverRowWithBorderStyles } from '~/ui/Popover'
+import { MenuSurface } from '~/ui/PopoverSurface'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { BasicLink } from './Link'
 

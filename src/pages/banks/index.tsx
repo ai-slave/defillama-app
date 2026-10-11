@@ -9,7 +9,8 @@ import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchT
 import { CHART_COLORS } from '~/constants/colors'
 import Layout from '~/layout'
 import { Card } from '~/ui/Card'
-import { ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { TableToolbar } from '~/ui/Toolbar'
 import { formatDate } from '~/utils/dateFormat'
 import { formatUsd } from '~/utils/numberFormat'
@@ -105,7 +106,7 @@ function Banks() {
 			description="Historical US bank failures database with closing dates, assets at failure, and inflation-adjusted annual totals."
 			canonicalUrl="/banks"
 		>
-			<ChartPanel className="relative col-span-2">
+			<Panel className="relative col-span-2">
 				<React.Suspense fallback={<ChartPanelExportShellLoading />}>
 					<MultiSeriesChart
 						title="Assets of failed banks (inflation adjusted)"
@@ -115,7 +116,7 @@ function Banks() {
 						exportButtons="auto"
 					/>
 				</React.Suspense>
-			</ChartPanel>
+			</Panel>
 			<SearchTableProvider
 				options={{ data: tableData, columns: banksTableColumns, initialState: { sorting: DEFAULT_SORTING_STATE } }}
 			>

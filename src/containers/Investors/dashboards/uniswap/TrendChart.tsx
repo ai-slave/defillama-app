@@ -4,15 +4,10 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import { CHART_INSET, CHART_LEGEND_RESERVE } from '~/components/ECharts/shared/chartSpacing'
 import type { IAdapterBreakdownChartData } from '~/containers/AdapterMetrics/api.types'
 import { getGroupedTimestampSec } from '~/containers/ProDashboard/utils'
-import {
-	CHART_FILL,
-	ChartPanel,
-	ChartPanelBodyError,
-	ChartPanelBodyEmpty,
-	ChartPanelBodyLoading,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import type { QueryRetry } from '~/utils/query'
 import {
 	BUCKET_DAYS,
@@ -212,7 +207,7 @@ export function SeriesTrendChart({
 		[groupBy, valueSymbol, maxItems, stacked]
 	)
 	return (
-		<ChartPanel>
+		<Panel>
 			<ChartPanelToolbar leading={<CardTitle title={title} subtitle={subtitle} />}>
 				{extraControl}
 				<SegmentedControl<View>
@@ -225,13 +220,15 @@ export function SeriesTrendChart({
 				/>
 			</ChartPanelToolbar>
 			{failedRead ? (
-				<ChartPanelBodyError retry={failedRead}>Couldn&apos;t load data.</ChartPanelBodyError>
+				<SurfaceBodyStatus variant="error" retry={failedRead}>
+					Couldn&apos;t load data.
+				</SurfaceBodyStatus>
 			) : isLoading ? (
-				<ChartPanelBodyLoading />
+				<SurfaceBodyLoadingStatus label="Loading chart" />
 			) : chartSeries.length === 0 ? (
-				<ChartPanelBodyEmpty>No data.</ChartPanelBodyEmpty>
+				<SurfaceBodyStatus variant="empty">No data.</SurfaceBodyStatus>
 			) : (
-				<Suspense fallback={<ChartPanelBodyLoading />}>
+				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 					<MultiSeriesChart
 						dataset={model.dataset}
 						charts={model.charts}
@@ -244,6 +241,6 @@ export function SeriesTrendChart({
 					/>
 				</Suspense>
 			)}
-		</ChartPanel>
+		</Panel>
 	)
 }

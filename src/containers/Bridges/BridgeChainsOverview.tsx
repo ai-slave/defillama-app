@@ -11,7 +11,9 @@ import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { BridgeChainsTable } from '~/containers/Bridges/BridgeChainsTable'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { ChartPanel, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 type BridgeChainsOverviewProps = {
@@ -49,7 +51,7 @@ export function BridgeChainsOverview({ allChains, tableData, chart }: BridgeChai
 
 	return (
 		<>
-			<ChartPanel>
+			<Panel>
 				<ChartPanelToolbar>
 					{rankedChains.length > 1 ? (
 						<SelectWithCombobox
@@ -71,7 +73,7 @@ export function BridgeChainsOverview({ allChains, tableData, chart }: BridgeChai
 				</ChartPanelToolbar>
 
 				{presentation.dataset.source.length > 0 ? (
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={presentation.dataset}
 							charts={presentation.charts}
@@ -84,7 +86,7 @@ export function BridgeChainsOverview({ allChains, tableData, chart }: BridgeChai
 						/>
 					</Suspense>
 				) : null}
-			</ChartPanel>
+			</Panel>
 			<BridgeChainsTable data={tableData} />
 		</>
 	)

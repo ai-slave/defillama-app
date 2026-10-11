@@ -29,8 +29,10 @@ import { getProtocolMetricFlags } from '~/containers/ProtocolOverview/queries'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { CHART_FILL, ChartPanel, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { FailedDataNote } from '~/ui/ScopeNote'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { slug } from '~/utils'
 import { buildHallmarksWithGenuineSpikes } from '~/utils/hallmarks'
@@ -292,7 +294,7 @@ export default function Protocols(props: ProtocolFeesPageProps) {
 						}
 					/>
 				</SummaryStatsCard>
-				<ChartPanel className="col-span-2">
+				<Panel className="col-span-2">
 					<ChartPanelToolbar>
 						<ChartGroupingSelector value={groupBy} setValue={setGroupBy} options={DWMC_GROUPING_OPTIONS_LOWERCASE} />
 						{props.defaultCharts.length > 1 ? (
@@ -318,7 +320,7 @@ export default function Protocols(props: ProtocolFeesPageProps) {
 						/>
 					</ChartPanelToolbar>
 					<FailedDataNote labels={props.failedMetrics} shows="The chart shows the other metrics." />
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={deferredFinalCharts.dataset}
 							charts={deferredFinalCharts.charts}
@@ -329,11 +331,11 @@ export default function Protocols(props: ProtocolFeesPageProps) {
 							onReady={handleChartReady}
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			</SummaryCardGrid>
 			<div className="grid grid-cols-2 gap-2">
 				{getProtocolFeeBreakdownPanels(props).map((panel) => (
-					<ChartPanel key={panel.title} className="col-span-full xl:col-span-1 xl:only:col-span-full">
+					<Panel key={panel.title} className="col-span-full xl:col-span-1 xl:only:col-span-full">
 						<DimensionProtocolChartByType
 							chartType={panel.chartType}
 							protocolName={slug(props.name)}
@@ -344,7 +346,7 @@ export default function Protocols(props: ProtocolFeesPageProps) {
 							{...(props.hallmarks ? { hallmarks: props.hallmarks } : {})}
 							title={panel.title}
 						/>
-					</ChartPanel>
+					</Panel>
 				))}
 			</div>
 		</ProtocolOverviewLayout>

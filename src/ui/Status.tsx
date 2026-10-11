@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import type { QueryRetry } from '~/utils/query'
 import { Button } from './Button'
 import { Card } from './Card'
@@ -12,15 +12,13 @@ import { LoadingDots, LoadingSpinner } from './Loaders'
    | Where                                     | Use                                         |
    | ----------------------------------------- | ------------------------------------------- |
    | A whole panel is the state                | PanelStatus, PanelLoadingStatus             |
-   | Inside a rendered Panel or Card body      | SurfaceBodyStatus, SurfaceBodyLoadingStatus |
-   | A chart's slot: nothing to plot           | ChartPanelBodyEmpty (./ChartPanel.tsx)      |
+   | Inside a Panel, Card or chart body        | SurfaceBodyStatus, SurfaceBodyLoadingStatus |
    | A message in a dialog or above content    | InlineStatus (error, warning, empty)        |
    | An error with no room for a box           | ErrorLine (menu rows, toolbars, chips)      |
    | Loading over content that stays visible   | SurfaceLoadingOverlay                       |
    | Nothing here yet, or nothing matched      | EmptyState (icon, title, hint, actions)     |
    | An empty result in a list, popover, table | NoResults (./NoResults.tsx)                 |
    | Loading rows in a list or popover         | ListLoading (./NoResults.tsx)               |
-   | A chart loading in its slot               | ChartPanelBodyLoading (./ChartPanel.tsx)    |
    | Loading inline in a row, field or line    | LoadingIndicator inside a role=status node  |
    | A busy button or inline control           | LoadingSpinner (./Loaders.tsx)              |
 
@@ -41,7 +39,7 @@ import { LoadingDots, LoadingSpinner } from './Loaders'
      `queryReadFailed` from src/utils/query.ts (nothing to show and it failed)
      and check it before loading; a refetch that fails over data on screen is
      `queryRefreshFailed`, a notice beside the data, never the error in its place;
-     PanelStatus, SurfaceBodyStatus, ChartPanelBodyError and InlineStatus take
+     PanelStatus, SurfaceBodyStatus and InlineStatus take
      the query as `retry` and draw its Try again (RetryButton); never place
      one by hand inside a status. See docs/focus-and-errors.md for retries.
    - scripts/policies/check-status-parts.ts refuses hand-built loading text,
@@ -225,19 +223,27 @@ export function PanelLoadingStatus({ label = 'Loading', className }: { label?: s
 type SurfaceBodyStatusProps = {
 	children: ReactNode
 	variant: TextStatusVariant
-	/** The query whose failure this is, as on PanelStatus. */
+	/** The query whose failure this is, as on PanelStatus. Its Try again waits while the query refetches; when what
+	    loads replaces the status, focus moves to the page content rather than dropping to the document. */
 	retry?: QueryRetry
 	className?: string
+	style?: CSSProperties
 }
 
-export function SurfaceBodyStatus({ children, variant, retry, className }: SurfaceBodyStatusProps) {
+/* The body parts fill the body they sit in (`flex-auto`; a 0 basis would drop a caller's `h-*` in a column sized by
+   its content) and centre themselves in it (`m-auto`), so a slot that is not a stretching flex column (a grid cell, an
+   items-start column, a `max-w-*` box) still shows the state in its middle.
+   `className` and `style` take the slot's size where it differs from the 360px default (min-h-0, h-*), so the page does
+   not jump when one state replaces another. Children render as one text block; several blocks (a sentence and a
+   button) bring their own flex wrapper. */
+export function SurfaceBodyStatus({ children, variant, retry, className, style }: SurfaceBodyStatusProps) {
 	const role = variant === 'error' ? 'alert' : 'status'
 
 	return (
-		// The inset keeps the text off a narrow body's edges, as the chart body parts do (./ChartPanel.tsx); a body
-		// that brings its own padding replaces it.
+		// The inset keeps the text off a narrow body's edges; a body that brings its own padding replaces it.
 		<div
-			className={`flex flex-1 flex-col items-center justify-center gap-2 initial:min-h-[360px] initial:p-4 ${className ?? ''}`.trim()}
+			className={`m-auto flex flex-auto flex-col items-center justify-center gap-2 initial:min-h-[360px] initial:p-4 ${className ?? ''}`.trim()}
+			style={style}
 		>
 			<div
 				role={role}
@@ -251,9 +257,20 @@ export function SurfaceBodyStatus({ children, variant, retry, className }: Surfa
 	)
 }
 
-export function SurfaceBodyLoadingStatus({ label = 'Loading', className }: { label?: string; className?: string }) {
+export function SurfaceBodyLoadingStatus({
+	label = 'Loading',
+	className,
+	style
+}: {
+	label?: string
+	className?: string
+	style?: CSSProperties
+}) {
 	return (
-		<div className={`flex flex-1 items-center justify-center initial:min-h-[360px] ${className ?? ''}`.trim()}>
+		<div
+			className={`m-auto flex flex-auto items-center justify-center initial:min-h-[360px] ${className ?? ''}`.trim()}
+			style={style}
+		>
 			<div role="status" aria-live="polite" className="flex items-center justify-center">
 				<LoadingIndicator label={label} />
 			</div>
@@ -283,7 +300,7 @@ const EMPTY_STATE_SIZE = {
 /** Where content would be and there is none: nothing created yet (no dashboards, no API key), nothing matched with a
     way back (Clear filters), a choice to make first (pick a token), or a locked feature (Upgrade). Not an error, which
     keeps PanelStatus or InlineStatus so it reads as broken, and not a quick no-match inside a table, list or popover,
-    which is NoResults. A one-line note inside a chart or panel body stays SurfaceBodyStatus / ChartPanelBodyEmpty.
+    which is NoResults. A one-line note inside a chart or panel body stays SurfaceBodyStatus.
     `md` sits inside a Panel, Card or dialog body and takes sm buttons; `lg` fills a page or tab and takes md buttons,
     with at most one primary. The icon sits in a neutral disc. `framed` draws a dashed well where a card, a grid of
     cards or a list would sit with no surface of its own (the page, a canvas dialog body); inside the Panel or Card that

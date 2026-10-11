@@ -1,7 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import type { ReactNode } from 'react'
-import { TabLink } from '~/ui/Tab'
-import { Tabs, Tab, TabPanel } from '~/ui/Tabs'
+import { Tabs, Tab, TabPanel, TabLink } from '~/ui/Tabs'
 
 type TableTab<T extends string> = { id: T; label: string }
 

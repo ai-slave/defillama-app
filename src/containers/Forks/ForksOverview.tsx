@@ -18,10 +18,11 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
-import { ChartPanel, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { PanelTitle, PanelHeader, Panel } from '~/ui/Panel'
 import { FailedDataNote } from '~/ui/ScopeNote'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { slug } from '~/utils'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { getEnabledForkOracleExtraTvlChartApiKeys } from '~/utils/tvlOverlap'
@@ -170,7 +171,7 @@ export function ForksOverview({
 		<>
 			<RowLinksWithDropdown heading="Forks" links={forkLinks} activeLink="All" />
 			<div className="flex flex-col gap-2 xl:flex-row">
-				<ChartPanel className="isolate flex-1">
+				<Panel className="isolate flex-1">
 					<ChartPanelToolbar>
 						{pieSelectableSeries.length > 1 ? (
 							<SelectWithCombobox
@@ -198,9 +199,9 @@ export function ForksOverview({
 						/>
 					</ChartPanelToolbar>
 					{isFetchingExtraSeries ? (
-						<ChartPanelBodyLoading />
+						<SurfaceBodyLoadingStatus label="Loading chart" />
 					) : (
-						<React.Suspense fallback={<ChartPanelBodyLoading />}>
+						<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<PieChart
 								chartData={piePresentation.chartData}
 								stackColors={piePresentation.stackColors}
@@ -208,8 +209,8 @@ export function ForksOverview({
 							/>
 						</React.Suspense>
 					)}
-				</ChartPanel>
-				<ChartPanel className="flex-1">
+				</Panel>
+				<Panel className="flex-1">
 					<ChartPanelToolbar>
 						<h2 className="mr-auto heading-xs">Forks TVL Dominance (%)</h2>
 						{forkSeries.length > 1 ? (
@@ -237,9 +238,9 @@ export function ForksOverview({
 						/>
 					) : null}
 					{isFetchingExtraSeries ? (
-						<ChartPanelBodyLoading />
+						<SurfaceBodyLoadingStatus label="Loading chart" />
 					) : (
-						<React.Suspense fallback={<ChartPanelBodyLoading />}>
+						<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<MultiSeriesChart
 								dataset={selectedDominance.dataset}
 								charts={selectedDominance.charts}
@@ -251,7 +252,7 @@ export function ForksOverview({
 							/>
 						</React.Suspense>
 					)}
-				</ChartPanel>
+				</Panel>
 			</div>
 			<React.Suspense fallback={<Panel style={{ minHeight: `${tableData.length * 50 + 200}px` }} />}>
 				<SearchTableProvider

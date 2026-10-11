@@ -7,16 +7,10 @@ import { VirtualizedSelect } from '~/components/Select/VirtualizedSelect'
 import { displayTableFeatures } from '~/components/Table/features/display'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
-import {
-	CHART_FILL,
-	ChartPanel,
-	ChartPanelBodyLoading,
-	ChartPanelExportShellLoading,
-	ChartPanelTitle,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelExportShellLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { PanelLoadingStatus } from '~/ui/Status'
+import { PanelLoadingStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { InlineStatStrip } from '~/ui/SummaryStats'
 import {
 	formatPercent,
@@ -291,7 +285,7 @@ export default function Rates() {
 				{supplyLoading ? (
 					<PanelLoadingStatus className="min-h-[400px]" />
 				) : supplyDataset.source.length > 0 ? (
-					<ChartPanel>
+					<Panel>
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								dataset={supplyDataset}
@@ -304,13 +298,13 @@ export default function Rates() {
 								exportButtons={AAVE_AREA_EXPORT}
 							/>
 						</Suspense>
-					</ChartPanel>
+					</Panel>
 				) : null}
 
 				{borrowLoading ? (
 					<PanelLoadingStatus className="min-h-[400px]" />
 				) : borrowDataset.source.length > 0 ? (
-					<ChartPanel>
+					<Panel>
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								dataset={borrowDataset}
@@ -323,12 +317,12 @@ export default function Rates() {
 								exportButtons={AAVE_AREA_EXPORT}
 							/>
 						</Suspense>
-					</ChartPanel>
+					</Panel>
 				) : null}
 			</div>
 
 			{rateCurveDataset ? (
-				<ChartPanel>
+				<Panel>
 					<ChartPanelToolbar
 						leading={
 							<ChartPanelTitle>
@@ -358,7 +352,7 @@ export default function Rates() {
 							csvSource={{ type: 'dataset', prepare: () => rateCurveDataset }}
 						/>
 					</ChartPanelToolbar>
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={rateCurveDataset}
 							charts={RATE_CURVE_CHARTS}
@@ -370,7 +364,7 @@ export default function Rates() {
 							onReady={rateCurve.handleChartReady}
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			) : null}
 
 			{marketsLoading ? (

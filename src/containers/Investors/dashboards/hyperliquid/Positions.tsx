@@ -16,9 +16,10 @@ import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { Table } from '~/components/Table/Table'
 import { TablePager } from '~/components/Table/TablePager'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanel, ChartPanelBodyLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { PanelLoadingStatus } from '~/ui/Status'
+import { PanelLoadingStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatDate } from '~/utils/dateFormat'
 import { formatCompactNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
@@ -130,7 +131,7 @@ function PortfolioTrend({
 	const changePct = first ? ((last - first) / first) * 100 : 0
 
 	return (
-		<ChartPanel>
+		<Panel>
 			<ChartPanelToolbar leading={<ChartPanelTitle>Portfolio Trend ({window})</ChartPanelTitle>}>
 				<span className={changePct >= 0 ? 'body-sm text-success' : 'body-sm text-error'}>
 					{changePct >= 0 ? '+' : ''}
@@ -142,7 +143,7 @@ function PortfolioTrend({
 					})}
 				</span>
 			</ChartPanelToolbar>
-			<Suspense fallback={<ChartPanelBodyLoading />}>
+			<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={PORTFOLIO_CHARTS}
@@ -160,7 +161,7 @@ function PortfolioTrend({
 				</span>
 				<span>{formatDate(points[points.length - 1].time, { input: 'milliseconds' })}</span>
 			</div>
-		</ChartPanel>
+		</Panel>
 	)
 }
 

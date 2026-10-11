@@ -1,8 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useAuthContext } from '~/auth'
 import { PromoBadge } from '~/ui/PromoBadge'
-import { TabLink } from '~/ui/Tab'
-import { Tab } from '~/ui/Tabs'
+import { Tab, TabLink } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
 import type { MainTabType } from './types'
 

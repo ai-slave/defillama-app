@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
-import { CHART_FILL, ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { queryReadFailed } from '~/utils/query'
@@ -70,7 +71,7 @@ export default function Staking() {
 			</div>
 
 			{chart && chart.dataset.source.length > 0 && (
-				<ChartPanel>
+				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							dataset={chart.dataset}
@@ -85,11 +86,11 @@ export default function Staking() {
 							chartOptions={chart.chartOptions}
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			)}
 
 			{pctChart && (
-				<ChartPanel>
+				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							dataset={pctChart.dataset}
@@ -103,7 +104,7 @@ export default function Staking() {
 							chartOptions={pctChart.chartOptions}
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			)}
 		</div>
 	)

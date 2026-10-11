@@ -8,16 +8,10 @@ import { CHART_SERIES_LIMIT, chartColor, OTHERS_COLOR } from '~/constants/colors
 import { ADAPTER_DATA_TYPES } from '~/containers/AdapterMetrics/constants'
 import { fetchProtocolChainBreakdownData } from '~/containers/ProDashboard/services/ProtocolChartBuilderData'
 import { getGroupedTimestampSec } from '~/containers/ProDashboard/utils'
-import {
-	CHART_FILL,
-	ChartPanel,
-	ChartPanelBodyError,
-	ChartPanelBodyLoading,
-	ChartPanelTitle,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { SurfaceBodyStatus } from '~/ui/Status'
+import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { mergeFailedReads, queryReadFailed, type QueryRetry } from '~/utils/query'
 import { carryForwardCumulative, parseDateToUnix, sumDailySeries, type Chart } from './transform'
 import { DEX, NETWORK_FEE_DATA_TYPES, networkFeeQuery, PALETTE, THOR_TEAL, withNetworkFee } from './ui'
@@ -143,7 +137,7 @@ function TrendCard({
 		[groupBy, valueSymbol]
 	)
 	return (
-		<ChartPanel>
+		<Panel>
 			<ChartPanelToolbar leading={<ChartPanelTitle subtitle={subtitle}>{title}</ChartPanelTitle>}>
 				<SegmentedControl
 					variant="default"
@@ -155,13 +149,15 @@ function TrendCard({
 				/>
 			</ChartPanelToolbar>
 			{failedRead ? (
-				<ChartPanelBodyError retry={failedRead}>Couldn&apos;t load chart data.</ChartPanelBodyError>
+				<SurfaceBodyStatus variant="error" retry={failedRead}>
+					Couldn&apos;t load chart data.
+				</SurfaceBodyStatus>
 			) : isLoading ? (
-				<ChartPanelBodyLoading />
+				<SurfaceBodyLoadingStatus label="Loading chart" />
 			) : chartSeries.length === 0 ? (
 				<SurfaceBodyStatus variant="empty">No data</SurfaceBodyStatus>
 			) : (
-				<Suspense fallback={<ChartPanelBodyLoading />}>
+				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 					<MultiSeriesChart
 						dataset={model.dataset}
 						charts={model.charts}
@@ -174,7 +170,7 @@ function TrendCard({
 					/>
 				</Suspense>
 			)}
-		</ChartPanel>
+		</Panel>
 	)
 }
 
@@ -307,9 +303,9 @@ export function DualAxisChart({ chart, subtitle }: { chart?: Chart | null; subti
 	}, [chart, subtitle])
 	if (!model) return null
 	return (
-		<ChartPanel>
+		<Panel>
 			<ChartPanelToolbar leading={<ChartPanelTitle subtitle={model.subtitle}>{model.title}</ChartPanelTitle>} />
-			<Suspense fallback={<ChartPanelBodyLoading />}>
+			<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<MultiSeriesChart
 					dataset={model.dataset}
 					charts={model.charts}
@@ -321,7 +317,7 @@ export function DualAxisChart({ chart, subtitle }: { chart?: Chart | null; subti
 					exportButtons="hidden"
 				/>
 			</Suspense>
-		</ChartPanel>
+		</Panel>
 	)
 }
 

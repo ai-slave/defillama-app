@@ -13,16 +13,10 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
-import {
-	CHART_FILL,
-	ChartPanel,
-	ChartPanelBodyLoading,
-	ChartPanelExportShellLoading,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelExportShellLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { InlineStatus, LoadingIndicator, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { InlineStatStrip, type InlineStatStripItem } from '~/ui/SummaryStats'
 import { Switch } from '~/ui/Switch'
 import { capitalizeFirstLetter, firstDayOfMonth, lastDayOfWeek, slug } from '~/utils'
@@ -938,7 +932,7 @@ function ChartContainer({
 
 			<div className="flex flex-col gap-2">
 				{categoriesFromData.length > 0 && rawChartData.length > 0 ? (
-					<ChartPanel>
+					<Panel>
 						<ChartPanelToolbar>
 							<h3 className="mr-auto heading-xs">Schedule</h3>
 							{hasGroupAllocationData ? (
@@ -1021,9 +1015,9 @@ function ChartContainer({
 							/>
 						</ChartPanelToolbar>
 						{isPriceOrMcapLoading ? (
-							<ChartPanelBodyLoading />
+							<SurfaceBodyLoadingStatus label="Loading chart" />
 						) : (
-							<Suspense fallback={<ChartPanelBodyLoading />}>
+							<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 								<MultiSeriesChart
 									dataset={deferredScheduleChartData.dataset}
 									charts={deferredScheduleChartData.charts}
@@ -1038,12 +1032,12 @@ function ChartContainer({
 								/>
 							</Suspense>
 						)}
-					</ChartPanel>
+					</Panel>
 				) : null}
 
 				<div className="grid grid-cols-2 gap-2">
 					{data.pieChartData[dataType].length > 0 ? (
-						<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+						<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 							<Suspense fallback={<ChartPanelExportShellLoading />}>
 								<PieChart
 									showLegend
@@ -1062,11 +1056,11 @@ function ChartContainer({
 									containerClassName={CHART_FILL}
 								/>
 							</Suspense>
-						</ChartPanel>
+						</Panel>
 					) : null}
 
 					{unlockedPercent !== null && unlockedExportButtons !== null ? (
-						<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+						<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 							<Suspense fallback={<ChartPanelExportShellLoading />}>
 								<PieChart
 									showLegend
@@ -1081,7 +1075,7 @@ function ChartContainer({
 									containerClassName={CHART_FILL}
 								/>
 							</Suspense>
-						</ChartPanel>
+						</Panel>
 					) : null}
 				</div>
 			</div>

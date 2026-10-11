@@ -1,8 +1,9 @@
 import { lazy, Suspense, useState } from 'react'
 import type { ISankeyChartProps } from '~/components/ECharts/SankeyChart/types'
-import { ChartPanel, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { PanelLoadingStatus } from '~/ui/Status'
+import { PanelLoadingStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import type { Chart, Kpi as KpiT } from './transform'
 import { BarListCard, CardTitle, KpiGrid, TimeAreaCard, useUniswapData } from './ui'
@@ -114,7 +115,7 @@ function CustodySankeyCard({ sankey }: { sankey: NonNullable<LiquidityData['lpCu
 			}
 		})
 	return (
-		<ChartPanel>
+		<Panel>
 			<ChartPanelToolbar
 				leading={
 					<CardTitle
@@ -124,10 +125,10 @@ function CustodySankeyCard({ sankey }: { sankey: NonNullable<LiquidityData['lpCu
 				}
 			/>
 			{/* Below 37.5rem SankeyChart is max(450px, 64px a node) tall, and this panel has seven nodes at most. */}
-			<Suspense fallback={<ChartPanelBodyLoading className="max-[37.5rem]:min-h-[450px]" />}>
+			<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="max-[37.5rem]:min-h-[450px]" />}>
 				<SankeyChart nodes={nodes} links={sankey.links} nodeColors={SANKEY_COLORS} height="360px" />
 			</Suspense>
-		</ChartPanel>
+		</Panel>
 	)
 }
 

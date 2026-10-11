@@ -1,8 +1,8 @@
 import { lazy, Suspense } from 'react'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import { Card } from '~/ui/Card'
-import { ChartPanelBodyEmpty, ChartPanelBodyError, ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { Skeleton } from '~/ui/Skeleton'
+import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import type { ChartRuntimeView } from '../../chartRuntime'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
 import { DASHBOARD_CHART_GROUPING } from '../../utils'
@@ -59,13 +59,19 @@ export function SeparateChartsPreview({ composerItems }: SeparateChartsPreviewPr
 										/>
 									</Suspense>
 								) : item.hasError ? (
-									<ChartPanelBodyError retry={item.canRetry ? item : undefined} className="size-full min-h-0">
+									<SurfaceBodyStatus
+										variant="error"
+										retry={item.canRetry ? item : undefined}
+										className="size-full min-h-0"
+									>
 										Couldn&apos;t load this series.
-									</ChartPanelBodyError>
+									</SurfaceBodyStatus>
 								) : item.isLoading ? (
-									<ChartPanelBodyLoading label="Loading chart data" className="size-full min-h-0" />
+									<SurfaceBodyLoadingStatus label="Loading chart data" className="size-full min-h-0" />
 								) : (
-									<ChartPanelBodyEmpty className="size-full min-h-0">No data.</ChartPanelBodyEmpty>
+									<SurfaceBodyStatus variant="empty" className="size-full min-h-0">
+										No data.
+									</SurfaceBodyStatus>
 								)}
 							</div>
 						</Card>

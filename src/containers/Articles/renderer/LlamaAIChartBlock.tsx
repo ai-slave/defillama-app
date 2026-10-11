@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import { isChartConfiguration, isChartData } from '~/containers/LlamaAI/chartTypes'
 import { DeferredChartRenderer } from '~/containers/LlamaAI/components/charts/DeferredChartRenderer'
-import { ChartPanelBodyLoading } from '~/ui/ChartPanel'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 
 export function LlamaAIChartBlock({ attrs, index }: { attrs: Record<string, unknown>; index: number | null }) {
 	const config = isChartConfiguration(attrs.chartConfig) ? attrs.chartConfig : null
@@ -12,7 +12,7 @@ export function LlamaAIChartBlock({ attrs, index }: { attrs: Record<string, unkn
 	return (
 		<figure className="my-6 flex flex-col gap-2">
 			<div className="rounded-md border border-medium bg-surface">
-				<Suspense fallback={<ChartPanelBodyLoading className="h-[380px]" />}>
+				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="h-[380px]" />}>
 					<DeferredChartRenderer charts={[config]} chartData={chartData} readOnly />
 				</Suspense>
 			</div>

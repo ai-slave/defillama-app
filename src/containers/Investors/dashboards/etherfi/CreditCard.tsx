@@ -1,7 +1,8 @@
 import { lazy, Suspense, useMemo } from 'react'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
-import { CHART_FILL, ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatUsd } from '~/utils/numberFormat'
@@ -102,7 +103,7 @@ export default function CreditCard() {
 			{tvlLoading ? (
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartPanel>
+				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="TVL"
@@ -115,13 +116,13 @@ export default function CreditCard() {
 							exportButtons={AREA_EXPORT}
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			)}
 
 			{feesLoading ? (
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartPanel>
+				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Fees"
@@ -134,13 +135,13 @@ export default function CreditCard() {
 							exportButtons={BAR_EXPORT}
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			)}
 
 			{feesLoading ? (
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartPanel>
+				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Revenue"
@@ -153,11 +154,11 @@ export default function CreditCard() {
 							exportButtons={BAR_EXPORT}
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			)}
 
 			{!feesLoading && hasHoldersRevenue && (
-				<ChartPanel>
+				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Holders Revenue"
@@ -170,13 +171,13 @@ export default function CreditCard() {
 							exportButtons={BAR_EXPORT}
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			)}
 
 			{tvlLoading ? (
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartPanel>
+				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="USD Inflows"
@@ -189,7 +190,7 @@ export default function CreditCard() {
 							exportButtons={BAR_EXPORT}
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			)}
 		</div>
 	)

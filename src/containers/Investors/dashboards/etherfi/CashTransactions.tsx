@@ -2,7 +2,8 @@ import { lazy, Suspense } from 'react'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_INSET } from '~/components/ECharts/shared/chartSpacing'
-import { CHART_FILL, ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatCompactNumber } from '~/utils/numberFormat'
@@ -131,7 +132,7 @@ export default function CashTransactions() {
 			{isLoading ? (
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartPanel>
+				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Weekly Transactions by Class"
@@ -145,13 +146,13 @@ export default function CashTransactions() {
 							exportButtons={BAR_EXPORT}
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			)}
 
 			{isLoading ? (
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartPanel>
+				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Weekly Users by Class"
@@ -165,13 +166,13 @@ export default function CashTransactions() {
 							exportButtons={BAR_EXPORT}
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			)}
 
 			{isLoading ? (
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartPanel>
+				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Weekly Transactions"
@@ -184,13 +185,13 @@ export default function CashTransactions() {
 							exportButtons={BAR_EXPORT}
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			)}
 
 			{isLoading ? (
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartPanel>
+				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Weekly Active Users"
@@ -203,13 +204,13 @@ export default function CashTransactions() {
 							exportButtons={BAR_EXPORT}
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			)}
 
 			{isLoading ? (
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartPanel>
+				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Weekly Average Txns per User"
@@ -222,7 +223,7 @@ export default function CashTransactions() {
 							exportButtons={BAR_EXPORT}
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			)}
 		</div>
 	)

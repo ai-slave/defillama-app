@@ -1,6 +1,6 @@
 import { Button } from '~/ui/Button'
-import { ChartPanelBodyEmpty } from '~/ui/ChartPanel'
 import { ScopeNote } from '~/ui/ScopeNote'
+import { SurfaceBodyStatus } from '~/ui/Status'
 
 /**
  * Explains a selected metric missing from a cumulative chart: a running total of daily active addresses counts the
@@ -22,10 +22,12 @@ export function CumulativeUnavailableNotice({
 	)
 	if (fill) {
 		return (
-			<ChartPanelBodyEmpty className="gap-2">
-				<span>Cumulative isn&apos;t available for {metric}.</span>
-				{showDaily}
-			</ChartPanelBodyEmpty>
+			<SurfaceBodyStatus variant="empty">
+				<div className="flex items-center justify-center gap-2">
+					<span>Cumulative isn&apos;t available for {metric}.</span>
+					{showDaily}
+				</div>
+			</SurfaceBodyStatus>
 		)
 	}
 	return (

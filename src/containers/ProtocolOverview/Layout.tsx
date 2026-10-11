@@ -12,9 +12,9 @@ import { getMainSiteIrBaseHref } from '~/containers/Investors/mainSiteDashboards
 import Layout from '~/layout'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
+import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
 import { InlineStatus } from '~/ui/Status'
-import { TabLink, tabTrackStyles } from '~/ui/Tab'
+import { TabLink, tabTrackStyles } from '~/ui/Tabs'
 import { slug } from '~/utils'
 import {
 	getProtocolLayoutSeo,

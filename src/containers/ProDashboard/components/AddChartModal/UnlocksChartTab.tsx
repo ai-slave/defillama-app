@@ -9,7 +9,6 @@ import { VirtualizedSelect, type VirtualizedSelectOption } from '~/components/Se
 import type { EmissionsChartConfig, EmissionsDataset } from '~/containers/Unlocks/api.types'
 import { formatUnlockDate } from '~/containers/Unlocks/dateFormat'
 import { getAllProtocolEmissions, getProtocolEmissons } from '~/containers/Unlocks/queries'
-import { ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { EmptyState, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { slug } from '~/utils'
 import { BoundParameterChip, useModalFieldBinding } from './bindingContext'
@@ -266,7 +265,7 @@ export function UnlocksChartTab({
 			chartContent = <SurfaceBodyStatus variant="empty">No unlocks data.</SurfaceBodyStatus>
 		} else {
 			chartContent = (
-				<Suspense fallback={<ChartPanelBodyLoading />}>
+				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 					<MultiSeriesChart
 						dataset={totalDataset}
 						charts={totalCharts}
@@ -284,7 +283,7 @@ export function UnlocksChartTab({
 			chartContent = <SurfaceBodyStatus variant="empty">No unlocks data.</SurfaceBodyStatus>
 		} else {
 			chartContent = (
-				<Suspense fallback={<ChartPanelBodyLoading />}>
+				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 					<MultiSeriesChart
 						dataset={scheduleDataset}
 						charts={scheduleCharts}
@@ -301,7 +300,7 @@ export function UnlocksChartTab({
 			chartContent = <SurfaceBodyStatus variant="empty">No unlocks data.</SurfaceBodyStatus>
 		} else {
 			chartContent = (
-				<Suspense fallback={<ChartPanelBodyLoading />}>
+				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 					<PieChart chartData={allocationPieChart.chartData} stackColors={allocationPieChartColors} />
 				</Suspense>
 			)
@@ -311,7 +310,7 @@ export function UnlocksChartTab({
 			chartContent = <SurfaceBodyStatus variant="empty">No unlocks data.</SurfaceBodyStatus>
 		} else {
 			chartContent = (
-				<Suspense fallback={<ChartPanelBodyLoading />}>
+				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 					<PieChart chartData={lockedUnlockedPieChartData} stackColors={LOCKED_UNLOCKED_COLORS} valueSymbol="%" />
 				</Suspense>
 			)

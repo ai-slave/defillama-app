@@ -5,13 +5,13 @@ import { collectSourceFiles, policyTargetFiles } from '../lib/sourceFiles'
 
 /*
  * Status parts policy. Loading, error and not-found states render through the parts in src/ui/Status.tsx,
- * src/ui/ChartPanel.tsx and src/ui/NoResults.tsx, so each one looks, announces and retries the same way on every page
+ * src/ui/ChartPanel.tsx (ChartPanelExportShellLoading) and src/ui/NoResults.tsx, so each one looks, announces and retries the same way on every page
  * (src/ui/Status.tsx header, docs/focus-and-errors.md). App code outside src/ui that hand-builds one of these shapes
  * is refused:
  *
  * 1. loading-text: an element whose text children read "Loading…", "Fetching…", "Searching…" or "Waiting…" (ending
  *    in …, ... or &hellip;, with `{expr}` pieces allowed between), or a string literal rendered as its child. Use
- *    LoadingIndicator, ListLoading, ChartPanelBodyLoading, PanelLoadingStatus or SurfaceBodyLoadingStatus.
+ *    LoadingIndicator, ListLoading, PanelLoadingStatus or SurfaceBodyLoadingStatus.
  *    Text under `sr-only`, a busy button's label (BUTTON_LIKE) and attribute
  *    values (pendingLabel, aria-label, label) are not checked.
  * 2. loading-dots: `<LoadingDots>`. Use LoadingIndicator; a busy button label (inside BUTTON_LIKE) may keep the dots.
@@ -26,7 +26,7 @@ import { collectSourceFiles, policyTargetFiles } from '../lib/sourceFiles'
  * 6. retry-gating: a ternary, `&&` or `if` that renders a retry (`refetch` or a `retry=` prop) when a query's
  *    `isError`, `isLoadingError` or `error` is set. A retry clears those, so the error and its focused Try again
  *    vanish while it runs. Gate the error on `queryReadFailed(query)` and check it before loading; PanelStatus,
- *    ChartPanelBodyError and InlineStatus take the query as `retry`. Also refused: a chain that tests the same query's
+ *    SurfaceBodyStatus and InlineStatus take the query as `retry`. Also refused: a chain that tests the same query's
  *    `isLoading` or `isPending` before that error branch, unless the loading test excludes `queryReadFailed(query)`
  *    (docs/focus-and-errors.md → Errors and retries).
  *    "Query" means the result of useQuery, useInfiniteQuery, useSuspenseQuery, useSuspenseInfiniteQuery or a `use*`
@@ -43,7 +43,7 @@ import { collectSourceFiles, policyTargetFiles } from '../lib/sourceFiles'
  *    no shape to refuse here; the doc's rule covers it.
  * 10. blank-fallback: a Suspense `fallback` or a `dynamic()` `loading` that renders a ChartPanelBody or a div with no
  *    children. A fallback is a loading state: render the part for its surface with a label naming what loads
- *    (ChartPanelBodyLoading, ChartPanelExportShellLoading, SurfaceBodyLoadingStatus, PanelLoadingStatus, or
+ *    (SurfaceBodyLoadingStatus, ChartPanelExportShellLoading, PanelLoadingStatus, or
  *    ProCardLoading on a Pro dashboard card), with the reserved height on its className or style.
  *
  * EXCEPTIONS names files where a rule's shape is deliberate, each with its reason. An exception that no longer
@@ -68,12 +68,12 @@ type RuleId =
 
 const MESSAGES: Record<RuleId, string> = {
 	'loading-text':
-		'renders loading text by hand; use LoadingIndicator, ListLoading, ChartPanelBodyLoading, PanelLoadingStatus or SurfaceBodyLoadingStatus',
+		'renders loading text by hand; use LoadingIndicator, ListLoading, PanelLoadingStatus or SurfaceBodyLoadingStatus',
 	'loading-dots': 'renders LoadingDots outside a busy button; use LoadingIndicator',
 	'lone-spinner':
-		'draws a region loading state from a lone LoadingSpinner; use PanelLoadingStatus, SurfaceBodyLoadingStatus, ListLoading, ChartPanelBodyLoading or LoadingIndicator',
+		'draws a region loading state from a lone LoadingSpinner; use PanelLoadingStatus, SurfaceBodyLoadingStatus, ListLoading or LoadingIndicator',
 	'blank-fallback':
-		'renders a blank box as a Suspense or dynamic() fallback; render the loading part for its surface with a label (ChartPanelBodyLoading, ChartPanelExportShellLoading, SurfaceBodyLoadingStatus, PanelLoadingStatus, ProCardLoading)',
+		'renders a blank box as a Suspense or dynamic() fallback; render the loading part for its surface with a label (SurfaceBodyLoadingStatus, ChartPanelExportShellLoading, PanelLoadingStatus, ProCardLoading)',
 	'error-box': 'hand-builds an error box; use InlineStatus or PanelStatus',
 	'alert-line': 'hand-builds an alert line; use ErrorLine or InlineStatus',
 	'retry-gating':
@@ -155,7 +155,7 @@ const EXCEPTIONS: Record<RuleId, Record<string, string>> = {
 
 // Parts whose failure is always a read and which take `retry`; InlineStatus also holds action errors, so only a Try
 // again that refetches counts there.
-const READ_STATUS_PARTS = new Set(['PanelStatus', 'SurfaceBodyStatus', 'ChartPanelBodyError'])
+const READ_STATUS_PARTS = new Set(['PanelStatus', 'SurfaceBodyStatus'])
 // Case-sensitive "Failed to": a lowercase 'failed to fetch' is a browser error being matched, not copy.
 const ERROR_COPY =
 	/^\s*Failed to\b|\b[Pp]lease\b|\bcould not be \w+ed\b|\b[Ss]omething went wrong\b|\bOops\b|^\s*Error: /
@@ -1167,7 +1167,7 @@ if (process.argv.includes('--self-test')) {
 		{
 			name: 'loading part as a Suspense fallback',
 			source:
-				'export const F = () => <Suspense fallback={<ChartPanelBodyLoading className="min-h-[600px]" />}><Chart /></Suspense>',
+				'export const F = () => <Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="min-h-[600px]" />}><Chart /></Suspense>',
 			rule: null
 		},
 		{
@@ -1183,7 +1183,7 @@ if (process.argv.includes('--self-test')) {
 		},
 		{
 			name: 'empty note through the part',
-			source: 'export const F = () => <ChartPanelBodyEmpty>No data in this range.</ChartPanelBodyEmpty>',
+			source: 'export const F = () => <SurfaceBodyStatus variant="empty">No data in this range.</SurfaceBodyStatus>',
 			rule: null
 		}
 	]

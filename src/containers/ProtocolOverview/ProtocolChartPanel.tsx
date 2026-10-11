@@ -15,10 +15,12 @@ import { serializeProtocolChartToMultiChart } from '~/containers/ProDashboard/ut
 import { useDarkModeManager, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useIsClient } from '~/hooks/useIsClient'
-import { ChartPanel, ChartPanelBody, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { MetricChip } from '~/ui/MetricChip'
+import { Panel } from '~/ui/Panel'
 import { FailedDataNote } from '~/ui/ScopeNote'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
 import { pushShallowQuery, readyAsPath } from '~/utils/routerQuery'
@@ -186,7 +188,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 	}, [router, props.availableCharts, toggledMetrics, defaultEnabledCharts, hasEvents])
 
 	return (
-		<ChartPanel className="flex-1">
+		<Panel className="flex-1">
 			<ChartPanelToolbar
 				leading={
 					<>
@@ -270,7 +272,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 					/>
 				) : null}
 				{isActiveAddressesHidden && toggledCharts.length === 1 ? null : (
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<ProtocolChart
 							chartData={deferredChartRenderModel.chartData}
 							chartColors={props.chartColors}
@@ -286,6 +288,6 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 					</Suspense>
 				)}
 			</ChartPanelBody>
-		</ChartPanel>
+		</Panel>
 	)
 }

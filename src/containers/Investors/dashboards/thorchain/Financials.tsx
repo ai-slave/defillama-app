@@ -5,7 +5,8 @@ import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/c
 import { IncomeStatement } from '~/containers/ProtocolOverview/IncomeStatement'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
 import { Card } from '~/ui/Card'
-import { ChartPanel, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelLoadingStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { readInvestorApiJson } from '../../api.types'
@@ -61,7 +62,7 @@ function ThorchainIncomeStatement({ title, subtitle }: { title: string; subtitle
 		data?.data && (['monthly', 'quarterly', 'yearly'] as const).some((k) => Object.keys(data.data[k] ?? {}).length > 0)
 
 	return (
-		<ChartPanel>
+		<Panel>
 			<ChartPanelToolbar leading={<ChartPanelTitle subtitle={subtitle}>{title}</ChartPanelTitle>}>
 				<SegmentedControl<typeof view>
 					variant="default"
@@ -91,7 +92,7 @@ function ThorchainIncomeStatement({ title, subtitle }: { title: string; subtitle
 					No income statement data
 				</SurfaceBodyStatus>
 			)}
-		</ChartPanel>
+		</Panel>
 	)
 }
 

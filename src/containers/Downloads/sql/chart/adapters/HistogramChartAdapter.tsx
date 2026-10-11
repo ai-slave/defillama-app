@@ -5,8 +5,7 @@ import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesCh
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { getTooltipRawYValue, normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
 import { CHART_COLORS } from '~/constants/colors'
-import { ChartPanelBodyLoading } from '~/ui/ChartPanel'
-import { EmptyState } from '~/ui/Status'
+import { EmptyState, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { formatNumber } from '~/utils/numberFormat'
 import type { ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
@@ -100,7 +99,9 @@ export function HistogramChartAdapter({ config, result, classified, onReady, hei
 		)
 
 	return (
-		<Suspense fallback={<ChartPanelBodyLoading className="min-h-0 w-full" style={{ height }} />}>
+		<Suspense
+			fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="min-h-0 w-full" style={{ height }} />}
+		>
 			<MultiSeriesChart
 				dataset={chartModel.dataset}
 				charts={chartModel.charts}

@@ -11,7 +11,7 @@ import {
 	ProxyAuthTokenContext,
 	useProtocolsAndChains
 } from '~/containers/ProDashboard/queries'
-import { ChartPanelBodyEmpty, ChartPanelBodyError, ChartPanelBodyLoading } from '~/ui/ChartPanel'
+import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { formatDate } from '~/utils/dateFormat'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
 import { mergeFailedReads, queryReadFailed } from '~/utils/query'
@@ -197,13 +197,17 @@ export function ArticleChartBlock({
 			<div className="article-chart-body relative">
 				<div className="h-[380px] w-full">
 					{allFailed ? (
-						<ChartPanelBodyError retry={failedReads}>Couldn&apos;t load this chart.</ChartPanelBodyError>
+						<SurfaceBodyStatus variant="error" retry={failedReads}>
+							Couldn&apos;t load this chart.
+						</SurfaceBodyStatus>
 					) : isLoading ? (
-						<ChartPanelBodyLoading className="h-full" />
+						<SurfaceBodyLoadingStatus label="Loading chart" className="h-full" />
 					) : chartModel.charts.length === 0 ? (
-						<ChartPanelBodyEmpty className="h-full">No data available.</ChartPanelBodyEmpty>
+						<SurfaceBodyStatus variant="empty" className="h-full">
+							No data available.
+						</SurfaceBodyStatus>
 					) : (
-						<Suspense fallback={<ChartPanelBodyLoading className="h-full" />}>
+						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="h-full" />}>
 							<MultiSeriesChart
 								dataset={chartModel.dataset}
 								charts={charts}

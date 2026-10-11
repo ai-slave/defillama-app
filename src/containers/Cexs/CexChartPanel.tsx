@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
-import { ChartPanel, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 
 export function CexChartPanel({
 	title,
@@ -11,11 +12,11 @@ export function CexChartPanel({
 	children: ReactNode
 }) {
 	return (
-		<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+		<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 			<ChartPanelToolbar leading={<ChartPanelTitle headingAs="h2">{title}</ChartPanelTitle>}>
 				{controls}
 			</ChartPanelToolbar>
 			{children}
-		</ChartPanel>
+		</Panel>
 	)
 }

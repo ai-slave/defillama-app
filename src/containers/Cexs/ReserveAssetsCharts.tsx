@@ -20,8 +20,8 @@ import {
 } from '~/containers/ProtocolOverview/useProtocolBreakdownCharts'
 import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/useProtocolBreakdownPresentation'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { CHART_FILL, ChartPanelBodyLoading } from '~/ui/ChartPanel'
-import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { CHART_FILL } from '~/ui/ChartPanel'
+import { PanelLoadingStatus, PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Switch } from '~/ui/Switch'
 import { slug } from '~/utils'
 import { exchangeIconUrl } from '~/utils/icons'
@@ -115,7 +115,7 @@ function ChainsChartCard({
 				</>
 			}
 		>
-			<React.Suspense fallback={<ChartPanelBodyLoading />}>
+			<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
@@ -187,7 +187,7 @@ function TokenValuesUSDChartCard({
 				</>
 			}
 		>
-			<React.Suspense fallback={<ChartPanelBodyLoading />}>
+			<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
@@ -271,7 +271,7 @@ function TokensBreakdownPieChartCard({
 				</>
 			}
 		>
-			<React.Suspense fallback={<ChartPanelBodyLoading />}>
+			<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<PieChart
 					chartData={presentation.chartData}
 					stackColors={presentation.stackColors}
@@ -341,7 +341,7 @@ function TokenBalancesRawChartCard({
 				</>
 			}
 		>
-			<React.Suspense fallback={<ChartPanelBodyLoading />}>
+			<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
@@ -376,7 +376,7 @@ function USDInflowsChartCard({ protocolName, dataset }: { protocolName: string; 
 				/>
 			}
 		>
-			<React.Suspense fallback={<ChartPanelBodyLoading />}>
+			<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={USD_INFLOWS_CHARTS}
@@ -446,7 +446,7 @@ function InflowsByTokenChartCard({
 				</>
 			}
 		>
-			<React.Suspense fallback={<ChartPanelBodyLoading />}>
+			<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}

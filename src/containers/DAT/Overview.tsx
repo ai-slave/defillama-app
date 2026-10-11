@@ -22,8 +22,10 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
-import { ChartPanel, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Hovercard } from '~/ui/Hovercard'
+import { Panel } from '~/ui/Panel'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatCompactNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
@@ -87,7 +89,7 @@ export function DATOverview({ allAssets, institutions, dailyFlowsByAsset }: IDAT
 	return (
 		<>
 			<RowLinksWithDropdown heading="Assets" links={allAssets} activeLink="All" />
-			<ChartPanel className="col-span-2">
+			<Panel className="col-span-2">
 				<ChartPanelToolbar>
 					<h1 className="mr-auto heading-xs">DAT Inflows by Asset</h1>
 					<ChartGroupingSelector
@@ -122,7 +124,7 @@ export function DATOverview({ allAssets, institutions, dailyFlowsByAsset }: IDAT
 						}}
 					/>
 				</ChartPanelToolbar>
-				<Suspense fallback={<ChartPanelBodyLoading />}>
+				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 					<MultiSeriesChart
 						dataset={deferredChartData.dataset}
 						charts={deferredChartData.charts}
@@ -133,7 +135,7 @@ export function DATOverview({ allAssets, institutions, dailyFlowsByAsset }: IDAT
 						onReady={handleChartReady}
 					/>
 				</Suspense>
-			</ChartPanel>
+			</Panel>
 			<SearchTableProvider
 				options={{ data: institutions, columns: overviewColumns, initialState: { sorting: DEFAULT_SORTING_STATE } }}
 			>

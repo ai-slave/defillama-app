@@ -5,7 +5,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { CHART_COLORS } from '~/constants/colors'
 import { ChainProtocolsTable } from '~/containers/ProtocolRankings/Table'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
-import { ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { FailedDataNote } from '~/ui/ScopeNote'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
@@ -86,7 +86,7 @@ export function ForksByProtocol({ fork, forkLinks, protocolTableData, chartData 
 					/>
 				</SummaryStatsCard>
 
-				<ChartPanel className="col-span-2">
+				<Panel className="col-span-2">
 					{!isFetchingExtraSeries ? (
 						<FailedDataNote
 							labels={failedApiKeys.map((key) => tvlOptionNames[key])}
@@ -111,7 +111,7 @@ export function ForksByProtocol({ fork, forkLinks, protocolTableData, chartData 
 							/>
 						</Suspense>
 					)}
-				</ChartPanel>
+				</Panel>
 			</SummaryCardGrid>
 			<Suspense
 				fallback={

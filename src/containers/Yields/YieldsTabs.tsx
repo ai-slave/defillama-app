@@ -1,7 +1,7 @@
 import { useRouter } from 'next/router'
 import type { ReactNode } from 'react'
 import { BasicLink } from '~/components/Link'
-import { TabLink, tabTrackStyles } from '~/ui/Tab'
+import { TabLink, tabTrackStyles } from '~/ui/Tabs'
 
 // The current APY view (window + components) is
 // carried across tabs so the selection persists on navigation.

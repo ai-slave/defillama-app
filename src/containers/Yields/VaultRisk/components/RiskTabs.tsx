@@ -1,8 +1,7 @@
 import { TabList } from '@ariakit/react'
 import { useEffect, useRef, useState } from 'react'
 import { Icon } from '~/ui/Icon'
-import { TabLink, tabTrackStyles } from '~/ui/Tab'
-import { Tabs, Tab, TabPanel as RiskTabPanel } from '~/ui/Tabs'
+import { Tabs, Tab, TabPanel as RiskTabPanel, TabLink, tabTrackStyles } from '~/ui/Tabs'
 import { EASE_OUT_EXPO } from '../primitives/motion'
 
 // Every panel stays in the DOM (inactive ones get `hidden`) so SSR HTML carries all of it

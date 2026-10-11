@@ -4,9 +4,8 @@ import { ModeUsage } from '~/containers/LlamaAI/components/input/ModeToggle'
 import type { AgenticAnswerMode, FactCheckedUsage, ResearchUsage } from '~/containers/LlamaAI/types'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { MenuSurface } from '~/ui/MenuSurface'
 import { popoverMenuItemStyles } from '~/ui/Popover'
-import { NestedDrawerHeader, PopoverSurface } from '~/ui/PopoverSurface'
+import { NestedDrawerHeader, PopoverSurface, MenuSurface } from '~/ui/PopoverSurface'
 
 interface MobileToolsPopoverProps {
 	mode: AgenticAnswerMode

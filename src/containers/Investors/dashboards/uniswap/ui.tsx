@@ -18,7 +18,9 @@ import { fetchAdapterProtocolMetrics } from '~/containers/AdapterMetrics/api'
 import type { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { useMedia } from '~/hooks/useMedia'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanel, ChartPanelBodyEmpty, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
+import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { keyedOccurrences, type RowIdentity } from '~/utils/keyedOccurrences'
 import { formatUsd } from '~/utils/numberFormat'
@@ -282,13 +284,15 @@ export function PlaceholderCard({
 	note?: string
 }) {
 	return (
-		<ChartPanel>
+		<Panel>
 			<ChartPanelToolbar leading={<CardTitle title={title} subtitle={subtitle} />} />
-			<ChartPanelBodyEmpty className="flex-col gap-2">
-				<span>Awaiting data.</span>
-				{note && <code className="rounded-sm bg-page px-2 py-0.5 mono-sm text-tertiary">{note}</code>}
-			</ChartPanelBodyEmpty>
-		</ChartPanel>
+			<SurfaceBodyStatus variant="empty">
+				<div className="flex flex-col items-center gap-2">
+					<span>Awaiting data.</span>
+					{note && <code className="rounded-sm bg-page px-2 py-0.5 mono-sm text-tertiary">{note}</code>}
+				</div>
+			</SurfaceBodyStatus>
+		</Panel>
 	)
 }
 
@@ -331,7 +335,7 @@ export function CardTitle({
 	)
 }
 
-/** A titled table card; charts sit in a ChartPanel with CardTitle instead. */
+/** A titled table card; charts sit in a Panel with CardTitle instead. */
 export function ChartCard({
 	title,
 	subtitle,
@@ -422,9 +426,9 @@ export function BarListCard({
 	showValues?: boolean
 }) {
 	return (
-		<ChartPanel>
+		<Panel>
 			<ChartPanelToolbar leading={<CardTitle title={title} subtitle={subtitle} />} />
-			<Suspense fallback={<ChartPanelBodyLoading />}>
+			<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<HBarChart
 					categories={items.map((item) => item.name)}
 					values={items.map((item) => item.value)}
@@ -434,7 +438,7 @@ export function BarListCard({
 					containerClassName={CHART_FILL}
 				/>
 			</Suspense>
-		</ChartPanel>
+		</Panel>
 	)
 }
 
@@ -519,7 +523,7 @@ export function TimeAreaCard({
 	if (chart.series.length === 0)
 		return <PlaceholderCard title={chart.title ?? ''} subtitle={subtitle} note="empty series" />
 	return (
-		<ChartPanel>
+		<Panel>
 			<ChartPanelToolbar
 				leading={
 					<CardTitle title={title ?? chart.title ?? ''} subtitle={subtitle ?? chart.subtitle} subtitles={subtitles} />
@@ -528,7 +532,7 @@ export function TimeAreaCard({
 				{value && <p className="mono-lg tracking-tight text-primary tabular-nums">{value}</p>}
 				{control}
 			</ChartPanelToolbar>
-			<Suspense fallback={<ChartPanelBodyLoading />}>
+			<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
@@ -540,6 +544,6 @@ export function TimeAreaCard({
 					chartOptions={chartOptions}
 				/>
 			</Suspense>
-		</ChartPanel>
+		</Panel>
 	)
 }

@@ -14,8 +14,10 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { CHART_COLORS } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanel, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
@@ -127,7 +129,7 @@ function LiquidationsDistributionChartCard({
 	const seriesLabel = chartState.breakdownMode === 'protocol' ? 'Protocol' : 'Chain'
 
 	return (
-		<ChartPanel>
+		<Panel>
 			<ChartPanelToolbar>
 				{displayOptions.hideTokenSelector ? (
 					<div className="mr-auto" />
@@ -222,7 +224,7 @@ function LiquidationsDistributionChartCard({
 					smol
 				/>
 			</ChartPanelToolbar>
-			<React.Suspense fallback={<ChartPanelBodyLoading />}>
+			<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<MultiSeriesChart
 					dataset={deferredChartModel.dataset}
 					charts={deferredChartModel.charts}
@@ -236,7 +238,7 @@ function LiquidationsDistributionChartCard({
 				/>
 			</React.Suspense>
 			<LiquidationsDistributionChartFooter timestamp={timestamp} />
-		</ChartPanel>
+		</Panel>
 	)
 }
 

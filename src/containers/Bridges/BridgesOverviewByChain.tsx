@@ -12,12 +12,13 @@ import { BridgesTable, type BridgesTableHandle } from '~/containers/Bridges/Brid
 import { BridgeVolumeChart } from '~/containers/Bridges/BridgeVolumeChart'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { usePageClockSec } from '~/hooks/usePageClock'
-import { ChartPanel, ChartPanelBody, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { ScopeNote } from '~/ui/ScopeNote'
 import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Switch } from '~/ui/Switch'
 import { TabPanel, Tabs } from '~/ui/Tabs'
@@ -366,7 +367,7 @@ export function BridgesOverviewByChain({
 
 					<CSVDownloadButton prepareCsv={prepareCsv} smol size="sm" className="mt-auto mr-auto" />
 				</SummaryStatsCard>
-				<ChartPanel className="col-span-2">
+				<Panel className="col-span-2">
 					{selectedChain === 'All' ? (
 						<>
 							<ChartPanelToolbar>
@@ -391,7 +392,9 @@ export function BridgesOverviewByChain({
 
 							{chartView === 'netflow' && netflowsData ? (
 								<ChartPanelBody className="min-h-[600px]">
-									<React.Suspense fallback={<ChartPanelBodyLoading className="min-h-[600px]" />}>
+									<React.Suspense
+										fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="min-h-[600px]" />}
+									>
 										<NetflowChart height={600} onReady={handleChartReady} data={netflowsData} />
 									</React.Suspense>
 								</ChartPanelBody>
@@ -470,7 +473,7 @@ export function BridgesOverviewByChain({
 								/>
 							) : activeChart?.kind === 'Net Flow' ? (
 								activeChart.dataset.source.length > 0 ? (
-									<React.Suspense fallback={<ChartPanelBodyLoading />}>
+									<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 										<MultiSeriesChart
 											dataset={activeChart.dataset}
 											charts={NET_FLOW_CHARTS}
@@ -481,7 +484,7 @@ export function BridgesOverviewByChain({
 								) : null
 							) : activeChart?.kind === 'Net Flow (%)' ? (
 								activeChart.dataset.source.length > 0 ? (
-									<React.Suspense fallback={<ChartPanelBodyLoading />}>
+									<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 										<MultiSeriesChart
 											dataset={activeChart.dataset}
 											charts={NET_FLOW_PCT_CHARTS}
@@ -492,7 +495,7 @@ export function BridgesOverviewByChain({
 								) : null
 							) : activeChart?.kind === 'Inflows' ? (
 								activeChart.dataset.source.length > 0 ? (
-									<React.Suspense fallback={<ChartPanelBodyLoading />}>
+									<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 										<MultiSeriesChart
 											dataset={activeChart.dataset}
 											charts={CHAIN_INFLOW_CHARTS}
@@ -502,7 +505,7 @@ export function BridgesOverviewByChain({
 									</React.Suspense>
 								) : null
 							) : activeChart?.kind === '24h Tokens Deposited' ? (
-								<React.Suspense fallback={<ChartPanelBodyLoading />}>
+								<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 									<PieChart
 										chartData={visibleTokenPiePresentation.chartData}
 										stackColors={visibleTokenPiePresentation.stackColors}
@@ -510,7 +513,7 @@ export function BridgesOverviewByChain({
 									/>
 								</React.Suspense>
 							) : activeChart?.kind === '24h Tokens Withdrawn' ? (
-								<React.Suspense fallback={<ChartPanelBodyLoading />}>
+								<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 									<PieChart
 										chartData={visibleTokenPiePresentation.chartData}
 										stackColors={visibleTokenPiePresentation.stackColors}
@@ -520,7 +523,7 @@ export function BridgesOverviewByChain({
 							) : null}
 						</>
 					)}
-				</ChartPanel>
+				</Panel>
 			</SummaryCardGrid>
 
 			<Panel>

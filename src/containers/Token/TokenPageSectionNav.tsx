@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react'
-import { TabLink, tabTrackStyles } from '~/ui/Tab'
+import { TabLink, tabTrackStyles } from '~/ui/Tabs'
 
 type TokenPageSectionNavItem = {
 	id: string

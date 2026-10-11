@@ -2,10 +2,11 @@ import { useRouter } from 'next/router'
 import { useMemo } from 'react'
 import { usePageClockSec } from '~/hooks/usePageClock'
 import { Card } from '~/ui/Card'
-import { ChartPanel, ChartPanelBody, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
-import { PanelHeader, PanelTitle } from '~/ui/Panel'
+import { PanelHeader, PanelTitle, Panel } from '~/ui/Panel'
 import { Skeleton } from '~/ui/Skeleton'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import type { MeasuredApy } from '../data/apy'
 import type { VerifiedBlock } from '../data/types'
 import { hasPart } from '../domain/apyPresentation'
@@ -113,7 +114,7 @@ export interface PoolDetailViewProps {
 
 function PoolChartPlaceholder({ title }: { title: string }) {
 	return (
-		<ChartPanel className="h-full">
+		<Panel className="h-full">
 			<PanelHeader>
 				<PanelTitle>{title}</PanelTitle>
 				<Skeleton className="ml-auto h-8 w-40" />
@@ -122,9 +123,9 @@ function PoolChartPlaceholder({ title }: { title: string }) {
 				<Skeleton className="h-8 w-40" />
 			</ChartPanelToolbar>
 			<ChartPanelBody>
-				<ChartPanelBodyLoading label="Loading chart" />
+				<SurfaceBodyLoadingStatus label="Loading chart" />
 			</ChartPanelBody>
-		</ChartPanel>
+		</Panel>
 	)
 }
 
@@ -274,7 +275,7 @@ export function PoolDetailView({
 			initialRange={initialRange}
 		/>
 	) : null
-	const apyCard = growthSection ? <ChartPanel>{growthSection}</ChartPanel> : null
+	const apyCard = growthSection ? <Panel>{growthSection}</Panel> : null
 	const receipts = verified ? (
 		<VerifiedApyPanel
 			verified={verified}
@@ -284,9 +285,9 @@ export function PoolDetailView({
 		/>
 	) : null
 	const exitCard = liquiditySection ? (
-		<ChartPanel id={EXIT_STATUS_ID} className="scroll-mt-4">
+		<Panel id={EXIT_STATUS_ID} className="scroll-mt-4">
 			{liquiditySection}
-		</ChartPanel>
+		</Panel>
 	) : exitReliability ? (
 		<ExitReliabilityPanel model={exitReliability} verified={verified} holders={holders} />
 	) : null

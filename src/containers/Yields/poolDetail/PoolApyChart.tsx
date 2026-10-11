@@ -16,16 +16,9 @@ import {
 } from '~/components/ECharts/shared/tooltip'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
-import {
-	CHART_FILL,
-	ChartPanel,
-	ChartPanelBody,
-	ChartPanelBodyEmpty,
-	ChartPanelBodyError,
-	ChartPanelBodyLoading,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
-import { PanelHeader, PanelTitle } from '~/ui/Panel'
+import { CHART_FILL, ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { PanelHeader, PanelTitle, Panel } from '~/ui/Panel'
+import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { formatPercent, formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { writeStickyPref } from '../stickyQueryPrefs'
@@ -457,7 +450,7 @@ export function PoolApyChart({
 	}, [enabled, isDark, lockedVerifiedApy, seriesDefs])
 
 	return (
-		<ChartPanel>
+		<Panel>
 			<PanelHeader>
 				<PanelTitle>{currentModel.title}</PanelTitle>
 				<div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
@@ -493,13 +486,17 @@ export function PoolApyChart({
 
 			<ChartPanelBody>
 				{failedRead ? (
-					<ChartPanelBodyError retry={failedRead}>Couldn&apos;t load {range} history.</ChartPanelBodyError>
+					<SurfaceBodyStatus variant="error" retry={failedRead}>
+						Couldn&apos;t load {range} history.
+					</SurfaceBodyStatus>
 				) : loading ? (
-					<ChartPanelBodyLoading label={`Loading ${range} history`} />
+					<SurfaceBodyLoadingStatus label={`Loading ${range} history`} />
 				) : !hasData ? (
-					<ChartPanelBodyEmpty>No data in this range for the selected series and window.</ChartPanelBodyEmpty>
+					<SurfaceBodyStatus variant="empty">
+						No data in this range for the selected series and window.
+					</SurfaceBodyStatus>
 				) : (
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={dataset}
 							charts={charts}
@@ -515,6 +512,6 @@ export function PoolApyChart({
 				)}
 			</ChartPanelBody>
 			{upgradeModal}
-		</ChartPanel>
+		</Panel>
 	)
 }

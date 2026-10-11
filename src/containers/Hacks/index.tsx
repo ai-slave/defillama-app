@@ -15,11 +15,12 @@ import { prepareTableCsv, useTableSearch } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { usePageClockSec } from '~/hooks/usePageClock'
-import { ChartPanel, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
@@ -200,7 +201,7 @@ export function HacksContainer({
 					<StatItem label="Total Value Hacked in DeFi (USD)" value={displayTotalHackedDefi} />
 					<StatItem label="Total Value Hacked in Bridges (USD)" value={displayTotalRugs} />
 				</SummaryStatsCard>
-				<ChartPanel className="col-span-2">
+				<Panel className="col-span-2">
 					<ChartPanelToolbar>
 						<SegmentedControl
 							variant="default"
@@ -229,7 +230,7 @@ export function HacksContainer({
 						/>
 					</ChartPanelToolbar>
 					{chartType === 'Monthly Sum' ? (
-						<React.Suspense fallback={<ChartPanelBodyLoading />}>
+						<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<MultiSeriesChart
 								dataset={deferredMonthlyHacksChartData.dataset}
 								charts={deferredMonthlyHacksChartData.charts}
@@ -238,11 +239,11 @@ export function HacksContainer({
 							/>
 						</React.Suspense>
 					) : (
-						<React.Suspense fallback={<ChartPanelBodyLoading />}>
+						<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<PieChart chartData={deferredPieChartData} onReady={handleChartReady} />
 						</React.Suspense>
 					)}
-				</ChartPanel>
+				</Panel>
 			</SummaryCardGrid>
 			<HacksTable data={filteredData} />
 		</>

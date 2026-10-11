@@ -18,21 +18,16 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useIsClient } from '~/hooks/useIsClient'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import {
-	ChartPanel,
-	ChartPanelBody,
-	ChartPanelBodyEmpty,
-	ChartPanelBodyError,
-	ChartPanelBodyLoading,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { EntityTitleRow } from '~/ui/EntityTitleRow'
 import { Icon } from '~/ui/Icon'
 import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
 import { MetricChip } from '~/ui/MetricChip'
 import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/MetricPrimitives'
+import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StaleText } from '~/ui/StaleText'
+import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryChange, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -91,7 +86,7 @@ const TOKEN_OVERVIEW_CHART_QUERY_KEY = 'chart'
 const TOKEN_OVERVIEW_TIMEFRAME_QUERY_KEY = 'timeframe'
 
 const DeferredProtocolChart = dynamic(() => import('~/containers/ProtocolOverview/Chart'), {
-	loading: () => <ChartPanelBodyLoading />
+	loading: () => <SurfaceBodyLoadingStatus label="Loading chart" />
 })
 
 function formatSupply(value: number | null | undefined, symbol: string) {
@@ -589,9 +584,11 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 			</ChartPanelToolbar>
 			<ChartPanelBody>
 				{chartBody === 'wait-for-client' ? null : chartBody === 'error' ? (
-					<ChartPanelBodyError retry={failedRead}>Couldn&apos;t load {loadingLabel}.</ChartPanelBodyError>
+					<SurfaceBodyStatus variant="error" retry={failedRead}>
+						Couldn&apos;t load {loadingLabel}.
+					</SurfaceBodyStatus>
 				) : chartBody === 'loading' ? (
-					<ChartPanelBodyLoading label={`Loading ${loadingLabel}`} />
+					<SurfaceBodyLoadingStatus label={`Loading ${loadingLabel}`} />
 				) : chartBody === 'chart' ? (
 					<DeferredProtocolChart
 						key={`${activeTimeframe}:${activeCharts.join('|')}`}
@@ -604,13 +601,13 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 						rangeHallmarks={null}
 					/>
 				) : (
-					<ChartPanelBodyEmpty className="max-w-sm">
+					<SurfaceBodyStatus variant="empty" className="max-w-sm">
 						{chartBody === 'unavailable'
 							? 'Chart unavailable for this token right now.'
 							: chartBody === 'select-metrics'
 								? 'Select metrics to chart.'
 								: 'Chart unavailable without CoinGecko market data.'}
-					</ChartPanelBodyEmpty>
+					</SurfaceBodyStatus>
 				)}
 			</ChartPanelBody>
 		</>
@@ -743,9 +740,9 @@ export function TokenOverviewSection({
 					<TokenMetrics overview={overview} />
 				</SummaryStatsCard>
 				<div className="col-span-2 grid grid-cols-2 gap-2">
-					<ChartPanel className="col-span-full">
+					<Panel className="col-span-full">
 						<TokenChartPanel overview={overview} geckoId={geckoId} />
-					</ChartPanel>
+					</Panel>
 				</div>
 				<TokenInformationCard overview={overview} issuer={issuer} chain={chain} />
 			</SummaryCardGrid>

@@ -1,6 +1,5 @@
 import { TabList } from '@ariakit/react'
-import { TabLink, tabTrackStyles } from '~/ui/Tab'
-import { Tab } from '~/ui/Tabs'
+import { Tab, TabLink, tabTrackStyles } from '~/ui/Tabs'
 
 export interface ViewTab<T extends string> {
 	id: T

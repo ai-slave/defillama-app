@@ -16,22 +16,16 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
-import {
-	CHART_FILL,
-	ChartPanel,
-	ChartPanelBodyEmpty,
-	ChartPanelBodyError,
-	ChartPanelBodyLoading,
-	ChartPanelTitle,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { CopyHelper } from '~/ui/Copy'
 import { HeroMetric } from '~/ui/HeroMetric'
 import { Icon } from '~/ui/Icon'
 import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
 import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/MetricPrimitives'
+import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Switch } from '~/ui/Switch'
 import { Tooltip } from '~/ui/Tooltip'
@@ -506,7 +500,7 @@ export function RWAAssetPage({
 					<Card padding="sm" className="flex flex-col gap-6 xl:hidden">
 						<AssetHeader asset={asset} displayName={displayName} headingAs="div" />
 					</Card>
-					<ChartPanel>
+					<Panel>
 						<ChartPanelToolbar>
 							<SegmentedControl<AssetChartMetric>
 								value={chartMetric}
@@ -567,11 +561,13 @@ export function RWAAssetPage({
 						) : null}
 						{isFlowChart ? (
 							queryReadFailed(assetFlowsQuery) ? (
-								<ChartPanelBodyError retry={assetFlowsQuery}>Couldn&apos;t load flow data.</ChartPanelBodyError>
+								<SurfaceBodyStatus variant="error" retry={assetFlowsQuery}>
+									Couldn&apos;t load flow data.
+								</SurfaceBodyStatus>
 							) : assetFlowsQuery.isLoading ? (
-								<ChartPanelBodyLoading />
+								<SurfaceBodyLoadingStatus label="Loading chart" />
 							) : flowChart ? (
-								<Suspense fallback={<ChartPanelBodyLoading />}>
+								<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 									<RWAFlowsChart
 										chart={flowChart}
 										onVisibleRangeChange={(range) => setFlowZoom({ source: flowChart.dataset.source, range })}
@@ -579,10 +575,10 @@ export function RWAAssetPage({
 									/>
 								</Suspense>
 							) : (
-								<ChartPanelBodyEmpty>No flow data available.</ChartPanelBodyEmpty>
+								<SurfaceBodyStatus variant="empty">No flow data available.</SurfaceBodyStatus>
 							)
 						) : assetChartDataset ? (
-							<Suspense fallback={<ChartPanelBodyLoading />}>
+							<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 								<MultiSeriesChart
 									charts={timeSeriesCharts}
 									dataset={assetChartDataset}
@@ -592,9 +588,9 @@ export function RWAAssetPage({
 								/>
 							</Suspense>
 						) : (
-							<ChartPanelBodyEmpty>No market data available.</ChartPanelBodyEmpty>
+							<SurfaceBodyStatus variant="empty">No market data available.</SurfaceBodyStatus>
 						)}
-					</ChartPanel>
+					</Panel>
 					<Card padding="sm" className="flex flex-col gap-6 xl:hidden">
 						<AssetKeyMetrics
 							asset={asset}
@@ -966,7 +962,7 @@ export function RWAAssetPage({
 			) : null}
 
 			{asset.nativeYieldPoolId && (isLoadingYieldChart || nativeYieldDataset) ? (
-				<ChartPanel className="overflow-hidden">
+				<Panel className="overflow-hidden">
 					<div
 						className="absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-(--series) to-transparent"
 						style={{ '--series': NATIVE_YIELD_CHARTS[0].color } as CSSProperties}
@@ -995,9 +991,9 @@ export function RWAAssetPage({
 					</ChartPanelToolbar>
 
 					{isLoadingYieldChart ? (
-						<ChartPanelBodyLoading className="flex-1" />
+						<SurfaceBodyLoadingStatus label="Loading chart" className="flex-1" />
 					) : (
-						<Suspense fallback={<ChartPanelBodyLoading className="flex-1" />}>
+						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="flex-1" />}>
 							<MultiSeriesChart
 								charts={NATIVE_YIELD_CHARTS}
 								dataset={nativeYieldDataset ?? { source: [], dimensions: [] }}
@@ -1011,7 +1007,7 @@ export function RWAAssetPage({
 					)}
 
 					{asset.issuer ? <p className="px-2 pb-2 body-sm text-secondary">Historical APY from {asset.issuer}</p> : null}
-				</ChartPanel>
+				</Panel>
 			) : null}
 
 			{displayPools.length > 0 ? (

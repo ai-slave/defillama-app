@@ -7,9 +7,10 @@ import { BasicLink } from '~/components/Link'
 import { LinkPreviewCard } from '~/components/SEO'
 import { TokenLogo } from '~/components/TokenLogo'
 import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
-import { ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { EntityTitleRow } from '~/ui/EntityTitleRow'
 import { HeroMetric } from '~/ui/HeroMetric'
+import { Panel } from '~/ui/Panel'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
@@ -103,9 +104,9 @@ export function ProtocolOverview(props: IProtocolOverviewPageData) {
 				<div className="col-span-2 flex flex-col">
 					<Suspense
 						fallback={
-							<ChartPanel>
+							<Panel>
 								<ChartPanelExportShellLoading />
-							</ChartPanel>
+							</Panel>
 						}
 					>
 						<ProtocolChartPanel {...props} />

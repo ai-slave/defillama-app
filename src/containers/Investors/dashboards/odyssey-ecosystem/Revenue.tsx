@@ -7,15 +7,10 @@ import { chartColor } from '~/constants/colors'
 import { IncomeStatement } from '~/containers/ProtocolOverview/IncomeStatement'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
 import { Card } from '~/ui/Card'
-import {
-	CHART_FILL,
-	ChartPanel,
-	ChartPanelBodyEmpty,
-	ChartPanelBodyLoading,
-	ChartPanelTitle,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import { readInvestorApiJson } from '../../api.types'
@@ -271,14 +266,14 @@ export default function Revenue() {
 					</>
 				)}
 			</div>
-			<ChartPanel>
+			<Panel>
 				<ChartPanelToolbar
 					leading={<ChartPanelTitle subtitle="Stacked by protocol">Daily Claimed Revenue</ChartPanelTitle>}
 				/>
 				{isLoading || !dailyModel ? (
-					<ChartPanelBodyLoading />
+					<SurfaceBodyLoadingStatus label="Loading chart" />
 				) : (
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={dailyModel.dataset}
 							charts={dailyModel.charts}
@@ -289,8 +284,8 @@ export default function Revenue() {
 						/>
 					</Suspense>
 				)}
-			</ChartPanel>
-			<ChartPanel>
+			</Panel>
+			<Panel>
 				<ChartPanelToolbar
 					leading={
 						<ChartPanelTitle subtitle="Revenue routed to token holders (MET / VSP)">Holder Buybacks</ChartPanelTitle>
@@ -309,10 +304,10 @@ export default function Revenue() {
 					/>
 				</ChartPanelToolbar>
 				{isLoading || (!holderModel && !holdersByMonthModel) ? (
-					<ChartPanelBodyLoading />
+					<SurfaceBodyLoadingStatus label="Loading chart" />
 				) : holderMode === 'monthly' ? (
 					holdersByMonthModel ? (
-						<Suspense fallback={<ChartPanelBodyLoading />}>
+						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<MultiSeriesChart
 								key="hb-monthly"
 								dataset={holdersByMonthModel.dataset}
@@ -325,10 +320,10 @@ export default function Revenue() {
 							/>
 						</Suspense>
 					) : (
-						<ChartPanelBodyEmpty>No monthly holder data.</ChartPanelBodyEmpty>
+						<SurfaceBodyStatus variant="empty">No monthly holder data.</SurfaceBodyStatus>
 					)
 				) : holderModel ? (
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							key="hb-daily"
 							dataset={holderModel.dataset}
@@ -340,9 +335,9 @@ export default function Revenue() {
 						/>
 					</Suspense>
 				) : (
-					<ChartPanelBodyEmpty>No daily holder data.</ChartPanelBodyEmpty>
+					<SurfaceBodyStatus variant="empty">No daily holder data.</SurfaceBodyStatus>
 				)}
-			</ChartPanel>
+			</Panel>
 
 			{/* Metronome breakdown · canonical from financial-statement adapter */}
 			{mc && (
@@ -379,7 +374,7 @@ export default function Revenue() {
 
 			{/* 3 · Unclaimed pipeline */}
 			<h2 className="heading-xs">Unclaimed Pipeline · Overview</h2>
-			<ChartPanel>
+			<Panel>
 				<ChartPanelToolbar
 					leading={
 						<div>
@@ -391,7 +386,7 @@ export default function Revenue() {
 					{up.asOf && <span className="body-sm text-secondary">As of {up.asOf}</span>}
 				</ChartPanelToolbar>
 				{up.pie && (
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<PieChart
 							chartData={up.pie}
 							valueSymbol="$"
@@ -401,7 +396,7 @@ export default function Revenue() {
 						/>
 					</Suspense>
 				)}
-			</ChartPanel>
+			</Panel>
 
 			<h2 className="heading-xs">Treasury LP Positions · Pending Rewards</h2>
 			<SubSectionCard title="Staked LP gauge rewards" total={lpTotal}>

@@ -8,8 +8,8 @@ import { CHANGE_SCALE_GRADIENT } from '~/components/ECharts/TreemapChart/Market/
 import { CHART_DOWN, CHART_UP } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useStableCallback } from '~/hooks/useStableCallback'
-import { ChartPanelBodyEmpty, ChartPanelBodyError, ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { queryReadFailed } from '~/utils/query'
 import { pushShallowQuery } from '~/utils/routerQuery'
@@ -187,16 +187,18 @@ export function TokensChartsSection({
 			{filterPills}
 			{datasetQuery.data ? <TokensSourceAvailability sources={datasetQuery.data.unavailableSources} /> : null}
 			{queryReadFailed(datasetQuery) ? (
-				<ChartPanelBodyError retry={datasetQuery} style={{ height: MAP_HEIGHT }}>
+				<SurfaceBodyStatus variant="error" retry={datasetQuery} style={{ height: MAP_HEIGHT }}>
 					Couldn&apos;t load chart data.
-				</ChartPanelBodyError>
+				</SurfaceBodyStatus>
 			) : data == null ? (
-				<ChartPanelBodyLoading style={{ height: MAP_HEIGHT }} />
+				<SurfaceBodyLoadingStatus label="Loading chart" style={{ height: MAP_HEIGHT }} />
 			) : !hasRows ? (
-				<ChartPanelBodyEmpty style={{ height: MAP_HEIGHT }}>No tokens match the current filters.</ChartPanelBodyEmpty>
+				<SurfaceBodyStatus variant="empty" style={{ height: MAP_HEIGHT }}>
+					No tokens match the current filters.
+				</SurfaceBodyStatus>
 			) : treemap ? (
 				<>
-					<React.Suspense fallback={<ChartPanelBodyLoading style={{ height: MAP_HEIGHT }} />}>
+					<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" style={{ height: MAP_HEIGHT }} />}>
 						<MarketTreemapChart
 							treeData={treemap.treeData}
 							leaves={treemap.leaves}
@@ -285,7 +287,7 @@ function MoversChart({
 					Nothing to show
 				</div>
 			) : (
-				<React.Suspense fallback={<ChartPanelBodyLoading style={{ height: MOVERS_HEIGHT }} />}>
+				<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" style={{ height: MOVERS_HEIGHT }} />}>
 					<HBarChart
 						categories={chartData.categories}
 						values={chartData.values}

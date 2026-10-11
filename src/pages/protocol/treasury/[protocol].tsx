@@ -26,9 +26,10 @@ import {
 import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/useProtocolBreakdownPresentation'
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { CHART_FILL, ChartPanel, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
-import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { Panel } from '~/ui/Panel'
+import { PanelLoadingStatus, PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Switch } from '~/ui/Switch'
 import { slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
@@ -86,7 +87,7 @@ function TokensBreakdownPieChartCard({
 	const exportTitle = `${protocolName} Treasury by Token`
 
 	return (
-		<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+		<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 			<ChartPanelToolbar>
 				<h2 className="mr-auto heading-xs">Tokens Breakdown</h2>
 				{selectableSeries.length > 1 ? (
@@ -111,7 +112,7 @@ function TokensBreakdownPieChartCard({
 					}}
 				/>
 			</ChartPanelToolbar>
-			<React.Suspense fallback={<ChartPanelBodyLoading />}>
+			<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<PieChart
 					chartData={presentation.chartData}
 					stackColors={presentation.stackColors}
@@ -119,7 +120,7 @@ function TokensBreakdownPieChartCard({
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
-		</ChartPanel>
+		</Panel>
 	)
 }
 
@@ -140,7 +141,7 @@ function HistoricalTreasuryChartCard({
 	const exportTitle = `${protocolName} Historical Treasury`
 
 	return (
-		<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+		<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 			<ChartPanelToolbar>
 				<h2 className="mr-auto heading-xs">Historical Treasury</h2>
 				<ChartExportButtons
@@ -151,7 +152,7 @@ function HistoricalTreasuryChartCard({
 					csvSource={{ type: 'dataset', prepare: () => dataset }}
 				/>
 			</ChartPanelToolbar>
-			<React.Suspense fallback={<ChartPanelBodyLoading />}>
+			<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
@@ -162,7 +163,7 @@ function HistoricalTreasuryChartCard({
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
-		</ChartPanel>
+		</Panel>
 	)
 }
 
@@ -209,7 +210,7 @@ function TokensMultiSeriesChartCard({
 	const exportTitle = `${protocolName} Treasury ${title}`
 
 	return (
-		<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+		<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 			<ChartPanelToolbar>
 				<h2 className="mr-auto heading-xs">{title}</h2>
 				{allTokens.length > 1 ? (
@@ -231,7 +232,7 @@ function TokensMultiSeriesChartCard({
 					csvSource={csvSource}
 				/>
 			</ChartPanelToolbar>
-			<React.Suspense fallback={<ChartPanelBodyLoading />}>
+			<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
@@ -243,7 +244,7 @@ function TokensMultiSeriesChartCard({
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
-		</ChartPanel>
+		</Panel>
 	)
 }
 

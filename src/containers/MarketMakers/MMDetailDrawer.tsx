@@ -5,7 +5,6 @@ import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { DialogBody, DialogHeader, SideSheet } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
@@ -33,7 +32,7 @@ import { forgdCtaPrimaryButtonStyles, forgdCtaSecondaryButtonStyles } from './st
 
 const RadarChart = dynamic(() => import('~/components/ECharts/RadarChart'), {
 	ssr: false,
-	loading: () => <ChartPanelBodyLoading className="min-h-[280px]" />
+	loading: () => <SurfaceBodyLoadingStatus label="Loading chart" className="min-h-[280px]" />
 })
 
 type Dict = Record<string, unknown>

@@ -3,7 +3,8 @@ import { lazy, Suspense } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { displayTableFeatures } from '~/components/Table/features/display'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatCompactNumber } from '~/utils/numberFormat'
@@ -151,7 +152,7 @@ export default function Blockchain() {
 				<StatTile label="Total Txs (All Time)" value={data.activityKpis.totalTxsAllTime.formatted} />
 			</div>
 
-			<ChartPanel>
+			<Panel>
 				<Suspense fallback={<ChartPanelExportShellLoading />}>
 					<MultiSeriesChart
 						title="Daily Transactions"
@@ -164,9 +165,9 @@ export default function Blockchain() {
 						valueSymbol=""
 					/>
 				</Suspense>
-			</ChartPanel>
+			</Panel>
 
-			<ChartPanel>
+			<Panel>
 				<Suspense fallback={<ChartPanelExportShellLoading />}>
 					<MultiSeriesChart
 						title="Active & New Addresses"
@@ -179,7 +180,7 @@ export default function Blockchain() {
 						valueSymbol=""
 					/>
 				</Suspense>
-			</ChartPanel>
+			</Panel>
 
 			{/* Gas & Fee Economics */}
 			<h2 className="heading-xs">Gas & Fee Economics</h2>
@@ -190,7 +191,7 @@ export default function Blockchain() {
 				<StatTile label="Avg Fee per Tx" value={data.gasKpis.avgFeePerTx.formatted} />
 			</div>
 
-			<ChartPanel>
+			<Panel>
 				<Suspense fallback={<ChartPanelExportShellLoading />}>
 					<MultiSeriesChart
 						title="Daily Gas Fees (USD)"
@@ -203,9 +204,9 @@ export default function Blockchain() {
 						valueSymbol="$"
 					/>
 				</Suspense>
-			</ChartPanel>
+			</Panel>
 
-			<ChartPanel>
+			<Panel>
 				<Suspense fallback={<ChartPanelExportShellLoading />}>
 					<MultiSeriesChart
 						title="Block Utilization (%)"
@@ -218,11 +219,11 @@ export default function Blockchain() {
 						valueSymbol="%"
 					/>
 				</Suspense>
-			</ChartPanel>
+			</Panel>
 
 			{/* Contract Deployments */}
 			<h2 className="heading-xs">Contract Deployments</h2>
-			<ChartPanel>
+			<Panel>
 				<Suspense fallback={<ChartPanelExportShellLoading />}>
 					<MultiSeriesChart
 						title="New Contracts Deployed (Monthly)"
@@ -235,11 +236,11 @@ export default function Blockchain() {
 						valueSymbol=""
 					/>
 				</Suspense>
-			</ChartPanel>
+			</Panel>
 
 			{/* Token Transfers */}
 			<h2 className="heading-xs">Token Transfers</h2>
-			<ChartPanel>
+			<Panel>
 				<Suspense fallback={<ChartPanelExportShellLoading />}>
 					<MultiSeriesChart
 						title="Daily Token Transfer Volume (USD)"
@@ -252,7 +253,7 @@ export default function Blockchain() {
 						valueSymbol="$"
 					/>
 				</Suspense>
-			</ChartPanel>
+			</Panel>
 
 			{data.topTokens.length > 0 && (
 				<div className="flex flex-col gap-4">

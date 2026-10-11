@@ -4,17 +4,11 @@ import * as React from 'react'
 import { buildAlignedCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import { chartColor } from '~/constants/colors'
 import { useInViewOnce } from '~/hooks/useInViewOnce'
-import {
-	CHART_FILL,
-	ChartPanel,
-	ChartPanelBody,
-	ChartPanelBodyEmpty,
-	ChartPanelBodyError,
-	ChartPanelBodyLoading,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { ScopeNote } from '~/ui/ScopeNote'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { queryReadFailed } from '~/utils/query'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { collectionHallmarks, hallmarkMetricsForKeys } from './chartHallmarks'
@@ -160,9 +154,11 @@ export function VenueChart({
 					showGlobalDataNotice={showGlobalDataNotice}
 				>
 					{queryReadFailed(query) ? (
-						<ChartPanelBodyError retry={query}>Couldn&apos;t load venue history.</ChartPanelBodyError>
+						<SurfaceBodyStatus variant="error" retry={query}>
+							Couldn&apos;t load venue history.
+						</SurfaceBodyStatus>
 					) : (
-						<ChartPanelBodyLoading />
+						<SurfaceBodyLoadingStatus label="Loading chart" />
 					)}
 				</VenueChartFrame>
 			)}
@@ -242,7 +238,7 @@ function VenueChartView({
 				updatedAt={chart.lastUpdated}
 				showGlobalDataNotice={showGlobalDataNotice}
 			>
-				<ChartPanelBodyEmpty>No time-series data is available for this venue.</ChartPanelBodyEmpty>
+				<SurfaceBodyStatus variant="empty">No time-series data is available for this venue.</SurfaceBodyStatus>
 			</VenueChartFrame>
 		)
 	}
@@ -256,7 +252,7 @@ function VenueChartView({
 			showGlobalDataNotice={showGlobalDataNotice}
 		>
 			{/* key forces a fresh chart per metric so series and value units are replaced, not merged. */}
-			<React.Suspense fallback={<ChartPanelBodyLoading />}>
+			<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<ChartPanelBody role="img" aria-label={`${active.label} history for this venue.`}>
 					<MultiSeriesChart
 						key={active.id}
@@ -291,7 +287,7 @@ function VenueChartFrame({
 }) {
 	const router = useRouter()
 	return (
-		<ChartPanel>
+		<Panel>
 			<ChartPanelToolbar>
 				{tabs.length > 1 ? (
 					<SegmentedControl<VenueHistoryMetric>
@@ -319,6 +315,6 @@ function VenueChartFrame({
 					{updatedAt ? `Last updated ${UTC_TIMESTAMP.format(new Date(updatedAt))}` : 'Last updated'}
 				</p>
 			</div>
-		</ChartPanel>
+		</Panel>
 	)
 }

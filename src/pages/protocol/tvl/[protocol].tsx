@@ -29,10 +29,11 @@ import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
 import { isTvlSettingsKey, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { CHART_FILL, ChartPanel, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
+import { Panel } from '~/ui/Panel'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
-import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { PanelLoadingStatus, PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -168,7 +169,7 @@ function USDInflowsChartCard({
 	const deferredDataset = React.useDeferredValue(dataset)
 
 	return (
-		<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+		<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 			<ChartPanelToolbar>
 				<h2 className="mr-auto heading-xs">{title}</h2>
 				<ChartExportButtons
@@ -179,7 +180,7 @@ function USDInflowsChartCard({
 					csvSource={{ type: 'dataset', prepare: () => dataset }}
 				/>
 			</ChartPanelToolbar>
-			<React.Suspense fallback={<ChartPanelBodyLoading />}>
+			<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<MultiSeriesChart
 					dataset={deferredDataset}
 					charts={USD_INFLOWS_CHARTS}
@@ -189,7 +190,7 @@ function USDInflowsChartCard({
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
-		</ChartPanel>
+		</Panel>
 	)
 }
 
@@ -232,7 +233,7 @@ function InflowsByTokenChartCard({
 	const deferredChart = React.useDeferredValue(chartSnapshot)
 
 	return (
-		<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+		<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 			<ChartPanelToolbar>
 				<h2 className="mr-auto heading-xs">{title}</h2>
 				<SegmentedControl<InflowsView>
@@ -266,7 +267,7 @@ function InflowsByTokenChartCard({
 			{view === 'table' ? (
 				<BreakdownSnapshotTable rows={tableRows} kind="Inflow" />
 			) : (
-				<React.Suspense fallback={<ChartPanelBodyLoading />}>
+				<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 					<MultiSeriesChart
 						dataset={deferredChart.dataset}
 						charts={deferredChart.charts}
@@ -282,7 +283,7 @@ function InflowsByTokenChartCard({
 					/>
 				</React.Suspense>
 			)}
-		</ChartPanel>
+		</Panel>
 	)
 }
 

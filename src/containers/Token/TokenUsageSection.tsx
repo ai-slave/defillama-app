@@ -22,7 +22,7 @@ import {
 	prepareTokenUsageTreemapCsv
 } from '~/containers/TokenUsage/treemap'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { CHART_FILL, ChartPanelBody, ChartPanelBodyLoading } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelBody } from '~/ui/ChartPanel'
 import { Checkbox } from '~/ui/Checkbox'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -42,7 +42,7 @@ const columnHelper = createColumnHelper<typeof paginatedTableFeatures, TokenUsag
 const TOKEN_USAGE_NAME_MAX_WIDTH = 'max-sm:max-w-[clamp(160px,40vw,260px)]'
 
 const TreemapChart = dynamic(() => import('~/components/ECharts/TreemapChart'), {
-	loading: () => <ChartPanelBodyLoading className="min-h-[480px]" />
+	loading: () => <SurfaceBodyLoadingStatus label="Loading chart" className="min-h-[480px]" />
 }) as React.FC<TreemapChartProps>
 
 const columns = columnHelper.columns([

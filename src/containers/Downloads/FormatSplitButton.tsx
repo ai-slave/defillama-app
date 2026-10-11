@@ -1,8 +1,8 @@
 import * as Ariakit from '@ariakit/react'
 import { Button, ButtonGroup } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { MenuSurface } from '~/ui/MenuSurface'
 import { popoverMenuItemStyles } from '~/ui/Popover'
+import { MenuSurface } from '~/ui/PopoverSurface'
 import type { DownloadFormat } from '~/utils/download'
 import { ConfirmableContent } from './ActionFeedback'
 

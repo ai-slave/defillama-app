@@ -18,15 +18,9 @@ import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { Table } from '~/components/Table/Table'
 import { TablePager } from '~/components/Table/TablePager'
 import { Card } from '~/ui/Card'
-import {
-	CHART_FILL,
-	ChartPanel,
-	ChartPanelBody,
-	ChartPanelBodyLoading,
-	ChartPanelTitle,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
-import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { CHART_FILL, ChartPanelBody, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
+import { PanelLoadingStatus, PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { mergeFailedReads, queryReadFailed } from '~/utils/query'
@@ -220,9 +214,9 @@ function FundingChart({ data }: { data: Array<{ name: string; value: number }> }
 	const height = `${Math.max(300, data.length * 28)}px`
 
 	return (
-		<ChartPanel>
+		<Panel>
 			<ChartPanelToolbar leading={<ChartPanelTitle>Funding Rates (Annualized) — Top 20 by OI</ChartPanelTitle>} />
-			<Suspense fallback={<ChartPanelBodyLoading style={{ minHeight: height }} />}>
+			<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" style={{ minHeight: height }} />}>
 				<HBarChart
 					categories={sorted.map((d) => d.name)}
 					values={sorted.map((d) => d.value)}
@@ -231,7 +225,7 @@ function FundingChart({ data }: { data: Array<{ name: string; value: number }> }
 					height={height}
 				/>
 			</Suspense>
-		</ChartPanel>
+		</Panel>
 	)
 }
 
@@ -457,13 +451,13 @@ function OIDistributionChart({ data }: { data: Array<{ name: string; value: numb
 	for (let index = 0; index < data.length; index++) stackColors[data[index].name] = OI_COLORS[index % OI_COLORS.length]
 
 	return (
-		<ChartPanel>
+		<Panel>
 			<ChartPanelToolbar leading={<ChartPanelTitle>Open Interest Distribution</ChartPanelTitle>} />
 			{/* A side tile beside the scatter, so the donut keeps its own height rather than the 360 body floor. */}
-			<Suspense fallback={<ChartPanelBodyLoading className="min-h-[400px]" />}>
+			<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="min-h-[400px]" />}>
 				<PieChart chartData={data} stackColors={stackColors} radius={['45%', '70%']} height="400px" />
 			</Suspense>
-		</ChartPanel>
+		</Panel>
 	)
 }
 
@@ -484,12 +478,12 @@ function VolumeOIScatter({ data }: { data: Array<PerpMarket> }) {
 	if (points.length === 0) return null
 
 	return (
-		<ChartPanel>
+		<Panel>
 			<ChartPanelToolbar
 				leading={<ChartPanelTitle>Volume vs Open Interest (bubble size = funding magnitude)</ChartPanelTitle>}
 			/>
 			<ChartPanelBody>
-				<Suspense fallback={<ChartPanelBodyLoading />}>
+				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 					<ScatterChart
 						chartData={points}
 						xAxisLabel="24h Volume ($)"
@@ -503,7 +497,7 @@ function VolumeOIScatter({ data }: { data: Array<PerpMarket> }) {
 					/>
 				</Suspense>
 			</ChartPanelBody>
-		</ChartPanel>
+		</Panel>
 	)
 }
 

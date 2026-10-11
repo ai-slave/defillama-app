@@ -3,13 +3,18 @@ import { type ReactNode, useCallback } from 'react'
 import { Button } from './Button'
 import { catchLostFocus } from './focus'
 import { Icon } from './Icon'
-import { surfaceMotionStyles } from './Popover'
+import {
+	popoverDestructiveMenuItemStyles,
+	popoverMenuItemStyles,
+	popoverTreeRowStyles,
+	surfaceMotionStyles
+} from './Popover'
 import { Tooltip } from './Tooltip'
 import { tw } from './tw'
 
 /* ----------------------------------------------------------------------------
    Anchored popover surfaces: PopoverSurface, ComboboxSurface, and
-   MenuSurface (./MenuSurface.tsx). New surfaces use them, never a raw
+   MenuSurface. New surfaces use them, never a raw
    `Ariakit.Menu`, `Ariakit.Popover` or `Ariakit.ComboboxPopover`; the
    `raw-popover-surface` rule in check-design-tokens.mjs counts direct
    renders outside src/ui. A raw surface stays only where no variant can
@@ -80,6 +85,23 @@ import { tw } from './tw'
    ./focus.ts): a control removed or disabled inside it hands focus to the
    surface's first control, never to the page. The net is the floor; a row
    that leaves still hands focus to its neighbour (focusNeighbourOnLeave).
+
+   MenuSurface is `Ariakit.Menu` with the surface contract wired in. Menus
+   anchor with `gutter={8}` (the default); `nested` flyouts pass `gutter={4}`
+   and `portal` as the parent requires.
+
+   A disclosure whose rows are actions (a chart's .png export, a table's
+   Export menu) is a menu: MenuSurface with MenuItem rows, so arrow keys move
+   between them. A preference toggle inside one is an
+   `Ariakit.MenuItemCheckbox`.
+
+   Rows are `MenuItem`. `row` picks the recipe: `menu` (default; px-3 py-2
+   body-sm full-bleed, hover-row wash, 44px tall on phones) or `tree` (the
+   indented hierarchy row used by the protocol switcher). Radio, checkbox
+   and select rows use the Ariakit item with a recipe from ./Popover.ts.
+   `className` is layout only, e.g. `border-b border-subtle` to group items.
+   A destructive row passes `destructive`, its own red recipe, because an
+   appended color class loses to the recipe's `text-primary`.
 
    Every surface unmounts its content on hide, like the dialogs and tooltips
    in this repo and the shared Select. Pass `unmountOnHide={false}` only with
@@ -229,15 +251,15 @@ type SurfaceChrome =
 
 export type SurfaceOwnProps = SurfaceLayout & SurfaceChrome
 
-/** The three wired pieces, for the surface components in this folder. */
-export function surfaceProps(variant: PopoverSurfaceVariant, { className }: SurfaceLayout) {
+/** The three wired pieces, for the surface components in this file. */
+function surfaceProps(variant: PopoverSurfaceVariant, { className }: SurfaceLayout) {
 	return {
 		className: join(VARIANT_SURFACE_STYLES[variant], className),
 		wrapperProps: { className: VARIANT_WRAPPER_STYLES[variant] }
 	}
 }
 
-export function surfaceTitleRow(heading: string | undefined) {
+function surfaceTitleRow(heading: string | undefined) {
 	if (heading === undefined) return null
 	return (
 		<div className={drawerTitleRowStyles}>
@@ -333,4 +355,48 @@ export function ComboboxSurface({
 			{children}
 		</Ariakit.ComboboxPopover>
 	)
+}
+
+type MenuSurfaceProps = SurfaceOwnProps & Omit<Ariakit.MenuProps, 'className' | 'wrapperProps' | 'title'>
+
+export function MenuSurface({
+	variant,
+	className,
+	heading,
+	dismiss: _dismiss,
+	children,
+	gutter = 8,
+	portal = true,
+	unmountOnHide = true,
+	...props
+}: MenuSurfaceProps) {
+	return (
+		<Ariakit.Menu
+			{...props}
+			gutter={gutter}
+			portal={portal}
+			unmountOnHide={unmountOnHide}
+			{...surfaceProps(variant, { className })}
+		>
+			{surfaceTitleRow(heading)}
+			{children}
+		</Ariakit.Menu>
+	)
+}
+
+type MenuItemRow = 'menu' | 'tree'
+
+const ROW_STYLES: Record<MenuItemRow, string> = {
+	menu: popoverMenuItemStyles,
+	tree: popoverTreeRowStyles
+}
+
+type MenuItemProps = Ariakit.MenuItemProps & {
+	row?: MenuItemRow
+	/** Deletes or removes something: red text. */ destructive?: boolean
+}
+
+export function MenuItem({ row = 'menu', destructive = false, className, ...props }: MenuItemProps) {
+	const recipe = destructive ? popoverDestructiveMenuItemStyles : ROW_STYLES[row]
+	return <Ariakit.MenuItem {...props} className={className ? `${recipe} ${className}`.trim() : recipe} />
 }

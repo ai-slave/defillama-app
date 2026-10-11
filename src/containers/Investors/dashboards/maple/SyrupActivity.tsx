@@ -5,7 +5,8 @@ import type { paginatedTableFeatures } from '~/components/Table/features/paginat
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { Table } from '~/components/Table/Table'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatDate, formatDateTime } from '~/utils/dateFormat'
@@ -371,7 +372,7 @@ export default function SyrupActivity() {
 			{isLoading ? (
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : monthlyChart.source.length > 0 ? (
-				<ChartPanel>
+				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Monthly stSyrup Deposits vs Withdrawals"
@@ -386,13 +387,13 @@ export default function SyrupActivity() {
 							exportButtons={MAPLE_CSV_ONLY_EXPORT}
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			) : null}
 
 			{isLoading ? (
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : migrationChart.source.length > 0 ? (
-				<ChartPanel>
+				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Monthly Syrup Token Migrations"
@@ -406,7 +407,7 @@ export default function SyrupActivity() {
 							exportButtons={MAPLE_CSV_ONLY_EXPORT}
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			) : null}
 
 			{isLoading ? <CardSkeleton title="Recent stSyrup Transactions" /> : <TxTable data={txRows} />}
@@ -432,7 +433,7 @@ export default function SyrupActivity() {
 				{dripLoading ? (
 					<PanelLoadingStatus className="min-h-[400px]" />
 				) : dripMonthlyChart.source.length > 0 ? (
-					<ChartPanel>
+					<Panel>
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								title="Monthly Drip Claims"
@@ -446,7 +447,7 @@ export default function SyrupActivity() {
 								exportButtons={MAPLE_CSV_ONLY_EXPORT}
 							/>
 						</Suspense>
-					</ChartPanel>
+					</Panel>
 				) : null}
 			</div>
 

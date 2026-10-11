@@ -21,12 +21,11 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Card } from '~/ui/Card'
 import { Change, changeTone, formatChange } from '~/ui/Change'
-import { ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { Field } from '~/ui/Field'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
-import { EmptyState, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { EmptyState, PanelLoadingStatus, PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
@@ -185,7 +184,7 @@ function TokenPnlContent({
 						csvSource={{ type: 'dataset', prepare: () => chartData.dataset }}
 					/>
 				</PanelHeader>
-				<Suspense fallback={<ChartPanelBodyLoading />}>
+				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 					<MultiSeriesChart
 						dataset={chartData.dataset}
 						charts={chartData.charts}

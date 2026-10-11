@@ -7,16 +7,10 @@ import {
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { displayTableFeatures } from '~/components/Table/features/display'
 import { Card } from '~/ui/Card'
-import {
-	CHART_FILL,
-	ChartPanel,
-	ChartPanelBodyLoading,
-	ChartPanelExportShellLoading,
-	ChartPanelTitle,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelExportShellLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { PanelLoadingStatus, PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { queryReadFailed } from '~/utils/query'
@@ -254,7 +248,7 @@ export default function Revenue() {
 
 			<div className="flex flex-col gap-4">
 				<h2 className="heading-xs">Total Fees Generated in NEAR</h2>
-				<ChartPanel>
+				<Panel>
 					<ChartPanelToolbar
 						leading={
 							<ChartPanelTitle
@@ -264,7 +258,7 @@ export default function Revenue() {
 							</ChartPanelTitle>
 						}
 					/>
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={chartView.feesModel.dataset}
 							charts={chartView.feesModel.charts}
@@ -276,12 +270,12 @@ export default function Revenue() {
 							exportButtons="hidden"
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			</div>
 
 			<div className="flex flex-col gap-4">
 				<h2 className="heading-xs">Revenue Over Time</h2>
-				<ChartPanel>
+				<Panel>
 					<ChartPanelToolbar
 						leading={
 							<ChartPanelTitle
@@ -291,7 +285,7 @@ export default function Revenue() {
 							</ChartPanelTitle>
 						}
 					/>
-					<Suspense fallback={<ChartPanelBodyLoading />}>
+					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={chartView.revenueModel.dataset}
 							charts={chartView.revenueModel.charts}
@@ -303,7 +297,7 @@ export default function Revenue() {
 							exportButtons="hidden"
 						/>
 					</Suspense>
-				</ChartPanel>
+				</Panel>
 			</div>
 
 			<div className="flex flex-col gap-4">
@@ -321,7 +315,7 @@ export default function Revenue() {
 						]}
 					/>
 				</div>
-				<ChartPanel>
+				<Panel>
 					{/* Both views draw the title in their own header; only the percentage view adds the export buttons. */}
 					{emissionsView === 'percentage' ? (
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
@@ -352,7 +346,7 @@ export default function Revenue() {
 							/>
 						</Suspense>
 					)}
-				</ChartPanel>
+				</Panel>
 			</div>
 
 			{data.walletBreakdown && data.walletBreakdown.length > 0 && (
