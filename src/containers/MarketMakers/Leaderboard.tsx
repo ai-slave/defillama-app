@@ -1,4 +1,6 @@
+import { useRouter } from 'next/router'
 import { useMemo, useState } from 'react'
+import { pushShallowQuery } from '~/utils/routerQuery'
 import { useLeaderboardRows } from './client'
 import { type ColumnConfig, DISPLAY_MODES, type DisplayMode, THRESHOLDS, type Threshold } from './constants'
 import { DocsDrawer } from './DocsDrawer'
@@ -31,10 +33,15 @@ export function Leaderboard({
 	fetchPath,
 	hasThreshold
 }: ILeaderboardProps) {
-	const { timeframe, setTimeframe, applyToAll, setApplyToAll, range } = useLeaderboardTimeframe(fetchPath)
+	const router = useRouter()
+	const { timeframe, setTimeframe, range } = useLeaderboardTimeframe()
 	const badge = timeframeBadge(timeframe)
-	const [mode, setMode] = useState<DisplayMode>(DISPLAY_MODES[0])
-	const [threshold, setThreshold] = useState<Threshold>(THRESHOLDS[0])
+	const mode = DISPLAY_MODES.find((value) => value === router.query.showAs) ?? DISPLAY_MODES[0]
+	const setMode = (value: DisplayMode) =>
+		void pushShallowQuery(router, { showAs: value === DISPLAY_MODES[0] ? undefined : value })
+	const threshold = THRESHOLDS.find((value) => value === router.query.threshold) ?? THRESHOLDS[0]
+	const setThreshold = (value: Threshold) =>
+		void pushShallowQuery(router, { threshold: value === THRESHOLDS[0] ? undefined : value })
 	const shape = useMemo<(raw: unknown) => Array<LeaderboardRow>>(
 		() =>
 			hasThreshold ? (raw) => selectDepthBucket(raw, threshold) : (raw) => toBoardRows(Array.isArray(raw) ? raw : []),
@@ -80,8 +87,6 @@ export function Leaderboard({
 				onClose={() => setRefineOpen(false)}
 				timeframe={timeframe}
 				setTimeframe={setTimeframe}
-				applyToAll={applyToAll}
-				setApplyToAll={setApplyToAll}
 			/>
 			<DocsDrawer open={docsOpen} onClose={() => setDocsOpen(false)} />
 			<MMDetailDrawer

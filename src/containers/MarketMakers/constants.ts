@@ -4,16 +4,23 @@ import type { Metric } from './types'
 export const DISPLAY_MODES = ['value', 'percentile', 'rank'] as const
 export type DisplayMode = (typeof DISPLAY_MODES)[number]
 
-export const TIMEFRAMES = ['All Time', 'Prev. 7d', 'Prev. 30d', 'Prev. 60d'] as const
-export type Timeframe = (typeof TIMEFRAMES)[number]
-export const DEFAULT_TIMEFRAME: Timeframe = 'Prev. 30d'
+// Each value is the `period` query value the market makers pages share.
+export const TIMEFRAME_OPTIONS = [
+	{ value: 'all', label: 'All Time' },
+	{ value: '7d', label: 'Prev. 7d' },
+	{ value: '30d', label: 'Prev. 30d' },
+	{ value: '60d', label: 'Prev. 60d' }
+] as const
+export type Timeframe = (typeof TIMEFRAME_OPTIONS)[number]['value']
+export const DEFAULT_TIMEFRAME: Timeframe = '30d'
 
-export const THRESHOLDS = ['2%', '1%', '0.5%'] as const
+// Percent of the mid price; each value is the `threshold` query value and reads as `${value}%`.
+export const THRESHOLDS = ['2', '1', '0.5'] as const
 export type Threshold = (typeof THRESHOLDS)[number]
 export const THRESHOLD_TO_BUCKET: Record<Threshold, 'depth200' | 'depth100' | 'depth50'> = {
-	'2%': 'depth200',
-	'1%': 'depth100',
-	'0.5%': 'depth50'
+	'2': 'depth200',
+	'1': 'depth100',
+	'0.5': 'depth50'
 }
 
 export type ColumnConfig = {

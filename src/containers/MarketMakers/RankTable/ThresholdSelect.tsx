@@ -7,7 +7,7 @@ export function ThresholdSelect({ value, setValue }: { value: Threshold; setValu
 	return (
 		<Ariakit.ComboboxProvider selectedValue={value} setSelectedValue={(v) => setValue(v as Threshold)}>
 			<ComboboxSelectTrigger className={selectTriggerStyles('filter', 'md')}>
-				<span>{value}</span>
+				<span>{value}%</span>
 				<span className="hidden min-[713px]:inline">Threshold</span>
 				<Ariakit.ComboboxSelectArrow />
 			</ComboboxSelectTrigger>
@@ -20,7 +20,7 @@ export function ThresholdSelect({ value, setValue }: { value: Threshold; setValu
 							check="tick"
 							checked={threshold === value}
 						>
-							{threshold} Threshold
+							{threshold}% Threshold
 						</PopoverRow>
 					))}
 				</PopoverList>

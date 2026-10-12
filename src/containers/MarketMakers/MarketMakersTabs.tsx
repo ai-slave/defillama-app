@@ -1,9 +1,11 @@
+import { useRouter } from 'next/router'
 import { useState } from 'react'
 import { BasicLink } from '~/components/Link'
 import { Card } from '~/ui/Card'
 import { Icon, type IIcon } from '~/ui/Icon'
 import { RailItem } from '~/ui/RailItem'
 import { TabLink, TabNav } from '~/ui/Tabs'
+import { DEFAULT_TIMEFRAME, readTimeframe } from './timeframe'
 
 export const MARKET_MAKER_TABS: Array<{ label: string; to: string; icon: IIcon['name'] }> = [
 	{ label: 'Performance Index', to: '/market-makers', icon: 'layers' },
@@ -15,8 +17,12 @@ export const MARKET_MAKER_TABS: Array<{ label: string; to: string; icon: IIcon['
 ]
 
 export function MarketMakersTabs({ active }: { active: string }) {
+	const router = useRouter()
 	const [open, setOpen] = useState(false)
 	const activeTab = MARKET_MAKER_TABS.find((tab) => tab.label === active)
+	// Every leaderboard reads the same `period`, so moving between tabs keeps the reader's timeframe.
+	const timeframe = readTimeframe(router.query)
+	const periodQuery = timeframe === DEFAULT_TIMEFRAME ? '' : `?period=${timeframe}`
 
 	return (
 		<>
@@ -47,7 +53,7 @@ export function MarketMakersTabs({ active }: { active: string }) {
 								<RailItem
 									as={BasicLink}
 									key={tab.to}
-									href={tab.to}
+									href={tab.to + periodQuery}
 									active={tab.label === active}
 									aria-current={tab.label === active ? 'page' : undefined}
 								>
@@ -64,7 +70,7 @@ export function MarketMakersTabs({ active }: { active: string }) {
 					<TabLink
 						as={BasicLink}
 						key={tab.to}
-						href={tab.to}
+						href={tab.to + periodQuery}
 						aria-current={tab.label === active ? 'page' : undefined}
 						className="flex items-center gap-1.5"
 					>

@@ -18,7 +18,7 @@ import { Superlatives } from './Superlatives'
 type SelectedMM = { id: string; name: string }
 
 export function PerformanceIndex(props: PerformanceIndexProps) {
-	const { timeframe, setTimeframe, applyToAll, setApplyToAll, range } = useLeaderboardTimeframe('performance')
+	const { timeframe, setTimeframe, range } = useLeaderboardTimeframe()
 	const badge = timeframeBadge(timeframe)
 	const period = timeframePeriod(timeframe)
 	const { data } = usePerformanceIndex(range, timeframe === DEFAULT_TIMEFRAME ? props : undefined)
@@ -62,8 +62,6 @@ export function PerformanceIndex(props: PerformanceIndexProps) {
 				onClose={() => setRefineOpen(false)}
 				timeframe={timeframe}
 				setTimeframe={setTimeframe}
-				applyToAll={applyToAll}
-				setApplyToAll={setApplyToAll}
 			/>
 			<MMDetailDrawer
 				open={selectedMM != null}

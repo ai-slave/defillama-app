@@ -28,10 +28,10 @@ describe('selectDepthBucket', () => {
 	const payload = { depth50: [row('half')], depth100: [row('one')], depth200: [row('two')] }
 
 	test.each([
-		['0.5%', 'half'],
-		['1%', 'one'],
-		['2%', 'two']
-	] as const)('maps the %s threshold to its own depth bucket', (threshold, id) => {
+		['0.5', 'half'],
+		['1', 'one'],
+		['2', 'two']
+	] as const)('maps the %s% threshold to its own depth bucket', (threshold, id) => {
 		expect(selectDepthBucket(payload, threshold).map((r) => r.marketMakerId)).toEqual([id])
 	})
 })

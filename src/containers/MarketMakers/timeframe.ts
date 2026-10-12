@@ -1,13 +1,14 @@
-import { useCallback } from 'react'
-import { getStorageItem, setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
+import type { ParsedUrlQuery } from 'node:querystring'
+import { useRouter } from 'next/router'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
-import { DEFAULT_TIMEFRAME, TIMEFRAMES, type Timeframe } from './constants'
+import { pushShallowQuery } from '~/utils/routerQuery'
+import { DEFAULT_TIMEFRAME, TIMEFRAME_OPTIONS, type Timeframe } from './constants'
 
 const DAYS: Record<Timeframe, number | null> = {
-	'All Time': null,
-	'Prev. 7d': 7,
-	'Prev. 30d': 30,
-	'Prev. 60d': 60
+	all: null,
+	'7d': 7,
+	'30d': 30,
+	'60d': 60
 }
 
 function isoDate(date: Date): string {
@@ -25,65 +26,32 @@ export function timeframeToRange(tf: Timeframe, today: Date): TimeRange {
 }
 
 const TIMEFRAME_BADGES: Record<Timeframe, string> = {
-	'All Time': 'All Time',
-	'Prev. 7d': 'Last 7-day',
-	'Prev. 30d': 'Last 30-day',
-	'Prev. 60d': 'Last 60-day'
+	all: 'All Time',
+	'7d': 'Last 7-day',
+	'30d': 'Last 30-day',
+	'60d': 'Last 60-day'
 }
 
 export function timeframeBadge(tf: Timeframe): string {
 	return TIMEFRAME_BADGES[tf]
 }
 
-const TIMEFRAME_PERIODS: Record<Timeframe, string> = {
-	'All Time': 'All Time',
-	'Prev. 7d': '7d',
-	'Prev. 30d': '30d',
-	'Prev. 60d': '60d'
-}
-
 export function timeframePeriod(tf: Timeframe): string {
-	return TIMEFRAME_PERIODS[tf]
+	return tf === 'all' ? 'All Time' : tf
 }
 
-const APPLY_TO_ALL_KEY = 'mm-timeframe-apply-all'
-const GLOBAL_TIMEFRAME_KEY = 'mm-timeframe-global'
-const boardKey = (boardId: string) => `mm-timeframe-${boardId}`
-
-const VALID_TIMEFRAMES = new Set<string>(TIMEFRAMES)
-
-function coerce(value: string | null | undefined): Timeframe {
-	return value != null && VALID_TIMEFRAMES.has(value) ? (value as Timeframe) : DEFAULT_TIMEFRAME
+export function readTimeframe(query: ParsedUrlQuery): Timeframe {
+	return TIMEFRAME_OPTIONS.find((option) => option.value === query.period)?.value ?? DEFAULT_TIMEFRAME
 }
 
-export function useLeaderboardTimeframe(boardId: string) {
-	const applyToAll = useStorageItem(APPLY_TO_ALL_KEY, 'false') === 'true'
-	const key = applyToAll ? GLOBAL_TIMEFRAME_KEY : boardKey(boardId)
-	const timeframe = coerce(useStorageItem(key, DEFAULT_TIMEFRAME))
-
-	const setTimeframe = useCallback(
-		(value: Timeframe) => {
-			setStorageItem(key, value)
-		},
-		[key]
-	)
-
-	const setApplyToAll = useCallback(
-		(value: boolean) => {
-			if (value) setStorageItem(GLOBAL_TIMEFRAME_KEY, coerce(getStorageItem(key)))
-			setStorageItem(APPLY_TO_ALL_KEY, value ? 'true' : 'false')
-		},
-		[key]
-	)
-
+/** One `period` in the URL drives every leaderboard; the section tabs carry it from page to page. */
+export function useLeaderboardTimeframe() {
+	const router = useRouter()
+	const timeframe = readTimeframe(router.query)
+	const setTimeframe = (value: Timeframe) =>
+		void pushShallowQuery(router, { period: value === DEFAULT_TIMEFRAME ? undefined : value })
 	const nowSec = useNowSeconds()
-	return {
-		timeframe,
-		setTimeframe,
-		applyToAll,
-		setApplyToAll,
-		range: timeframeToRange(timeframe, new Date(nowSec * 1000))
-	}
+	return { timeframe, setTimeframe, range: timeframeToRange(timeframe, new Date(nowSec * 1000)) }
 }
 
 export { DEFAULT_TIMEFRAME }

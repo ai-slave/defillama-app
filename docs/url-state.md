@@ -26,6 +26,7 @@ A column-header sort stays local and a "Rank by" control goes in the URL: the he
 - A pick from a fixed list finds the query value among the control's own options, so a missing or unknown value falls back to the default with no cast: `OPTIONS.find((option) => option.value === router.query.period)?.value ?? '1d'`. A toggle compares to its one value or uses `isTrueQueryParam`.
 - The handler writes `undefined` for the default, so the plain route stays the default view and the canonical link.
 - Reuse the key name a sibling page uses for the same choice, such as `mapSize` and `mapGroup` on the equities maps.
+- A choice that should follow the reader across a section's pages travels in the links between them, never in local storage, which would make a shared link open the sharer's saved choice. The market makers tabs carry `period` this way (`MarketMakers/MarketMakersTabs.tsx`).
 - A shallow push to the same route does not scroll, so a control halfway down the page stays in view.
 - A static page renders the default first and the linked value after hydration; see "First render" in `docs/effects.md`.
 - Test the reader through the real writer: click the control, then open the page with the query it pushed (`docs/testing.md`).
