@@ -41,7 +41,7 @@ const columns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[min(240px,40vw)]'
+			headerClassName: 'min-w-[min(240px,40vw)]'
 		}
 	}),
 	columnHelper.accessor((row) => row.totalHackedUsd ?? undefined, {
@@ -50,7 +50,6 @@ const columns = columnHelper.columns([
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
-			headerClassName: 'w-[130px]',
 			align: 'center'
 		}
 	}),
@@ -60,7 +59,6 @@ const columns = columnHelper.columns([
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
-			headerClassName: 'w-[150px]',
 			align: 'center'
 		}
 	}),
@@ -70,7 +68,6 @@ const columns = columnHelper.columns([
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
-			headerClassName: 'w-[140px]',
 			align: 'center',
 			headerHelperText: 'Total Hacked - Returned Funds'
 		}

@@ -111,32 +111,32 @@ const industryColumns = industryColumnHelper.columns([
 		),
 		enableHiding: false,
 		meta: {
-			headerClassName: 'w-56 sticky left-0 z-20 bg-surface',
+			headerClassName: 'min-w-56 sticky left-0 z-20 bg-surface',
 			cellClassName: 'sticky left-0 z-10 bg-surface',
 			align: 'start'
 		}
 	}),
 	industryColumnHelper.accessor('companyCount', {
 		header: 'Companies',
-		meta: { headerClassName: 'w-24', align: 'end' }
+		meta: { align: 'end' }
 	}),
 	industryColumnHelper.accessor((row) => row.marketCap ?? undefined, {
 		id: 'marketCap',
 		header: 'Market Cap',
 		cell: ({ getValue }) => formatMetric(getValue(), 'usd'),
-		meta: { headerClassName: 'w-28', align: 'end' }
+		meta: { align: 'end' }
 	}),
 	industryColumnHelper.accessor((row) => row.weight ?? undefined, {
 		id: 'weight',
 		header: 'Market Share',
 		cell: ({ getValue }) => formatMetric(getValue(), 'percent'),
-		meta: { headerClassName: 'w-24', align: 'end' }
+		meta: { align: 'end' }
 	}),
 	industryColumnHelper.accessor((row) => row.sectorWeight ?? undefined, {
 		id: 'sectorWeight',
 		header: 'Sector Share',
 		cell: ({ getValue }) => formatMetric(getValue(), 'percent'),
-		meta: { headerClassName: 'w-24', align: 'end' }
+		meta: { align: 'end' }
 	}),
 	...(
 		[
@@ -153,26 +153,26 @@ const industryColumns = industryColumnHelper.columns([
 				const value = getValue()
 				return value == null ? '—' : <Change value={value} />
 			},
-			meta: { headerClassName: 'w-18', align: 'end' }
+			meta: { headerClassName: 'min-w-18', align: 'end' }
 		})
 	),
 	industryColumnHelper.accessor((row) => row.dollarVolume24h ?? undefined, {
 		id: 'dollarVolume24h',
 		header: 'Volume 24h',
 		cell: ({ getValue }) => formatMetric(getValue(), 'usd'),
-		meta: { headerClassName: 'w-28', align: 'end' }
+		meta: { align: 'end' }
 	}),
 	industryColumnHelper.accessor((row) => row.trailingPE ?? undefined, {
 		id: 'trailingPE',
 		header: 'P/E',
 		cell: ({ getValue }) => formatMetric(getValue(), 'multiple'),
-		meta: { headerClassName: 'w-18', align: 'end' }
+		meta: { headerClassName: 'min-w-18', align: 'end' }
 	}),
 	industryColumnHelper.accessor((row) => row.dividendYield ?? undefined, {
 		id: 'dividendYield',
 		header: 'Div. Yield',
 		cell: ({ getValue }) => formatMetric(getValue(), 'percent'),
-		meta: { headerClassName: 'w-24', align: 'end' }
+		meta: { align: 'end' }
 	})
 ])
 

@@ -60,7 +60,7 @@ const getColumns = (blockExplorersData: BlockExplorersResponse, tokenChain: stri
 					</span>
 				)
 			},
-			meta: { headerClassName: 'w-[200px] min-w-[200px]' }
+			meta: { headerClassName: 'min-w-[200px]' }
 		}),
 		columnHelper.accessor(
 			(row) =>
@@ -106,7 +106,7 @@ const getColumns = (blockExplorersData: BlockExplorersResponse, tokenChain: stri
 						</Hovercard>
 					)
 				},
-				meta: { headerClassName: 'w-[200px] min-w-[200px]' }
+				meta: { headerClassName: 'min-w-[200px]' }
 			}
 		),
 		columnHelper.accessor((row) => row.received ?? undefined, {
@@ -114,28 +114,28 @@ const getColumns = (blockExplorersData: BlockExplorersResponse, tokenChain: stri
 			header: 'Received',
 			cell: ({ getValue }) =>
 				formatCompactNumber(getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
-			meta: { headerClassName: 'w-[140px] min-w-[140px]', align: 'end' }
+			meta: { headerClassName: 'min-w-[140px]', align: 'end' }
 		}),
 		columnHelper.accessor((row) => row.balance ?? undefined, {
 			id: 'balance',
 			header: 'Balance',
 			cell: ({ getValue }) =>
 				formatCompactNumber(getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
-			meta: { headerClassName: 'w-[140px] min-w-[140px]', align: 'end' }
+			meta: { headerClassName: 'min-w-[140px]', align: 'end' }
 		}),
 		columnHelper.accessor((row) => row.staked ?? undefined, {
 			id: 'staked',
 			header: 'Staked',
 			cell: ({ getValue }) =>
 				formatCompactNumber(getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
-			meta: { headerClassName: 'w-[140px] min-w-[140px]', align: 'end' }
+			meta: { headerClassName: 'min-w-[140px]', align: 'end' }
 		}),
 		columnHelper.accessor((row) => row.transferredOut ?? undefined, {
 			id: 'transferredOut',
 			header: 'Transferred Out',
 			cell: ({ getValue }) =>
 				formatCompactNumber(getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
-			meta: { headerClassName: 'w-[160px] min-w-[160px]', align: 'end' }
+			meta: { headerClassName: 'min-w-[160px]', align: 'end' }
 		})
 	])
 

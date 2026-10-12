@@ -80,7 +80,7 @@ export function CardsTable({ rows, reference }: { rows: Array<CardTierRow>; refe
 						<TableColumnSelect />
 						<TableCsvExport filename="crypto-cards" includeHiddenColumns />
 					</TableToolbar>
-					<VirtualSearchTableView rowSize={CARDS_ROW_HEIGHT} tableLayout="fixed" />
+					<VirtualSearchTableView rowSize={CARDS_ROW_HEIGHT} />
 				</Card>
 			</SearchTableProvider>
 		</div>

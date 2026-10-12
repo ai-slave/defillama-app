@@ -186,7 +186,7 @@ const columns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[min(220px,40vw)]'
+			headerClassName: 'min-w-[min(220px,40vw)]'
 		}
 	}),
 	columnHelper.accessor((row) => row.currentTvl ?? undefined, {
@@ -208,7 +208,7 @@ const columns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'min-w-[120px]',
 			align: 'end',
 			headerHelperText:
 				'This excludes IOU assets issued by the CEX that are already counted on another chain, such as Binance-pegged BTC in BSC, which is already counted in Bitcoin chain'
@@ -240,7 +240,7 @@ const columns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[145px]',
+			headerClassName: 'min-w-[145px]',
 			align: 'end',
 			headerHelperText: 'TVL of the CEX excluding all assets issued by itself, such as their own token'
 		}
@@ -250,7 +250,6 @@ const columns = columnHelper.columns([
 		header: '24h Inflows',
 		cell: (info) => <Change value={info.getValue()} unit="usd" />,
 		meta: {
-			headerClassName: 'w-[120px]',
 			align: 'end'
 		}
 	}),
@@ -259,7 +258,7 @@ const columns = columnHelper.columns([
 		header: '7d Inflows',
 		cell: (info) => <Change value={info.getValue()} unit="usd" />,
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'min-w-[120px]',
 			align: 'end'
 		}
 	}),
@@ -268,7 +267,7 @@ const columns = columnHelper.columns([
 		header: '30d Inflows',
 		cell: (info) => <Change value={info.getValue()} unit="usd" />,
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'min-w-[120px]',
 			align: 'end'
 		}
 	}),
@@ -280,7 +279,6 @@ const columns = columnHelper.columns([
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[125px]',
 			align: 'end'
 		}
 	}),
@@ -292,7 +290,6 @@ const columns = columnHelper.columns([
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[160px]',
 			align: 'end'
 		}
 	}),
@@ -304,7 +301,6 @@ const columns = columnHelper.columns([
 			return value != null ? `${roundNumber(Number(value), 2)}x` : null
 		},
 		meta: {
-			headerClassName: 'w-[130px]',
 			align: 'end',
 			headerHelperText: 'Open Interest / Clean Assets'
 		}
@@ -314,14 +310,12 @@ const columns = columnHelper.columns([
 		header: 'Custom Range Inflows',
 		cell: ({ row }) => <CustomRangeCell state={row.original.customRangeState} value={row.original.customRange} />,
 		meta: {
-			headerClassName: 'w-[min(200px,40vw)]',
 			align: 'end'
 		}
 	}),
 	columnHelper.accessor('auditor', {
 		header: 'Auditor',
 		meta: {
-			headerClassName: 'w-[100px]',
 			align: 'end'
 		}
 	}),
@@ -333,7 +327,6 @@ const columns = columnHelper.columns([
 			return <>{value == null ? null : formatDate(value, { input: 'seconds' })}</>
 		},
 		meta: {
-			headerClassName: 'w-[130px]',
 			align: 'end'
 		}
 	})

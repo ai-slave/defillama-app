@@ -311,7 +311,7 @@ export function DirectoryTable({
 					<TableColumnSelect />
 					<TableCsvExport filename="exchanges-directory" includeHiddenColumns />
 				</TableToolbar>
-				<VirtualSearchTableView rowSize={56} tableLayout="fixed" />
+				<VirtualSearchTableView rowSize={56} />
 			</Card>
 		</SearchTableProvider>
 	)

@@ -63,7 +63,7 @@ const LST_BASE_COLUMNS = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[min(280px,40vw)]'
+			headerClassName: 'min-w-[min(280px,40vw)]'
 		}
 	}),
 	columnHelper.accessor((row) => row.stakedEth ?? undefined, {
@@ -75,7 +75,7 @@ const LST_BASE_COLUMNS = columnHelper.columns([
 				compactSuffix: 'lowercase'
 			}),
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'min-w-[120px]',
 			align: 'end',
 			headerHelperText: 'Current amount of ETH represented by the provider’s tracked liquid staking deposits'
 		}
@@ -90,7 +90,7 @@ const LST_BASE_COLUMNS = columnHelper.columns([
 				compactSuffix: 'lowercase'
 			}),
 		meta: {
-			headerClassName: 'w-[110px]',
+			headerClassName: 'min-w-[110px]',
 			align: 'end',
 			headerHelperText: 'Current USD value of the provider’s tracked staked ETH'
 		}
@@ -100,7 +100,6 @@ const LST_BASE_COLUMNS = columnHelper.columns([
 		header: '7d Change',
 		cell: (info) => <Change value={info.getValue()} />,
 		meta: {
-			headerClassName: 'w-[110px]',
 			align: 'end',
 			headerHelperText: 'Change in staked ETH from exactly 7 days before the latest observation'
 		}
@@ -110,7 +109,6 @@ const LST_BASE_COLUMNS = columnHelper.columns([
 		header: '30d Change',
 		cell: (info) => <Change value={info.getValue()} />,
 		meta: {
-			headerClassName: 'w-[120px]',
 			align: 'end',
 			headerHelperText: 'Change in staked ETH from exactly 30 days before the latest observation'
 		}
@@ -134,7 +132,6 @@ const LST_BASE_COLUMNS = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[125px]',
 			align: 'end',
 			headerHelperText: 'Share of current staked ETH across all providers shown in this table'
 		}
@@ -154,7 +151,7 @@ const LST_SYMBOL_COLUMN = columnHelper.accessor('lsdSymbol', {
 		)
 	},
 	meta: {
-		headerClassName: 'w-[100px]',
+		headerClassName: 'min-w-[100px]',
 		align: 'end',
 		headerHelperText: 'Symbol of the liquid staking token tracked for peg and fee data'
 	}
@@ -181,7 +178,6 @@ const LST_PEG_COLUMN = columnHelper.accessor((row) => row.ethPeg?.deviation ?? u
 		)
 	},
 	meta: {
-		headerClassName: 'w-[115px]',
 		align: 'end',
 		headerHelperText:
 			'Percentage deviation of the executable market rate from the contract-derived expected ETH redemption rate'
@@ -193,7 +189,6 @@ const LST_MCAP_COLUMN = columnHelper.accessor((row) => row.mcapOverTvl ?? undefi
 	header: 'Mcap/TVL',
 	cell: ({ getValue }) => formatRatio(getValue()),
 	meta: {
-		headerClassName: 'w-[110px]',
 		align: 'end',
 		headerHelperText: 'Protocol market capitalization divided by the USD value of its staked ETH'
 	}
@@ -207,7 +202,6 @@ const LST_APY_COLUMN = columnHelper.accessor((row) => row.apy ?? undefined, {
 			? `${formatPercent(info.getValue(), { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
 			: null,
 	meta: {
-		headerClassName: 'w-[130px]',
 		align: 'end',
 		headerHelperText: 'Current annualized staking yield of the selected Ethereum LST pool'
 	}
@@ -221,7 +215,7 @@ const LST_FEE_COLUMN = columnHelper.accessor((row) => row.fee ?? undefined, {
 			? `${formatPercent(info.getValue(), { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
 			: null,
 	meta: {
-		headerClassName: 'w-[90px]',
+		headerClassName: 'min-w-[90px]',
 		align: 'end',
 		headerHelperText: 'Percentage of staking rewards retained by the protocol'
 	}

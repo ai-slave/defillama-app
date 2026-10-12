@@ -95,7 +95,7 @@ export function RampTable({ catalog }: { catalog: RampCatalogModel }) {
 					<TableColumnSelect />
 					<TableCsvExport filename="fiat-ramp-costs" includeHiddenColumns />
 				</TableToolbar>
-				<SearchTableView tableLayout="auto" />
+				<SearchTableView columnSizing="content" />
 			</Card>
 		</SearchTableProvider>
 	)

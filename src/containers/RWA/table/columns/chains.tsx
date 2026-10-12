@@ -14,7 +14,7 @@ export const chainsColumn = columnHelper.accessor((row) => row.metrics.chains.ma
 		const chains = row.original.metrics.chains
 		return chains.length === 0 ? null : <IconsRow items={chains.map(toChainIconItem)} />
 	},
-	meta: { headerClassName: 'w-[160px]', align: 'end', headerHelperText: CHAINS_COLUMN_HELP }
+	meta: { headerClassName: 'min-w-[160px]', align: 'end', headerHelperText: CHAINS_COLUMN_HELP }
 })
 
 function toChainIconItem(share: RWAChainShare): IconsRowItem {

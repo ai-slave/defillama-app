@@ -58,7 +58,7 @@ const columns = columnHelper.columns([
 		header: 'Company',
 		enableSorting: false,
 		cell: ({ row }) => <CompanyCell row={row} />,
-		meta: { headerClassName: 'w-[220px] min-w-[220px]', align: 'start' }
+		meta: { headerClassName: 'min-w-[220px]', align: 'start' }
 	}),
 	columnHelper.accessor('id', {
 		id: 'companyId',
@@ -70,7 +70,7 @@ const columns = columnHelper.columns([
 		header: 'Sector',
 		enableSorting: false,
 		meta: {
-			headerClassName: 'w-[180px] min-w-[180px]',
+			headerClassName: 'min-w-[180px]',
 			cellClassName: 'truncate',
 			align: 'start'
 		}
@@ -80,7 +80,6 @@ const columns = columnHelper.columns([
 		header: preIpoDefinitions.company.estimatedValuation.label,
 		cell: ({ getValue }) => formatUsd(getValue(), PRE_IPO_USD_OPTIONS) ?? '-',
 		meta: {
-			headerClassName: 'w-[168px] min-w-[168px]',
 			align: 'end',
 			headerHelperText: preIpoDefinitions.company.estimatedValuation.description
 		}
@@ -93,7 +92,6 @@ const columns = columnHelper.columns([
 			return value == null ? '-' : <Change value={value} />
 		},
 		meta: {
-			headerClassName: 'w-[112px] min-w-[112px]',
 			align: 'end',
 			headerHelperText: preIpoDefinitions.company.valuationChange1Y.description
 		}
@@ -103,7 +101,6 @@ const columns = columnHelper.columns([
 		header: preIpoDefinitions.company.latestRaise.label,
 		cell: ({ getValue }) => formatUsd(getValue(), PRE_IPO_USD_OPTIONS) ?? '-',
 		meta: {
-			headerClassName: 'w-[132px] min-w-[132px]',
 			align: 'end',
 			headerHelperText: preIpoDefinitions.company.latestRaise.description
 		}
@@ -113,7 +110,6 @@ const columns = columnHelper.columns([
 		header: preIpoDefinitions.company.latestFundingValuation.label,
 		cell: ({ getValue }) => formatUsd(getValue(), PRE_IPO_USD_OPTIONS) ?? '-',
 		meta: {
-			headerClassName: 'w-[200px] min-w-[200px]',
 			align: 'end',
 			headerHelperText: preIpoDefinitions.company.latestFundingValuation.description
 		}
@@ -123,7 +119,6 @@ const columns = columnHelper.columns([
 		header: preIpoDefinitions.company.totalRaised.label,
 		cell: ({ getValue }) => formatUsd(getValue(), PRE_IPO_USD_OPTIONS) ?? '-',
 		meta: {
-			headerClassName: 'w-[132px] min-w-[132px]',
 			align: 'end',
 			headerHelperText: preIpoDefinitions.company.totalRaised.description
 		}
@@ -136,7 +131,6 @@ const columns = columnHelper.columns([
 			return value == null ? '-' : <Change value={value} />
 		},
 		meta: {
-			headerClassName: 'w-[172px] min-w-[172px]',
 			align: 'end',
 			headerHelperText: preIpoDefinitions.company.premiumVsFunding.description
 		}
@@ -146,7 +140,6 @@ const columns = columnHelper.columns([
 		header: preIpoDefinitions.company.latestFundingDate.label,
 		cell: ({ getValue }) => formatDate(getValue()) ?? '-',
 		meta: {
-			headerClassName: 'w-[164px] min-w-[164px]',
 			align: 'end',
 			headerHelperText: preIpoDefinitions.company.latestFundingDate.description
 		}
@@ -156,7 +149,6 @@ const columns = columnHelper.columns([
 		header: preIpoDefinitions.company.valuationAsOf.label,
 		cell: ({ getValue }) => formatDate(getValue()) ?? '-',
 		meta: {
-			headerClassName: 'w-[148px] min-w-[148px]',
 			align: 'end',
 			headerHelperText: preIpoDefinitions.company.valuationAsOf.description
 		}

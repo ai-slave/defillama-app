@@ -49,14 +49,13 @@ const columns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[min(200px,40vw)]'
+			headerClassName: 'min-w-[min(200px,40vw)]'
 		}
 	}),
 	columnHelper.accessor((row) => row.deals ?? undefined, {
 		id: 'deals',
 		header: 'Deals',
 		meta: {
-			headerClassName: 'w-[120px]',
 			align: 'end'
 		}
 	}),
@@ -68,7 +67,6 @@ const columns = columnHelper.columns([
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[140px]',
 			align: 'end'
 		}
 	}),
@@ -77,7 +75,7 @@ const columns = columnHelper.columns([
 		enableSorting: false,
 		cell: ({ getValue }) => <IconsRow items={toChainIconItems(getValue())} />,
 		meta: {
-			headerClassName: 'w-[100px]',
+			headerClassName: 'min-w-[100px]',
 			align: 'end'
 		}
 	}),
@@ -86,14 +84,14 @@ const columns = columnHelper.columns([
 		header: 'Top Project Category',
 		enableSorting: false,
 		meta: {
-			headerClassName: 'w-[min(180px,40vw)]'
+			headerClassName: 'min-w-[min(180px,40vw)]'
 		}
 	}),
 	columnHelper.accessor('topRound', {
 		header: 'Top Round Type',
 		enableSorting: false,
 		meta: {
-			headerClassName: 'w-[140px]'
+			headerClassName: 'min-w-[140px]'
 		}
 	}),
 	columnHelper.accessor('projects', {
@@ -107,7 +105,7 @@ const columns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[min(240px,40vw)]'
+			headerClassName: 'min-w-[min(240px,40vw)]'
 		}
 	})
 ])

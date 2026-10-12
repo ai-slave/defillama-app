@@ -8,7 +8,9 @@ import { VirtualTable } from '../VirtualTable'
 
 vi.mock('next/router', () => ({ useRouter: () => ({ pathname: '/pairs' }) }))
 const helper = createColumnHelper<typeof searchTableFeatures, { name: string }>()
-const columns = helper.columns([helper.accessor('name', { header: 'Name', meta: { headerClassName: 'w-[180px]' } })])
+const columns = helper.columns([
+	helper.accessor('name', { header: 'Name', meta: { headerClassName: 'min-w-[180px]' } })
+])
 const data = Array.from({ length: 100 }, (_, i) => ({ name: `Asset ${i + 1}` }))
 
 function Fixture() {

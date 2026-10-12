@@ -112,7 +112,7 @@ const loopColumns: TableOptions<typeof paginatedTableFeatures, LoopTableRow>['co
 				hasRiskData={row.original.hasRiskData}
 			/>
 		),
-		meta: { headerClassName: 'w-[160px]' }
+		meta: { headerClassName: 'min-w-[160px]' }
 	}),
 	loopHelper.accessor('project', {
 		id: 'project',
@@ -126,7 +126,7 @@ const loopColumns: TableOptions<typeof paginatedTableFeatures, LoopTableRow>['co
 				raiseValuationUsd={row.original.raiseValuationUsd}
 			/>
 		),
-		meta: { headerClassName: 'w-[130px]' }
+		meta: { headerClassName: 'min-w-[130px]' }
 	}),
 	loopHelper.accessor('chains', {
 		id: 'chains',
@@ -135,7 +135,7 @@ const loopColumns: TableOptions<typeof paginatedTableFeatures, LoopTableRow>['co
 		cell: (info) => (
 			<IconsRow items={toChainIconItems(info.getValue() as Array<string>, (chain) => chainHref('/chain', chain))} />
 		),
-		meta: { headerClassName: 'w-[50px] min-w-[50px]', align: 'end' }
+		meta: { align: 'end' }
 	}),
 	loopHelper.accessor((row) => row.loopApy ?? undefined, {
 		id: 'loop_apy',
@@ -182,7 +182,6 @@ const loopColumns: TableOptions<typeof paginatedTableFeatures, LoopTableRow>['co
 			return <SignedApyCell value={loopApy} summaryLabel="Loop APY" note={note} tooltipRows={tooltipRows} />
 		},
 		meta: {
-			headerClassName: 'w-[160px] min-w-[160px]',
 			align: 'end',
 			headerHelperText: 'Net APY of the looped position — leveraged supply yield minus borrow cost'
 		}
@@ -193,7 +192,6 @@ const loopColumns: TableOptions<typeof paginatedTableFeatures, LoopTableRow>['co
 		enableSorting: true,
 		cell: ({ row }) => <LeverageCell value={row.original.leverage} />,
 		meta: {
-			headerClassName: 'w-[100px] min-w-[100px]',
 			align: 'end',
 			headerHelperText: 'Looped exposure multiplier, derived from LTV'
 		}
@@ -215,7 +213,7 @@ const loopColumns: TableOptions<typeof paginatedTableFeatures, LoopTableRow>['co
 				rewardSymbols={row.original.supplyRewardTokensSymbols}
 			/>
 		),
-		meta: { headerClassName: 'w-[140px] min-w-[140px]', align: 'end' }
+		meta: { align: 'end' }
 	}),
 	loopHelper.accessor((row) => row.borrowApy ?? undefined, {
 		id: 'borrow_apy',
@@ -229,7 +227,7 @@ const loopColumns: TableOptions<typeof paginatedTableFeatures, LoopTableRow>['co
 				rewardSymbols={row.original.borrowRewardTokensSymbols}
 			/>
 		),
-		meta: { headerClassName: 'w-[130px] min-w-[130px]', align: 'end' }
+		meta: { align: 'end' }
 	}),
 	loopHelper.accessor((row) => row.availableBorrowUsd ?? undefined, {
 		id: 'available_borrow',
@@ -239,7 +237,7 @@ const loopColumns: TableOptions<typeof paginatedTableFeatures, LoopTableRow>['co
 			<AvailableCell available={row.original.availableBorrowUsd} capacityFilled={row.original.borrowCapacityFilled} />
 		),
 		meta: {
-			headerClassName: 'w-[110px] min-w-[110px]',
+			headerClassName: 'min-w-[110px]',
 			align: 'end',
 			headerHelperText: 'Amount available to borrow after caps'
 		}
@@ -249,7 +247,7 @@ const loopColumns: TableOptions<typeof paginatedTableFeatures, LoopTableRow>['co
 		header: 'LTV',
 		enableSorting: true,
 		cell: ({ row }) => <LtvCell value={row.original.ltv} />,
-		meta: { headerClassName: 'w-[80px] min-w-[80px]', align: 'end' }
+		meta: { headerClassName: 'min-w-[80px]', align: 'end' }
 	})
 ])
 
@@ -261,7 +259,7 @@ export function PaginatedLoopsTable(props: IYieldsTableProps<LoopTableRow>) {
 			initialPageSize={props.initialPageSize ?? 50}
 			manualPagination={props.manualPagination ?? true}
 			manualSorting={props.manualSorting ?? true}
-			tableClassName="min-w-[920px] [&_td]:py-1.5"
+			tableClassName="[&_td]:py-1.5"
 		/>
 	)
 }

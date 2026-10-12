@@ -41,7 +41,7 @@ const bridgeChainsColumn = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[160px] min-[480px]:w-[180px]'
+			headerClassName: 'min-w-[160px] min-[480px]:min-w-[180px]'
 		}
 	}),
 	columnHelper.accessor((row) => row.prevDayNetFlow ?? undefined, {
@@ -49,7 +49,6 @@ const bridgeChainsColumn = columnHelper.columns([
 		header: '24h Net Flow',
 		cell: (info) => <Change value={info.getValue()} unit="usd" />,
 		meta: {
-			headerClassName: 'w-[120px] min-[480px]:w-[140px]',
 			align: 'end'
 		}
 	}),
@@ -59,7 +58,6 @@ const bridgeChainsColumn = columnHelper.columns([
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
-			headerClassName: 'w-[130px] min-[480px]:w-[150px]',
 			align: 'end'
 		}
 	}),
@@ -69,7 +67,6 @@ const bridgeChainsColumn = columnHelper.columns([
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
-			headerClassName: 'w-[130px] min-[480px]:w-[150px]',
 			align: 'end'
 		}
 	}),
@@ -78,7 +75,6 @@ const bridgeChainsColumn = columnHelper.columns([
 		header: '7d Net Flow',
 		cell: (info) => <Change value={info.getValue()} unit="usd" />,
 		meta: {
-			headerClassName: 'w-[120px] min-[480px]:w-[140px]',
 			align: 'end'
 		}
 	}),
@@ -88,7 +84,6 @@ const bridgeChainsColumn = columnHelper.columns([
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
-			headerClassName: 'w-[130px] min-[480px]:w-[150px]',
 			align: 'end'
 		}
 	}),
@@ -98,7 +93,6 @@ const bridgeChainsColumn = columnHelper.columns([
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
-			headerClassName: 'w-[130px] min-[480px]:w-[150px]',
 			align: 'end'
 		}
 	}),
@@ -111,7 +105,6 @@ const bridgeChainsColumn = columnHelper.columns([
 			return value
 		},
 		meta: {
-			headerClassName: 'w-[145px]',
 			align: 'end'
 		}
 	})

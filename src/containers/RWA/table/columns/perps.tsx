@@ -30,7 +30,7 @@ export const venueTypeColumn = columnHelper.accessor(
 				</span>
 			)
 		},
-		meta: textColumnMeta('w-[120px]', 'Whether the contract trades on a decentralized or a centralized venue.')
+		meta: textColumnMeta('Whether the contract trades on a decentralized or a centralized venue.')
 	}
 )
 
@@ -48,17 +48,21 @@ type PerpsUsdMetric =
 	| 'midPrice'
 	| 'previousDayPrice'
 
-/** A USD column; the header may be short ("24h") under its group, so the export takes the definition's label. */
+/**
+ * A USD column; the header may be short ("24h") under its group, so the export takes the definition's label. A price
+ * fits under its header, so only the aggregates pass a width.
+ */
 export function createPerpsUsdColumn(
 	id: PerpsUsdMetric,
 	header: string,
-	definition: { label: string; description: string }
+	definition: { label: string; description: string },
+	width?: string
 ) {
 	return columnHelper.accessor((row) => row.metrics[id] ?? undefined, {
 		id,
 		header,
 		cell: ({ getValue }) => formatTableUsd(getValue()),
-		meta: numberColumnMeta('w-[120px]', definition.description, definition.label)
+		meta: { headerClassName: width, ...numberColumnMeta(definition.description, definition.label) }
 	})
 }
 
@@ -66,7 +70,7 @@ export const maxLeverageColumn = columnHelper.accessor((row) => row.metrics.maxL
 	id: 'maxLeverage',
 	header: 'Max Leverage',
 	cell: ({ getValue }) => formatRwaMultiple(getValue(), 2),
-	meta: numberColumnMeta('w-[130px]', `${d.maxLeverage.description} A group row leaves it empty.`, d.maxLeverage.label)
+	meta: numberColumnMeta(`${d.maxLeverage.description} A group row leaves it empty.`, d.maxLeverage.label)
 })
 
 /** Fee rates sit in hundredths of a percent, so four decimals below one percent. */
@@ -85,7 +89,7 @@ export function createPerpsFeeRateColumn(
 		id,
 		header,
 		cell: ({ getValue }) => formatFeeRate(getValue()),
-		meta: numberColumnMeta('w-[110px]', `${definition.description} ${GROUP_RATE_NOTE}`, definition.label)
+		meta: numberColumnMeta(`${definition.description} ${GROUP_RATE_NOTE}`, definition.label)
 	})
 }
 

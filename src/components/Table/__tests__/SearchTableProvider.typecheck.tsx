@@ -17,24 +17,24 @@ const columns = [
 	columnHelper.accessor('name', {
 		header: 'Name',
 		cell: (info) => info.getValue().toUpperCase(),
-		meta: { headerClassName: 'w-[160px] min-w-[160px]' }
+		meta: { headerClassName: 'min-w-[160px]' }
 	}),
 	columnHelper.accessor('amount', {
 		header: 'Amount',
 		cell: (info) => formatNumber(info.getValue(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-		meta: { headerClassName: 'w-[120px] min-w-[120px]' }
+		meta: { headerClassName: 'min-w-[120px]' }
 	}),
 	columnHelper.accessor((row) => row.tags.length, {
 		id: 'tagCount',
 		header: 'Tags',
 		cell: (info) => info.getValue().toString(),
-		meta: { headerClassName: 'w-[100px] min-w-[100px]' }
+		meta: { headerClassName: 'min-w-[100px]' }
 	}),
 	columnHelper.display({
 		id: 'actions',
 		header: 'Actions',
 		cell: () => null,
-		meta: { headerClassName: 'w-[100px] min-w-[100px]' }
+		meta: { headerClassName: 'min-w-[100px]' }
 	})
 ]
 

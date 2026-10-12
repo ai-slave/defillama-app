@@ -35,7 +35,7 @@ const banksTableColumns = columnHelper.columns([
 		header: 'Name',
 		enableSorting: false,
 		meta: {
-			headerClassName: 'w-[min(220px,40vw)]'
+			headerClassName: 'min-w-[min(220px,40vw)]'
 		}
 	}),
 	columnHelper.accessor((row) => row.date ?? undefined, {
@@ -44,7 +44,7 @@ const banksTableColumns = columnHelper.columns([
 		sortFn: sortFn_datetime,
 		cell: (info) => (info.getValue() ? formatDate(info.getValue(), { input: 'seconds' }) : ''),
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'min-w-[120px]',
 			align: 'end'
 		}
 	}),
@@ -56,7 +56,7 @@ const banksTableColumns = columnHelper.columns([
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: '',
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'min-w-[120px]',
 			align: 'end'
 		}
 	}),
@@ -68,7 +68,6 @@ const banksTableColumns = columnHelper.columns([
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: '',
 		meta: {
-			headerClassName: 'w-[min(220px,40vw)]',
 			align: 'end'
 		}
 	})

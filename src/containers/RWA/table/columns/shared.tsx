@@ -21,18 +21,16 @@ export function getLeafRow(row: RWATableRow): RWALeafRow | null {
 	return row.kind === 'leaf' ? row : null
 }
 
-export function numberColumnMeta(width: string, help?: string, csvHeader?: string) {
+export function numberColumnMeta(help?: string, csvHeader?: string) {
 	return {
-		headerClassName: width,
 		align: 'end' as const,
 		...(help ? { headerHelperText: help } : {}),
 		...(csvHeader ? { csvHeader } : {})
 	}
 }
 
-export function textColumnMeta(width: string, help?: string, csvHeader?: string) {
+export function textColumnMeta(help?: string, csvHeader?: string) {
 	return {
-		headerClassName: width,
 		align: 'end' as const,
 		...(help ? { headerHelperText: help } : {}),
 		...(csvHeader ? { csvHeader } : {})
@@ -157,7 +155,7 @@ export function createDistinctTextColumn({
 	id: RWAGroupDistinctKey
 	header: string
 	pick: (asset: RWAOverviewDisplayRow) => string | null | undefined
-	meta: ReturnType<typeof textColumnMeta>
+	meta: ReturnType<typeof textColumnMeta> & { headerClassName?: string }
 	fold?: RWAGroupTextFold
 	href?: (value: string) => string | null
 	render?: (value: string) => ReactNode

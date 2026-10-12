@@ -41,13 +41,13 @@ const perpColumns = perpColumnHelper.columns([
 	perpColumnHelper.accessor('exchangeName', {
 		header: 'Exchange',
 		enableSorting: false,
-		meta: { headerClassName: 'w-[150px]', align: 'start' }
+		meta: { headerClassName: 'min-w-[150px]', align: 'start' }
 	}),
 	perpColumnHelper.accessor('exchangeType', {
 		header: preIpoDefinitions.perpetualMarket.type.label,
 		enableSorting: false,
 		meta: {
-			headerClassName: 'w-[80px]',
+			headerClassName: 'min-w-[80px]',
 			align: 'start',
 			headerHelperText: preIpoDefinitions.perpetualMarket.type.description
 		}
@@ -57,7 +57,7 @@ const perpColumns = perpColumnHelper.columns([
 		enableSorting: false,
 		cell: ({ getValue, row }) => <IntegrationLink href={row.original.tradeUrl} label={getValue()} />,
 		meta: {
-			headerClassName: 'w-[240px] min-w-[240px]',
+			headerClassName: 'min-w-[240px]',
 			align: 'start',
 			headerHelperText: preIpoDefinitions.perpetualMarket.contract.description
 		}
@@ -67,7 +67,7 @@ const perpColumns = perpColumnHelper.columns([
 		header: preIpoDefinitions.perpetualMarket.price.label,
 		cell: ({ getValue }) => formatUsd(getValue(), { maximumFractionDigits: 4 }) ?? '-',
 		meta: {
-			headerClassName: 'w-[110px]',
+			headerClassName: 'min-w-[110px]',
 			align: 'end',
 			headerHelperText: preIpoDefinitions.perpetualMarket.price.description
 		}
@@ -77,7 +77,7 @@ const perpColumns = perpColumnHelper.columns([
 		header: preIpoDefinitions.perpetualMarket.volume.label,
 		cell: ({ getValue }) => formatUsd(getValue(), PRE_IPO_USD_OPTIONS) ?? '-',
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'min-w-[120px]',
 			align: 'end',
 			headerHelperText: preIpoDefinitions.perpetualMarket.volume.description
 		}
@@ -87,7 +87,6 @@ const perpColumns = perpColumnHelper.columns([
 		header: preIpoDefinitions.perpetualMarket.openInterest.label,
 		cell: ({ getValue }) => formatUsd(getValue(), PRE_IPO_USD_OPTIONS) ?? '-',
 		meta: {
-			headerClassName: 'w-[140px]',
 			align: 'end',
 			headerHelperText: preIpoDefinitions.perpetualMarket.openInterest.description
 		}
@@ -98,7 +97,6 @@ const perpColumns = perpColumnHelper.columns([
 		cell: ({ getValue }) =>
 			formatPercent(getValue(), { input: 'percent', maximumFractionDigits: 2, signDisplay: 'exceptZero' }) ?? '-',
 		meta: {
-			headerClassName: 'w-[170px]',
 			align: 'end',
 			headerHelperText: preIpoDefinitions.perpetualMarket.annualizedFunding.description
 		}
@@ -108,7 +106,6 @@ const perpColumns = perpColumnHelper.columns([
 		header: preIpoDefinitions.perpetualMarket.estimatedValuation.label,
 		cell: ({ getValue }) => formatUsd(getValue(), PRE_IPO_USD_OPTIONS) ?? '-',
 		meta: {
-			headerClassName: 'w-[170px]',
 			align: 'end',
 			headerHelperText: preIpoDefinitions.perpetualMarket.estimatedValuation.description
 		}
@@ -127,7 +124,7 @@ const issuerColumns = issuerColumnHelper.columns([
 		enableSorting: false,
 		cell: ({ getValue, row }) => <IntegrationLink href={row.original.productUrl} label={getValue()} />,
 		meta: {
-			headerClassName: 'w-[180px]',
+			headerClassName: 'min-w-[180px]',
 			align: 'start',
 			headerHelperText: preIpoDefinitions.tokenIssuer.issuer.description
 		}
@@ -136,7 +133,7 @@ const issuerColumns = issuerColumnHelper.columns([
 		header: preIpoDefinitions.tokenIssuer.backing.label,
 		enableSorting: false,
 		meta: {
-			headerClassName: 'w-[160px]',
+			headerClassName: 'min-w-[160px]',
 			align: 'start',
 			headerHelperText: preIpoDefinitions.tokenIssuer.backing.description
 		}
@@ -146,7 +143,7 @@ const issuerColumns = issuerColumnHelper.columns([
 		header: preIpoDefinitions.tokenIssuer.price.label,
 		cell: ({ getValue }) => formatUsd(getValue(), { maximumFractionDigits: 4 }) ?? '-',
 		meta: {
-			headerClassName: 'w-[110px]',
+			headerClassName: 'min-w-[110px]',
 			align: 'end',
 			headerHelperText: preIpoDefinitions.tokenIssuer.price.description
 		}
@@ -156,7 +153,6 @@ const issuerColumns = issuerColumnHelper.columns([
 		header: preIpoDefinitions.tokenIssuer.marketCap.label,
 		cell: ({ getValue }) => formatUsd(getValue(), PRE_IPO_USD_OPTIONS) ?? '-',
 		meta: {
-			headerClassName: 'w-[140px]',
 			align: 'end',
 			headerHelperText: preIpoDefinitions.tokenIssuer.marketCap.description
 		}
@@ -166,7 +162,6 @@ const issuerColumns = issuerColumnHelper.columns([
 		header: preIpoDefinitions.tokenIssuer.estimatedValuation.label,
 		cell: ({ getValue }) => formatUsd(getValue(), PRE_IPO_USD_OPTIONS) ?? '-',
 		meta: {
-			headerClassName: 'w-[170px]',
 			align: 'end',
 			headerHelperText: preIpoDefinitions.tokenIssuer.estimatedValuation.description
 		}

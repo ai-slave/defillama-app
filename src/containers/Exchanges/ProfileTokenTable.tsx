@@ -49,7 +49,7 @@ function segmentExecColumn(spec: {
 	segment: ExchangeSegment
 	definition: { label: string; description: string }
 	field: 'realizedSlippage10kBps' | 'markout1mBps'
-	width: string
+	width?: string
 }) {
 	return columnHelper.accessor((row) => row.executionBySegment[spec.segment]?.[spec.field] ?? undefined, {
 		id: spec.id,
@@ -105,7 +105,7 @@ const TOKEN_COLUMNS = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[152px]',
+			headerClassName: 'min-w-[152px]',
 			headerHelperText: 'Base asset, with the highest leverage its perps offer here. Hover for the segments trading it.'
 		}
 	}),
@@ -122,7 +122,6 @@ const TOKEN_COLUMNS = columnHelper.columns([
 					return cost == null ? NA : money(cost)
 				}),
 			meta: {
-				headerClassName: 'w-[160px]',
 				align: 'end',
 				headerHelperText:
 					'All-in cost of a $10k market order on this token here: taker fee plus half the effective spread, one line per segment.'
@@ -134,28 +133,26 @@ const TOKEN_COLUMNS = columnHelper.columns([
 		segment: 'spot',
 		definition: definitions.spotSlippage,
 		field: 'realizedSlippage10kBps',
-		width: 'w-[204px]'
+		width: 'min-w-[204px]'
 	}),
 	segmentExecColumn({
 		id: 'perpSlippage',
 		segment: 'linear_perp',
 		definition: definitions.perpSlippage,
 		field: 'realizedSlippage10kBps',
-		width: 'w-[204px]'
+		width: 'min-w-[204px]'
 	}),
 	segmentExecColumn({
 		id: 'spotMarkout',
 		segment: 'spot',
 		definition: definitions.spotMarkout,
-		field: 'markout1mBps',
-		width: 'w-[140px]'
+		field: 'markout1mBps'
 	}),
 	segmentExecColumn({
 		id: 'perpMarkout',
 		segment: 'linear_perp',
 		definition: definitions.perpMarkout,
-		field: 'markout1mBps',
-		width: 'w-[150px]'
+		field: 'markout1mBps'
 	}),
 	columnHelper.accessor(
 		(row) => {
@@ -180,7 +177,7 @@ const TOKEN_COLUMNS = columnHelper.columns([
 							flagged
 						)
 			},
-			meta: { headerClassName: 'w-[150px]', align: 'end', headerHelperText: definitions.intraSpread.description }
+			meta: { align: 'end', headerHelperText: definitions.intraSpread.description }
 		}
 	),
 	columnHelper.accessor(
@@ -201,7 +198,7 @@ const TOKEN_COLUMNS = columnHelper.columns([
 						) ?? '–'
 				),
 			meta: {
-				headerClassName: 'w-[180px]',
+				headerClassName: 'min-w-[180px]',
 				align: 'end',
 				headerHelperText: definitions.segmentActiveLiquidity.description
 			}
@@ -212,7 +209,6 @@ const TOKEN_COLUMNS = columnHelper.columns([
 		header: definitions.perpOpenInterest.label,
 		cell: ({ getValue }) => formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–',
 		meta: {
-			headerClassName: 'w-[112px]',
 			align: 'end',
 			headerHelperText: definitions.perpOpenInterest.description
 		}
@@ -225,7 +221,7 @@ const TOKEN_COLUMNS = columnHelper.columns([
 				? nvolCell(row.original.spotNormalizedVolume, row.original.spotVolumeIsReported)
 				: NOT_TRADED,
 		meta: {
-			headerClassName: 'w-[112px]',
+			headerClassName: 'min-w-[112px]',
 			align: 'end',
 			headerHelperText: `${definitions.spotNormalizedVolume.description} * = a market without a captured book counts at reported volume.`
 		}
@@ -238,7 +234,6 @@ const TOKEN_COLUMNS = columnHelper.columns([
 				? nvolCell(row.original.perpNormalizedVolume, row.original.perpVolumeIsReported)
 				: NOT_TRADED,
 		meta: {
-			headerClassName: 'w-[128px]',
 			align: 'end',
 			headerHelperText: `${definitions.perpNormalizedVolume.description} * = a market without a captured book counts at reported volume.`
 		}
@@ -267,7 +262,7 @@ export function ProfileTokenTable({
 					<TableCsvExport filename={`${profile.slug}-tokens`} includeHiddenColumns />
 				</TableToolbar>
 				{/* Two-line execution cells need the taller row. */}
-				<VirtualSearchTableView rowSize={56} tableLayout="fixed" />
+				<VirtualSearchTableView rowSize={56} />
 			</Card>
 		</SearchTableProvider>
 	)

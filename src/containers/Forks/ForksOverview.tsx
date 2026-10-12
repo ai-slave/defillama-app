@@ -58,14 +58,13 @@ const forksColumn = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[min(240px,40vw)]'
+			headerClassName: 'min-w-[min(240px,40vw)]'
 		}
 	}),
 	columnHelper.accessor((row) => row.forkedProtocols ?? undefined, {
 		id: 'forkedProtocols',
 		header: 'Forked Protocols',
 		meta: {
-			headerClassName: 'w-[150px]',
 			align: 'end'
 		}
 	}),
@@ -81,7 +80,7 @@ const forksColumn = columnHelper.columns([
 					})
 				: null,
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'min-w-[120px]',
 			align: 'end'
 		}
 	}),
@@ -93,7 +92,6 @@ const forksColumn = columnHelper.columns([
 				? `${formatPercent(info.getValue(), { input: 'percent', compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`
 				: null,
 		meta: {
-			headerClassName: 'w-[min(210px,40vw)]',
 			align: 'end'
 		}
 	})

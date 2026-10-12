@@ -26,8 +26,8 @@ const features = tableFeatures({
 })
 const helper = createColumnHelper<typeof features, { name: string; value: number }>()
 const columns = helper.columns([
-	helper.accessor('name', { header: 'Name', meta: { headerClassName: 'w-[180px]' } }),
-	helper.accessor('value', { header: 'Value', meta: { headerClassName: 'w-[120px]' } })
+	helper.accessor('name', { header: 'Name', meta: { headerClassName: 'min-w-[180px]' } }),
+	helper.accessor('value', { header: 'Value', meta: { headerClassName: 'min-w-[120px]' } })
 ])
 const columnOrders = { 0: ['value'] }
 const data = Array.from({ length: 12 }, (_, i) => ({ name: `Asset ${i + 1}`, value: i + 1 }))
@@ -118,14 +118,14 @@ test('refreshes rows and pagination controls when only the supplied data changes
 const changedColumns = helper.columns([
 	helper.accessor('name', {
 		header: 'Renamed',
-		meta: { headerClassName: 'w-[180px]' },
+		meta: { headerClassName: 'min-w-[180px]' },
 		cell: ({ getValue }) => `Updated ${getValue()}`
 	})
 ])
 const reformattedColumns = helper.columns([
 	helper.accessor('name', {
 		header: 'Name',
-		meta: { headerClassName: 'w-[180px]' },
+		meta: { headerClassName: 'min-w-[180px]' },
 		cell: ({ getValue }) => `Formatted ${getValue()}`
 	}),
 	columns[1]
@@ -174,10 +174,10 @@ const cellWork = vi.fn((name: string) => name)
 const measuredColumns = helper.columns([
 	helper.accessor('name', {
 		header: 'Name',
-		meta: { headerClassName: 'w-[180px]', cellStyle: rowWork },
+		meta: { headerClassName: 'min-w-[180px]', cellStyle: rowWork },
 		cell: ({ getValue }) => cellWork(getValue())
 	}),
-	helper.accessor('value', { header: 'Value', meta: { headerClassName: 'w-[120px]' } })
+	helper.accessor('value', { header: 'Value', meta: { headerClassName: 'min-w-[120px]' } })
 ])
 function MeasuredFixture() {
 	const [count, setCount] = useState(0)

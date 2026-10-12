@@ -67,29 +67,29 @@ const constituentColumns = constituentColumnHelper.columns([
 			</div>
 		),
 		enableHiding: false,
-		meta: { headerClassName: 'w-56', align: 'start' }
+		meta: { headerClassName: 'min-w-56', align: 'start' }
 	}),
 	constituentColumnHelper.accessor('industry', {
 		header: 'Industry',
-		meta: { headerClassName: 'w-44', align: 'start' }
+		meta: { headerClassName: 'min-w-44', align: 'start' }
 	}),
 	constituentColumnHelper.accessor((row) => row.marketCap ?? undefined, {
 		id: 'marketCap',
 		header: 'Market Cap',
 		cell: ({ getValue }) => formatMetric(getValue(), 'usd'),
-		meta: { headerClassName: 'w-28', align: 'end' }
+		meta: { align: 'end' }
 	}),
 	constituentColumnHelper.accessor((row) => row.sectorWeight ?? undefined, {
 		id: 'sectorWeight',
 		header: 'Sector Wt.',
 		cell: ({ getValue }) => formatMetric(getValue(), 'percent'),
-		meta: { headerClassName: 'w-24', align: 'end' }
+		meta: { align: 'end' }
 	}),
 	constituentColumnHelper.accessor((row) => row.currentPrice ?? undefined, {
 		id: 'currentPrice',
 		header: 'Price',
 		cell: ({ getValue }) => formatMetric(getValue(), 'usd'),
-		meta: { headerClassName: 'w-24', align: 'end' }
+		meta: { headerClassName: 'min-w-24', align: 'end' }
 	}),
 	...(
 		[
@@ -105,20 +105,20 @@ const constituentColumns = constituentColumnHelper.columns([
 				const value = getValue()
 				return value == null ? '—' : <Change value={value} />
 			},
-			meta: { headerClassName: 'w-20', align: 'end' }
+			meta: { headerClassName: 'min-w-20', align: 'end' }
 		})
 	),
 	constituentColumnHelper.accessor((row) => row.dollarVolume24h ?? undefined, {
 		id: 'dollarVolume24h',
 		header: 'Volume 24h',
 		cell: ({ getValue }) => formatMetric(getValue(), 'usd'),
-		meta: { headerClassName: 'w-28', align: 'end' }
+		meta: { align: 'end' }
 	}),
 	constituentColumnHelper.accessor((row) => row.trailingPE ?? undefined, {
 		id: 'trailingPE',
 		header: 'P/E',
 		cell: ({ getValue }) => formatMetric(getValue(), 'multiple'),
-		meta: { headerClassName: 'w-18', align: 'end' }
+		meta: { headerClassName: 'min-w-18', align: 'end' }
 	})
 ])
 

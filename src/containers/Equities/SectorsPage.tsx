@@ -91,19 +91,19 @@ const sectorColumns = sectorColumnHelper.columns([
 			</span>
 		),
 		enableHiding: false,
-		meta: { headerClassName: 'w-52', align: 'start' }
+		meta: { headerClassName: 'min-w-52', align: 'start' }
 	}),
 	sectorColumnHelper.accessor((row) => row.marketCap ?? undefined, {
 		id: 'marketCap',
 		header: 'Market Cap',
 		cell: ({ getValue }) => formatMetric(getValue(), 'usd'),
-		meta: { headerClassName: 'w-28', align: 'end' }
+		meta: { align: 'end' }
 	}),
 	sectorColumnHelper.accessor((row) => row.weight ?? undefined, {
 		id: 'weight',
 		header: 'Weight',
 		cell: ({ getValue }) => formatMetric(getValue(), 'percent'),
-		meta: { headerClassName: 'w-20', align: 'end' }
+		meta: { align: 'end' }
 	}),
 	...(
 		[
@@ -120,30 +120,30 @@ const sectorColumns = sectorColumnHelper.columns([
 				const value = getValue()
 				return value == null ? '—' : <Change value={value} />
 			},
-			meta: { headerClassName: 'w-20', align: 'end' }
+			meta: { headerClassName: 'min-w-20', align: 'end' }
 		})
 	),
 	sectorColumnHelper.accessor((row) => row.dollarVolume24h ?? undefined, {
 		id: 'dollarVolume24h',
 		header: 'Volume 24h',
 		cell: ({ getValue }) => formatMetric(getValue(), 'usd'),
-		meta: { headerClassName: 'w-28', align: 'end' }
+		meta: { align: 'end' }
 	}),
 	sectorColumnHelper.accessor((row) => row.trailingPE ?? undefined, {
 		id: 'trailingPE',
 		header: 'P/E',
 		cell: ({ getValue }) => formatMetric(getValue(), 'multiple'),
-		meta: { headerClassName: 'w-18', align: 'end' }
+		meta: { headerClassName: 'min-w-18', align: 'end' }
 	}),
 	sectorColumnHelper.accessor((row) => row.dividendYield ?? undefined, {
 		id: 'dividendYield',
 		header: 'Div. Yield',
 		cell: ({ getValue }) => formatMetric(getValue(), 'percent'),
-		meta: { headerClassName: 'w-24', align: 'end' }
+		meta: { align: 'end' }
 	}),
 	sectorColumnHelper.accessor('companyCount', {
 		header: 'Equities',
-		meta: { headerClassName: 'w-20', align: 'end' }
+		meta: { align: 'end' }
 	}),
 	sectorColumnHelper.accessor('topHoldings', {
 		header: 'Top Holdings',
@@ -161,7 +161,7 @@ const sectorColumns = sectorColumnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-28',
+			headerClassName: 'min-w-28',
 			align: 'start',
 			csvValue: (row) => row.topHoldings.map((holding) => holding.ticker).join(', ')
 		}

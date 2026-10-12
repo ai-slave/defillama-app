@@ -54,17 +54,14 @@ const bridgedChainColumns = columnHelper.columns([
 		header: 'Token',
 		enableSorting: false,
 		meta: {
-			headerClassName: 'w-[min(220px,40vw)]'
+			headerClassName: 'min-w-[min(220px,40vw)]'
 		}
 	}),
 	columnHelper.accessor((row) => row.value, {
 		id: 'value',
 		header: 'Total Bridged',
 		cell: (info) =>
-			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
-		meta: {
-			headerClassName: 'w-[120px]'
-		}
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 	})
 ])
 

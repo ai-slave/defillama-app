@@ -71,7 +71,7 @@ const columns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[min(220px,40vw)]'
+			headerClassName: 'min-w-[min(220px,40vw)]'
 		}
 	}),
 	columnHelper.accessor('tokenBreakdowns', {
@@ -117,7 +117,6 @@ const columns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[120px]',
 			align: 'end'
 		}
 	}),
@@ -127,7 +126,7 @@ const columns = columnHelper.columns([
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
-			headerClassName: 'w-[115px]',
+			headerClassName: 'min-w-[115px]',
 			align: 'end'
 		}
 	}),
@@ -137,7 +136,6 @@ const columns = columnHelper.columns([
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
-			headerClassName: 'w-[160px]',
 			align: 'end'
 		}
 	}),
@@ -147,7 +145,7 @@ const columns = columnHelper.columns([
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'min-w-[120px]',
 			align: 'end'
 		}
 	}),
@@ -157,7 +155,7 @@ const columns = columnHelper.columns([
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
-			headerClassName: 'w-[100px]',
+			headerClassName: 'min-w-[100px]',
 			align: 'end'
 		}
 	}),
@@ -167,7 +165,6 @@ const columns = columnHelper.columns([
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
-			headerClassName: 'w-[min(185px,40vw)]',
 			align: 'end'
 		}
 	}),
@@ -177,7 +174,6 @@ const columns = columnHelper.columns([
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
-			headerClassName: 'w-[135px]',
 			align: 'end'
 		}
 	}),
@@ -189,7 +185,7 @@ const columns = columnHelper.columns([
 				? null
 				: formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
-			headerClassName: 'w-[128px]',
+			headerClassName: 'min-w-[128px]',
 			align: 'end'
 		}
 	})

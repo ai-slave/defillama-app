@@ -89,7 +89,7 @@ const stablecoinsColumns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[180px] lg:w-[240px]'
+			headerClassName: 'min-w-[180px] lg:min-w-[240px]'
 		}
 	}),
 	columnHelper.accessor('chains', {
@@ -99,7 +99,7 @@ const stablecoinsColumns = columnHelper.columns([
 			<IconsRow items={toChainIconItems(getValue(), (chain) => chainHref('/stablecoins', chain))} />
 		),
 		meta: {
-			headerClassName: 'w-[180px] lg:w-[200px]',
+			headerClassName: 'min-w-[180px] lg:min-w-[200px]',
 			align: 'end',
 			headerHelperText: 'Chains are ordered by stablecoin issuance on each chain'
 		}
@@ -121,7 +121,7 @@ const stablecoinsColumns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'min-w-[120px]',
 			align: 'end'
 		}
 	}),
@@ -142,7 +142,6 @@ const stablecoinsColumns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[132px]',
 			align: 'end',
 			headerHelperText: 'Shows greatest % price deviation from peg over the past month'
 		}
@@ -165,7 +164,7 @@ const stablecoinsColumns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[110px]',
+			headerClassName: 'min-w-[110px]',
 			align: 'end'
 		}
 	}),
@@ -180,7 +179,7 @@ const stablecoinsColumns = columnHelper.columns([
 				'-'
 			),
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'min-w-[120px]',
 			align: 'end'
 		}
 	}),
@@ -194,7 +193,7 @@ const stablecoinsColumns = columnHelper.columns([
 				'-'
 			),
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'min-w-[120px]',
 			align: 'end'
 		}
 	}),
@@ -208,7 +207,6 @@ const stablecoinsColumns = columnHelper.columns([
 				'-'
 			),
 		meta: {
-			headerClassName: 'w-[120px]',
 			align: 'end'
 		}
 	}),
@@ -249,7 +247,7 @@ const stablecoinsColumns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'min-w-[120px]',
 			align: 'end'
 		}
 	})

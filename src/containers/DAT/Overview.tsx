@@ -172,7 +172,7 @@ const overviewColumns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[min(228px,40vw)]',
+			headerClassName: 'min-w-[min(228px,40vw)]',
 			align: 'start'
 		}
 	}),
@@ -210,7 +210,6 @@ const overviewColumns = columnHelper.columns([
 				)
 			},
 			meta: {
-				headerClassName: 'w-[120px]',
 				align: 'end'
 			}
 		}
@@ -223,7 +222,6 @@ const overviewColumns = columnHelper.columns([
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[120px]',
 			align: 'end'
 		}
 	}),
@@ -235,7 +233,6 @@ const overviewColumns = columnHelper.columns([
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[min(196px,40vw)]',
 			align: 'end'
 		}
 	}),
@@ -262,7 +259,6 @@ const overviewColumns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[120px]',
 			align: 'end'
 		}
 	}),
@@ -274,7 +270,6 @@ const overviewColumns = columnHelper.columns([
 				? formatCompactNumber(info.getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[140px]',
 			align: 'end',
 			headerHelperText:
 				'Market Net Asset Value based only on the current outstanding common shares, with no dilution considered.'
@@ -288,7 +283,6 @@ const overviewColumns = columnHelper.columns([
 				? formatCompactNumber(info.getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[140px]',
 			align: 'end',
 			headerHelperText:
 				'Market Net Asset Value adjusted for expected dilution from in-the-money options and convertibles that are likely to be exercised'
@@ -302,7 +296,6 @@ const overviewColumns = columnHelper.columns([
 				? formatCompactNumber(info.getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[120px]',
 			align: 'end',
 			headerHelperText:
 				'Market Net Asset Value under the fully diluted scenario, assuming every warrant, option, and convertible is exercised (the most conservative/worst-case view)'

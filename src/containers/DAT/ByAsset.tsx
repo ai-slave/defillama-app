@@ -154,7 +154,7 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 				)
 			},
 			meta: {
-				headerClassName: 'w-[min(228px,40vw)]',
+				headerClassName: 'min-w-[min(228px,40vw)]',
 				align: 'start'
 			}
 		}),
@@ -169,7 +169,7 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 				)
 			},
 			meta: {
-				headerClassName: 'w-[120px]',
+				headerClassName: 'min-w-[120px]',
 				align: 'end'
 			}
 		}),
@@ -182,7 +182,6 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 				return <>{formatUsd(usdValue, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</>
 			},
 			meta: {
-				headerClassName: 'w-[min(196px,40vw)]',
 				align: 'end'
 			}
 		}),
@@ -209,7 +208,6 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 				)
 			},
 			meta: {
-				headerClassName: 'w-[120px]',
 				align: 'end'
 			}
 		}),
@@ -231,7 +229,6 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 				)
 			},
 			meta: {
-				headerClassName: 'w-[min(228px,40vw)]',
 				align: 'end'
 			}
 		}),
@@ -244,7 +241,6 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 				return <>{formatCompactNumber(realized_mNAV, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</>
 			},
 			meta: {
-				headerClassName: 'w-[140px]',
 				align: 'end',
 				headerHelperText:
 					'Market Net Asset Value based only on the current outstanding common shares, with no dilution considered.'
@@ -261,7 +257,6 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 				)
 			},
 			meta: {
-				headerClassName: 'w-[140px]',
 				align: 'end',
 				headerHelperText:
 					'Market Net Asset Value adjusted for expected dilution from in-the-money options and convertibles that are likely to be exercised'
@@ -276,7 +271,6 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 				return <>{formatCompactNumber(max_mNAV, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</>
 			},
 			meta: {
-				headerClassName: 'w-[120px]',
 				align: 'end',
 				headerHelperText:
 					'Market Net Asset Value under the fully diluted scenario, assuming every warrant, option, and convertible is exercised (the most conservative/worst-case view)'
@@ -291,7 +285,6 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 				return <>{formatUsd(avgPrice, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</>
 			},
 			meta: {
-				headerClassName: 'w-[168px]',
 				align: 'end',
 				headerHelperText: `Average cost per ${symbol} of the institution's holdings`
 			}
@@ -305,7 +298,6 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 				return <>{formatDate(lastUpdated)}</>
 			},
 			meta: {
-				headerClassName: 'w-[120px]',
 				align: 'end',
 				headerHelperText:
 					'Some companies do not update their holdings frequently, so the last announcement date may not be the most recent'

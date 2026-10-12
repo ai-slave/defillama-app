@@ -74,7 +74,7 @@ const BRIDGES_COLUMNS = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[140px] min-[480px]:w-[180px] lg:w-[240px]'
+			headerClassName: 'min-w-[140px] min-[480px]:min-w-[180px] lg:min-w-[240px]'
 		}
 	}),
 	columnHelper.accessor('chains', {
@@ -82,7 +82,7 @@ const BRIDGES_COLUMNS = columnHelper.columns([
 		enableSorting: false,
 		cell: ({ getValue }) => <IconsRow items={toChainIconItems(getValue(), (chain) => `/bridges/${slug(chain)}`)} />,
 		meta: {
-			headerClassName: 'w-[180px] lg:w-[200px]',
+			headerClassName: 'min-w-[180px] lg:min-w-[200px]',
 			align: 'end',
 			headerHelperText: 'Chains are ordered by bridge volume on each chain'
 		}
@@ -92,7 +92,7 @@ const BRIDGES_COLUMNS = columnHelper.columns([
 		header: '1d Change',
 		cell: (info) => <Change value={info.getValue()} />,
 		meta: {
-			headerClassName: 'w-[100px]',
+			headerClassName: 'min-w-[100px]',
 			align: 'end'
 		}
 	}),
@@ -102,7 +102,6 @@ const BRIDGES_COLUMNS = columnHelper.columns([
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
-			headerClassName: 'w-[160px]',
 			align: 'end',
 			headerHelperText: 'Volume during the last completed UTC day'
 		}
@@ -113,7 +112,6 @@ const BRIDGES_COLUMNS = columnHelper.columns([
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
-			headerClassName: 'w-[160px]',
 			align: 'end',
 			headerHelperText: 'Volume during the last 7 completed UTC days'
 		}
@@ -124,7 +122,6 @@ const BRIDGES_COLUMNS = columnHelper.columns([
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
-			headerClassName: 'w-[160px]',
 			align: 'end',
 			headerHelperText: 'Volume during the last 30 completed UTC days'
 		}
@@ -133,7 +130,6 @@ const BRIDGES_COLUMNS = columnHelper.columns([
 		id: 'txsPrevDay',
 		header: '24h # of Txs',
 		meta: {
-			headerClassName: 'w-[124px]',
 			align: 'end'
 		}
 	})

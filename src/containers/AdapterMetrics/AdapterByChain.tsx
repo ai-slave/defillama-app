@@ -569,7 +569,7 @@ const NameColumn = (type: IProps['type']) =>
 			)
 		},
 		meta: {
-			headerClassName: 'w-[180px] sm:w-[240px] md:w-[280px]'
+			headerClassName: 'min-w-[180px] sm:min-w-[240px] md:min-w-[280px]'
 		}
 	})
 
@@ -582,7 +582,6 @@ const utrColumn = columnHelper.accessor((row) => row.token?.utr?.score ?? undefi
 			<UtrGradeHovercard name={row.original.name} utr={row.original.token.utr} rights={row.original.token.rights} />
 		) : null,
 	meta: {
-		headerClassName: 'w-[98px]',
 		align: 'center',
 		headerHelperText:
 			'Universal Token Rating, from AAA to CCC, based on what the project discloses and how its token performs',
@@ -605,7 +604,6 @@ const rightsColumn = columnHelper.display({
 			/>
 		) : null,
 	meta: {
-		headerClassName: 'w-[82px]',
 		align: 'center',
 		headerHelperText:
 			'Which rights the token gives its holders: treasury, revenue, burns, equity, value accrual and governance',
@@ -621,7 +619,7 @@ const categoryColumn = (align?: 'center') =>
 		cell: ({ getValue }) =>
 			getValue() ? <TextLink href={getCategoryRoute(slug(getValue()))}>{getValue()}</TextLink> : '',
 		meta: {
-			headerClassName: 'w-[128px]',
+			headerClassName: 'min-w-[128px]',
 			...(align ? { align } : {})
 		}
 	})
@@ -636,20 +634,16 @@ const definitionColumn = columnHelper.accessor((protocol) => protocol.methodolog
 	),
 	enableSorting: false,
 	meta: {
-		headerClassName: 'w-[400px]'
+		headerClassName: 'min-w-[400px]'
 	}
 })
 
-type MetricColumnSize = 128 | 152 | 160 | 169 | 172 | 180 | 184
+type MetricColumnSize = 128 | 160 | 180
 
 const metricColumnWidthClassBySize: Record<MetricColumnSize, string> = {
-	128: 'w-[128px]',
-	152: 'w-[152px]',
-	160: 'w-[160px]',
-	169: 'w-[169px] min-w-[169px]',
-	172: 'w-[172px] min-w-[172px]',
-	180: 'w-[min(180px,40vw)]',
-	184: 'w-[184px] min-w-[184px]'
+	128: 'min-w-[128px]',
+	160: 'min-w-[160px]',
+	180: 'min-w-[min(180px,40vw)]'
 }
 
 const getMetricColumnWidthClass = (size: MetricColumnSize) => metricColumnWidthClassBySize[size]
@@ -659,7 +653,7 @@ const metricColumn = (
 	header: string,
 	accessor: (protocol: AdapterProtocolRow) => number | null | undefined,
 	headerHelperText: string,
-	size: MetricColumnSize,
+	size?: MetricColumnSize,
 	align: 'center' | 'end' = 'center',
 	csvHeader?: string
 ) =>
@@ -671,7 +665,7 @@ const metricColumn = (
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: getMetricColumnWidthClass(size),
+			...(size ? { headerClassName: getMetricColumnWidthClass(size) } : {}),
 			align,
 			headerHelperText,
 			...(csvHeader ? { csvHeader } : {})
@@ -683,7 +677,7 @@ const doubleCountedMetricColumn = (
 	header: string | (() => ReactNode),
 	accessor: (protocol: AdapterProtocolRow) => number | null | undefined,
 	headerHelperText: string,
-	size: MetricColumnSize,
+	size?: MetricColumnSize,
 	csvHeader?: string
 ) =>
 	columnHelper.accessor((row) => accessor(row) ?? undefined, {
@@ -709,7 +703,7 @@ const doubleCountedMetricColumn = (
 				: null
 		},
 		meta: {
-			headerClassName: getMetricColumnWidthClass(size),
+			...(size ? { headerClassName: getMetricColumnWidthClass(size) } : {}),
 			align: 'center',
 			headerHelperText,
 			...(csvHeader ? { csvHeader } : {})
@@ -721,7 +715,7 @@ const reportedPerpVolumeColumn = (
 	header: string,
 	accessor: (protocol: AdapterProtocolRow) => number | null | undefined,
 	headerHelperText: string,
-	size: MetricColumnSize
+	size?: MetricColumnSize
 ) =>
 	columnHelper.accessor((row) => accessor(row) ?? undefined, {
 		id,
@@ -760,7 +754,7 @@ const reportedPerpVolumeColumn = (
 			)
 		},
 		meta: {
-			headerClassName: getMetricColumnWidthClass(size),
+			...(size ? { headerClassName: getMetricColumnWidthClass(size) } : {}),
 			align: 'center',
 			headerHelperText
 		}
@@ -771,7 +765,7 @@ const openInterestMetricColumn = (
 	header: string,
 	accessor: (protocol: AdapterProtocolRow) => number | null | undefined,
 	headerHelperText: string,
-	size: MetricColumnSize,
+	size?: MetricColumnSize,
 	align: 'center' | 'end' = 'center'
 ) =>
 	columnHelper.accessor((row) => accessor(row) ?? undefined, {
@@ -797,7 +791,7 @@ const openInterestMetricColumn = (
 				: null
 		},
 		meta: {
-			headerClassName: getMetricColumnWidthClass(size),
+			...(size ? { headerClassName: getMetricColumnWidthClass(size) } : {}),
 			align,
 			headerHelperText
 		}
@@ -822,7 +816,6 @@ const ratioColumn = (id: OptionsRatioKey, header: string, headerHelperText: stri
 			)
 		},
 		meta: {
-			headerClassName: getMetricColumnWidthClass(160),
 			align: 'center',
 			headerHelperText
 		}
@@ -834,37 +827,37 @@ const pfOrPsColumn = (label: 'P/F' | 'P/S', headerHelperText: string) =>
 		header: label,
 		cell: (info) => formatRatio(info.getValue()),
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'min-w-[120px]',
 			align: 'center',
 			headerHelperText
 		}
 	})
 
-const createEarningsColumns = (metricDefinitions: Record<'24h' | '7d' | '30d', string>) => [
+const createEarningsColumns = (metricDefinitions: Record<'24h' | '7d' | '30d', string>, size?: MetricColumnSize) => [
 	NameColumn('Earnings'),
 	categoryColumn(),
-	metricColumn('total24h', 'Earnings 24h', (protocol) => protocol.total24h, metricDefinitions['24h'], 160),
-	metricColumn('total7d', 'Earnings 7d', (protocol) => protocol.total7d, metricDefinitions['7d'], 160),
-	metricColumn('total30d', 'Earnings 30d', (protocol) => protocol.total30d, metricDefinitions['30d'], 160)
+	metricColumn('total24h', 'Earnings 24h', (protocol) => protocol.total24h, metricDefinitions['24h'], size),
+	metricColumn('total7d', 'Earnings 7d', (protocol) => protocol.total7d, metricDefinitions['7d'], size),
+	metricColumn('total30d', 'Earnings 30d', (protocol) => protocol.total30d, metricDefinitions['30d'], size)
 ]
 
 const PROTOCOL_EARNINGS_COLUMNS = createEarningsColumns(definitions.earnings.protocol)
-const CHAIN_EARNINGS_COLUMNS = createEarningsColumns(definitions.earnings.chain)
+const CHAIN_EARNINGS_COLUMNS = createEarningsColumns(definitions.earnings.chain, 160)
 
 const COLUMNS_BY_TYPE = {
 	Fees: [
 		NameColumn('Fees'),
 		categoryColumn(),
 		definitionColumn,
-		metricColumn('total24h', 'Fees 24h', (protocol) => protocol.total24h, definitions.fees.protocol['24h'], 128),
+		metricColumn('total24h', 'Fees 24h', (protocol) => protocol.total24h, definitions.fees.protocol['24h']),
 		metricColumn('total7d', 'Fees 7d', (protocol) => protocol.total7d, definitions.fees.protocol['7d'], 128),
-		metricColumn('total30d', 'Fees 30d', (protocol) => protocol.total30d, definitions.fees.protocol['30d'], 128)
+		metricColumn('total30d', 'Fees 30d', (protocol) => protocol.total30d, definitions.fees.protocol['30d'])
 	],
 	Revenue: [
 		NameColumn('Revenue'),
-		metricColumn('total24h', 'Revenue 24h', (protocol) => protocol.total24h, definitions.revenue.protocol['24h'], 128),
-		metricColumn('total7d', 'Revenue 7d', (protocol) => protocol.total7d, definitions.revenue.protocol['7d'], 128),
-		metricColumn('total30d', 'Revenue 30d', (protocol) => protocol.total30d, definitions.revenue.protocol['30d'], 128),
+		metricColumn('total24h', 'Revenue 24h', (protocol) => protocol.total24h, definitions.revenue.protocol['24h']),
+		metricColumn('total7d', 'Revenue 7d', (protocol) => protocol.total7d, definitions.revenue.protocol['7d']),
+		metricColumn('total30d', 'Revenue 30d', (protocol) => protocol.total30d, definitions.revenue.protocol['30d']),
 		utrColumn,
 		rightsColumn,
 		categoryColumn(),
@@ -878,22 +871,19 @@ const COLUMNS_BY_TYPE = {
 			'total24h',
 			'Holders Revenue 24h',
 			(protocol) => protocol.total24h,
-			definitions.holdersRevenue.protocol['24h'],
-			180
+			definitions.holdersRevenue.protocol['24h']
 		),
 		metricColumn(
 			'total7d',
 			'Holders Revenue 7d',
 			(protocol) => protocol.total7d,
-			definitions.holdersRevenue.protocol['7d'],
-			180
+			definitions.holdersRevenue.protocol['7d']
 		),
 		metricColumn(
 			'total30d',
 			'Holders Revenue 30d',
 			(protocol) => protocol.total30d,
-			definitions.holdersRevenue.protocol['30d'],
-			180
+			definitions.holdersRevenue.protocol['30d']
 		)
 	],
 	'Options Premium Volume': [
@@ -950,46 +940,35 @@ const COLUMNS_BY_TYPE = {
 			'total24h',
 			'Premium Volume 24h',
 			(protocol) => protocol.total24h,
-			definitions.optionsPremium.protocol['24h'],
-			180
+			definitions.optionsPremium.protocol['24h']
 		),
 		metricColumn(
 			'notionalVolume24h',
 			'Notional Volume 24h',
 			(protocol) => protocol.notionalVolume24h,
-			definitions.optionsNotional.protocol['24h'],
-			180
+			definitions.optionsNotional.protocol['24h']
 		),
 		openInterestMetricColumn(
 			'openInterest',
 			'Notional OI',
 			(protocol) => protocol.openInterest,
-			definitions.optionsOpenInterest.protocol,
-			160
+			definitions.optionsOpenInterest.protocol
 		),
-		metricColumn('fees24h', 'Fees 24h', (protocol) => protocol.fees24h, definitions.fees.protocol['24h'], 128),
+		metricColumn('fees24h', 'Fees 24h', (protocol) => protocol.fees24h, definitions.fees.protocol['24h']),
 		ratioColumn('notionalToPremium', 'Notional / Premium', definitions.optionsOpenInterest.notionalToPremium),
 		ratioColumn('openInterestToPremium', 'OI / Premium', definitions.optionsOpenInterest.openInterestToPremium),
-		metricColumn(
-			'revenue24h',
-			'Revenue 24h',
-			(protocol) => protocol.revenue24h,
-			definitions.revenue.protocol['24h'],
-			128
-		),
+		metricColumn('revenue24h', 'Revenue 24h', (protocol) => protocol.revenue24h, definitions.revenue.protocol['24h']),
 		metricColumn(
 			'total7d',
 			'Premium Volume 7d',
 			(protocol) => protocol.total7d,
-			definitions.optionsPremium.protocol['7d'],
-			180
+			definitions.optionsPremium.protocol['7d']
 		),
 		metricColumn(
 			'total30d',
 			'Premium Volume 30d',
 			(protocol) => protocol.total30d,
-			definitions.optionsPremium.protocol['30d'],
-			180
+			definitions.optionsPremium.protocol['30d']
 		)
 	],
 	'DEX Volume': [
@@ -998,22 +977,19 @@ const COLUMNS_BY_TYPE = {
 			'total24h',
 			'DEX Volume 24h',
 			(protocol) => protocol.total24h,
-			definitions.dexs.protocol['24h'],
-			152
+			definitions.dexs.protocol['24h']
 		),
 		doubleCountedMetricColumn(
 			'total7d',
 			'DEX Volume 7d',
 			(protocol) => protocol.total7d,
-			definitions.dexs.protocol['7d'],
-			152
+			definitions.dexs.protocol['7d']
 		),
 		doubleCountedMetricColumn(
 			'total30d',
 			'DEX Volume 30d',
 			(protocol) => protocol.total30d,
-			definitions.dexs.protocol['30d'],
-			152
+			definitions.dexs.protocol['30d']
 		)
 	],
 	'Perp Volume': [
@@ -1022,36 +998,31 @@ const COLUMNS_BY_TYPE = {
 			'normalizedVolume24h',
 			'Normalized Volume 24h',
 			(protocol) => protocol.normalizedVolume24h,
-			definitions.normalizedVolume.protocol['24h'],
-			180
+			definitions.normalizedVolume.protocol['24h']
 		),
 		reportedPerpVolumeColumn(
 			'total24h',
 			'Reported Volume 24h',
 			(protocol) => protocol.total24h,
-			definitions.perps.protocol['24h'],
-			160
+			definitions.perps.protocol['24h']
 		),
 		openInterestMetricColumn(
 			'openInterest',
 			'Open Interest',
 			(protocol) => protocol.openInterest,
-			definitions.openInterest.protocol,
-			160
+			definitions.openInterest.protocol
 		),
 		reportedPerpVolumeColumn(
 			'total7d',
 			'Reported Volume 7d',
 			(protocol) => protocol.total7d,
-			definitions.perps.protocol['7d'],
-			160
+			definitions.perps.protocol['7d']
 		),
 		reportedPerpVolumeColumn(
 			'total30d',
 			'Reported Volume 30d',
 			(protocol) => protocol.total30d,
-			definitions.perps.protocol['30d'],
-			160
+			definitions.perps.protocol['30d']
 		)
 	],
 	'Open Interest': [
@@ -1061,7 +1032,7 @@ const COLUMNS_BY_TYPE = {
 			'Open Interest',
 			(protocol) => protocol.total24h,
 			definitions.openInterest.protocol,
-			160,
+			undefined,
 			'end'
 		)
 	],
@@ -1071,29 +1042,25 @@ const COLUMNS_BY_TYPE = {
 			'total24h',
 			'Normalized Volume 24h',
 			(protocol) => protocol.total24h,
-			definitions.normalizedVolume.protocol['24h'],
-			180
+			definitions.normalizedVolume.protocol['24h']
 		),
 		doubleCountedMetricColumn(
 			'activeLiquidity',
 			'Active Liquidity',
 			(protocol) => protocol.activeLiquidity,
-			definitions.activeLiquidity.protocol,
-			180
+			definitions.activeLiquidity.protocol
 		),
 		reportedPerpVolumeColumn(
 			'total7d',
 			'Normalized Volume 7d',
 			(protocol) => protocol.total7d,
-			definitions.normalizedVolume.protocol['7d'],
-			180
+			definitions.normalizedVolume.protocol['7d']
 		),
 		reportedPerpVolumeColumn(
 			'total30d',
 			'Normalized Volume 30d',
 			(protocol) => protocol.total30d,
-			definitions.normalizedVolume.protocol['30d'],
-			180
+			definitions.normalizedVolume.protocol['30d']
 		)
 	],
 	'Perp Aggregator Volume': [
@@ -1103,7 +1070,7 @@ const COLUMNS_BY_TYPE = {
 			'Perp Agg Vol 24h',
 			(protocol) => protocol.total24h,
 			definitions.perpsAggregators.protocol['24h'],
-			172,
+			undefined,
 			'center',
 			'Perp Aggregator Volume 24h'
 		),
@@ -1112,7 +1079,7 @@ const COLUMNS_BY_TYPE = {
 			'Perp Agg Vol 7d',
 			(protocol) => protocol.total7d,
 			definitions.perpsAggregators.protocol['7d'],
-			172,
+			undefined,
 			'center',
 			'Perp Aggregator Volume 7d'
 		),
@@ -1121,7 +1088,7 @@ const COLUMNS_BY_TYPE = {
 			'Perp Agg Vol 30d',
 			(protocol) => protocol.total30d,
 			definitions.perpsAggregators.protocol['30d'],
-			172,
+			undefined,
 			'center',
 			'Perp Aggregator Volume 30d'
 		)
@@ -1133,7 +1100,7 @@ const COLUMNS_BY_TYPE = {
 			'Bridge Agg Vol 24h',
 			(protocol) => protocol.total24h,
 			definitions.bridgeAggregators.chain['24h'],
-			184,
+			undefined,
 			'center',
 			'Bridge Aggregator Volume 24h'
 		),
@@ -1142,7 +1109,7 @@ const COLUMNS_BY_TYPE = {
 			'Bridge Agg Vol 7d',
 			(protocol) => protocol.total7d,
 			definitions.bridgeAggregators.chain['7d'],
-			184,
+			undefined,
 			'center',
 			'Bridge Aggregator Volume 7d'
 		),
@@ -1151,7 +1118,7 @@ const COLUMNS_BY_TYPE = {
 			'Bridge Agg Vol 30d',
 			(protocol) => protocol.total30d,
 			definitions.bridgeAggregators.chain['30d'],
-			184,
+			undefined,
 			'center',
 			'Bridge Aggregator Volume 30d'
 		)
@@ -1163,7 +1130,7 @@ const COLUMNS_BY_TYPE = {
 			'DEX Agg Vol 24h',
 			(protocol) => protocol.total24h,
 			definitions.dexAggregators.protocol['24h'],
-			169,
+			undefined,
 			'center',
 			'DEX Aggregator Volume 24h'
 		),
@@ -1172,7 +1139,7 @@ const COLUMNS_BY_TYPE = {
 			'DEX Agg Vol 7d',
 			(protocol) => protocol.total7d,
 			definitions.dexAggregators.protocol['7d'],
-			169,
+			undefined,
 			'center',
 			'DEX Aggregator Volume 7d'
 		),
@@ -1181,7 +1148,7 @@ const COLUMNS_BY_TYPE = {
 			'DEX Agg Vol 30d',
 			(protocol) => protocol.total30d,
 			definitions.dexAggregators.protocol['30d'],
-			169,
+			undefined,
 			'center',
 			'DEX Aggregator Volume 30d'
 		)

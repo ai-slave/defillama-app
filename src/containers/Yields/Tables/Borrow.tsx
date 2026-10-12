@@ -68,7 +68,7 @@ const marketColumns = marketHelper.columns([
 				hasRiskData={row.original.hasRiskData}
 			/>
 		),
-		meta: { headerClassName: 'w-[200px]' }
+		meta: { headerClassName: 'min-w-[200px]' }
 	}),
 	marketHelper.accessor('project', {
 		id: 'project',
@@ -82,14 +82,14 @@ const marketColumns = marketHelper.columns([
 				raiseValuationUsd={row.original.raiseValuationUsd}
 			/>
 		),
-		meta: { headerClassName: 'w-[160px]' }
+		meta: { headerClassName: 'min-w-[160px]' }
 	}),
 	marketHelper.accessor('chains', {
 		id: 'chains',
 		header: 'Chain',
 		enableSorting: false,
 		cell: (info) => <IconsRow items={toChainIconItems(info.getValue(), (chain) => chainHref('/chain', chain))} />,
-		meta: { headerClassName: 'w-[55px] min-w-[55px]', align: 'end' }
+		meta: { align: 'end' }
 	}),
 	marketHelper.accessor((row) => row.supplyApy ?? undefined, {
 		id: 'supply_apy',
@@ -108,7 +108,7 @@ const marketColumns = marketHelper.columns([
 				rewardSymbols={row.original.supplyRewardTokensSymbols}
 			/>
 		),
-		meta: { headerClassName: 'w-[140px] min-w-[140px]', align: 'end' }
+		meta: { align: 'end' }
 	}),
 	marketHelper.accessor((row) => row.borrowApy ?? undefined, {
 		id: 'borrow_apy',
@@ -127,7 +127,7 @@ const marketColumns = marketHelper.columns([
 				rewardSymbols={row.original.borrowRewardTokensSymbols}
 			/>
 		),
-		meta: { headerClassName: 'w-[140px] min-w-[140px]', align: 'end' }
+		meta: { align: 'end' }
 	}),
 	marketHelper.accessor((row) => row.availableBorrowUsd ?? undefined, {
 		id: 'available_borrow',
@@ -137,7 +137,7 @@ const marketColumns = marketHelper.columns([
 			<AvailableCell available={row.original.availableBorrowUsd} capacityFilled={row.original.borrowCapacityFilled} />
 		),
 		meta: {
-			headerClassName: 'w-[130px] min-w-[130px]',
+			headerClassName: 'min-w-[130px]',
 			align: 'end',
 			headerHelperText: 'Amount available to borrow after caps'
 		}
@@ -147,14 +147,14 @@ const marketColumns = marketHelper.columns([
 		header: 'Borrowed',
 		enableSorting: true,
 		cell: (info) => <UsdCell value={info.getValue()} />,
-		meta: { headerClassName: 'w-[120px] min-w-[120px]', align: 'end' }
+		meta: { align: 'end' }
 	}),
 	marketHelper.accessor((row) => row.ltv ?? undefined, {
 		id: 'ltv',
 		header: 'LTV',
 		enableSorting: true,
 		cell: ({ row }) => <LtvCell value={row.original.ltv} />,
-		meta: { headerClassName: 'w-[55px] min-w-[55px]', align: 'end' }
+		meta: { headerClassName: 'min-w-[55px]', align: 'end' }
 	})
 ])
 
@@ -179,7 +179,7 @@ const routeColumns = routeHelper.columns([
 				hasRiskData={row.original.hasRiskData}
 			/>
 		),
-		meta: { headerClassName: 'w-[165px]' }
+		meta: { headerClassName: 'min-w-[165px]' }
 	}),
 	routeHelper.accessor('project', {
 		id: 'project',
@@ -193,14 +193,14 @@ const routeColumns = routeHelper.columns([
 				raiseValuationUsd={row.original.raiseValuationUsd}
 			/>
 		),
-		meta: { headerClassName: 'w-[160px]' }
+		meta: { headerClassName: 'min-w-[160px]' }
 	}),
 	routeHelper.accessor('chains', {
 		id: 'chains',
 		header: 'Chain',
 		enableSorting: false,
 		cell: (info) => <IconsRow items={toChainIconItems(info.getValue(), (chain) => chainHref('/chain', chain))} />,
-		meta: { headerClassName: 'w-[60px] min-w-[60px]', align: 'end' }
+		meta: { align: 'end' }
 	}),
 	routeHelper.accessor((row) => row.netApy ?? undefined, {
 		id: 'net_apy',
@@ -224,7 +224,6 @@ const routeColumns = routeHelper.columns([
 			return <SignedApyCell value={row.original.netApy} summaryLabel="Net" tooltipRows={tooltipRows} />
 		},
 		meta: {
-			headerClassName: 'w-[130px] min-w-[150px]',
 			align: 'end',
 			headerHelperText: 'Net APY of the route — supply yield minus borrow cost'
 		}
@@ -246,7 +245,7 @@ const routeColumns = routeHelper.columns([
 				rewardSymbols={row.original.supplyRewardTokensSymbols}
 			/>
 		),
-		meta: { headerClassName: 'w-[120px] min-w-[150px]', align: 'end' }
+		meta: { align: 'end' }
 	}),
 	routeHelper.accessor((row) => row.borrowApy ?? undefined, {
 		id: 'borrow_apy',
@@ -265,7 +264,7 @@ const routeColumns = routeHelper.columns([
 				rewardSymbols={row.original.borrowRewardTokensSymbols}
 			/>
 		),
-		meta: { headerClassName: 'w-[120px] min-w-[150px]', align: 'end' }
+		meta: { align: 'end' }
 	}),
 	routeHelper.accessor((row) => row.availableBorrowUsd ?? undefined, {
 		id: 'available_borrow',
@@ -274,14 +273,14 @@ const routeColumns = routeHelper.columns([
 		cell: ({ row }) => (
 			<AvailableCell available={row.original.availableBorrowUsd} capacityFilled={row.original.borrowCapacityFilled} />
 		),
-		meta: { headerClassName: 'w-[100px]', align: 'end', headerHelperText: 'Amount available to borrow after caps' }
+		meta: { headerClassName: 'min-w-[100px]', align: 'end', headerHelperText: 'Amount available to borrow after caps' }
 	}),
 	routeHelper.accessor((row) => row.ltv ?? undefined, {
 		id: 'ltv',
 		header: 'LTV',
 		enableSorting: true,
 		cell: ({ row }) => <LtvCell value={row.original.ltv} />,
-		meta: { headerClassName: 'w-[70px]', align: 'end' }
+		meta: { align: 'end' }
 	})
 ])
 
@@ -296,7 +295,7 @@ export function PaginatedBorrowMarketsTable({
 			initialPageSize={props.initialPageSize ?? 50}
 			manualPagination={props.manualPagination ?? true}
 			manualSorting={props.manualSorting ?? true}
-			tableClassName="min-w-[920px] [&_td]:py-1.5"
+			tableClassName="[&_td]:py-1.5"
 			shell={appearance === 'embedded' ? 'none' : 'default'}
 		/>
 	)
@@ -313,7 +312,7 @@ export function PaginatedBorrowRoutesTable({
 			initialPageSize={props.initialPageSize ?? 50}
 			manualPagination={props.manualPagination ?? true}
 			manualSorting={props.manualSorting ?? true}
-			tableClassName="min-w-[920px] [&_td]:py-1.5"
+			tableClassName="[&_td]:py-1.5"
 			shell={appearance === 'embedded' ? 'none' : 'default'}
 		/>
 	)

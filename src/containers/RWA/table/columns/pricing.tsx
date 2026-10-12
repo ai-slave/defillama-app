@@ -4,5 +4,5 @@ export const priceColumn = columnHelper.accessor((row) => row.metrics.price ?? u
 	id: 'price',
 	header: 'Price',
 	cell: ({ getValue }) => formatTableUsd(getValue()),
-	meta: numberColumnMeta('w-[120px]', 'Latest token price in USD.', 'Token Price')
+	meta: { headerClassName: 'min-w-[120px]', ...numberColumnMeta('Latest token price in USD.', 'Token Price') }
 })

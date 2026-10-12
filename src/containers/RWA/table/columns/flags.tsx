@@ -22,7 +22,7 @@ function formatFlagTally(tally: RWAFlagTally): string {
 
 type FlagColumnConfig = {
 	key: RWAFlagKey
-	width: string
+	width?: string
 	/** A restriction: yes is the warning color. */
 	yesIsWarning?: boolean
 	/** In the export, not the picker; the dialog filters cover them. */
@@ -30,13 +30,13 @@ type FlagColumnConfig = {
 }
 
 const FLAG_COLUMNS: Array<FlagColumnConfig> = [
-	{ key: 'redeemable', width: 'w-[120px]' },
-	{ key: 'attestations', width: 'w-[120px]' },
-	{ key: 'cexListed', width: 'w-[120px]', csvOnly: true },
-	{ key: 'kycForMintRedeem', width: 'w-[min(188px,40vw)]', yesIsWarning: true, csvOnly: true },
-	{ key: 'kycAllowlistedWhitelistedToTransferHold', width: 'w-[min(332px,40vw)]', yesIsWarning: true, csvOnly: true },
-	{ key: 'transferable', width: 'w-[120px]', csvOnly: true },
-	{ key: 'selfCustody', width: 'w-[120px]', csvOnly: true }
+	{ key: 'redeemable' },
+	{ key: 'attestations' },
+	{ key: 'cexListed', width: 'min-w-[120px]', csvOnly: true },
+	{ key: 'kycForMintRedeem', yesIsWarning: true, csvOnly: true },
+	{ key: 'kycAllowlistedWhitelistedToTransferHold', yesIsWarning: true, csvOnly: true },
+	{ key: 'transferable', csvOnly: true },
+	{ key: 'selfCustody', csvOnly: true }
 ]
 
 function createFlagColumn({ key, width, yesIsWarning = false, csvOnly = false }: FlagColumnConfig) {
@@ -60,7 +60,8 @@ function createFlagColumn({ key, width, yesIsWarning = false, csvOnly = false }:
 				)
 			},
 			meta: {
-				...numberColumnMeta(width, definition.description),
+				headerClassName: width,
+				...numberColumnMeta(definition.description),
 				csvValue: (row) => (row.kind === 'group' ? formatFlagTally(row.flags[key]) : (row.asset[key] ?? '')),
 				...(csvOnly ? { hidden: true, csvOnly: true } : {})
 			}

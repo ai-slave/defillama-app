@@ -64,7 +64,7 @@ const marketsColumns = marketsColumnHelper.columns([
 		header: 'Pair',
 		enableSorting: false,
 		meta: {
-			headerClassName: 'w-[132px]',
+			headerClassName: 'min-w-[132px]',
 			align: 'start'
 		}
 	}),
@@ -73,7 +73,7 @@ const marketsColumns = marketsColumnHelper.columns([
 		enableSorting: false,
 		cell: ({ getValue }) => <TextLink href={rwaPerpsContractHref(getValue())}>{getValue()}</TextLink>,
 		meta: {
-			headerClassName: 'w-[168px]',
+			headerClassName: 'min-w-[168px]',
 			align: 'start'
 		}
 	}),
@@ -82,7 +82,7 @@ const marketsColumns = marketsColumnHelper.columns([
 		header: 'Price',
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
-			headerClassName: 'w-[112px]',
+			headerClassName: 'min-w-[112px]',
 			align: 'end'
 		}
 	}),
@@ -91,7 +91,7 @@ const marketsColumns = marketsColumnHelper.columns([
 		header: '24h Volume',
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
-			headerClassName: 'w-[124px]',
+			headerClassName: 'min-w-[124px]',
 			align: 'end'
 		}
 	}),
@@ -100,7 +100,7 @@ const marketsColumns = marketsColumnHelper.columns([
 		header: 'Open Interest',
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
-			headerClassName: 'w-[132px]',
+			headerClassName: 'min-w-[132px]',
 			align: 'end'
 		}
 	}),
@@ -109,7 +109,7 @@ const marketsColumns = marketsColumnHelper.columns([
 		header: 'Funding APR',
 		cell: ({ getValue }) => formatFundingRate(getValue() ?? null),
 		meta: {
-			headerClassName: 'w-[124px]',
+			headerClassName: 'min-w-[124px]',
 			align: 'end'
 		}
 	}),
@@ -123,7 +123,7 @@ const marketsColumns = marketsColumnHelper.columns([
 				'-'
 			),
 		meta: {
-			headerClassName: 'w-[180px]',
+			headerClassName: 'min-w-[180px]',
 			align: 'start'
 		}
 	}),
@@ -132,7 +132,7 @@ const marketsColumns = marketsColumnHelper.columns([
 		enableSorting: false,
 		cell: ({ getValue }) => <Tag>{getValue()}</Tag>,
 		meta: {
-			headerClassName: 'w-[84px]',
+			headerClassName: 'min-w-[84px]',
 			align: 'start'
 		}
 	}),
@@ -146,7 +146,7 @@ const marketsColumns = marketsColumnHelper.columns([
 				'-'
 			),
 		meta: {
-			headerClassName: 'w-[180px]',
+			headerClassName: 'min-w-[180px]',
 			align: 'start'
 		}
 	}),
@@ -160,7 +160,7 @@ const marketsColumns = marketsColumnHelper.columns([
 			</Button>
 		),
 		meta: {
-			headerClassName: 'w-[92px]',
+			headerClassName: 'min-w-[92px]',
 			align: 'end'
 		}
 	}),
@@ -172,7 +172,7 @@ const marketsColumns = marketsColumnHelper.columns([
 			</StaleText>
 		),
 		meta: {
-			headerClassName: 'w-[172px]',
+			headerClassName: 'min-w-[172px]',
 			align: 'end'
 		}
 	})
@@ -184,7 +184,7 @@ const tokensColumns = tokensColumnHelper.columns([
 		enableSorting: false,
 		cell: ({ getValue }) => <TextLink href={rwaAssetHref(getValue())}>{getValue()}</TextLink>,
 		meta: {
-			headerClassName: 'w-[132px]',
+			headerClassName: 'min-w-[132px]',
 			align: 'start'
 		}
 	}),
@@ -195,7 +195,7 @@ const tokensColumns = tokensColumnHelper.columns([
 			<TextLink href={rwaPlatformHref(row.original.issuerRwaPlatformSlug)}>{getValue()}</TextLink>
 		),
 		meta: {
-			headerClassName: 'w-[180px]',
+			headerClassName: 'min-w-[180px]',
 			align: 'start'
 		}
 	}),
@@ -204,7 +204,7 @@ const tokensColumns = tokensColumnHelper.columns([
 		header: 'Price',
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
-			headerClassName: 'w-[112px]',
+			headerClassName: 'min-w-[112px]',
 			align: 'end'
 		}
 	}),
@@ -213,7 +213,7 @@ const tokensColumns = tokensColumnHelper.columns([
 		header: 'Active Market Cap',
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
-			headerClassName: 'w-[160px]',
+			headerClassName: 'min-w-[160px]',
 			align: 'end'
 		}
 	}),
@@ -221,7 +221,7 @@ const tokensColumns = tokensColumnHelper.columns([
 		header: 'Issuer',
 		enableSorting: false,
 		meta: {
-			headerClassName: 'w-[min(320px,48vw)]',
+			headerClassName: 'min-w-[min(320px,48vw)]',
 			align: 'start'
 		}
 	})

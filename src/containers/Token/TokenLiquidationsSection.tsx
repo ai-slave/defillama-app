@@ -57,14 +57,13 @@ const protocolColumns = protocolColumnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[min(220px,40vw)]'
+			headerClassName: 'min-w-[min(220px,40vw)]'
 		}
 	}),
 	protocolColumnHelper.accessor((row) => row.positionCount ?? undefined, {
 		id: 'positionCount',
 		header: 'Positions',
 		meta: {
-			headerClassName: 'w-[110px]',
 			align: 'end'
 		}
 	}),
@@ -72,7 +71,6 @@ const protocolColumns = protocolColumnHelper.columns([
 		id: 'chainCount',
 		header: 'Chains',
 		meta: {
-			headerClassName: 'w-[90px]',
 			align: 'end'
 		}
 	}),
@@ -82,7 +80,6 @@ const protocolColumns = protocolColumnHelper.columns([
 		cell: ({ getValue }) =>
 			formatUsd(getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
-			headerClassName: 'w-[145px]',
 			align: 'end'
 		}
 	})
@@ -104,14 +101,13 @@ const chainColumns = chainColumnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[min(180px,40vw)]'
+			headerClassName: 'min-w-[min(180px,40vw)]'
 		}
 	}),
 	chainColumnHelper.accessor((row) => row.positionCount ?? undefined, {
 		id: 'positionCount',
 		header: 'Positions',
 		meta: {
-			headerClassName: 'w-[110px]',
 			align: 'end'
 		}
 	}),
@@ -119,7 +115,6 @@ const chainColumns = chainColumnHelper.columns([
 		id: 'protocolCount',
 		header: 'Protocols',
 		meta: {
-			headerClassName: 'w-[110px]',
 			align: 'end'
 		}
 	}),
@@ -129,7 +124,6 @@ const chainColumns = chainColumnHelper.columns([
 		cell: ({ getValue }) =>
 			formatUsd(getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
-			headerClassName: 'w-[145px]',
 			align: 'end'
 		}
 	})

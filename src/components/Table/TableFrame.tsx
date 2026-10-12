@@ -15,10 +15,9 @@ import { useMedia } from '~/hooks/useMedia'
 import { EmptyState } from '~/ui/Status'
 import { Definition, Tooltip } from '~/ui/Tooltip'
 import type { SortingFeatures, VisibilityFeatures } from './features/contracts'
-import { TableColumnGroup } from './TableColumnGroup'
 import { TableEmptyRow } from './TableEmptyRow'
 import { TableWatermark } from './TableWatermark'
-import type { TableCssVars, TableLayout } from './types'
+import type { ColumnSizing, TableCssVars } from './types'
 
 interface StickyHeaderLayout {
 	left: number
@@ -56,7 +55,7 @@ interface TableFrameProps<F extends SortingFeatures & VisibilityFeatures, T exte
 	rowCount: number
 	isChainPage: boolean
 	compact: boolean
-	tableLayout: TableLayout
+	columnSizing: ColumnSizing
 	className?: string
 	style?: React.CSSProperties
 	/** Runs each time the scroll container mounts. It is not rendered while every column is hidden. */
@@ -72,7 +71,7 @@ export function TableFrame<F extends SortingFeatures & VisibilityFeatures, T ext
 	rowCount,
 	isChainPage,
 	compact,
-	tableLayout,
+	columnSizing,
 	className,
 	style,
 	onContainerMount,
@@ -362,18 +361,18 @@ export function TableFrame<F extends SortingFeatures & VisibilityFeatures, T ext
 			style={{ maxWidth: '100%', WebkitOverflowScrolling: 'touch', ...style }}
 		>
 			<TableWatermark rowCount={rowCount} />
+			{/* Auto layout lets a header widen its column. Under `declared` sizing, `max-w-0` on body cells keeps them
+			    out of the width calculation, so the window of rendered rows never moves a column. */}
 			<table
+				className={columnSizing === 'declared' ? '[&>tbody>tr>td]:max-w-0' : undefined}
 				style={{
 					position: 'relative',
 					width: '100%',
 					minWidth: '100%',
-					tableLayout,
 					borderCollapse: 'separate',
 					borderSpacing: 0
 				}}
 			>
-				{tableLayout === 'fixed' ? <TableColumnGroup columns={visibleLeafColumns} /> : null}
-
 				<thead ref={tableHeaderRef} style={{ display: 'table-header-group', zIndex: 10 }}>
 					{renderHeaderRows()}
 				</thead>
@@ -413,7 +412,15 @@ export function TableFrame<F extends SortingFeatures & VisibilityFeatures, T ext
 							} as TableCssVars
 						}
 					>
-						<TableColumnGroup columns={visibleLeafColumns} widths={leafColumnWidths} />
+						{/* The copy has no body, so it takes the widths the real header measured. */}
+						<colgroup>
+							{visibleLeafColumns.map((column, index) => (
+								<col
+									key={column.id}
+									style={leafColumnWidths[index] ? { width: `${leafColumnWidths[index]}px` } : undefined}
+								/>
+							))}
+						</colgroup>
 						<thead style={{ display: 'table-header-group', zIndex: 10 }}>
 							{renderHeaderRows({ isStickyMirror: true })}
 						</thead>

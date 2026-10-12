@@ -64,36 +64,37 @@ export function BridgedTVLChainsList({ assets, chains, flows1d, deprecatedChains
 	)
 }
 
-const BRIDGED_SECTION_COLUMNS = [
+const BRIDGED_SECTION_COLUMNS: Array<{
+	id: ChainAssetCategoryKey
+	header: string
+	width?: string
+	helperText: string
+}> = [
 	{
 		id: 'total',
 		header: 'Total Bridged',
-		width: 'w-[120px]',
 		helperText: 'Total value of assets on the chain, excluding own tokens'
 	},
-	{ id: 'native', header: 'Native', width: 'w-[110px]', helperText: 'Assets minted natively on the chain' },
+	{ id: 'native', header: 'Native', width: 'min-w-[110px]', helperText: 'Assets minted natively on the chain' },
 	{
 		id: 'canonical',
 		header: 'Canonical',
-		width: 'w-[120px]',
 		helperText: 'Assets bridged through the official canonical bridge'
 	},
 	{
 		id: 'ownTokens',
 		header: 'Own Tokens',
-		width: 'w-[120px]',
 		helperText: 'The chains own token, either for gas or for governance '
 	},
 	{
 		id: 'thirdParty',
 		header: 'Third Party',
-		width: 'w-[120px]',
 		helperText: 'Assets bridged through bridges that aren’t the canonical bridge'
 	},
-	{ id: 'stablecoins', header: 'Stablecoins', width: 'w-[120px]', helperText: 'Stablecoins held on the chain' },
-	{ id: 'rwa', header: 'RWAs', width: 'w-[110px]', helperText: 'Tokenized real world assets held on the chain' },
-	{ id: 'lst', header: 'Liquid Staking', width: 'w-[130px]', helperText: 'Liquid staking tokens held on the chain' }
-] as const
+	{ id: 'stablecoins', header: 'Stablecoins', helperText: 'Stablecoins held on the chain' },
+	{ id: 'rwa', header: 'RWAs', width: 'min-w-[110px]', helperText: 'Tokenized real world assets held on the chain' },
+	{ id: 'lst', header: 'Liquid Staking', helperText: 'Liquid staking tokens held on the chain' }
+]
 
 const bridgedNameColumn = columnHelper.accessor('name', {
 	id: 'name',
@@ -113,7 +114,7 @@ const bridgedNameColumn = columnHelper.accessor('name', {
 		)
 	},
 	meta: {
-		headerClassName: 'w-[min(200px,40vw)]'
+		headerClassName: 'min-w-[min(200px,40vw)]'
 	}
 })
 

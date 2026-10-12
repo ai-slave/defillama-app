@@ -34,24 +34,14 @@ function hasObjectProperty(node: AstNode, property: string): boolean {
 	return getObjectProperty(node, property) !== undefined
 }
 
-function hasMetaProperty(config: AstNode, property: string): boolean {
-	const meta = getObjectProperty(config, 'meta')
-	return Boolean(meta && meta.type === 'ObjectExpression' && hasObjectProperty(meta, property))
-}
-
-function hasLiteralMetaFlag(config: AstNode, property: string): boolean {
-	const meta = getObjectProperty(config, 'meta')
-	if (!meta || meta.type !== 'ObjectExpression') return false
-	const value = getObjectProperty(meta, property)
-	return value?.type === 'Literal' && value.value === true
-}
-
 function compactNodeText(source: string, node: AstNode | undefined): string {
 	return node ? source.slice(node.start, node.end).replace(/\s+/g, ' ').slice(0, 120) : ''
 }
 
-describe('VirtualTable column sizing', () => {
-	test('keeps shared VirtualTable leaf columns explicitly CSS-sized through headerClassName', () => {
+describe('Table column sizing', () => {
+	// The shared renderers size columns from meta.headerClassName (see "Column widths" in the Table README) and never
+	// read TanStack's size, so a size there silently does nothing.
+	test('leaves TanStack size off shared table columns', () => {
 		const failures: Array<string> = []
 
 		for (const file of sourceFiles()) {
@@ -74,21 +64,13 @@ describe('VirtualTable column sizing', () => {
 				const callArguments = node.arguments as Array<AstNode>
 				const config = callArguments[callArguments.length - 1]
 				if (!config || config.type !== 'ObjectExpression') return
-				// Hidden export-only columns never participate in table layout.
-				if (hasLiteralMetaFlag(config, 'hidden')) return
 
 				const id = compactNodeText(source, getObjectProperty(config, 'id') ?? callArguments[0])
 				const header = compactNodeText(source, getObjectProperty(config, 'header'))
 				const label = `${relativePath}:${lineOf(source, node.start)} ${method} ${id}${header ? ` / ${header}` : ''}`
 
 				if (hasObjectProperty(config, 'size')) {
-					failures.push(`${label} still uses size`)
-				}
-				if (hasMetaProperty(config, 'colClassName')) {
-					failures.push(`${label} still uses meta.colClassName`)
-				}
-				if (!hasMetaProperty(config, 'headerClassName')) {
-					failures.push(`${label} missing meta.headerClassName`)
+					failures.push(`${label} uses size`)
 				}
 			})
 		}

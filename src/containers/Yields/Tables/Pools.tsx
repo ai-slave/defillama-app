@@ -96,7 +96,7 @@ function createEarnColumns(query: ApiQuery, median?: EarnApyMedian, defaultColum
 					hasRiskData={row.original.hasRiskData}
 				/>
 			),
-			meta: { headerClassName: 'w-[190px] min-w-[190px]' }
+			meta: { headerClassName: 'min-w-[190px]' }
 		}),
 		columnHelper.accessor((row) => row.referenceAsset ?? undefined, {
 			id: 'referenceAsset',
@@ -119,7 +119,7 @@ function createEarnColumns(query: ApiQuery, median?: EarnApyMedian, defaultColum
 				)
 			},
 			meta: {
-				headerClassName: 'w-[110px] min-w-[110px]',
+				headerClassName: 'min-w-[110px]',
 				headerHelperText: 'The asset you provide to enter the pool'
 			}
 		}),
@@ -135,7 +135,7 @@ function createEarnColumns(query: ApiQuery, median?: EarnApyMedian, defaultColum
 					raiseValuationUsd={row.original.raiseValuationUsd}
 				/>
 			),
-			meta: { headerClassName: 'w-[130px] min-w-[130px]' }
+			meta: { headerClassName: 'min-w-[130px]' }
 		}),
 		columnHelper.accessor((row) => row.category ?? undefined, {
 			id: 'category',
@@ -151,14 +151,14 @@ function createEarnColumns(query: ApiQuery, median?: EarnApyMedian, defaultColum
 					<EmptyCell />
 				)
 			},
-			meta: { headerClassName: 'w-[110px] min-w-[110px]' }
+			meta: { headerClassName: 'min-w-[110px]' }
 		}),
 		columnHelper.accessor('chains', {
 			id: 'chains',
 			header: 'Chain',
 			enableSorting: false,
 			cell: (info) => <IconsRow items={toChainIconItems(info.getValue(), (chain) => chainHref('/chain', chain))} />,
-			meta: { headerClassName: 'w-[60px] min-w-[60px]', align: 'end' }
+			meta: { align: 'end' }
 		}),
 		columnHelper.accessor((row) => row.tvl ?? undefined, {
 			id: 'tvl',
@@ -182,7 +182,7 @@ function createEarnColumns(query: ApiQuery, median?: EarnApyMedian, defaultColum
 					</span>
 				),
 			meta: {
-				headerClassName: 'w-[100px] min-w-[100px]',
+				headerClassName: 'min-w-[100px]',
 				align: 'end',
 				headerHelperText: 'Total value deposited in the pool. For lending pools, this is total supplied.'
 			}
@@ -193,7 +193,7 @@ function createEarnColumns(query: ApiQuery, median?: EarnApyMedian, defaultColum
 			enableSorting: true,
 			cell: ({ row }) => <EarnApyCell row={row.original} median={median} />,
 			meta: {
-				headerClassName: 'w-[136px] min-w-[136px]',
+				headerClassName: 'min-w-[136px]',
 				align: 'end',
 				// The lock sits on the column, not beside a figure, where it read as a fixed rate.
 				headerTrail: () => <MeasuredColumnHint />,
@@ -211,7 +211,6 @@ function createEarnColumns(query: ApiQuery, median?: EarnApyMedian, defaultColum
 			enableSorting: true,
 			cell: ({ row }) => <ExitCell row={row.original} />,
 			meta: {
-				headerClassName: 'w-[144px] min-w-[144px]',
 				align: 'end',
 				headerTrail: () => <MeasuredExitColumnHint />,
 				headerHelperText:
@@ -224,7 +223,7 @@ function createEarnColumns(query: ApiQuery, median?: EarnApyMedian, defaultColum
 			enableSorting: true,
 			cell: (info) =>
 				info.getValue() == null ? <EmptyCell /> : <span>{formatPercent(info.getValue(), YIELD_PERCENT_OPTIONS)}</span>,
-			meta: { headerClassName: 'w-[150px] min-w-[150px]', align: 'end' }
+			meta: { align: 'end' }
 		}),
 		columnHelper.accessor((row) => row.apyRewardRaw ?? undefined, {
 			id: 'apyReward',
@@ -237,7 +236,7 @@ function createEarnColumns(query: ApiQuery, median?: EarnApyMedian, defaultColum
 					tokens={info.row.original.rewardTokens}
 				/>
 			),
-			meta: { headerClassName: 'w-[150px] min-w-[150px]', align: 'end' }
+			meta: { align: 'end' }
 		}),
 		columnHelper.accessor((row) => row.apyMean30d ?? undefined, {
 			id: 'apyMean30d',
@@ -246,7 +245,6 @@ function createEarnColumns(query: ApiQuery, median?: EarnApyMedian, defaultColum
 			cell: (info) =>
 				info.getValue() == null ? <EmptyCell /> : <span>{formatPercent(info.getValue(), YIELD_PERCENT_OPTIONS)}</span>,
 			meta: {
-				headerClassName: 'w-[135px] min-w-[135px]',
 				align: 'end',
 				headerHelperText: 'Rolling 30-day average of APY Base + APY Reward'
 			}
@@ -270,7 +268,7 @@ function createEarnColumns(query: ApiQuery, median?: EarnApyMedian, defaultColum
 					<EmptyCell />
 				),
 			meta: {
-				headerClassName: 'w-[124px] min-w-[124px] whitespace-nowrap',
+				headerClassName: 'min-w-[124px] whitespace-nowrap',
 				align: 'center',
 				headerHelperText: 'Follows the APY composition toggled above (+Reward / +Intrinsic)'
 			}
@@ -287,7 +285,6 @@ function createEarnColumns(query: ApiQuery, median?: EarnApyMedian, defaultColum
 				/>
 			),
 			meta: {
-				headerClassName: 'w-[120px] min-w-[120px]',
 				align: 'center',
 				headerHelperText:
 					'30-day APY stability score, 0–100 — higher is steadier (≥67 Stable · 33–66 Mixed · <33 Volatile). Follows the APY composition toggled above'
@@ -338,7 +335,6 @@ function createEarnColumns(query: ApiQuery, median?: EarnApyMedian, defaultColum
 				)
 			},
 			meta: {
-				headerClassName: 'w-[90px] min-w-[90px]',
 				align: 'end',
 				headerHelperText: 'Unique token holders'
 			}
@@ -354,7 +350,6 @@ function createEarnColumns(query: ApiQuery, median?: EarnApyMedian, defaultColum
 					formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				),
 			meta: {
-				headerClassName: 'w-[110px] min-w-[110px]',
 				align: 'end',
 				headerHelperText: '$ Volume in the last 24 hours.'
 			}
@@ -369,7 +364,7 @@ function createEarnColumns(query: ApiQuery, median?: EarnApyMedian, defaultColum
 				) : (
 					<span>{formatNumber(info.getValue(), { maximumFractionDigits: 4 })}</span>
 				),
-			meta: { headerClassName: 'w-[130px] min-w-[130px]', align: 'end' }
+			meta: { align: 'end' }
 		}),
 		columnHelper.accessor((row) => row.top10Pct ?? undefined, {
 			id: 'top10Pct',
@@ -394,7 +389,6 @@ function createEarnColumns(query: ApiQuery, median?: EarnApyMedian, defaultColum
 				)
 			},
 			meta: {
-				headerClassName: 'w-[110px] min-w-[110px]',
 				align: 'end',
 				headerHelperText: 'Percentage of TVL held by the top 10 holders. Higher = more concentrated.'
 			}
@@ -412,7 +406,6 @@ function createEarnColumns(query: ApiQuery, median?: EarnApyMedian, defaultColum
 					</span>
 				),
 			meta: {
-				headerClassName: 'w-[110px] min-w-[110px]',
 				align: 'end',
 				headerHelperText: 'Average position size in USD (TVL / holder count).'
 			}
@@ -451,7 +444,7 @@ export function PaginatedYieldsPoolTable({
 		<PaginatedYieldsTable
 			data={data}
 			columns={columns}
-			tableClassName="min-w-[1180px] [&_td]:py-1.5"
+			tableClassName="[&_td]:py-1.5"
 			initialPageSize={initialPageSize}
 			initialPageIndex={initialPageIndex}
 			{...(rowCount !== undefined ? { rowCount } : {})}

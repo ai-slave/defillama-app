@@ -237,7 +237,7 @@ const columns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[min(240px,40vw)]'
+			headerClassName: 'min-w-[min(240px,40vw)]'
 		}
 	}),
 	columnHelper.accessor('chains', {
@@ -252,7 +252,7 @@ const columns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[min(200px,40vw)]',
+			headerClassName: 'min-w-[min(200px,40vw)]',
 			align: 'end',
 			headerHelperText: 'Chains secured by the oracle'
 		}
@@ -261,7 +261,6 @@ const columns = columnHelper.columns([
 		id: 'protocolsSecured',
 		header: 'Protocols',
 		meta: {
-			headerClassName: 'w-[100px]',
 			align: 'end'
 		}
 	}),
@@ -277,7 +276,7 @@ const columns = columnHelper.columns([
 				: formatUsd(tvl, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 		},
 		meta: {
-			headerClassName: 'w-[140px]',
+			headerClassName: 'min-w-[140px]',
 			align: 'end',
 			headerHelperText: 'Total Value Secured by the Oracle'
 		}

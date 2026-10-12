@@ -43,7 +43,7 @@ export function BridgeTokensTable({ data }: { data: Array<BridgeTokenTableRow> }
 						)
 					},
 					meta: {
-						headerClassName: 'w-[120px]'
+						headerClassName: 'min-w-[120px]'
 					}
 				}),
 				columnHelper.display({
@@ -62,7 +62,7 @@ export function BridgeTokensTable({ data }: { data: Array<BridgeTokenTableRow> }
 						)
 					},
 					meta: {
-						headerClassName: 'w-[120px]',
+						headerClassName: 'min-w-[120px]',
 						align: 'end'
 					}
 				}),
@@ -78,7 +78,7 @@ export function BridgeTokensTable({ data }: { data: Array<BridgeTokenTableRow> }
 									compactSuffix: 'lowercase'
 								}),
 					meta: {
-						headerClassName: 'w-[120px]',
+						headerClassName: 'min-w-[120px]',
 						align: 'end'
 					}
 				}),
@@ -94,7 +94,7 @@ export function BridgeTokensTable({ data }: { data: Array<BridgeTokenTableRow> }
 									compactSuffix: 'lowercase'
 								}),
 					meta: {
-						headerClassName: 'w-[120px]',
+						headerClassName: 'min-w-[120px]',
 						align: 'end'
 					}
 				}),
@@ -110,7 +110,7 @@ export function BridgeTokensTable({ data }: { data: Array<BridgeTokenTableRow> }
 									compactSuffix: 'lowercase'
 								}),
 					meta: {
-						headerClassName: 'w-[120px]',
+						headerClassName: 'min-w-[120px]',
 						align: 'end'
 					}
 				})

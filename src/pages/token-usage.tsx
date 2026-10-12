@@ -305,14 +305,14 @@ const columns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[min(240px,40vw)]'
+			headerClassName: 'min-w-[min(240px,40vw)]'
 		}
 	}),
 	columnHelper.accessor('category', {
 		header: 'Category',
 		enableSorting: false,
 		meta: {
-			headerClassName: 'w-[140px]'
+			headerClassName: 'min-w-[140px]'
 		}
 	}),
 	columnHelper.accessor((row) => row.amountUsd ?? undefined, {
@@ -321,7 +321,7 @@ const columns = columnHelper.columns([
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'min-w-[120px]',
 			align: 'end'
 		}
 	})

@@ -16,7 +16,7 @@ Choose the renderer independently of how rows are fetched or paginated. Import e
 | Reset table state when the entity or view changes | A React `key` on the provider; persistent navigation controls sit outside the keyed subtree                                                                  | `src/containers/Token/TokenMarketsSection.tsx`             |
 | Deliver rows too large for page props             | `src/server/tablePages/README.md`                                                                                                                            | server-paginated directories                               |
 | Name the row (Name, Ticker, Pair)                 | `enableHiding: false` on the identity column; build pickers with `getHideableColumns` / `getColumnSelectState` or `TableColumnSelect`                        | `search/columnSelect.ts`                                   |
-| Size a column                                     | `w-[N] min-w-[N]` in `meta.headerClassName`; see "Column widths"                                                                                             | `meta: { headerClassName: 'w-[121px] min-w-[121px]' }`     |
+| Size a column for its values                      | `min-w-[N]` in `meta.headerClassName`; the header sizes itself. See "Column widths"                                                                          | `meta: { headerClassName: 'min-w-[121px]' }`               |
 | Keep a text cell on one line                      | `meta.cellClassName: 'truncate'`                                                                                                                             | `PaginatedTable` text columns                              |
 
 ```tsx
@@ -50,43 +50,38 @@ Choose the renderer independently of how rows are fetched or paginated. Import e
 
 ## Column widths
 
-`PaginatedTable` always uses `table-layout: fixed`, and `Table` and `VirtualTable` default to it. Under that layout the rendered width equals the `headerClassName` width including padding, so the math below is exact.
+The shared renderers lay tables out with `table-layout: auto`, and a column is as wide as the larger of two things: its header (label, sort caret and padding), which the browser measures, and the `min-w-*` classes in `meta.headerClassName`. Body cells never count: every body cell gets `max-width: 0`. So rows scrolling into a virtual window, a sort, a page change or an expanded row never move a column, and a sticky header copy, which has no body, lines up with the table. Spare room is shared across the columns.
 
-```
-width = ceil(24 + max(header + 14 if sortable, widest body value))
-```
-
-- 24 is the cell's `px-3` padding on both sides; 14 is the 10px `SortIcon` plus its 4px `gap-1`.
-- A long-label numeric column is header-bound; a short-label one (`P/E`, `Price`) is body-bound, so do not shrink it to its header.
-- A column of bounded vocabulary (sector) widens so values fit on one line. A free-text column (industry, description) takes a sensible width and truncates.
+- Never size a column for its header. A long-label numeric column ("Reported Volume 24h") declares no width.
+- Declare `min-w-[N]` for what the body shows: a name or text column, which truncates at that width, or a column whose values are wider than its label (`P/E`, `Price`). N is the widest value plus the cell's horizontal padding (24px, or 40px in compact tables).
+- Use `min-w-*`, never `w-*`: auto layout shrinks a column below its `width` as soon as the table overflows.
+- Variants and viewport caps work as usual: `sm:min-w-[240px]`, `min-w-[min(180px,40vw)]`.
 - A truncated cell does not show its full value on hover. When the value must be readable, widen the column or give the cell a `Tooltip onlyWhenClipped` (`src/ui/Tooltip.tsx`), which shows the full value only while it is cut off.
-- Renaming a header changes a header-bound width; re-measure in the same change. When the new label would need a width out of proportion to its values, shorten it and put the detail in `headerHelperText`.
+- `columnSizing="content"` on `Table` sizes columns to every rendered cell, for a short table that renders all its rows and whose values vary in width (`MicaTable`, `RampTable`). Never use it with `VirtualTable` or pagination, where the rendered rows change.
 
-Measure on a page that renders the table, with the widest values on screen (sort descending or show more rows):
+Measure body widths on a page that renders the table, with the widest values on screen (sort descending or show more rows):
 
 ```js
-// Per visible column: current width → width that fits the header and every visible body cell.
+// Per visible column: current width → width that fits every visible body cell.
 const table = document.querySelector('table')
-const headers = [...table.tHead.rows[0].cells]
-const bodyRows = [...table.tBodies[0].rows]
+const headers = [...table.tHead.rows[table.tHead.rows.length - 1].cells]
+const bodyRows = [...table.tBodies[0].rows].filter((r) => r.cells.length === headers.length)
 const contentWidth = (cell) => {
 	const range = document.createRange()
 	range.selectNodeContents(cell)
 	return range.getBoundingClientRect().width
 }
 headers.forEach((th, i) => {
-	const cells = [th, ...bodyRows.map((r) => r.cells[i])].filter(Boolean)
-	const need = Math.max(...cells.map((c) => Math.ceil(contentWidth(c))))
+	const need = Math.max(0, ...bodyRows.map((r) => Math.ceil(contentWidth(r.cells[i]))))
 	const pad = parseFloat(getComputedStyle(th).paddingLeft) + parseFloat(getComputedStyle(th).paddingRight)
-	const current = th.getBoundingClientRect().width
-	console.log(th.innerText.trim().padEnd(24), 'now', Math.round(current), '→', need + pad)
+	console.log(th.innerText.trim().padEnd(24), 'now', Math.round(th.getBoundingClientRect().width), '→', need + pad)
 })
 ```
 
 ## Look
 
 - Normal rows are 50px and compact rows 40px. `rowSize` overrides both for multiline or entity rows, and the virtualizer estimate uses the same value.
-- Compact mode also drops vertical dividers and tightens padding; never shrink one cell or header on its own.
+- Compact mode also drops vertical dividers and tightens vertical padding; its horizontal padding is 20px, not 12px. Never shrink one cell or header on its own.
 - Headers use `table-header` and stay on one line (`whitespace-nowrap`). Body cells inherit 14px Inter.
 - Numeric cells use Inter, never `mono-*`. The shared renderers add `tabular-nums` to end-aligned columns so sorted digits line up; measure those columns with tabular digits on.
 - Numeric columns usually align to the end; text columns (names, categories) align to the start, header and cells alike.

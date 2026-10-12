@@ -116,7 +116,7 @@ export function MicaTable({ venues }: { venues: Array<MicaVenueRowModel> }) {
 					<TableColumnSelect />
 					<TableCsvExport filename="mica-exchanges" includeHiddenColumns />
 				</TableToolbar>
-				<SearchTableView tableLayout="auto" />
+				<SearchTableView columnSizing="content" />
 			</Card>
 		</SearchTableProvider>
 	)

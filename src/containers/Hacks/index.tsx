@@ -255,7 +255,7 @@ const hacksColumns = columnHelper.columns([
 		header: 'Name',
 		enableSorting: false,
 		meta: {
-			headerClassName: 'w-[min(200px,40vw)]'
+			headerClassName: 'min-w-[min(200px,40vw)]'
 		}
 	}),
 	columnHelper.accessor((row) => row.date ?? undefined, {
@@ -265,7 +265,7 @@ const hacksColumns = columnHelper.columns([
 			return value === undefined ? <span className="text-tertiary">N/A</span> : formatDate(value, { input: 'seconds' })
 		},
 		meta: {
-			headerClassName: 'w-[120px]'
+			headerClassName: 'min-w-[120px]'
 		},
 		header: 'Date'
 	}),
@@ -279,9 +279,6 @@ const hacksColumns = columnHelper.columns([
 			) : (
 				formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 			)
-		},
-		meta: {
-			headerClassName: 'w-[140px]'
 		}
 	}),
 	columnHelper.accessor('chains', {
@@ -289,14 +286,14 @@ const hacksColumns = columnHelper.columns([
 		enableSorting: false,
 		cell: ({ getValue }) => <IconsRow items={toChainIconItems(getValue(), (chain) => chainHref('/chain', chain))} />,
 		meta: {
-			headerClassName: 'w-[60px]'
+			headerClassName: 'min-w-[60px]'
 		}
 	}),
 	columnHelper.accessor('classification', {
 		header: 'Classification',
 		enableSorting: false,
 		meta: {
-			headerClassName: 'w-[140px]',
+			headerClassName: 'min-w-[140px]',
 			headerHelperText:
 				'Classified based on whether the hack targeted a weakness in Infrastructure, Smart Contract Language, Protocol Logic or the interaction between multiple protocols (Ecosystem)'
 		},
@@ -313,7 +310,7 @@ const hacksColumns = columnHelper.columns([
 		header: 'Technique',
 		enableSorting: false,
 		meta: {
-			headerClassName: 'w-[min(200px,40vw)]'
+			headerClassName: 'min-w-[min(200px,40vw)]'
 		},
 		cell: ({ getValue }) => {
 			const value = getValue()
@@ -327,7 +324,7 @@ const hacksColumns = columnHelper.columns([
 	columnHelper.accessor('language', {
 		header: 'Language',
 		meta: {
-			headerClassName: 'w-[148px]'
+			headerClassName: 'min-w-[148px]'
 		}
 	})
 ])

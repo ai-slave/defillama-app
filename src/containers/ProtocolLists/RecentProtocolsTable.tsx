@@ -188,7 +188,7 @@ const protocolsColumns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[180px] lg:w-[240px] xl:w-[200px]'
+			headerClassName: 'min-w-[180px] lg:min-w-[240px] xl:min-w-[200px]'
 		}
 	}),
 	columnHelper.accessor('category', {
@@ -204,7 +204,7 @@ const protocolsColumns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[140px]'
+			headerClassName: 'min-w-[140px]'
 		}
 	}),
 	columnHelper.accessor((row) => row.tvl ?? undefined, {
@@ -212,7 +212,7 @@ const protocolsColumns = columnHelper.columns([
 		header: 'TVL',
 		cell: ({ getValue, row }) => <ProtocolTvlCell value={getValue()} rowValues={row.original} />,
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'min-w-[120px]',
 			align: 'end',
 			headerHelperText: 'Sum of value of all coins held in smart contracts of the protocol'
 		}
@@ -222,7 +222,6 @@ const protocolsColumns = columnHelper.columns([
 		header: '1d TVL Change',
 		cell: ({ getValue }) => <Change value={getValue()} />,
 		meta: {
-			headerClassName: 'w-[140px]',
 			align: 'end',
 			headerHelperText: 'Change in TVL in the last 24 hours'
 		}
@@ -232,7 +231,6 @@ const protocolsColumns = columnHelper.columns([
 		header: '7d TVL Change',
 		cell: ({ getValue }) => <Change value={getValue()} />,
 		meta: {
-			headerClassName: 'w-[140px]',
 			align: 'end',
 			headerHelperText: 'Change in TVL in the last 7 days'
 		}
@@ -242,7 +240,6 @@ const protocolsColumns = columnHelper.columns([
 		header: '30d TVL Change',
 		cell: ({ getValue }) => <Change value={getValue()} />,
 		meta: {
-			headerClassName: 'w-[140px]',
 			align: 'end',
 			headerHelperText: 'Change in TVL in the last 30 days'
 		}
@@ -252,7 +249,7 @@ const protocolsColumns = columnHelper.columns([
 		header: 'Mcap/TVL',
 		cell: (info) => <>{formatRatio(info.getValue())}</>,
 		meta: {
-			headerClassName: 'w-[110px]',
+			headerClassName: 'min-w-[110px]',
 			align: 'end',
 			headerHelperText: 'Market cap / TVL ratio'
 		}
@@ -323,7 +320,7 @@ const listedAtColumn = columnHelper.accessor((row) => row.listedAt ?? undefined,
 		return listedAt != null ? <RelativeTime value={listedAt} input="seconds" /> : null
 	},
 	meta: {
-		headerClassName: 'w-[120px]',
+		headerClassName: 'min-w-[120px]',
 		align: 'end'
 	}
 })
@@ -341,7 +338,6 @@ const airdropsColumns = columnHelper.columns([
 		header: 'Total Money Raised',
 		cell: ({ row }) => (row.original.raiseSummary ? <RaisesTotal {...row.original.raiseSummary} /> : null),
 		meta: {
-			headerClassName: 'w-[168px]',
 			align: 'end'
 		}
 	}),

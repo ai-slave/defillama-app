@@ -153,7 +153,7 @@ function createColumns(metric: ExtraTvlMetric) {
 				)
 			},
 			meta: {
-				headerClassName: 'w-[min(280px,40vw)]'
+				headerClassName: 'min-w-[min(280px,40vw)]'
 			}
 		}),
 		columnHelper.accessor('category', {
@@ -166,7 +166,7 @@ function createColumns(metric: ExtraTvlMetric) {
 				return <TextLink href={getCategoryRoute(slug(value))}>{value}</TextLink>
 			},
 			meta: {
-				headerClassName: 'w-[128px]'
+				headerClassName: 'min-w-[128px]'
 			}
 		}),
 		columnHelper.accessor((row) => row.value ?? undefined, {
@@ -177,7 +177,7 @@ function createColumns(metric: ExtraTvlMetric) {
 					? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 					: null,
 			meta: {
-				headerClassName: 'w-[128px]',
+				headerClassName: 'min-w-[128px]',
 				align: 'end',
 				headerHelperText: metricInfo.headerHelperText
 			}
@@ -187,7 +187,7 @@ function createColumns(metric: ExtraTvlMetric) {
 			header: 'Change 30d',
 			cell: (info) => <Change value={info.getValue()} />,
 			meta: {
-				headerClassName: 'w-[110px]',
+				headerClassName: 'min-w-[110px]',
 				align: 'end'
 			}
 		})

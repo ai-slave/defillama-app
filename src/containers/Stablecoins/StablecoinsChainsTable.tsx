@@ -71,7 +71,7 @@ const stablecoinsByChainColumns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[min(200px,40vw)]'
+			headerClassName: 'min-w-[min(200px,40vw)]'
 		}
 	}),
 	columnHelper.accessor((row) => row.change_7d ?? undefined, {
@@ -79,7 +79,7 @@ const stablecoinsByChainColumns = columnHelper.columns([
 		header: '7d Change',
 		cell: (info) => <Change value={info.getValue()} />,
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'min-w-[120px]',
 			align: 'end'
 		}
 	}),
@@ -89,7 +89,6 @@ const stablecoinsByChainColumns = columnHelper.columns([
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
-			headerClassName: 'w-[132px]',
 			align: 'end'
 		}
 	}),
@@ -118,7 +117,7 @@ const stablecoinsByChainColumns = columnHelper.columns([
 				)
 			},
 			meta: {
-				headerClassName: 'w-[170px]',
+				headerClassName: 'min-w-[170px]',
 				align: 'end'
 			}
 		}
@@ -129,7 +128,6 @@ const stablecoinsByChainColumns = columnHelper.columns([
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
-			headerClassName: 'w-[min(180px,40vw)]',
 			align: 'end'
 		}
 	}),
@@ -139,7 +137,6 @@ const stablecoinsByChainColumns = columnHelper.columns([
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
-			headerClassName: 'w-[min(185px,40vw)]',
 			align: 'end'
 		}
 	})

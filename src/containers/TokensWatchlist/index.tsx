@@ -17,12 +17,7 @@ import { NewPortfolioDialog } from '~/components/NewPortfolioDialog'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import type { TokenMarketsListResponse } from '~/containers/Markets/api.types'
 import { TokenMarketsSection } from '~/containers/Token/TokenMarketsSection'
-import {
-	EXPANDABLE_TOKENS_COLUMNS,
-	getRankColumnWidth,
-	TOKENS_MARKETS_EXPANDER_COLUMN_WIDTH,
-	TOKENS_TABLE_WIDTH_EXCLUDING_RANK
-} from '~/containers/Tokens'
+import { EXPANDABLE_TOKENS_COLUMNS, getRankColumnWidth } from '~/containers/Tokens'
 import { useWatchlistTokensTable } from '~/containers/Tokens/queries.client'
 import { TokensSourceAvailability } from '~/containers/Tokens/SourceAvailability'
 import { tokenTableFeatures, type TokenTableFeatures } from '~/containers/Tokens/tableFeatures'
@@ -131,10 +126,7 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Arr
 	})
 
 	const rankColumnWidth = getRankColumnWidth(rows)
-	const tableStyle = {
-		'--tokens-rank-column-width': `${rankColumnWidth}px`,
-		'--tokens-table-min-width': `${TOKENS_TABLE_WIDTH_EXCLUDING_RANK + TOKENS_MARKETS_EXPANDER_COLUMN_WIDTH + rankColumnWidth}px`
-	} as React.CSSProperties
+	const tableStyle = { '--tokens-rank-column-width': `${rankColumnWidth}px` } as React.CSSProperties
 
 	if (isLoadingWatchlist) {
 		return (
@@ -191,7 +183,6 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Arr
 							table={table}
 							pageSizeOptions={PAGE_SIZE_OPTIONS}
 							style={tableStyle}
-							tableClassName="min-w-(--tokens-table-min-width)"
 							interactionDisabled={isFetching}
 							renderSubComponent={(row: Row<typeof tableFeaturesConfig, TokensTableRow>) => (
 								<ExpandedTokenMarkets geckoId={row.original.id} symbol={row.original.symbol} />

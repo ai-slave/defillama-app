@@ -76,7 +76,7 @@ const columns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[min(280px,40vw)]'
+			headerClassName: 'min-w-[min(280px,40vw)]'
 		}
 	}),
 	columnHelper.accessor((row) => row.netTreasury ?? undefined, {
@@ -87,7 +87,6 @@ const columns = columnHelper.columns([
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[128px]',
 			align: 'end',
 			headerHelperText: 'Value of tokens owned by a protocol, excluding its own token'
 		}

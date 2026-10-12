@@ -35,7 +35,7 @@ export function VirtualTable<F extends SortingFeatures & VisibilityFeatures, T e
 	compact = false,
 	useStickyHeader = true,
 	rowRankById,
-	tableLayout = 'fixed',
+	columnSizing = 'declared',
 	className,
 	style
 }: VirtualTableProps<F, T>) {
@@ -110,7 +110,7 @@ export function VirtualTable<F extends SortingFeatures & VisibilityFeatures, T e
 			rowCount={rows.length}
 			isChainPage={isChainPage}
 			compact={compact}
-			tableLayout={tableLayout}
+			columnSizing={columnSizing}
 			className={className}
 			style={style}
 		>

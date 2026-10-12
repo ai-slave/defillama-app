@@ -370,7 +370,7 @@ const COLUMN_REGISTRY = {
 			)
 		},
 		meta: {
-			headerClassName: 'w-[min(280px,40vw)]'
+			headerClassName: 'min-w-[min(280px,40vw)]'
 		}
 	}),
 	tvl: columnHelper.accessor((p) => p.tvl ?? undefined, {
@@ -381,7 +381,7 @@ const COLUMN_REGISTRY = {
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'min-w-[120px]',
 			align: 'end',
 			headerHelperText: 'Sum of value of all coins held in smart contracts of the protocol'
 		}
@@ -391,7 +391,7 @@ const COLUMN_REGISTRY = {
 		header: 'Mcap/TVL',
 		cell: (info) => formatRatio(info.getValue()),
 		meta: {
-			headerClassName: 'w-[110px]',
+			headerClassName: 'min-w-[110px]',
 			align: 'end',
 			headerHelperText: 'Market cap / TVL ratio'
 		}
@@ -404,7 +404,7 @@ const COLUMN_REGISTRY = {
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[100px]',
+			headerClassName: 'min-w-[100px]',
 			align: 'end',
 			headerHelperText: definitions.fees.protocol['7d']
 		}
@@ -417,7 +417,6 @@ const COLUMN_REGISTRY = {
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[128px]',
 			align: 'end',
 			headerHelperText: definitions.revenue.protocol['7d']
 		}
@@ -430,7 +429,7 @@ const COLUMN_REGISTRY = {
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[100px]',
+			headerClassName: 'min-w-[100px]',
 			align: 'end',
 			headerHelperText: definitions.fees.protocol['30d']
 		}
@@ -443,7 +442,6 @@ const COLUMN_REGISTRY = {
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[128px]',
 			align: 'end',
 			headerHelperText: definitions.revenue.protocol['30d']
 		}
@@ -456,7 +454,7 @@ const COLUMN_REGISTRY = {
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[100px]',
+			headerClassName: 'min-w-[100px]',
 			align: 'end',
 			headerHelperText: definitions.fees.protocol['24h']
 		}
@@ -469,7 +467,6 @@ const COLUMN_REGISTRY = {
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[128px]',
 			align: 'end',
 			headerHelperText: definitions.revenue.protocol['24h']
 		}
@@ -479,7 +476,7 @@ const COLUMN_REGISTRY = {
 		header: 'Perp Volume 24h',
 		cell: (info) => perpVolumeCell(info),
 		meta: {
-			headerClassName: 'w-[160px]',
+			headerClassName: 'min-w-[160px]',
 			align: 'end',
 			headerHelperText: definitions.perps.protocol['24h']
 		}
@@ -489,7 +486,7 @@ const COLUMN_REGISTRY = {
 		header: 'Perp Volume 7d',
 		cell: (info) => perpVolumeCell(info),
 		meta: {
-			headerClassName: 'w-[160px]',
+			headerClassName: 'min-w-[160px]',
 			align: 'end',
 			headerHelperText: definitions.perps.protocol['7d']
 		}
@@ -499,7 +496,7 @@ const COLUMN_REGISTRY = {
 		header: 'Perp Volume 30d',
 		cell: (info) => perpVolumeCell(info),
 		meta: {
-			headerClassName: 'w-[160px]',
+			headerClassName: 'min-w-[160px]',
 			align: 'end',
 			headerHelperText: definitions.perps.protocol['30d']
 		}
@@ -512,7 +509,7 @@ const COLUMN_REGISTRY = {
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[160px]',
+			headerClassName: 'min-w-[160px]',
 			align: 'end',
 			headerHelperText: definitions.openInterest.protocol
 		}
@@ -525,7 +522,7 @@ const COLUMN_REGISTRY = {
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[140px]',
+			headerClassName: 'min-w-[140px]',
 			align: 'end',
 			headerHelperText: definitions.dexs.protocol['7d']
 		}
@@ -538,7 +535,7 @@ const COLUMN_REGISTRY = {
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[148px]',
+			headerClassName: 'min-w-[148px]',
 			align: 'end',
 			headerHelperText: definitions.dexs.protocol['30d']
 		}
@@ -551,7 +548,7 @@ const COLUMN_REGISTRY = {
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[148px]',
+			headerClassName: 'min-w-[148px]',
 			align: 'end',
 			headerHelperText: definitions.dexs.protocol['24h']
 		}
@@ -564,7 +561,7 @@ const COLUMN_REGISTRY = {
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[min(220px,40vw)]',
+			headerClassName: 'min-w-[min(220px,40vw)]',
 			align: 'end',
 			headerHelperText: definitions.dexs.protocol['7d']
 		}
@@ -577,7 +574,7 @@ const COLUMN_REGISTRY = {
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[min(220px,40vw)]',
+			headerClassName: 'min-w-[min(220px,40vw)]',
 			align: 'end',
 			headerHelperText: definitions.dexs.protocol['30d']
 		}
@@ -590,7 +587,7 @@ const COLUMN_REGISTRY = {
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[min(220px,40vw)]',
+			headerClassName: 'min-w-[min(220px,40vw)]',
 			align: 'end',
 			headerHelperText: definitions.dexs.protocol['24h']
 		}
@@ -603,7 +600,7 @@ const COLUMN_REGISTRY = {
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[min(180px,40vw)]',
+			headerClassName: 'min-w-[min(180px,40vw)]',
 			align: 'end',
 			headerHelperText: definitions.dexs.protocol['7d']
 		}
@@ -616,7 +613,7 @@ const COLUMN_REGISTRY = {
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[min(195px,40vw)]',
+			headerClassName: 'min-w-[min(195px,40vw)]',
 			align: 'end',
 			headerHelperText: definitions.dexs.protocol['30d']
 		}
@@ -629,7 +626,7 @@ const COLUMN_REGISTRY = {
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[min(195px,40vw)]',
+			headerClassName: 'min-w-[min(195px,40vw)]',
 			align: 'end',
 			headerHelperText: definitions.dexs.protocol['24h']
 		}
@@ -642,7 +639,7 @@ const COLUMN_REGISTRY = {
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[min(180px,40vw)]',
+			headerClassName: 'min-w-[min(180px,40vw)]',
 			align: 'end',
 			headerHelperText: definitions.dexs.protocol['7d']
 		}
@@ -655,7 +652,7 @@ const COLUMN_REGISTRY = {
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[min(180px,40vw)]',
+			headerClassName: 'min-w-[min(180px,40vw)]',
 			align: 'end',
 			headerHelperText: definitions.dexs.protocol['30d']
 		}
@@ -668,7 +665,7 @@ const COLUMN_REGISTRY = {
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[min(180px,40vw)]',
+			headerClassName: 'min-w-[min(180px,40vw)]',
 			align: 'end',
 			headerHelperText: definitions.dexs.protocol['24h']
 		}
@@ -681,7 +678,7 @@ const COLUMN_REGISTRY = {
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[160px]',
+			headerClassName: 'min-w-[160px]',
 			align: 'end',
 			headerHelperText: definitions.dexs.protocol['7d']
 		}
@@ -694,7 +691,7 @@ const COLUMN_REGISTRY = {
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[160px]',
+			headerClassName: 'min-w-[160px]',
 			align: 'end',
 			headerHelperText: definitions.dexs.protocol['30d']
 		}
@@ -707,7 +704,7 @@ const COLUMN_REGISTRY = {
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[160px]',
+			headerClassName: 'min-w-[160px]',
 			align: 'end',
 			headerHelperText: definitions.dexs.protocol['24h']
 		}
@@ -720,7 +717,7 @@ const COLUMN_REGISTRY = {
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[min(180px,40vw)]',
+			headerClassName: 'min-w-[min(180px,40vw)]',
 			align: 'end',
 			headerHelperText: definitions.optionsPremium.protocol['7d']
 		}
@@ -733,7 +730,7 @@ const COLUMN_REGISTRY = {
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[min(180px,40vw)]',
+			headerClassName: 'min-w-[min(180px,40vw)]',
 			align: 'end',
 			headerHelperText: definitions.optionsPremium.protocol['30d']
 		}
@@ -746,7 +743,7 @@ const COLUMN_REGISTRY = {
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[min(180px,40vw)]',
+			headerClassName: 'min-w-[min(180px,40vw)]',
 			align: 'end',
 			headerHelperText: definitions.optionsPremium.protocol['24h']
 		}
@@ -759,7 +756,7 @@ const COLUMN_REGISTRY = {
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[min(180px,40vw)]',
+			headerClassName: 'min-w-[min(180px,40vw)]',
 			align: 'end',
 			headerHelperText: definitions.optionsNotional.protocol['7d']
 		}
@@ -772,7 +769,7 @@ const COLUMN_REGISTRY = {
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[min(180px,40vw)]',
+			headerClassName: 'min-w-[min(180px,40vw)]',
 			align: 'end',
 			headerHelperText: definitions.optionsNotional.protocol['30d']
 		}
@@ -785,7 +782,7 @@ const COLUMN_REGISTRY = {
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[min(180px,40vw)]',
+			headerClassName: 'min-w-[min(180px,40vw)]',
 			align: 'end',
 			headerHelperText: definitions.optionsNotional.protocol['24h']
 		}
@@ -798,7 +795,6 @@ const COLUMN_REGISTRY = {
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[140px]',
 			align: 'end',
 			headerHelperText: 'Total amount currently borrowed from the protocol'
 		}
@@ -811,7 +807,7 @@ const COLUMN_REGISTRY = {
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[100px]',
+			headerClassName: 'min-w-[100px]',
 			align: 'end',
 			headerHelperText: 'Total amount supplied to the protocol'
 		}
@@ -821,7 +817,7 @@ const COLUMN_REGISTRY = {
 		header: 'Supplied/TVL',
 		cell: (info) => formatRatio(info.getValue()),
 		meta: {
-			headerClassName: 'w-[140px]',
+			headerClassName: 'min-w-[140px]',
 			align: 'end',
 			headerHelperText: '(Total amount supplied / Total value locked) ratio'
 		}

@@ -10,6 +10,7 @@ declare module '@tanstack/react-table' {
 		headerLead?: (context: HeaderContext<TFeatures, TData, TValue>) => ReactNode
 		/** Rendered after the header's sort button, outside it, so it may carry its own hovercard. */
 		headerTrail?: (context: HeaderContext<TFeatures, TData, TValue>) => ReactNode
+		/** Classes for this column's `<th>`. Size the column for its values with `min-w-*`; the header sizes itself (see "Column widths" in src/components/Table/README.md). */
 		headerClassName?: string
 		/** Extra classes for this column's body `<td>` (e.g. `truncate` to ellipsis long text). */
 		cellClassName?: string

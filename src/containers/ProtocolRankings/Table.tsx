@@ -421,10 +421,10 @@ function ChainProtocolsTableInner({
 					meta: {
 						headerClassName:
 							displayFormat === 'string'
-								? 'w-[220px] min-w-[220px]'
+								? 'min-w-[220px]'
 								: displayFormat === 'boolean'
-									? 'w-[110px] min-w-[110px]'
-									: 'w-[140px] min-w-[140px]',
+									? 'min-w-[110px]'
+									: 'min-w-[140px]',
 						align: displayFormat === 'string' ? 'start' : displayFormat === 'boolean' ? 'center' : 'end',
 						headerHelperText: col.formula
 					}
@@ -830,7 +830,6 @@ type ActivityPeriodColumn<Suffix extends '24h' | '7d' | '30d', Period extends Ta
 	suffix: Suffix
 	tablePeriod: Period
 	helperText: string
-	width: string
 }
 
 type ExtendedActivityMetric = {
@@ -857,22 +856,19 @@ const EXTENDED_ACTIVITY_METRICS: ReadonlyArray<ExtendedActivityMetric> = [
 				id: 'perp_volume_24h',
 				suffix: '24h',
 				tablePeriod: TABLE_PERIODS.ONE_DAY,
-				helperText: definitions.perps.protocol['24h'],
-				width: 'w-[154px] min-w-[154px]'
+				helperText: definitions.perps.protocol['24h']
 			},
 			{
 				id: 'perp_volume_7d',
 				suffix: '7d',
 				tablePeriod: TABLE_PERIODS.SEVEN_DAYS,
-				helperText: definitions.perps.protocol['7d'],
-				width: 'w-[143px] min-w-[143px]'
+				helperText: definitions.perps.protocol['7d']
 			},
 			{
 				id: 'perp_volume_30d',
 				suffix: '30d',
 				tablePeriod: TABLE_PERIODS.ONE_MONTH,
-				helperText: definitions.perps.protocol['30d'],
-				width: 'w-[154px] min-w-[154px]'
+				helperText: definitions.perps.protocol['30d']
 			}
 		]
 	},
@@ -886,22 +882,19 @@ const EXTENDED_ACTIVITY_METRICS: ReadonlyArray<ExtendedActivityMetric> = [
 				id: 'normalized_volume_24h',
 				suffix: '24h',
 				tablePeriod: TABLE_PERIODS.ONE_DAY,
-				helperText: definitions.normalizedVolume.protocol['24h'],
-				width: 'w-[199px] min-w-[199px]'
+				helperText: definitions.normalizedVolume.protocol['24h']
 			},
 			{
 				id: 'normalized_volume_7d',
 				suffix: '7d',
 				tablePeriod: TABLE_PERIODS.SEVEN_DAYS,
-				helperText: definitions.normalizedVolume.protocol['7d'],
-				width: 'w-[189px] min-w-[189px]'
+				helperText: definitions.normalizedVolume.protocol['7d']
 			},
 			{
 				id: 'normalized_volume_30d',
 				suffix: '30d',
 				tablePeriod: TABLE_PERIODS.ONE_MONTH,
-				helperText: definitions.normalizedVolume.protocol['30d'],
-				width: 'w-[199px] min-w-[199px]'
+				helperText: definitions.normalizedVolume.protocol['30d']
 			}
 		]
 	},
@@ -914,22 +907,19 @@ const EXTENDED_ACTIVITY_METRICS: ReadonlyArray<ExtendedActivityMetric> = [
 				id: 'options_premium_volume_24h',
 				suffix: '24h',
 				tablePeriod: TABLE_PERIODS.ONE_DAY,
-				helperText: definitions.optionsPremium.protocol['24h'],
-				width: 'w-[237px] min-w-[237px]'
+				helperText: definitions.optionsPremium.protocol['24h']
 			},
 			{
 				id: 'options_premium_volume_7d',
 				suffix: '7d',
 				tablePeriod: TABLE_PERIODS.SEVEN_DAYS,
-				helperText: definitions.optionsPremium.protocol['7d'],
-				width: 'w-[227px] min-w-[227px]'
+				helperText: definitions.optionsPremium.protocol['7d']
 			},
 			{
 				id: 'options_premium_volume_30d',
 				suffix: '30d',
 				tablePeriod: TABLE_PERIODS.ONE_MONTH,
-				helperText: definitions.optionsPremium.protocol['30d'],
-				width: 'w-[238px] min-w-[238px]'
+				helperText: definitions.optionsPremium.protocol['30d']
 			}
 		]
 	},
@@ -942,22 +932,19 @@ const EXTENDED_ACTIVITY_METRICS: ReadonlyArray<ExtendedActivityMetric> = [
 				id: 'options_notional_volume_24h',
 				suffix: '24h',
 				tablePeriod: TABLE_PERIODS.ONE_DAY,
-				helperText: definitions.optionsNotional.protocol['24h'],
-				width: 'w-[234px] min-w-[234px]'
+				helperText: definitions.optionsNotional.protocol['24h']
 			},
 			{
 				id: 'options_notional_volume_7d',
 				suffix: '7d',
 				tablePeriod: TABLE_PERIODS.SEVEN_DAYS,
-				helperText: definitions.optionsNotional.protocol['7d'],
-				width: 'w-[224px] min-w-[224px]'
+				helperText: definitions.optionsNotional.protocol['7d']
 			},
 			{
 				id: 'options_notional_volume_30d',
 				suffix: '30d',
 				tablePeriod: TABLE_PERIODS.ONE_MONTH,
-				helperText: definitions.optionsNotional.protocol['30d'],
-				width: 'w-[234px] min-w-[234px]'
+				helperText: definitions.optionsNotional.protocol['30d']
 			}
 		]
 	},
@@ -971,22 +958,19 @@ const EXTENDED_ACTIVITY_METRICS: ReadonlyArray<ExtendedActivityMetric> = [
 				id: 'dex_aggregator_volume_24h',
 				suffix: '24h',
 				tablePeriod: TABLE_PERIODS.ONE_DAY,
-				helperText: definitions.dexAggregators.protocol['24h'],
-				width: 'w-[230px] min-w-[230px]'
+				helperText: definitions.dexAggregators.protocol['24h']
 			},
 			{
 				id: 'dex_aggregator_volume_7d',
 				suffix: '7d',
 				tablePeriod: TABLE_PERIODS.SEVEN_DAYS,
-				helperText: definitions.dexAggregators.protocol['7d'],
-				width: 'w-[220px] min-w-[220px]'
+				helperText: definitions.dexAggregators.protocol['7d']
 			},
 			{
 				id: 'dex_aggregator_volume_30d',
 				suffix: '30d',
 				tablePeriod: TABLE_PERIODS.ONE_MONTH,
-				helperText: definitions.dexAggregators.protocol['30d'],
-				width: 'w-[230px] min-w-[230px]'
+				helperText: definitions.dexAggregators.protocol['30d']
 			}
 		]
 	},
@@ -1000,22 +984,19 @@ const EXTENDED_ACTIVITY_METRICS: ReadonlyArray<ExtendedActivityMetric> = [
 				id: 'perp_aggregator_volume_24h',
 				suffix: '24h',
 				tablePeriod: TABLE_PERIODS.ONE_DAY,
-				helperText: definitions.perpsAggregators.protocol['24h'],
-				width: 'w-[233px] min-w-[233px]'
+				helperText: definitions.perpsAggregators.protocol['24h']
 			},
 			{
 				id: 'perp_aggregator_volume_7d',
 				suffix: '7d',
 				tablePeriod: TABLE_PERIODS.SEVEN_DAYS,
-				helperText: definitions.perpsAggregators.protocol['7d'],
-				width: 'w-[223px] min-w-[223px]'
+				helperText: definitions.perpsAggregators.protocol['7d']
 			},
 			{
 				id: 'perp_aggregator_volume_30d',
 				suffix: '30d',
 				tablePeriod: TABLE_PERIODS.ONE_MONTH,
-				helperText: definitions.perpsAggregators.protocol['30d'],
-				width: 'w-[233px] min-w-[233px]'
+				helperText: definitions.perpsAggregators.protocol['30d']
 			}
 		]
 	},
@@ -1029,22 +1010,19 @@ const EXTENDED_ACTIVITY_METRICS: ReadonlyArray<ExtendedActivityMetric> = [
 				id: 'bridge_aggregator_volume_24h',
 				suffix: '24h',
 				tablePeriod: TABLE_PERIODS.ONE_DAY,
-				helperText: definitions.bridgeAggregators.protocol['24h'],
-				width: 'w-[245px] min-w-[245px]'
+				helperText: definitions.bridgeAggregators.protocol['24h']
 			},
 			{
 				id: 'bridge_aggregator_volume_7d',
 				suffix: '7d',
 				tablePeriod: TABLE_PERIODS.SEVEN_DAYS,
-				helperText: definitions.bridgeAggregators.protocol['7d'],
-				width: 'w-[235px] min-w-[235px]'
+				helperText: definitions.bridgeAggregators.protocol['7d']
 			},
 			{
 				id: 'bridge_aggregator_volume_30d',
 				suffix: '30d',
 				tablePeriod: TABLE_PERIODS.ONE_MONTH,
-				helperText: definitions.bridgeAggregators.protocol['30d'],
-				width: 'w-[246px] min-w-[246px]'
+				helperText: definitions.bridgeAggregators.protocol['30d']
 			}
 		]
 	}
@@ -1232,13 +1210,11 @@ const protocolRankingAccessor = (key: ProtocolRankingSortKey) => (row: IProtocol
 const activityMetricColumn = ({
 	id,
 	header,
-	headerHelperText,
-	headerClassName
+	headerHelperText
 }: {
 	id: ProtocolRankingSortKey
 	header: string
 	headerHelperText: string
-	headerClassName: string
 }) =>
 	columnHelper.accessor(protocolRankingAccessor(id), {
 		id,
@@ -1248,7 +1224,6 @@ const activityMetricColumn = ({
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName,
 			align: 'end',
 			headerHelperText
 		}
@@ -1261,8 +1236,7 @@ const activityMetricColumnsByGroup = (group: TABLE_COLUMN_GROUPS) =>
 				id: column.id,
 				header: `${metric.label} ${column.suffix}`,
 				headerHelperText:
-					metric.overlapWarning === undefined ? column.helperText : `${column.helperText}. ${metric.overlapWarning}`,
-				headerClassName: column.width
+					metric.overlapWarning === undefined ? column.helperText : `${column.helperText}. ${metric.overlapWarning}`
 			})
 		)
 	)
@@ -1313,7 +1287,7 @@ const columns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[200px] min-w-[200px] lg:w-[257px] lg:min-w-[257px]'
+			headerClassName: 'min-w-[200px] lg:min-w-[257px]'
 		}
 	}),
 	columnHelper.accessor('category', {
@@ -1330,7 +1304,7 @@ const columns = columnHelper.columns([
 			return <TextLink href={href}>{category}</TextLink>
 		},
 		meta: {
-			headerClassName: 'w-[139px] min-w-[139px]'
+			headerClassName: 'min-w-[139px]'
 		}
 	}),
 	columnHelper.group({
@@ -1353,7 +1327,7 @@ const columns = columnHelper.columns([
 						)
 					) : null,
 				meta: {
-					headerClassName: 'w-[120px] min-w-[120px]',
+					headerClassName: 'min-w-[120px]',
 					align: 'end',
 					headerHelperText: 'Value of all coins held in smart contracts of the protocol'
 				}
@@ -1363,7 +1337,6 @@ const columns = columnHelper.columns([
 				header: '1d Change',
 				cell: ({ getValue }) => <Change value={getValue()} />,
 				meta: {
-					headerClassName: 'w-[109px] min-w-[109px]',
 					align: 'end',
 					headerHelperText: 'Change in TVL in the last 24 hours'
 				}
@@ -1373,7 +1346,6 @@ const columns = columnHelper.columns([
 				header: '7d Change',
 				cell: ({ getValue }) => <Change value={getValue()} />,
 				meta: {
-					headerClassName: 'w-[110px] min-w-[110px]',
 					align: 'end',
 					headerHelperText: 'Change in TVL in the last 7 days'
 				}
@@ -1383,7 +1355,6 @@ const columns = columnHelper.columns([
 				header: '30d Change',
 				cell: ({ getValue }) => <Change value={getValue()} />,
 				meta: {
-					headerClassName: 'w-[112px] min-w-[112px]',
 					align: 'end',
 					headerHelperText: 'Change in TVL in the last 30 days'
 				}
@@ -1399,7 +1370,6 @@ const columns = columnHelper.columns([
 				? formatUsd(getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[120px] min-w-[120px]',
 			align: 'end',
 			headerHelperText: 'Current protocol token market cap'
 		}
@@ -1412,7 +1382,6 @@ const columns = columnHelper.columns([
 				? formatUsd(getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[120px] min-w-[120px]',
 			align: 'end',
 			headerHelperText: 'Current protocol token price'
 		}
@@ -1422,7 +1391,6 @@ const columns = columnHelper.columns([
 		header: 'Mcap/TVL',
 		cell: (info) => formatRatio(info.getValue()),
 		meta: {
-			headerClassName: 'w-[110px] min-w-[110px]',
 			align: 'end',
 			headerHelperText: 'Market cap / TVL ratio'
 		}
@@ -1439,7 +1407,7 @@ const columns = columnHelper.columns([
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[100px] min-w-[100px]',
+					headerClassName: 'min-w-[100px]',
 					align: 'end',
 					headerHelperText: definitions.fees.protocol['24h']
 				}
@@ -1452,7 +1420,6 @@ const columns = columnHelper.columns([
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[126px] min-w-[126px]',
 					align: 'end',
 					headerHelperText: definitions.revenue.protocol['24h']
 				}
@@ -1465,7 +1432,6 @@ const columns = columnHelper.columns([
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[182px] min-w-[182px]',
 					align: 'end',
 					headerHelperText: definitions.holdersRevenue.protocol['24h']
 				}
@@ -1478,7 +1444,6 @@ const columns = columnHelper.columns([
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[137px] min-w-[137px]',
 					align: 'end',
 					headerHelperText: definitions.incentives.protocol['24h']
 				}
@@ -1491,7 +1456,7 @@ const columns = columnHelper.columns([
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[90px] min-w-[90px]',
+					headerClassName: 'min-w-[90px]',
 					align: 'end',
 					headerHelperText: definitions.fees.protocol['7d']
 				}
@@ -1504,7 +1469,6 @@ const columns = columnHelper.columns([
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[116px] min-w-[116px]',
 					align: 'end',
 					headerHelperText: definitions.revenue.protocol['7d']
 				}
@@ -1517,7 +1481,6 @@ const columns = columnHelper.columns([
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[172px] min-w-[172px]',
 					align: 'end',
 					headerHelperText: definitions.holdersRevenue.protocol['7d']
 				}
@@ -1530,7 +1493,6 @@ const columns = columnHelper.columns([
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[127px] min-w-[127px]',
 					align: 'end',
 					headerHelperText: definitions.incentives.protocol['7d']
 				}
@@ -1543,7 +1505,7 @@ const columns = columnHelper.columns([
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[100px] min-w-[100px]',
+					headerClassName: 'min-w-[100px]',
 					align: 'end',
 					headerHelperText: definitions.fees.protocol['30d']
 				}
@@ -1556,7 +1518,6 @@ const columns = columnHelper.columns([
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[127px] min-w-[127px]',
 					align: 'end',
 					headerHelperText: definitions.revenue.protocol['30d']
 				}
@@ -1569,7 +1530,6 @@ const columns = columnHelper.columns([
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[183px] min-w-[183px]',
 					align: 'end',
 					headerHelperText: definitions.holdersRevenue.protocol['30d']
 				}
@@ -1582,7 +1542,6 @@ const columns = columnHelper.columns([
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[137px] min-w-[137px]',
 					align: 'end',
 					headerHelperText: definitions.incentives.protocol['30d']
 				}
@@ -1595,7 +1554,7 @@ const columns = columnHelper.columns([
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[93px] min-w-[93px]',
+					headerClassName: 'min-w-[93px]',
 					align: 'end',
 					headerHelperText: definitions.fees.protocol['1y']
 				}
@@ -1608,7 +1567,6 @@ const columns = columnHelper.columns([
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[177px] min-w-[177px]',
 					align: 'end',
 					headerHelperText: definitions.fees.protocol['monthlyAverage1y']
 				}
@@ -1621,7 +1579,6 @@ const columns = columnHelper.columns([
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[116px] min-w-[116px]',
 					align: 'end',
 					headerHelperText: definitions.revenue.protocol['1y']
 				}
@@ -1634,7 +1591,6 @@ const columns = columnHelper.columns([
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[172px] min-w-[172px]',
 					align: 'end',
 					headerHelperText: definitions.holdersRevenue.protocol['1y']
 				}
@@ -1647,7 +1603,6 @@ const columns = columnHelper.columns([
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[170px] min-w-[170px]',
 					align: 'end',
 					headerHelperText: definitions.revenue.protocol['monthlyAverage1y']
 				}
@@ -1660,7 +1615,6 @@ const columns = columnHelper.columns([
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[259px] min-w-[259px]',
 					align: 'end',
 					headerHelperText: definitions.holdersRevenue.protocol['monthlyAverage1y']
 				}
@@ -1673,7 +1627,6 @@ const columns = columnHelper.columns([
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[127px] min-w-[127px]',
 					align: 'end',
 					headerHelperText: definitions.incentives.protocol['1y']
 				}
@@ -1686,7 +1639,6 @@ const columns = columnHelper.columns([
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[214px] min-w-[214px]',
 					align: 'end',
 					headerHelperText: definitions.incentives.protocol['monthlyAverage1y']
 				}
@@ -1699,7 +1651,6 @@ const columns = columnHelper.columns([
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[149px] min-w-[149px]',
 					align: 'end',
 					headerHelperText: definitions.fees.protocol['cumulative']
 				}
@@ -1712,7 +1663,6 @@ const columns = columnHelper.columns([
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[175px] min-w-[175px]',
 					align: 'end',
 					headerHelperText: definitions.revenue.protocol['cumulative']
 				}
@@ -1725,7 +1675,6 @@ const columns = columnHelper.columns([
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[231px] min-w-[231px]',
 					align: 'end',
 					headerHelperText: definitions.holdersRevenue.protocol['cumulative']
 				}
@@ -1738,7 +1687,6 @@ const columns = columnHelper.columns([
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[186px] min-w-[186px]',
 					align: 'end',
 					headerHelperText: definitions.incentives.protocol['cumulative']
 				}
@@ -1748,7 +1696,7 @@ const columns = columnHelper.columns([
 				header: 'P/F',
 				cell: (info) => (info.getValue() != null ? `${formatRatio(info.getValue())}x` : null),
 				meta: {
-					headerClassName: 'w-[68px] min-w-[68px]',
+					headerClassName: 'min-w-[68px]',
 					align: 'end',
 					headerHelperText: definitions.fees.protocol['pf']
 				}
@@ -1758,7 +1706,7 @@ const columns = columnHelper.columns([
 				header: 'P/S',
 				cell: (info) => (info.getValue() != null ? `${formatRatio(info.getValue())}x` : null),
 				meta: {
-					headerClassName: 'w-[67px] min-w-[67px]',
+					headerClassName: 'min-w-[67px]',
 					align: 'end',
 					headerHelperText: definitions.revenue.protocol['ps']
 				}
@@ -1772,7 +1720,6 @@ const columns = columnHelper.columns([
 						: null,
 
 				meta: {
-					headerClassName: 'w-[127px] min-w-[127px]',
 					align: 'end',
 					headerHelperText: definitions.earnings.protocol['24h']
 				}
@@ -1786,7 +1733,6 @@ const columns = columnHelper.columns([
 						: null,
 
 				meta: {
-					headerClassName: 'w-[117px] min-w-[117px]',
 					align: 'end',
 					headerHelperText: definitions.earnings.protocol['7d']
 				}
@@ -1799,7 +1745,6 @@ const columns = columnHelper.columns([
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[127px] min-w-[127px]',
 					align: 'end',
 					headerHelperText: definitions.earnings.protocol['30d']
 				}
@@ -1812,7 +1757,6 @@ const columns = columnHelper.columns([
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[116px] min-w-[116px]',
 					align: 'end',
 					headerHelperText: definitions.earnings.protocol['1y']
 				}
@@ -1829,7 +1773,6 @@ const columns = columnHelper.columns([
 							})
 						: null,
 				meta: {
-					headerClassName: 'w-[204px] min-w-[204px]',
 					align: 'end',
 					headerHelperText: definitions.earnings.protocol['monthlyAverage1y']
 				}
@@ -1842,7 +1785,6 @@ const columns = columnHelper.columns([
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[176px] min-w-[176px]',
 					align: 'end',
 					headerHelperText: definitions.earnings.protocol['cumulative']
 				}
@@ -1864,7 +1806,6 @@ const columns = columnHelper.columns([
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[153px] min-w-[153px]',
 					align: 'end',
 					headerHelperText: definitions.dexs.protocol['24h']
 				}
@@ -1877,7 +1818,6 @@ const columns = columnHelper.columns([
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[143px] min-w-[143px]',
 					align: 'end',
 					headerHelperText: definitions.dexs.protocol['7d']
 				}
@@ -1890,7 +1830,6 @@ const columns = columnHelper.columns([
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[154px] min-w-[154px]',
 					align: 'end',
 					headerHelperText: definitions.dexs.protocol['30d']
 				}
@@ -1900,7 +1839,6 @@ const columns = columnHelper.columns([
 				header: 'Spot Change 7d',
 				cell: ({ getValue }) => (getValue() !== 0 ? <Change value={getValue()} /> : null),
 				meta: {
-					headerClassName: 'w-[145px] min-w-[145px]',
 					align: 'end',
 					headerHelperText: definitions.dexs.protocol['change7d']
 				}
@@ -1913,7 +1851,6 @@ const columns = columnHelper.columns([
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[202px] min-w-[202px]',
 					align: 'end',
 					headerHelperText: definitions.dexs.protocol['cumulative']
 				}
@@ -1932,14 +1869,12 @@ const columns = columnHelper.columns([
 			activityMetricColumn({
 				id: 'open_interest',
 				header: 'Open Interest',
-				headerHelperText: definitions.openInterest.protocol,
-				headerClassName: 'w-[129px] min-w-[129px]'
+				headerHelperText: definitions.openInterest.protocol
 			}),
 			activityMetricColumn({
 				id: 'active_liquidity',
 				header: 'Active Liquidity',
-				headerHelperText: definitions.activeLiquidity.protocol,
-				headerClassName: 'w-[142px] min-w-[142px]'
+				headerHelperText: definitions.activeLiquidity.protocol
 			})
 		],
 		meta: {

@@ -25,8 +25,8 @@ const downloads = installDownloadSink()
 type Asset = { name: string; value: number }
 const helper = createColumnHelper<typeof searchTableFeatures, Asset>()
 const columns = helper.columns([
-	helper.accessor('name', { header: 'Name', meta: { headerClassName: 'w-[160px]' } }),
-	helper.accessor('value', { header: 'Value', meta: { headerClassName: 'w-[120px]' } })
+	helper.accessor('name', { header: 'Name', meta: { headerClassName: 'min-w-[160px]' } }),
+	helper.accessor('value', { header: 'Value', meta: { headerClassName: 'min-w-[120px]' } })
 ])
 const data = [
 	{ name: 'Beta', value: 2 },
@@ -146,7 +146,7 @@ test.each([false, true])('refreshes same-ID columns and data through the provide
 	const formatted = helper.columns([
 		helper.accessor('name', {
 			header: 'Renamed',
-			meta: { headerClassName: 'w-[160px]' },
+			meta: { headerClassName: 'min-w-[160px]' },
 			cell: ({ getValue }) => `New ${getValue()}`
 		}),
 		columns[1]

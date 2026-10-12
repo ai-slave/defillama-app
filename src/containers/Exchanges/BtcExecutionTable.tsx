@@ -45,7 +45,7 @@ const columns = columnHelper.columns([
 		header: 'Rank',
 		sortDescFirst: false,
 		cell: ({ getValue }) => (getValue() == null ? NA : `#${getValue()}`),
-		meta: { align: 'end', headerClassName: 'min-w-[71px]' }
+		meta: { align: 'end' }
 	}),
 	columnHelper.accessor((row) => row.costToTradeBps ?? undefined, {
 		id: 'costToTrade',
@@ -57,7 +57,6 @@ const columns = columnHelper.columns([
 				: (formatUsd(getValue(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'),
 		meta: {
 			align: 'end',
-			headerClassName: 'min-w-[124px]',
 			headerHelperText: 'Base-tier taker fee plus half the effective spread, on a $10k BTC market order.'
 		}
 	}),
@@ -69,7 +68,7 @@ const columns = columnHelper.columns([
 			getValue() == null
 				? NA
 				: (formatUsd(getValue(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'),
-		meta: { align: 'end', headerClassName: 'min-w-[147px]' }
+		meta: { align: 'end' }
 	}),
 	columnHelper.accessor((row) => row.quotedSpreadBps ?? undefined, {
 		id: 'quotedSpread',
@@ -79,35 +78,35 @@ const columns = columnHelper.columns([
 			getValue() == null
 				? NA
 				: (formatUsd(getValue(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'),
-		meta: { align: 'end', headerClassName: 'min-w-[137px]' }
+		meta: { align: 'end' }
 	}),
 	columnHelper.accessor((row) => row.realizedSlippage10kBps ?? undefined, {
 		id: 'slippage',
 		header: 'Slippage (predicted → realized)',
 		sortDescFirst: false,
 		cell: ({ row, getValue }) => (getValue() == null ? NA : <SlippageLadder execution={row.original} />),
-		meta: { align: 'end', headerClassName: 'min-w-[247px]' }
+		meta: { align: 'end' }
 	}),
 	columnHelper.accessor((row) => row.markout1mBps ?? undefined, {
 		id: 'markout',
 		header: 'Markout (1m / 5m)',
 		sortDescFirst: false,
 		cell: ({ row, getValue }) => (getValue() == null ? NA : <MarkoutHorizons execution={row.original} />),
-		meta: { align: 'end', headerClassName: 'min-w-[159px]' }
+		meta: { align: 'end' }
 	}),
 	columnHelper.accessor((row) => row.markout1sBps ?? undefined, {
 		id: 'markout1s',
 		header: 'Markout (1s)',
 		sortDescFirst: false,
 		cell: ({ getValue }) => (getValue() == null ? NA : <Markout value={getValue() ?? null} />),
-		meta: { align: 'end', headerClassName: 'min-w-[120px]' }
+		meta: { align: 'end' }
 	}),
 	columnHelper.accessor((row) => row.markout15sBps ?? undefined, {
 		id: 'markout15s',
 		header: 'Markout (15s)',
 		sortDescFirst: false,
 		cell: ({ getValue }) => (getValue() == null ? NA : <Markout value={getValue() ?? null} />),
-		meta: { align: 'end', headerClassName: 'min-w-[129px]' }
+		meta: { align: 'end' }
 	}),
 	columnHelper.accessor((row) => row.takerFeeBps ?? undefined, {
 		id: 'takerFee',
@@ -119,7 +118,6 @@ const columns = columnHelper.columns([
 				: (formatUsd(getValue(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'),
 		meta: {
 			align: 'end',
-			headerClassName: 'min-w-[102px]',
 			headerHelperText: 'Base-tier taker fee measured from fills, not the advertised schedule.'
 		}
 	}),
@@ -129,7 +127,6 @@ const columns = columnHelper.columns([
 		cell: ({ getValue }) => formatNumber(getValue(), { maximumFractionDigits: 0 }),
 		meta: {
 			align: 'end',
-			headerClassName: 'min-w-[137px]',
 			headerHelperText: 'Tick-data hours behind these figures: more hours, more confidence.'
 		}
 	}),
@@ -137,7 +134,7 @@ const columns = columnHelper.columns([
 		id: 'nTrades',
 		header: 'Trades Measured',
 		cell: ({ getValue }) => formatNumber(getValue(), { maximumFractionDigits: 0 }),
-		meta: { align: 'end', headerClassName: 'min-w-[155px]' }
+		meta: { align: 'end' }
 	})
 ])
 
@@ -150,7 +147,7 @@ export function BtcExecutionTable({ rows }: { rows: Array<BtcExecutionRowModel> 
 					<TableCsvExport filename="btc-execution" />
 				</TableToolbar>
 				{/* Auto sizing needs every row mounted; this list is short. */}
-				<SearchTableView tableLayout="auto" />
+				<SearchTableView columnSizing="content" />
 			</Card>
 		</SearchTableProvider>
 	)

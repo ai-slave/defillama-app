@@ -279,7 +279,7 @@ function segmentColumn(spec: {
 	suffix?: (row: ExchangeDirectoryRowModel) => string
 	/** Muted text after the value, e.g. the normalized-volume gap to reported. */
 	annotation?: (row: ExchangeDirectoryRowModel) => string | undefined
-	/** For labels wider than the default 112px column (see "Column widths" in src/components/Table/README.md). */
+	/** For values wider than the default 112px column; a longer label widens it on its own ("Column widths" in src/components/Table/README.md). */
 	headerClassName?: string
 }) {
 	return columnHelper.accessor(spec.value, {
@@ -296,7 +296,7 @@ function segmentColumn(spec: {
 			)
 		},
 		meta: {
-			headerClassName: spec.headerClassName ?? 'w-[112px] min-w-[112px]',
+			headerClassName: spec.headerClassName ?? 'min-w-[112px]',
 			align: 'end',
 			headerHelperText: spec.definition.description
 		}
@@ -333,8 +333,6 @@ function perpColumn(spec: {
 	suffix?: (row: ExchangeDirectoryRowModel) => string
 	/** Muted text after the value, e.g. the normalized-volume gap to reported. */
 	annotation?: (row: ExchangeDirectoryRowModel) => string | undefined
-	/** For labels wider than the default 112px column (see "Column widths" in src/components/Table/README.md). */
-	headerClassName?: string
 }) {
 	const parts = (row: ExchangeDirectoryRowModel) =>
 		ALL_PERP_SEGMENTS.filter((segment) => row.segments[segment]).map((segment) => ({
@@ -368,7 +366,6 @@ function perpColumn(spec: {
 			)
 		},
 		meta: {
-			headerClassName: spec.headerClassName ?? 'w-[112px] min-w-[112px]',
 			align: 'end',
 			headerHelperText: spec.definition.description
 		}
@@ -419,7 +416,7 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 		segment: ExchangeSegment
 		definition: { label: string; description: string }
 		field: 'realizedSlippage10kBps' | 'markout1mBps'
-		width: string
+		width?: string
 	}) =>
 		columnHelper.accessor((row) => segmentExec(row, spec.segment)?.[spec.field] ?? undefined, {
 			id: spec.id,
@@ -508,7 +505,7 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 				)
 			},
 			meta: {
-				headerClassName: 'w-[254px] min-w-[254px]',
+				headerClassName: 'min-w-[254px]',
 				headerHelperText: definitions.name.description,
 				csvValue: (row) => row.name
 			}
@@ -587,7 +584,7 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 				)
 			},
 			meta: {
-				headerClassName: 'w-[100px] min-w-[100px]',
+				headerClassName: 'min-w-[100px]',
 				headerHelperText: definitions.venueLinks.description
 			}
 		}),
@@ -622,7 +619,6 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 				)
 			},
 			meta: {
-				headerClassName: 'w-[160px] min-w-[160px]',
 				align: 'end',
 				headerHelperText: `${definitions.execCostToTrade.description} ${EXECUTION_SCOPE_NOTE}${scope === 'all' ? ' One line per segment, sorted by USD perp.' : ''}`,
 				csvValue: (row) => {
@@ -637,7 +633,6 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 			sortDescFirst: false,
 			cell: ({ row }) => <SlippageLadder execution={scopedExec(row.original)} />,
 			meta: {
-				headerClassName: 'w-[186px] min-w-[186px]',
 				align: 'end',
 				headerHelperText: `${definitions.execSlippage10k.description} ${EXECUTION_SCOPE_NOTE}`,
 				csvValue: (row) => {
@@ -651,14 +646,14 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 			segment: 'spot',
 			definition: definitions.spotSlippage,
 			field: 'realizedSlippage10kBps',
-			width: 'w-[204px] min-w-[204px]'
+			width: 'min-w-[204px]'
 		}),
 		mergedExecColumn({
 			id: 'perpSlippage',
 			segment: 'linear_perp',
 			definition: definitions.perpSlippage,
 			field: 'realizedSlippage10kBps',
-			width: 'w-[204px] min-w-[204px]'
+			width: 'min-w-[204px]'
 		}),
 		columnHelper.accessor((row) => scopedExec(row)?.markout1mBps ?? undefined, {
 			id: 'execMarkout1m',
@@ -666,7 +661,6 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 			sortDescFirst: false,
 			cell: ({ row }) => <MarkoutHorizons execution={scopedExec(row.original)} />,
 			meta: {
-				headerClassName: 'w-[140px] min-w-[140px]',
 				align: 'end',
 				headerHelperText: `${definitions.execMarkout1m.description} ${EXECUTION_SCOPE_NOTE}`,
 				csvValue: (row) => {
@@ -679,15 +673,13 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 			id: 'spotMarkout',
 			segment: 'spot',
 			definition: definitions.spotMarkout,
-			field: 'markout1mBps',
-			width: 'w-[140px] min-w-[140px]'
+			field: 'markout1mBps'
 		}),
 		mergedExecColumn({
 			id: 'perpMarkout',
 			segment: 'linear_perp',
 			definition: definitions.perpMarkout,
-			field: 'markout1mBps',
-			width: 'w-[150px] min-w-[150px]'
+			field: 'markout1mBps'
 		}),
 		// Blank below INSIDE_MIN_PCT, a false flag there; the merged view lists only the
 		// segments that reach it.
@@ -717,7 +709,6 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 					)
 				},
 				meta: {
-					headerClassName: 'w-[150px] min-w-[150px]',
 					align: 'end',
 					headerHelperText: `${definitions.intraSpread.description} ${EXECUTION_SCOPE_NOTE}`
 				}
@@ -749,7 +740,7 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 						NVOL_SEGMENTS
 					),
 				meta: {
-					headerClassName: 'w-[180px] min-w-[180px]',
+					headerClassName: 'min-w-[180px]',
 					align: 'end',
 					headerHelperText: `${definitions.segmentActiveLiquidity.description} Sorted by the two together.`
 				}
@@ -778,7 +769,6 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 			id: 'perpNormalizedVolume',
 			definition: definitions.perpNormalizedVolume,
 			pick: (row, segment) => normalizedOrReported(row, segment).value,
-			headerClassName: 'w-[128px] min-w-[128px]',
 			suffix: (row) => (fellBackWithBook(row, ALL_PERP_SEGMENTS) ? '*' : ''),
 			annotation: (row) =>
 				fellBackWithBook(row, ALL_PERP_SEGMENTS) ? undefined : normalizedVolumeGap(row.normalizedVolume?.linear_perp),
@@ -810,7 +800,6 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 				return linkedMetric(formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–', notes.join(' · '))
 			},
 			meta: {
-				headerClassName: 'w-[124px] min-w-[124px]',
 				align: 'end',
 				headerHelperText: definitions.activeLiquidity.description
 			}
@@ -829,7 +818,6 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 				return linkedMetric(formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–', note || undefined)
 			},
 			meta: {
-				headerClassName: 'w-[114px] min-w-[114px]',
 				align: 'end',
 				headerHelperText: definitions.depth2Usd.description
 			}
@@ -849,7 +837,6 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 				)
 			},
 			meta: {
-				headerClassName: 'w-[129px] min-w-[129px]',
 				align: 'end',
 				headerHelperText: definitions.openInterestUsd.description
 			}
@@ -867,7 +854,6 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 					return <FractionChange value={getValue()} />
 				},
 				meta: {
-					headerClassName: 'w-[89px] min-w-[89px]',
 					align: 'end',
 					headerHelperText: definitions.openInterestChange24h.description
 				}
@@ -882,7 +868,6 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 					scopedActivity(row.original)?.doubleCount?.volume
 				),
 			meta: {
-				headerClassName: 'w-[124px] min-w-[124px]',
 				align: 'end',
 				headerHelperText: definitions.volume24h.description
 			}
@@ -906,7 +891,6 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 				)
 			},
 			meta: {
-				headerClassName: 'w-[130px] min-w-[130px]',
 				align: 'end',
 				headerHelperText: definitions.normalizedVolume.description
 			}
@@ -921,7 +905,6 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 				header: definitions.volumeChange24h.label,
 				cell: ({ getValue }) => <FractionChange value={getValue()} />,
 				meta: {
-					headerClassName: 'w-[102px] min-w-[102px]',
 					align: 'end',
 					headerHelperText: definitions.volumeChange24h.description
 				}
@@ -933,7 +916,6 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 			cell: ({ row, getValue }) =>
 				scopedActivity(row.original)?.supportsOpenInterest ? ratio(getValue()) : <UnsupportedMetric />,
 			meta: {
-				headerClassName: 'w-[96px] min-w-[96px]',
 				align: 'end',
 				headerHelperText: definitions.volumeToOi.description
 			}
@@ -944,7 +926,6 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 			cell: ({ row, getValue }) =>
 				scopedActivity(row.original)?.supportsDepth ? ratio(getValue()) : <UnsupportedMetric />,
 			meta: {
-				headerClassName: 'w-[110px] min-w-[110px]',
 				align: 'end',
 				headerHelperText: definitions.volumeToDepth.description
 			}
@@ -954,7 +935,6 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 			header: definitions.marketCount.label,
 			cell: ({ getValue }) => getValue() ?? '–',
 			meta: {
-				headerClassName: 'w-[93px] min-w-[93px]',
 				align: 'end',
 				headerHelperText: definitions.marketCount.description
 			}
@@ -964,7 +944,6 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 			header: definitions.coinCount.label,
 			cell: ({ getValue }) => getValue() ?? '–',
 			meta: {
-				headerClassName: 'w-[79px] min-w-[79px]',
 				align: 'end',
 				headerHelperText: definitions.coinCount.description
 			}
@@ -980,7 +959,6 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 				/>
 			),
 			meta: {
-				headerClassName: 'w-[124px] min-w-[124px]',
 				align: 'end',
 				headerHelperText: definitions.sparkline.description
 			}
@@ -990,7 +968,7 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 			header: definitions.reservesUsd.label,
 			cell: ({ getValue }) => formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–',
 			meta: {
-				headerClassName: 'w-[119px] min-w-[119px]',
+				headerClassName: 'min-w-[119px]',
 				align: 'end',
 				headerHelperText: definitions.reservesUsd.description
 			}
@@ -1005,7 +983,6 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 				header: definitions.cleanRatio.label,
 				cell: ({ getValue }) => formatPercent(getValue(), PERCENT_OPTIONS) ?? '–',
 				meta: {
-					headerClassName: 'w-[114px] min-w-[114px]',
 					align: 'end',
 					headerHelperText: definitions.cleanRatio.description
 				}
@@ -1016,7 +993,6 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 			header: definitions.inflows24hUsd.label,
 			cell: ({ getValue }) => formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–',
 			meta: {
-				headerClassName: 'w-[117px] min-w-[117px]',
 				align: 'end',
 				headerHelperText: definitions.inflows24hUsd.description
 			}
@@ -1026,7 +1002,7 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 			header: definitions.inflows7dUsd.label,
 			cell: ({ getValue }) => formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–',
 			meta: {
-				headerClassName: 'w-[114px] min-w-[114px]',
+				headerClassName: 'min-w-[114px]',
 				align: 'end',
 				headerHelperText: definitions.inflows7dUsd.description
 			}
@@ -1036,7 +1012,6 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 			header: definitions.inflows1mUsd.label,
 			cell: ({ getValue }) => formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–',
 			meta: {
-				headerClassName: 'w-[114px] min-w-[114px]',
 				align: 'end',
 				headerHelperText: definitions.inflows1mUsd.description
 			}
@@ -1046,7 +1021,6 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 			header: definitions.ownTokenFraction.label,
 			cell: ({ getValue }) => formatPercent(getValue(), PERCENT_OPTIONS) ?? '–',
 			meta: {
-				headerClassName: 'w-[114px] min-w-[114px]',
 				align: 'end',
 				headerHelperText: definitions.ownTokenFraction.description
 			}
@@ -1056,7 +1030,6 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 			header: definitions.auditor.label,
 			cell: ({ getValue }) => getValue() ?? '–',
 			meta: {
-				headerClassName: 'w-[119px] min-w-[119px]',
 				headerHelperText: definitions.auditor.description
 			}
 		}),
@@ -1065,7 +1038,6 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 			header: definitions.freshness.label,
 			cell: ({ getValue }) => getValue()?.slice(0, 10) ?? '–',
 			meta: {
-				headerClassName: 'w-[114px] min-w-[114px]',
 				align: 'end',
 				headerHelperText: definitions.freshness.description
 			}
@@ -1082,7 +1054,6 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 					'–'
 				),
 			meta: {
-				headerClassName: 'w-[102px] min-w-[102px]',
 				align: 'end',
 				headerHelperText: definitions.warnings.description
 			}
@@ -1102,7 +1073,7 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 				)
 			},
 			meta: {
-				headerClassName: 'w-[79px] min-w-[79px]',
+				headerClassName: 'min-w-[79px]',
 				headerHelperText: definitions.reservesSource.description
 			}
 		}),
@@ -1111,7 +1082,7 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 			header: definitions.spotFee.label,
 			cell: ({ row }) => <FeeValue fee={row.original.fees?.spot} kind="spot" />,
 			meta: {
-				headerClassName: 'w-[129px] min-w-[129px] whitespace-nowrap',
+				headerClassName: 'min-w-[129px] whitespace-nowrap',
 				align: 'end',
 				headerHelperText: definitions.spotFee.description,
 				csvValue: (row) => (row.fees?.spot ? feeLabel(row.fees.spot) : '–')
@@ -1122,7 +1093,7 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 			header: definitions.linearPerpFee.label,
 			cell: ({ row }) => <FeeValue fee={row.original.fees?.linearPerp} kind="perp" />,
 			meta: {
-				headerClassName: 'w-[139px] min-w-[139px] whitespace-nowrap',
+				headerClassName: 'min-w-[139px] whitespace-nowrap',
 				align: 'end',
 				headerHelperText: definitions.linearPerpFee.description,
 				csvValue: (row) => (row.fees?.linearPerp ? feeLabel(row.fees.linearPerp) : '–')
@@ -1133,7 +1104,7 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 			header: definitions.inversePerpFee.label,
 			cell: ({ row }) => <FeeValue fee={row.original.fees?.inversePerp} kind="perp" />,
 			meta: {
-				headerClassName: 'w-[139px] min-w-[139px] whitespace-nowrap',
+				headerClassName: 'min-w-[139px] whitespace-nowrap',
 				align: 'end',
 				headerHelperText: definitions.inversePerpFee.description,
 				csvValue: (row) => (row.fees?.inversePerp ? feeLabel(row.fees.inversePerp) : '–')
@@ -1149,21 +1120,21 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 					? `${symbol.toUpperCase()}${discount == null ? '' : ` · ${formatPercent(discount, PERCENT_OPTIONS) ?? '–'} off`}`
 					: '–'
 			},
-			meta: { headerClassName: 'w-[130px] min-w-[130px]', headerHelperText: definitions.feeToken.description }
+			meta: { headerClassName: 'min-w-[130px]', headerHelperText: definitions.feeToken.description }
 		}),
 		columnHelper.accessor((row) => row.funding?.fiatCurrencies?.join(', '), {
 			id: 'fiatCurrencies',
 			header: definitions.fiatCurrencies.label,
 			enableSorting: false,
 			cell: ({ getValue }) => getValue() ?? '–',
-			meta: { headerClassName: 'w-[193px] min-w-[193px]', headerHelperText: definitions.fiatCurrencies.description }
+			meta: { headerClassName: 'min-w-[193px]', headerHelperText: definitions.fiatCurrencies.description }
 		}),
 		columnHelper.display({
 			id: 'fiatFees',
 			header: definitions.fiatFees.label,
 			cell: ({ row }) => <FiatFeesValue name={row.original.name} fees={row.original.funding?.fiatFees ?? null} />,
 			meta: {
-				headerClassName: 'w-[114px] min-w-[114px]',
+				headerClassName: 'min-w-[114px]',
 				headerHelperText: definitions.fiatFees.description,
 				csvValue: (row) => (row.funding?.fiatFees ? fiatFeeSummary(row.funding.fiatFees) : '–')
 			}
@@ -1172,7 +1143,7 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 			id: 'fiatOnramp',
 			header: definitions.fiatOnramp.label,
 			cell: ({ getValue }) => (getValue() == null ? '–' : getValue() ? 'Yes' : 'No'),
-			meta: { headerClassName: 'w-[124px] min-w-[124px]', headerHelperText: definitions.fiatOnramp.description }
+			meta: { headerHelperText: definitions.fiatOnramp.description }
 		}),
 		// Region figure wins when a country is selected — it is priced off that
 		// region's own rails (US ACH, GB Faster Payments…) rather than the root
@@ -1184,7 +1155,6 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 				header: definitions.rampCost.label,
 				cell: ({ getValue }) => formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–',
 				meta: {
-					headerClassName: 'w-[155px] min-w-[155px]',
 					align: 'end',
 					headerHelperText: definitions.rampCost.description
 				}
@@ -1197,7 +1167,6 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 				header: definitions.offRampCost.label,
 				cell: ({ getValue }) => formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–',
 				meta: {
-					headerClassName: 'w-[155px] min-w-[155px]',
 					align: 'end',
 					headerHelperText: definitions.offRampCost.description
 				}
@@ -1217,7 +1186,7 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 				)
 			},
 			meta: {
-				headerClassName: 'w-[199px] min-w-[199px]',
+				headerClassName: 'min-w-[199px]',
 				headerHelperText: definitions.headquarters.description
 			}
 		}),
@@ -1231,7 +1200,6 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 				/>
 			),
 			meta: {
-				headerClassName: 'w-[144px] min-w-[144px]',
 				headerHelperText: definitions.euStatus.description,
 				csvValue: (row) => (row.compliance?.euStatus ? getEuStatusPresentation(row.compliance.euStatus).label : '–')
 			}
@@ -1247,7 +1215,7 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 				/>
 			),
 			meta: {
-				headerClassName: 'w-[119px] min-w-[119px]',
+				headerClassName: 'min-w-[119px]',
 				headerHelperText: definitions.mica.description,
 				csvValue: (row) => {
 					const mica = row.compliance?.mica
@@ -1261,7 +1229,7 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 			enableSorting: false,
 			cell: ({ row }) => <KycRequirementValue name={row.original.name} kyc={row.original.compliance?.kyc ?? null} />,
 			meta: {
-				headerClassName: 'w-[239px] min-w-[239px]',
+				headerClassName: 'min-w-[239px]',
 				headerHelperText: definitions.kyc.description,
 				csvValue: (row) => {
 					const kyc = row.compliance?.kyc
@@ -1275,7 +1243,6 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 			header: definitions.licenseCount.label,
 			cell: ({ getValue }) => getValue() ?? '–',
 			meta: {
-				headerClassName: 'w-[114px] min-w-[114px]',
 				align: 'end',
 				headerHelperText: definitions.licenseCount.description
 			}
@@ -1285,7 +1252,6 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 			header: definitions.founded.label,
 			cell: ({ getValue }) => getValue() ?? '–',
 			meta: {
-				headerClassName: 'w-[97px] min-w-[97px]',
 				align: 'end',
 				headerHelperText: definitions.founded.description
 			}
@@ -1295,7 +1261,7 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 			id: 'kind',
 			header: definitions.kind.label,
 			cell: ({ getValue }) => <KindBadge kind={getValue()} />,
-			meta: { headerClassName: 'w-[71px] min-w-[71px]', headerHelperText: definitions.kind.description }
+			meta: { headerHelperText: definitions.kind.description }
 		})
 	])
 	return executionAvailable ? columns : columns.filter((column) => !EXECUTION_COLUMN_IDS.includes(column.id ?? ''))

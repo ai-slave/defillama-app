@@ -21,8 +21,8 @@ vi.mock('next/router', () => ({ useRouter: () => ({ pathname: '/assets', query: 
 type Asset = { name: string; value: number }
 const helper = createColumnHelper<typeof searchTableFeatures, Asset>()
 const columns = helper.columns([
-	helper.accessor('name', { header: 'Name', meta: { headerClassName: 'w-[160px]' } }),
-	helper.accessor('value', { header: 'Value', meta: { headerClassName: 'w-[120px]' } })
+	helper.accessor('name', { header: 'Name', meta: { headerClassName: 'min-w-[160px]' } }),
+	helper.accessor('value', { header: 'Value', meta: { headerClassName: 'min-w-[120px]' } })
 ])
 const data = [
 	{ name: 'Alpha', value: 1 },
@@ -81,8 +81,8 @@ const paginatedFeatures = tableFeatures({
 })
 const paginatedHelper = createColumnHelper<typeof paginatedFeatures, Asset>()
 const paginatedColumns = paginatedHelper.columns([
-	paginatedHelper.accessor('name', { header: 'Name', meta: { headerClassName: 'w-[160px]' } }),
-	paginatedHelper.accessor('value', { header: 'Value', meta: { headerClassName: 'w-[120px]' } })
+	paginatedHelper.accessor('name', { header: 'Name', meta: { headerClassName: 'min-w-[160px]' } }),
+	paginatedHelper.accessor('value', { header: 'Value', meta: { headerClassName: 'min-w-[120px]' } })
 ])
 const noAssets: Array<Asset> = []
 

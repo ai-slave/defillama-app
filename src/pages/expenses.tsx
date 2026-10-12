@@ -90,14 +90,13 @@ const columns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[min(220px,40vw)]'
+			headerClassName: 'min-w-[min(220px,40vw)]'
 		}
 	}),
 	columnHelper.accessor((row) => row.headcount ?? undefined, {
 		id: 'headcount',
 		header: 'Headcount',
 		meta: {
-			headerClassName: 'w-[110px]',
 			align: 'end'
 		}
 	}),
@@ -109,7 +108,6 @@ const columns = columnHelper.columns([
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[150px]',
 			align: 'end'
 		}
 	}),
@@ -136,9 +134,6 @@ const columns = columnHelper.columns([
 					<Icon name="arrow-up-right" className="size-4" />
 				</Tooltip>
 			) : null
-		},
-		meta: {
-			headerClassName: 'w-[90px]'
 		}
 	})
 ])

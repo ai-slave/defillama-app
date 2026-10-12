@@ -392,7 +392,7 @@ const CoinPerformanceColumn = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[min(240px,40vw)]'
+			headerClassName: 'min-w-[min(240px,40vw)]'
 		}
 	}),
 	columnHelper.accessor((row) => row.change ?? undefined, {
@@ -400,7 +400,7 @@ const CoinPerformanceColumn = columnHelper.columns([
 		header: 'Δ%',
 		cell: ({ getValue }) => <Change value={getValue()} />,
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'min-w-[120px]',
 			align: 'end',
 			headerHelperText: `Shows how a coin has performed over your chosen time period and in your selected denomination (e.g., $, BTC).`
 		}
@@ -411,7 +411,7 @@ const CoinPerformanceColumn = columnHelper.columns([
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
-			headerClassName: 'w-[110px]',
+			headerClassName: 'min-w-[110px]',
 			align: 'end'
 		}
 	}),
@@ -429,7 +429,7 @@ const CoinPerformanceColumn = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[110px]',
+			headerClassName: 'min-w-[110px]',
 			align: 'end'
 		}
 	})
@@ -456,7 +456,7 @@ const CategoryPerformanceColumn = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[min(240px,40vw)]'
+			headerClassName: 'min-w-[min(240px,40vw)]'
 		}
 	}),
 	columnHelper.accessor((row) => row.change ?? undefined, {
@@ -464,7 +464,7 @@ const CategoryPerformanceColumn = columnHelper.columns([
 		header: 'Δ%',
 		cell: ({ getValue }) => <Change value={getValue()} />,
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'min-w-[120px]',
 			align: 'end',
 			headerHelperText: `Shows how a category of coins has performed over your chosen time period and in your selected denomination (e.g., $, BTC). Method: 1. calculating the percentage change for each individual coin in the category. 2. weighting these changes based on each coin's market capitalization. 3. averaging these weighted changes to get the overall category performance.`
 		}
@@ -475,7 +475,6 @@ const CategoryPerformanceColumn = columnHelper.columns([
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
-			headerClassName: 'w-[110px]',
 			align: 'end'
 		}
 	}),
@@ -487,7 +486,6 @@ const CategoryPerformanceColumn = columnHelper.columns([
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[120px]',
 			align: 'end'
 		}
 	}),
@@ -495,7 +493,6 @@ const CategoryPerformanceColumn = columnHelper.columns([
 		id: 'nbCoins',
 		header: '# of Coins',
 		meta: {
-			headerClassName: 'w-[110px]',
 			align: 'end'
 		}
 	})

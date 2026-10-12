@@ -311,7 +311,7 @@ export function buildCardsColumns(
 				)
 			},
 			meta: {
-				headerClassName: 'w-[min(288px,58vw)]',
+				headerClassName: 'min-w-[min(288px,58vw)]',
 				csvValue: (row) => (row.tierName ? `${row.cardName} — ${row.tierName}` : row.cardName)
 			}
 		}),
@@ -323,7 +323,7 @@ export function buildCardsColumns(
 			enableSorting: false,
 			cell: ({ row }) => <TextValue row={row.original} field="region" value={row.original.region || null} />,
 			meta: {
-				headerClassName: 'w-[118px] min-w-[118px]',
+				headerClassName: 'min-w-[118px]',
 				headerHelperText: 'Region this tier’s terms apply to.'
 			}
 		}),
@@ -335,7 +335,7 @@ export function buildCardsColumns(
 				return label == null ? <EmptyValue /> : <span className="whitespace-nowrap">{label}</span>
 			},
 			meta: {
-				headerClassName: 'w-[120px] min-w-[120px] whitespace-nowrap',
+				headerClassName: 'min-w-[120px] whitespace-nowrap',
 				align: 'end',
 				headerHelperText: 'Countries where the card can be issued.',
 				csvValue: (row) => availabilityLabel(row) ?? ''
@@ -347,7 +347,7 @@ export function buildCardsColumns(
 			enableSorting: false,
 			cell: ({ row }) => <ProseValue row={row.original} field="cashbackRate" value={row.original.cashbackRate} />,
 			meta: {
-				headerClassName: 'w-[200px] min-w-[200px] 2xl:w-[260px] 2xl:min-w-[260px]',
+				headerClassName: 'min-w-[200px] 2xl:min-w-[260px]',
 				headerHelperText: 'Advertised cashback rate, including tier conditions.'
 			}
 		}),
@@ -375,7 +375,6 @@ export function buildCardsColumns(
 				)
 			},
 			meta: {
-				headerClassName: 'w-[175px] min-w-[175px]',
 				headerHelperText: 'What cashback is paid in.'
 			}
 		}),
@@ -387,7 +386,7 @@ export function buildCardsColumns(
 				<ProseValue row={row.original} field="maxCashbackPerMonth" value={row.original.maxCashbackPerMonth} />
 			),
 			meta: {
-				headerClassName: 'w-[130px] min-w-[130px]',
+				headerClassName: 'min-w-[130px]',
 				headerHelperText: 'Maximum cashback earnable per month.'
 			}
 		}),
@@ -397,7 +396,7 @@ export function buildCardsColumns(
 			enableSorting: false,
 			cell: ({ row }) => <PerksValue perks={row.original.perks} />,
 			meta: {
-				headerClassName: 'w-[310px] min-w-[310px]',
+				headerClassName: 'min-w-[310px]',
 				csvValue: (row) => row.perks.join(', ')
 			}
 		}),
@@ -407,7 +406,7 @@ export function buildCardsColumns(
 			enableSorting: false,
 			cell: ({ row }) => <ProseValue row={row.original} field="annualFee" value={row.original.annualFee} />,
 			meta: {
-				headerClassName: 'w-[130px] min-w-[130px]'
+				headerClassName: 'min-w-[130px]'
 			}
 		}),
 		columnHelper.accessor((row) => row.fxFee ?? undefined, {
@@ -416,7 +415,7 @@ export function buildCardsColumns(
 			enableSorting: false,
 			cell: ({ row }) => <ProseValue row={row.original} field="fxFee" value={row.original.fxFee} />,
 			meta: {
-				headerClassName: 'w-[230px] min-w-[230px] 2xl:w-[300px] 2xl:min-w-[300px]',
+				headerClassName: 'min-w-[230px] 2xl:min-w-[300px]',
 				headerHelperText: 'Foreign-exchange markup on non-base-currency transactions.'
 			}
 		}),
@@ -426,7 +425,7 @@ export function buildCardsColumns(
 			enableSorting: false,
 			cell: ({ row }) => <TextValue row={row.original} field="atmFee" value={row.original.atmFee} />,
 			meta: {
-				headerClassName: 'w-[86px] min-w-[86px] whitespace-nowrap',
+				headerClassName: 'whitespace-nowrap',
 				align: 'end',
 				headerHelperText: 'Fee on ATM withdrawals.'
 			}
@@ -437,7 +436,7 @@ export function buildCardsColumns(
 			enableSorting: false,
 			cell: ({ row }) => <ProseValue row={row.original} field="atmAllowance" value={row.original.atmAllowance} />,
 			meta: {
-				headerClassName: 'w-[250px] min-w-[250px] 2xl:w-[310px] 2xl:min-w-[310px]',
+				headerClassName: 'min-w-[250px] 2xl:min-w-[310px]',
 				headerHelperText: 'Fee-free ATM withdrawal allowance.'
 			}
 		}),
@@ -447,7 +446,7 @@ export function buildCardsColumns(
 			enableSorting: false,
 			cell: ({ row }) => <ProseValue row={row.original} field="access" value={row.original.access} />,
 			meta: {
-				headerClassName: 'w-[170px] min-w-[170px] 2xl:w-[180px] 2xl:min-w-[180px]',
+				headerClassName: 'min-w-[170px] 2xl:min-w-[180px]',
 				headerHelperText: 'What unlocks this tier: deposits, stakes, points, or fees. None means anyone can get it.'
 			}
 		}),
@@ -458,7 +457,7 @@ export function buildCardsColumns(
 				<TextValue row={row.original} field="cardClassification" value={capitalize(row.original.cardClassification)} />
 			),
 			meta: {
-				headerClassName: 'w-[116px] min-w-[116px] whitespace-nowrap',
+				headerClassName: 'min-w-[116px] whitespace-nowrap',
 				headerHelperText: 'Debit, credit, prepaid, or spend.',
 				csvValue: (row) => capitalize(row.cardClassification) ?? ''
 			}
@@ -468,7 +467,7 @@ export function buildCardsColumns(
 			header: 'Network',
 			cell: ({ row }) => <TextValue row={row.original} field="network" value={capitalize(row.original.network)} />,
 			meta: {
-				headerClassName: 'w-[104px] min-w-[104px] whitespace-nowrap',
+				headerClassName: 'min-w-[104px] whitespace-nowrap',
 				headerHelperText: 'Payment network the card runs on.',
 				csvValue: (row) => capitalize(row.network) ?? ''
 			}
@@ -478,7 +477,7 @@ export function buildCardsColumns(
 			header: 'Issuer',
 			cell: ({ row }) => <TextValue row={row.original} field="issuer" value={row.original.issuer} />,
 			meta: {
-				headerClassName: 'w-[122px] min-w-[122px] whitespace-nowrap',
+				headerClassName: 'min-w-[122px] whitespace-nowrap',
 				headerHelperText: 'Issuing bank / BIN sponsor.'
 			}
 		}),
@@ -489,7 +488,7 @@ export function buildCardsColumns(
 				<TextValue row={row.original} field="custodyType" value={capitalize(row.original.custodyType)} />
 			),
 			meta: {
-				headerClassName: 'w-[120px] min-w-[120px] whitespace-nowrap',
+				headerClassName: 'min-w-[120px] whitespace-nowrap',
 				csvValue: (row) => capitalize(row.custodyType) ?? ''
 			}
 		}),
@@ -505,7 +504,7 @@ export function buildCardsColumns(
 				/>
 			),
 			meta: {
-				headerClassName: 'w-[200px] min-w-[200px]',
+				headerClassName: 'min-w-[200px]',
 				align: 'end',
 				headerHelperText: 'Chains the card can be funded from.',
 				csvValue: (row) => row.supportedChains.join(', ')
@@ -528,7 +527,7 @@ export function buildCardsColumns(
 				/>
 			),
 			meta: {
-				headerClassName: 'w-[200px] min-w-[200px]',
+				headerClassName: 'min-w-[200px]',
 				cellClassName: 'items-top py-0 shrink-0',
 				align: 'end',
 				headerHelperText: 'Tokens the card can spend or be funded with.',
@@ -540,7 +539,7 @@ export function buildCardsColumns(
 			header: 'Card form',
 			cell: ({ row }) => <TextValue row={row.original} field="virtualPhysical" value={row.original.virtualPhysical} />,
 			meta: {
-				headerClassName: 'w-[158px] min-w-[158px] whitespace-nowrap',
+				headerClassName: 'min-w-[158px] whitespace-nowrap',
 				headerHelperText: 'Whether the card is virtual, physical, or both.'
 			}
 		}),
@@ -549,7 +548,7 @@ export function buildCardsColumns(
 			header: 'Apple Pay',
 			cell: ({ row }) => <BooleanValue row={row.original} field="applePay" value={row.original.applePay} />,
 			meta: {
-				headerClassName: 'w-[112px] min-w-[112px] whitespace-nowrap',
+				headerClassName: 'min-w-[112px] whitespace-nowrap',
 				align: 'end',
 				headerHelperText: 'Whether the card can be added to Apple Pay.',
 				csvValue: (row) => booleanCsv(row.applePay)
@@ -560,7 +559,7 @@ export function buildCardsColumns(
 			header: 'Google Pay',
 			cell: ({ row }) => <BooleanValue row={row.original} field="googlePay" value={row.original.googlePay} />,
 			meta: {
-				headerClassName: 'w-[120px] min-w-[120px] whitespace-nowrap',
+				headerClassName: 'min-w-[120px] whitespace-nowrap',
 				align: 'end',
 				headerHelperText: 'Whether the card can be added to Google Pay.',
 				csvValue: (row) => booleanCsv(row.googlePay)
@@ -571,7 +570,7 @@ export function buildCardsColumns(
 			header: 'IBAN',
 			cell: ({ row }) => <BooleanValue row={row.original} field="iban" value={row.original.iban} />,
 			meta: {
-				headerClassName: 'w-[78px] min-w-[78px] whitespace-nowrap',
+				headerClassName: 'whitespace-nowrap',
 				align: 'end',
 				headerHelperText: 'Whether the card account comes with an IBAN for bank transfers.',
 				csvValue: (row) => booleanCsv(row.iban)
@@ -585,7 +584,7 @@ export function buildCardsColumns(
 				<ProseValue row={row.original} field="dailySpendingLimit" value={row.original.dailySpendingLimit} />
 			),
 			meta: {
-				headerClassName: 'w-[170px] min-w-[170px] 2xl:w-[230px] 2xl:min-w-[230px]',
+				headerClassName: 'min-w-[170px] 2xl:min-w-[230px]',
 				headerHelperText: 'Provider-set daily spending limit.'
 			}
 		}),
@@ -597,7 +596,7 @@ export function buildCardsColumns(
 				<ProseValue row={row.original} field="monthlySpendingLimit" value={row.original.monthlySpendingLimit} />
 			),
 			meta: {
-				headerClassName: 'w-[200px] min-w-[200px] 2xl:w-[240px] 2xl:min-w-[240px]',
+				headerClassName: 'min-w-[200px] 2xl:min-w-[240px]',
 				headerHelperText: 'Provider-set monthly spending limit.'
 			}
 		})

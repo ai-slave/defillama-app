@@ -110,7 +110,7 @@ export function buildPairColumns(
 					</span>
 				)
 			},
-			meta: { headerClassName: 'w-[105px]', headerHelperText: definitions.token.description }
+			meta: { headerClassName: 'min-w-[105px]', headerHelperText: definitions.token.description }
 		}),
 		columnHelper.accessor('symbol', {
 			id: 'pair',
@@ -131,7 +131,7 @@ export function buildPairColumns(
 				</span>
 			),
 			meta: {
-				headerClassName: isPerp ? 'w-[165px]' : 'w-[135px]',
+				headerClassName: isPerp ? 'min-w-[165px]' : 'min-w-[135px]',
 				headerHelperText: definitions.pair.description
 			}
 		}),
@@ -139,14 +139,14 @@ export function buildPairColumns(
 			id: 'price',
 			header: definitions.price.label,
 			cell: ({ row, getValue }) => formatPairPrice(getValue(), row.original.quote),
-			meta: { headerClassName: 'w-[150px]', align: 'end', headerHelperText: definitions.price.description }
+			meta: { headerClassName: 'min-w-[150px]', align: 'end', headerHelperText: definitions.price.description }
 		}),
 		columnHelper.accessor((row) => row.priceChange24h ?? undefined, {
 			id: 'priceChange24h',
 			header: definitions.priceChange24h.label,
 			cell: ({ getValue }) => <FractionChange value={getValue()} />,
 			meta: {
-				headerClassName: 'w-[95px]',
+				headerClassName: 'min-w-[95px]',
 				align: 'end',
 				headerHelperText: definitions.priceChange24h.description
 			}
@@ -161,7 +161,10 @@ export function buildPairColumns(
 				getValue() == null
 					? NA
 					: (formatUsd(getValue(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'),
-			meta: { headerClassName: 'w-[150px]', align: 'end', headerHelperText: definitions.execCostToTrade.description }
+			meta: {
+				align: 'end',
+				headerHelperText: definitions.execCostToTrade.description
+			}
 		}),
 		columnHelper.accessor((row) => row.execution?.realizedSlippage10kBps ?? undefined, {
 			id: 'execSlippage10k',
@@ -173,14 +176,18 @@ export function buildPairColumns(
 					actual={row.original.execution?.realizedSlippage10kBps ?? null}
 				/>
 			),
-			meta: { headerClassName: 'w-[140px]', align: 'end', headerHelperText: definitions.execSlippage10k.description }
+			meta: {
+				headerClassName: 'min-w-[140px]',
+				align: 'end',
+				headerHelperText: definitions.execSlippage10k.description
+			}
 		}),
 		columnHelper.accessor((row) => insideShown(row.execution?.insideSpreadPct) ?? undefined, {
 			id: 'intraSpread',
 			header: definitions.intraSpread.label,
 			sortDescFirst: true,
 			cell: ({ row }) => <IntraSpread pct={row.original.execution?.insideSpreadPct} />,
-			meta: { headerClassName: 'w-[125px]', align: 'end', headerHelperText: definitions.intraSpread.description }
+			meta: { align: 'end', headerHelperText: definitions.intraSpread.description }
 		}),
 		columnHelper.accessor((row) => row.execution?.effectiveSpreadBps ?? undefined, {
 			id: 'execEffectiveSpread',
@@ -188,7 +195,6 @@ export function buildPairColumns(
 			sortDescFirst: false,
 			cell: ({ getValue }) => (getValue() == null ? NA : pctOfBps(getValue() ?? null)),
 			meta: {
-				headerClassName: 'w-[100px]',
 				align: 'end',
 				headerHelperText: definitions.execEffectiveSpread.description
 			}
@@ -198,7 +204,7 @@ export function buildPairColumns(
 			header: definitions.execMarkout1m.label,
 			sortDescFirst: false,
 			cell: ({ getValue }) => <Markout value={getValue() ?? null} />,
-			meta: { headerClassName: 'w-[105px]', align: 'end', headerHelperText: definitions.execMarkout1m.description }
+			meta: { align: 'end', headerHelperText: definitions.execMarkout1m.description }
 		}),
 		// Active liquidity leads the liquidity metrics, matching the exchanges directory.
 		columnHelper.accessor((row) => row.normalizedVolume?.activeLiquidity ?? undefined, {
@@ -226,7 +232,6 @@ export function buildPairColumns(
 				)
 			},
 			meta: {
-				headerClassName: 'w-[125px]',
 				align: 'end',
 				headerHelperText: definitions.activeLiquidity.description
 			}
@@ -257,20 +262,20 @@ export function buildPairColumns(
 				) : (
 					<UnsupportedMetric />
 				),
-			meta: { headerClassName: 'w-[115px]', align: 'end', headerHelperText: definitions.depth2Usd.description }
+			meta: { align: 'end', headerHelperText: definitions.depth2Usd.description }
 		}),
 		columnHelper.accessor((row) => row.volume24h ?? undefined, {
 			id: 'volume24h',
 			header: definitions.volume24h.label,
 			cell: ({ getValue }) => formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–',
-			meta: { headerClassName: 'w-[120px]', align: 'end', headerHelperText: definitions.volume24h.description }
+			meta: { headerClassName: 'min-w-[120px]', align: 'end', headerHelperText: definitions.volume24h.description }
 		}),
 		columnHelper.accessor((row) => row.volumeChange24h ?? undefined, {
 			id: 'volumeChange24h',
 			header: definitions.volumeChange24h.label,
 			cell: ({ getValue }) => <FractionChange value={getValue()} />,
 			meta: {
-				headerClassName: 'w-[100px]',
+				headerClassName: 'min-w-[100px]',
 				align: 'end',
 				headerHelperText: definitions.volumeChange24h.description
 			}
@@ -302,7 +307,7 @@ export function buildPairColumns(
 				)
 			},
 			meta: {
-				headerClassName: 'w-[120px]',
+				headerClassName: 'min-w-[120px]',
 				align: 'end',
 				headerHelperText: definitions.normalizedVolume.description
 			}
@@ -312,7 +317,7 @@ export function buildPairColumns(
 			header: definitions.spreadFraction.label,
 			cell: ({ getValue }) => formatPercent(getValue(), PERCENT_THREE_DECIMALS_OPTIONS) ?? '–',
 			meta: {
-				headerClassName: 'w-[90px]',
+				headerClassName: 'min-w-[90px]',
 				align: 'end',
 				headerHelperText: definitions.spreadFraction.description
 			}
@@ -325,19 +330,19 @@ export function buildPairColumns(
 					id: 'markPrice',
 					header: definitions.markPrice.label,
 					cell: ({ row, getValue }) => formatPairPrice(getValue(), row.original.quote),
-					meta: { headerClassName: 'w-[115px]', align: 'end', headerHelperText: definitions.markPrice.description }
+					meta: { headerClassName: 'min-w-[115px]', align: 'end', headerHelperText: definitions.markPrice.description }
 				}),
 				columnHelper.accessor((row) => row.indexPrice ?? undefined, {
 					id: 'indexPrice',
 					header: definitions.indexPrice.label,
 					cell: ({ row, getValue }) => formatPairPrice(getValue(), row.original.quote),
-					meta: { headerClassName: 'w-[115px]', align: 'end', headerHelperText: definitions.indexPrice.description }
+					meta: { headerClassName: 'min-w-[115px]', align: 'end', headerHelperText: definitions.indexPrice.description }
 				}),
 				columnHelper.accessor((row) => row.basis ?? undefined, {
 					id: 'basis',
 					header: definitions.basis.label,
 					cell: ({ getValue }) => formatPercent(getValue(), PERCENT_THREE_DECIMALS_OPTIONS) ?? '–',
-					meta: { headerClassName: 'w-[90px]', align: 'end', headerHelperText: definitions.basis.description }
+					meta: { headerClassName: 'min-w-[90px]', align: 'end', headerHelperText: definitions.basis.description }
 				}),
 				columnHelper.accessor((row) => row.openInterestUsd ?? undefined, {
 					id: 'openInterestUsd',
@@ -349,7 +354,7 @@ export function buildPairColumns(
 							<UnsupportedMetric />
 						),
 					meta: {
-						headerClassName: 'w-[125px]',
+						headerClassName: 'min-w-[125px]',
 						align: 'end',
 						headerHelperText: definitions.openInterestUsd.description
 					}
@@ -362,7 +367,7 @@ export function buildPairColumns(
 						return <FractionChange value={getValue()} />
 					},
 					meta: {
-						headerClassName: 'w-[90px]',
+						headerClassName: 'min-w-[90px]',
 						align: 'end',
 						headerHelperText: definitions.openInterestChange24h.description
 					}
@@ -390,7 +395,7 @@ export function buildPairColumns(
 						)
 					},
 					meta: {
-						headerClassName: 'w-[105px]',
+						headerClassName: 'min-w-[105px]',
 						align: 'end',
 						headerHelperText: definitions.fundingRate8h.description
 					}
@@ -411,7 +416,7 @@ export function buildPairColumns(
 							<UnsupportedMetric />
 						),
 					meta: {
-						headerClassName: 'w-[220px]',
+						headerClassName: 'min-w-[220px]',
 						align: 'end',
 						headerHelperText: definitions.nextFundingAt.description
 					}
@@ -436,7 +441,6 @@ export function buildPairColumns(
 			header: definitions.volumeFreshness.label,
 			cell: ({ getValue }) => getValue()?.slice(0, 10) ?? '–',
 			meta: {
-				headerClassName: 'w-[115px]',
 				align: 'end',
 				headerHelperText: definitions.volumeFreshness.description
 			}
@@ -445,19 +449,19 @@ export function buildPairColumns(
 			id: 'makerFee',
 			header: definitions.makerFee.label,
 			cell: ({ getValue }) => formatPercent(getValue(), PERCENT_THREE_DECIMALS_OPTIONS) ?? '–',
-			meta: { headerClassName: 'w-[100px]', align: 'end', headerHelperText: definitions.makerFee.description }
+			meta: { align: 'end', headerHelperText: definitions.makerFee.description }
 		}),
 		columnHelper.accessor((row) => row.takerFee ?? undefined, {
 			id: 'takerFee',
 			header: definitions.takerFee.label,
 			cell: ({ getValue }) => formatPercent(getValue(), PERCENT_THREE_DECIMALS_OPTIONS) ?? '–',
-			meta: { headerClassName: 'w-[100px]', align: 'end', headerHelperText: definitions.takerFee.description }
+			meta: { align: 'end', headerHelperText: definitions.takerFee.description }
 		}),
 		columnHelper.accessor((row) => row.listedAt ?? undefined, {
 			id: 'listedAt',
 			header: definitions.listedAt.label,
 			cell: ({ getValue }) => (getValue() == null ? '–' : (formatDate(getValue(), { input: 'seconds' }) ?? '–')),
-			meta: { headerClassName: 'w-[110px]', align: 'end', headerHelperText: definitions.listedAt.description }
+			meta: { headerClassName: 'min-w-[110px]', align: 'end', headerHelperText: definitions.listedAt.description }
 		})
 	])
 
@@ -491,7 +495,7 @@ export function buildPairColumns(
 							</span>
 						)
 					},
-					meta: { headerClassName: 'w-[160px]', headerHelperText: definitions.venue.description }
+					meta: { headerClassName: 'min-w-[160px]', headerHelperText: definitions.venue.description }
 				})
 			])
 		: []

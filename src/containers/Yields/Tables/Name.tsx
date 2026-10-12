@@ -63,7 +63,7 @@ export function PoolNameLockup({
 	pegTokenSymbol?: string | null | undefined
 	pegConsequence?: string | undefined
 }) {
-	// Inline rank: number inside the name cell (no dedicated column, so table-layout:fixed
+	// Inline rank: number inside the name cell (no dedicated column, so spare table width
 	// can't balloon the gap), min-w-4 slot; longer ranks simply grow and nudge the content.
 	const rowNumber = usePaginatedTableDisplayRowNumber(rowId ?? '')
 	const poolUrl = `/yields/pool/${configID}`

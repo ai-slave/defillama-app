@@ -409,7 +409,7 @@ const emissionsColumns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[160px] lg:w-[214px]'
+			headerClassName: 'min-w-[160px] lg:min-w-[214px]'
 		}
 	}),
 	columnHelper.accessor((row) => row.tPrice ?? undefined, {
@@ -430,7 +430,7 @@ const emissionsColumns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[90px]',
+			headerClassName: 'min-w-[90px]',
 			align: 'end'
 		}
 	}),
@@ -451,7 +451,7 @@ const emissionsColumns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'min-w-[120px]',
 			align: 'end'
 		}
 	}),
@@ -489,7 +489,6 @@ const emissionsColumns = columnHelper.columns([
 				)
 			},
 			meta: {
-				headerClassName: 'w-[152px]',
 				align: 'end',
 				headerHelperText: 'Share of maximum supply unlocked at the emissions artifact snapshot.'
 			}
@@ -525,7 +524,6 @@ const emissionsColumns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[min(184px,40vw)]',
 			align: 'end',
 			headerHelperText:
 				"Price trend shown from 7 days before to 7 days after the most recent unlock event. Doesn't include Non-Circulating and Farming emissions."
@@ -548,7 +546,6 @@ const emissionsColumns = columnHelper.columns([
 				</div>
 			),
 			meta: {
-				headerClassName: 'w-[236px]',
 				align: 'end',
 				headerHelperText:
 					'Observed token price change during the 7 days after the most recent unlock. This does not imply that the unlock caused the change.'
@@ -580,7 +577,6 @@ const emissionsColumns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[158px]',
 			align: 'end',
 			headerHelperText:
 				'Cliff unlocks plus linear releases accrued during the exact rolling 24-hour period from the emissions artifact snapshot. Events without a known amount or valid snapshot price are excluded.'
@@ -620,7 +616,7 @@ const upcomingEventColumn = (nowSec: number) =>
 				)
 			},
 			meta: {
-				headerClassName: 'w-[520px]'
+				headerClassName: 'min-w-[520px]'
 			}
 		}
 	)

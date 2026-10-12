@@ -41,7 +41,7 @@ const categoriesColumns = columnHelper.columns([
 		header: 'Category',
 		enableSorting: false,
 		meta: {
-			headerClassName: 'w-[min(240px,40vw)]'
+			headerClassName: 'min-w-[min(240px,40vw)]'
 		},
 		cell: ({ getValue, row }) => {
 			const categoryName = getValue()
@@ -68,7 +68,6 @@ const categoriesColumns = columnHelper.columns([
 		id: 'protocols',
 		header: 'Protocols',
 		meta: {
-			headerClassName: 'w-[100px]',
 			align: 'end'
 		}
 	}),
@@ -76,7 +75,6 @@ const categoriesColumns = columnHelper.columns([
 		id: 'tvl',
 		header: 'Combined TVL',
 		meta: {
-			headerClassName: 'w-[135px]',
 			align: 'end'
 		},
 		cell: ({ getValue }) => {
@@ -88,7 +86,6 @@ const categoriesColumns = columnHelper.columns([
 		id: 'change_1d',
 		header: '1d TVL Change',
 		meta: {
-			headerClassName: 'w-[140px]',
 			align: 'end'
 		},
 		cell: ({ getValue }) => <Change value={getValue()} />
@@ -97,7 +94,6 @@ const categoriesColumns = columnHelper.columns([
 		id: 'change_7d',
 		header: '7d TVL Change',
 		meta: {
-			headerClassName: 'w-[140px]',
 			align: 'end'
 		},
 		cell: ({ getValue }) => <Change value={getValue()} />
@@ -106,7 +102,6 @@ const categoriesColumns = columnHelper.columns([
 		id: 'change_1m',
 		header: '30d TVL Change',
 		meta: {
-			headerClassName: 'w-[140px]',
 			align: 'end'
 		},
 		cell: ({ getValue }) => <Change value={getValue()} />
@@ -115,7 +110,6 @@ const categoriesColumns = columnHelper.columns([
 		id: 'revenue',
 		header: 'Combined 24h Revenue',
 		meta: {
-			headerClassName: 'w-[min(200px,40vw)]',
 			align: 'end'
 		},
 		cell: ({ getValue }) => {
@@ -127,7 +121,7 @@ const categoriesColumns = columnHelper.columns([
 		header: 'Description',
 		enableSorting: false,
 		meta: {
-			headerClassName: 'w-[min(1600px,40vw)]'
+			headerClassName: 'min-w-[min(1600px,40vw)]'
 		}
 	})
 ])

@@ -35,7 +35,7 @@ function TestTable({ interactionDisabled = false, stickyHeader = false, data = o
 		columns: [
 			columnHelper.accessor('name', {
 				header: 'Name',
-				meta: { headerClassName: 'w-[180px]', headerHelperText: 'Name help' }
+				meta: { headerClassName: 'min-w-[180px]', headerHelperText: 'Name help' }
 			})
 		],
 		initialState: { pagination: { pageIndex: 0, pageSize: 10 } }

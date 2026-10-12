@@ -102,7 +102,7 @@ export function OracleOverview({
 						)
 					},
 					meta: {
-						headerClassName: 'w-[min(240px,40vw)]'
+						headerClassName: 'min-w-[min(240px,40vw)]'
 					}
 				}),
 				columnHelper.accessor('category', {
@@ -110,7 +110,7 @@ export function OracleOverview({
 					enableSorting: false,
 					cell: ({ getValue }) => getValue() ?? 'Unknown',
 					meta: {
-						headerClassName: 'w-[140px]',
+						headerClassName: 'min-w-[140px]',
 						align: 'center'
 					}
 				}),
@@ -137,7 +137,7 @@ export function OracleOverview({
 						)
 					},
 					meta: {
-						headerClassName: 'w-[120px]',
+						headerClassName: 'min-w-[120px]',
 						align: 'center'
 					}
 				})

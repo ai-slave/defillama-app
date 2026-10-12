@@ -189,13 +189,13 @@ const calendarColumns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[min(220px,40vw)]'
+			headerClassName: 'min-w-[min(220px,40vw)]'
 		}
 	}),
 	columnHelper.accessor('type', {
 		header: 'Type',
 		meta: {
-			headerClassName: 'w-[100px]'
+			headerClassName: 'min-w-[100px]'
 		}
 	}),
 	columnHelper.accessor((row) => row.timestamp ?? undefined, {
@@ -205,7 +205,7 @@ const calendarColumns = columnHelper.columns([
 			return <SimpleUpcomingEvent timestamp={getValue() / 1e3} name={row.original.name} />
 		},
 		meta: {
-			headerClassName: 'w-[min(800px,40vw)]'
+			headerClassName: 'min-w-[min(800px,40vw)]'
 		}
 	})
 ])

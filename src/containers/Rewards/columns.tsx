@@ -17,12 +17,12 @@ export const lifecycleStyles: Record<RewardLifecycle, string> = {
 }
 const helper = createColumnHelper<typeof tableFeaturesConfig, RewardProgram>()
 
-// Widths follow "Column widths" in src/components/Table/README.md: 24px padding + max(header + 14px sort,
-// widest realistic body).
+// Widths cover the widest realistic body value plus 24px padding; headers size themselves ("Column widths" in
+// src/components/Table/README.md).
 export const columns = helper.columns([
 	helper.accessor('protocol', {
 		header: 'Protocol / Program',
-		meta: { headerClassName: 'w-[300px] min-w-[300px]' },
+		meta: { headerClassName: 'min-w-[300px]' },
 		cell: ({ row }) => (
 			<div className="flex items-center gap-2">
 				<Button
@@ -68,14 +68,14 @@ export const columns = helper.columns([
 		// The expanded row always carries the full copy, because a clipped cell reveals nothing on hover
 		// ("Column widths" in src/components/Table/README.md).
 		meta: {
-			headerClassName: 'w-[320px] min-w-[320px] xl:w-[420px] xl:min-w-[420px] 2xl:w-[520px] 2xl:min-w-[520px]'
+			headerClassName: 'min-w-[320px] xl:min-w-[420px] 2xl:min-w-[520px]'
 		},
 		cell: ({ getValue }) => <span className="line-clamp-2 text-secondary">{getValue()}</span>
 	}),
 	helper.accessor('rewardTypes', {
 		header: 'Reward Type',
 		enableSorting: false,
-		meta: { headerClassName: 'w-[240px] min-w-[240px]' },
+		meta: { headerClassName: 'min-w-[240px]' },
 		cell: ({ getValue }) =>
 			getValue().length > 0 ? (
 				<div className="flex flex-wrap gap-1">
@@ -91,7 +91,7 @@ export const columns = helper.columns([
 	}),
 	helper.accessor('lifecycle', {
 		header: 'Status',
-		meta: { headerClassName: 'w-[116px] min-w-[116px]' },
+		meta: { headerClassName: 'min-w-[116px]' },
 		cell: ({ row, getValue }) => (
 			<div className="flex flex-col items-start gap-1">
 				<span className={`inline-flex items-center gap-1.5 label-sm ${lifecycleStyles[getValue()]}`}>
@@ -108,14 +108,14 @@ export const columns = helper.columns([
 		header: 'Dates',
 		sortUndefined: 'last',
 		sortFn: 'text',
-		meta: { headerClassName: 'w-[173px] min-w-[173px]' },
+		meta: { headerClassName: 'min-w-[173px]' },
 		cell: ({ row }) =>
 			row.original.dateRangeLabel ? <span className="text-secondary">{row.original.dateRangeLabel}</span> : null
 	}),
 	helper.display({
 		id: 'link',
 		header: 'Link',
-		meta: { headerClassName: 'w-[100px] min-w-[100px]' },
+		meta: { headerClassName: 'min-w-[100px]' },
 		cell: ({ row }) =>
 			row.original.referralUrl ? (
 				<ExternalLinkButton

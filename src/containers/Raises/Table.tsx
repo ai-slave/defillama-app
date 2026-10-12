@@ -30,13 +30,13 @@ export const raisesColumns = columnHelper.columns([
 		header: 'Name',
 		enableSorting: false,
 		meta: {
-			headerClassName: 'w-[min(180px,40vw)]'
+			headerClassName: 'min-w-[min(180px,40vw)]'
 		}
 	}),
 	columnHelper.accessor((row) => row.date ?? undefined, {
 		id: 'date',
 		meta: {
-			headerClassName: 'w-[120px]'
+			headerClassName: 'min-w-[120px]'
 		},
 		header: 'Date',
 		cell: (info) => formatDate(info.getValue(), { input: 'seconds' })
@@ -47,22 +47,19 @@ export const raisesColumns = columnHelper.columns([
 		cell: (info) =>
 			info.getValue() != null
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-				: null,
-		meta: {
-			headerClassName: 'w-[140px]'
-		}
+				: null
 	}),
 	columnHelper.accessor('round', {
 		header: 'Round',
 		enableSorting: false,
 		meta: {
-			headerClassName: 'w-[140px]'
+			headerClassName: 'min-w-[140px]'
 		}
 	}),
 	columnHelper.accessor('category', {
 		header: 'Category',
 		meta: {
-			headerClassName: 'w-[160px]'
+			headerClassName: 'min-w-[160px]'
 		},
 		enableSorting: false,
 		cell: (info) => <Tooltip content={info.getValue()}>{info.getValue()}</Tooltip>
@@ -70,7 +67,7 @@ export const raisesColumns = columnHelper.columns([
 	columnHelper.accessor('sector', {
 		header: 'Description',
 		meta: {
-			headerClassName: 'w-[140px]'
+			headerClassName: 'min-w-[140px]'
 		},
 		enableSorting: false,
 		cell: (info) => <Tooltip content={info.getValue()}>{info.getValue()}</Tooltip>
@@ -78,7 +75,7 @@ export const raisesColumns = columnHelper.columns([
 	columnHelper.accessor('leadInvestors', {
 		header: 'Lead Investor',
 		meta: {
-			headerClassName: 'w-[120px]'
+			headerClassName: 'min-w-[120px]'
 		},
 		enableSorting: false,
 		cell: (info) => <Tooltip content={info.getValue().join(', ')}>{info.getValue().join(', ')}</Tooltip>
@@ -89,23 +86,20 @@ export const raisesColumns = columnHelper.columns([
 		cell: (info) =>
 			info.getValue() != null
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-				: null,
-		meta: {
-			headerClassName: 'w-[100px]'
-		}
+				: null
 	}),
 	columnHelper.accessor('chains', {
 		header: 'Chains',
 		enableSorting: false,
 		cell: ({ getValue }) => <IconsRow items={toChainIconItems(getValue(), (chain) => chainHref('/chain', chain))} />,
 		meta: {
-			headerClassName: 'w-[80px]'
+			headerClassName: 'min-w-[80px]'
 		}
 	}),
 	columnHelper.accessor('otherInvestors', {
 		header: 'Other Investors',
 		meta: {
-			headerClassName: 'w-[min(400px,40vw)]'
+			headerClassName: 'min-w-[min(400px,40vw)]'
 		},
 		enableSorting: false,
 		cell: (info) => <Tooltip content={info.getValue().join(', ')}>{info.getValue().join(', ')}</Tooltip>

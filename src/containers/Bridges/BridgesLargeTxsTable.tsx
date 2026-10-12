@@ -79,7 +79,7 @@ export function BridgesLargeTxsTable({
 						</span>
 					),
 					meta: {
-						headerClassName: 'w-[220px]'
+						headerClassName: 'min-w-[220px]'
 					}
 				}),
 				columnHelper.accessor('bridge', {
@@ -94,7 +94,7 @@ export function BridgesLargeTxsTable({
 						)
 					},
 					meta: {
-						headerClassName: 'w-[140px] lg:w-[160px]'
+						headerClassName: 'min-w-[140px] lg:min-w-[160px]'
 					}
 				}),
 				columnHelper.accessor('isDeposit', {
@@ -106,7 +106,7 @@ export function BridgesLargeTxsTable({
 						)
 					},
 					meta: {
-						headerClassName: 'w-[140px]',
+						headerClassName: 'min-w-[140px]',
 						align: 'end'
 					}
 				}),
@@ -142,7 +142,7 @@ export function BridgesLargeTxsTable({
 						)
 					},
 					meta: {
-						headerClassName: 'w-[100px] min-[480px]:w-[120px]',
+						headerClassName: 'min-w-[100px] min-[480px]:min-w-[120px]',
 						align: 'end'
 					}
 				}),
@@ -152,7 +152,7 @@ export function BridgesLargeTxsTable({
 					cell: (info) =>
 						formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 					meta: {
-						headerClassName: 'w-[120px]',
+						headerClassName: 'min-w-[120px]',
 						align: 'end'
 					}
 				}),
@@ -185,7 +185,7 @@ export function BridgesLargeTxsTable({
 						)
 					},
 					meta: {
-						headerClassName: 'w-[160px]',
+						headerClassName: 'min-w-[160px]',
 						align: 'end'
 					}
 				})

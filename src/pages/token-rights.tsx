@@ -631,13 +631,13 @@ const columns = columnHelper.columns([
 				</span>
 			)
 		},
-		meta: { headerClassName: 'w-[min(220px,40vw)]' }
+		meta: { headerClassName: 'min-w-[min(220px,40vw)]' }
 	}),
 	columnHelper.accessor('tokens', {
 		header: 'Token',
 		enableSorting: false,
 		cell: ({ getValue }) => <TokenRightsTagList items={getValue()} />,
-		meta: { headerClassName: 'w-[280px]' }
+		meta: { headerClassName: 'min-w-[280px]' }
 	}),
 	columnHelper.accessor((row) => row.holdersRevenue24h ?? undefined, {
 		id: 'holdersRevenue24h',
@@ -652,7 +652,6 @@ const columns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[150px]',
 			align: 'end',
 			headerHelperText: 'Revenue distributed to token holders over the last 24 hours'
 		}
@@ -664,7 +663,6 @@ const columns = columnHelper.columns([
 			<RightsDots rights={getValue()} labels={['Governance decisions', 'Treasury decisions', 'Revenue decisions']} />
 		),
 		meta: {
-			headerClassName: 'w-[130px]',
 			align: 'center',
 			headerHelperText: 'Dots show whether token holders have governance, treasury, and revenue decision rights'
 		}
@@ -674,7 +672,6 @@ const columns = columnHelper.columns([
 		enableSorting: false,
 		cell: ({ getValue }) => <RightsDots rights={getValue()} labels={['Buybacks', 'Dividends', 'Burns']} />,
 		meta: {
-			headerClassName: 'w-[150px]',
 			align: 'center',
 			headerHelperText: 'Dots show whether the token has buybacks, dividends, and burns'
 		}
@@ -684,7 +681,6 @@ const columns = columnHelper.columns([
 		enableSorting: false,
 		cell: ({ getValue, row }) => <FeeSwitchBadge status={getValue()} details={row.original.feeSwitchDetails} />,
 		meta: {
-			headerClassName: 'w-[120px]',
 			align: 'center',
 			headerHelperText: 'Whether protocol fees are currently routed to token holders'
 		}
@@ -706,7 +702,7 @@ const columns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[260px]',
+			headerClassName: 'min-w-[260px]',
 			headerHelperText: 'Mechanism by which token holders may benefit economically, such as buybacks or revenue share'
 		}
 	}),
@@ -717,7 +713,6 @@ const columns = columnHelper.columns([
 			<EquityCaptureBadge value={getValue()} details={row.original.equityRevenueCaptureDetails} />
 		),
 		meta: {
-			headerClassName: 'w-[190px]',
 			align: 'center',
 			headerHelperText: 'Whether token holders have exposure to protocol or company revenue similar to equity'
 		}

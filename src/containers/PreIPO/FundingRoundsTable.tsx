@@ -22,19 +22,18 @@ const columns = columnHelper.columns([
 	columnHelper.accessor('date', {
 		header: 'Date',
 		cell: ({ getValue }) => formatDate(getValue()) ?? '-',
-		meta: { headerClassName: 'w-[130px]', align: 'start' }
+		meta: { headerClassName: 'min-w-[130px]', align: 'start' }
 	}),
 	columnHelper.accessor('series', {
 		header: 'Round',
 		enableSorting: false,
-		meta: { headerClassName: 'w-[180px]', align: 'start' }
+		meta: { headerClassName: 'min-w-[180px]', align: 'start' }
 	}),
 	columnHelper.accessor((row) => row.amountRaised ?? undefined, {
 		id: 'amountRaised',
 		header: preIpoDefinitions.fundingRound.amountRaised.label,
 		cell: ({ getValue }) => formatUsd(getValue(), PRE_IPO_USD_OPTIONS) ?? '-',
 		meta: {
-			headerClassName: 'w-[150px]',
 			align: 'end',
 			headerHelperText: preIpoDefinitions.fundingRound.amountRaised.description
 		}
@@ -44,7 +43,6 @@ const columns = columnHelper.columns([
 		header: preIpoDefinitions.fundingRound.valuation.label,
 		cell: ({ getValue }) => formatUsd(getValue(), PRE_IPO_USD_OPTIONS) ?? '-',
 		meta: {
-			headerClassName: 'w-[160px]',
 			align: 'end',
 			headerHelperText: preIpoDefinitions.fundingRound.valuation.description
 		}

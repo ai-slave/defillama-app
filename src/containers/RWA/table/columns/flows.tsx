@@ -55,13 +55,15 @@ export function createFlowsColumnGroup(status: RWAFlowStatus, period: RWAChangeP
 							display
 						)
 					},
-					meta: numberColumnMeta(
-						'w-[130px]',
-						window === null
-							? 'Net flows are published for 7d and 30d windows, so the 1d period has none.'
-							: header.description,
-						window === null ? 'Net Flow (no 1d window)' : header.label
-					)
+					meta: {
+						headerClassName: 'min-w-[130px]',
+						...numberColumnMeta(
+							window === null
+								? 'Net flows are published for 7d and 30d windows, so the 1d period has none.'
+								: header.description,
+							window === null ? 'Net Flow (no 1d window)' : header.label
+						)
+					}
 				}
 			)
 		]

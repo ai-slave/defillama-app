@@ -66,7 +66,7 @@ const topGainersAndLosersColumns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[min(260px,40vw)]'
+			headerClassName: 'min-w-[min(260px,40vw)]'
 		}
 	}),
 	columnHelper.accessor('chains', {
@@ -74,7 +74,7 @@ const topGainersAndLosersColumns = columnHelper.columns([
 		enableSorting: false,
 		cell: ({ getValue }) => <IconsRow items={toChainIconItems(getValue(), (chain) => chainHref('/chain', chain))} />,
 		meta: {
-			headerClassName: 'w-[min(200px,40vw)]',
+			headerClassName: 'min-w-[min(200px,40vw)]',
 			align: 'end',
 			headerHelperText: "Chains are ordered by protocol's highest TVL on each chain"
 		}
@@ -87,7 +87,7 @@ const topGainersAndLosersColumns = columnHelper.columns([
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[100px]',
+			headerClassName: 'min-w-[100px]',
 			align: 'end'
 		}
 	}),
@@ -96,7 +96,7 @@ const topGainersAndLosersColumns = columnHelper.columns([
 		header: '1d TVL Change',
 		cell: ({ getValue }) => <Change value={getValue()} />,
 		meta: {
-			headerClassName: 'w-[140px]',
+			headerClassName: 'min-w-[140px]',
 			align: 'end',
 			headerHelperText: 'Change in TVL in the last 24 hours'
 		}
@@ -106,7 +106,6 @@ const topGainersAndLosersColumns = columnHelper.columns([
 		header: 'Mcap/TVL',
 		cell: (info) => formatRatio(info.getValue()),
 		meta: {
-			headerClassName: 'w-[120px]',
 			align: 'end',
 			headerHelperText: 'Market cap / TVL ratio'
 		}

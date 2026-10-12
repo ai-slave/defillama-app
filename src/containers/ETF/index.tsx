@@ -158,13 +158,13 @@ const columns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[100px]'
+			headerClassName: 'min-w-[100px]'
 		}
 	}),
 	columnHelper.accessor('issuer', {
 		header: 'Issuer',
 		meta: {
-			headerClassName: 'w-[160px]',
+			headerClassName: 'min-w-[160px]',
 			align: 'end'
 		}
 	}),
@@ -173,7 +173,6 @@ const columns = columnHelper.columns([
 		enableSorting: true,
 		cell: ({ getValue }) => <IconsRow items={toChainIconItems(getValue())} />,
 		meta: {
-			headerClassName: 'w-[160px]',
 			align: 'end'
 		}
 	}),
@@ -182,7 +181,7 @@ const columns = columnHelper.columns([
 		header: 'Flows',
 		cell: ({ getValue }) => <Change value={getValue()} unit="usd" />,
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'min-w-[120px]',
 			align: 'end'
 		}
 	}),
@@ -194,7 +193,7 @@ const columns = columnHelper.columns([
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'min-w-[120px]',
 			align: 'end'
 		}
 	}),
@@ -206,7 +205,7 @@ const columns = columnHelper.columns([
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'min-w-[120px]',
 			align: 'end'
 		}
 	})

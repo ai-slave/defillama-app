@@ -33,14 +33,14 @@ const assetColumn = createDistinctTextColumn({
 			{asset}
 		</TextLink>
 	),
-	meta: textColumnMeta('w-[140px]', d.baseAsset.description, d.baseAsset.label)
+	meta: { headerClassName: 'min-w-[140px]', ...textColumnMeta(d.baseAsset.description, d.baseAsset.label) }
 })
 
 const assetClassColumn = createDistinctTextColumn({
 	id: 'assetClass',
 	header: 'Asset Class',
 	pick: (asset) => (asset.assetClass ?? []).join(', '),
-	meta: textColumnMeta('w-[150px]', d.assetClass.description, d.assetClass.label)
+	meta: { headerClassName: 'min-w-[150px]', ...textColumnMeta(d.assetClass.description, d.assetClass.label) }
 })
 
 /** A group's change marks the markets it leaves out; a market shows its own percent. */
@@ -69,11 +69,13 @@ function createChangeColumn(
 		cell: ({ row }) => (
 			<ChangeWithDropsCell change={pick(row.original.metrics)} group={row.original.kind === 'group'} />
 		),
-		meta: numberColumnMeta(
-			'w-[100px]',
-			`${definition.description} Groups compare like for like: contracts without a prior leave both sides, and a group marks the markets that fell to zero.`,
-			definition.label
-		)
+		meta: {
+			headerClassName: 'min-w-[100px]',
+			...numberColumnMeta(
+				`${definition.description} Groups compare like for like: contracts without a prior leave both sides, and a group marks the markets that fell to zero.`,
+				definition.label
+			)
+		}
 	})
 }
 
@@ -85,7 +87,6 @@ const turnoverColumn = columnHelper.accessor(
 		header: 'Turnover 30d',
 		cell: ({ getValue }) => formatRwaMultiple(getValue(), 1),
 		meta: numberColumnMeta(
-			'w-[120px]',
 			'30 day volume divided by open interest: how many times the open positions turned over.',
 			'Turnover 30d (x)'
 		)
@@ -96,14 +97,14 @@ const markPriceColumn = columnHelper.accessor((row) => row.metrics.price ?? unde
 	id: 'price',
 	header: 'Mark',
 	cell: ({ getValue }) => formatTableUsd(getValue()),
-	meta: numberColumnMeta('w-[110px]', d.price.description, d.price.label)
+	meta: numberColumnMeta(d.price.description, d.price.label)
 })
 
 const priceChange24hColumn = columnHelper.accessor((row) => row.metrics.priceChange24h ?? undefined, {
 	id: 'priceChange24h',
 	header: '24h',
 	cell: ({ getValue }) => <Change value={getValue()} />,
-	meta: numberColumnMeta('w-[100px]', d.priceChange24h.description, d.priceChange24h.label)
+	meta: numberColumnMeta(d.priceChange24h.description, d.priceChange24h.label)
 })
 
 /** Premiums sit in hundredths of a percent, so three decimals. */
@@ -129,7 +130,6 @@ const premiumColumn = columnHelper.accessor((row) => row.metrics.premium ?? unde
 	header: 'Premium',
 	cell: ({ row }) => <PremiumCell row={row.original} />,
 	meta: numberColumnMeta(
-		'w-[110px]',
 		`${d.premium.description} Positive means the perp trades above the underlying. A group row leaves it empty.`,
 		'Premium (%)'
 	)
@@ -158,7 +158,6 @@ const fundingAprColumn = columnHelper.accessor((row) => row.metrics.fundingApr ?
 	header: 'APR',
 	cell: ({ row }) => <FundingCell metrics={row.original.metrics} />,
 	meta: numberColumnMeta(
-		'w-[110px]',
 		`${d.fundingRate.description} Shown annualized from the venue's funding interval so 1h and 8h venues compare; the raw rate per interval is in the cell tooltip. A group row leaves it empty.`,
 		'Funding rate (annualized %)'
 	)
@@ -167,7 +166,7 @@ const fundingAprColumn = columnHelper.accessor((row) => row.metrics.fundingApr ?
 const sizeDecimalsColumn = columnHelper.accessor((row) => getPerpsMarket(row)?.sizeDecimals ?? undefined, {
 	id: 'sizeDecimals',
 	header: 'Size Decimals',
-	meta: numberColumnMeta('w-[120px]', d.sizeDecimals.description, d.sizeDecimals.label)
+	meta: numberColumnMeta(d.sizeDecimals.description, d.sizeDecimals.label)
 })
 
 const fundingIntervalColumn = createDistinctTextColumn({
@@ -175,7 +174,7 @@ const fundingIntervalColumn = createDistinctTextColumn({
 	header: 'Interval',
 	pick: (asset) => (asset.kind === 'perps' ? formatFundingInterval(asset.fundingIntervalHours) : null),
 	fold: 'single',
-	meta: textColumnMeta('w-[100px]', 'How often funding is paid between longs and shorts.', 'Funding Interval')
+	meta: textColumnMeta('How often funding is paid between longs and shorts.', 'Funding Interval')
 })
 
 /**
@@ -198,7 +197,7 @@ export const createPerpsColumns = ({ assetLine }: { assetLine: boolean }) => [
 				id: 'marginAsset',
 				header: 'Margin Asset',
 				pick: (asset) => (asset.kind === 'perps' ? asset.marginAsset : null),
-				meta: textColumnMeta('w-[140px]', d.marginAsset.description, d.marginAsset.label)
+				meta: { headerClassName: 'min-w-[140px]', ...textColumnMeta(d.marginAsset.description, d.marginAsset.label) }
 			}),
 			venueTypeColumn,
 			createAccessModelColumn('single')
@@ -208,7 +207,7 @@ export const createPerpsColumns = ({ assetLine }: { assetLine: boolean }) => [
 		id: 'openInterestGroup',
 		header: 'Open Interest',
 		columns: [
-			createPerpsUsdColumn('openInterest', 'OI', d.openInterest),
+			createPerpsUsdColumn('openInterest', 'OI', d.openInterest, 'min-w-[120px]'),
 			createChangeColumn('openInterestChange24h', '24h', (m) => m.openInterestChange24h, d.openInterestChange24h)
 		]
 	}),
@@ -216,11 +215,11 @@ export const createPerpsColumns = ({ assetLine }: { assetLine: boolean }) => [
 		id: 'volume',
 		header: 'Volume',
 		columns: [
-			createPerpsUsdColumn('volume24h', '24h', d.volume24h),
+			createPerpsUsdColumn('volume24h', '24h', d.volume24h, 'min-w-[120px]'),
 			createChangeColumn('volume24hChange24h', '24h', (m) => m.volume24hChange24h, d.volume24hChange24h),
-			createPerpsUsdColumn('volume7d', '7d', d.volume7d),
-			createPerpsUsdColumn('volume30d', '30d', d.volume30d),
-			createPerpsUsdColumn('volumeAllTime', 'All-time', d.volumeAllTime),
+			createPerpsUsdColumn('volume7d', '7d', d.volume7d, 'min-w-[120px]'),
+			createPerpsUsdColumn('volume30d', '30d', d.volume30d, 'min-w-[120px]'),
+			createPerpsUsdColumn('volumeAllTime', 'All-time', d.volumeAllTime, 'min-w-[120px]'),
 			turnoverColumn
 		]
 	}),
@@ -232,7 +231,7 @@ export const createPerpsColumns = ({ assetLine }: { assetLine: boolean }) => [
 				id: 'pair',
 				header: 'Pair',
 				pick: (asset) => (asset.kind === 'perps' ? asset.pair : null),
-				meta: textColumnMeta('w-[140px]', d.pair.description, d.pair.label)
+				meta: { headerClassName: 'min-w-[140px]', ...textColumnMeta(d.pair.description, d.pair.label) }
 			}),
 			markPriceColumn,
 			priceChange24hColumn,
@@ -251,10 +250,10 @@ export const createPerpsColumns = ({ assetLine }: { assetLine: boolean }) => [
 		id: 'estimatedFees',
 		header: 'Est. Fees',
 		columns: [
-			createPerpsUsdColumn('protocolFees24h', '24h', d.estimatedProtocolFees24h),
-			createPerpsUsdColumn('protocolFees30d', '30d', d.estimatedProtocolFees30d),
-			createPerpsUsdColumn('protocolFees7d', '7d', d.estimatedProtocolFees7d),
-			createPerpsUsdColumn('protocolFeesAllTime', 'All-time', d.estimatedProtocolFeesAllTime)
+			createPerpsUsdColumn('protocolFees24h', '24h', d.estimatedProtocolFees24h, 'min-w-[120px]'),
+			createPerpsUsdColumn('protocolFees30d', '30d', d.estimatedProtocolFees30d, 'min-w-[120px]'),
+			createPerpsUsdColumn('protocolFees7d', '7d', d.estimatedProtocolFees7d, 'min-w-[120px]'),
+			createPerpsUsdColumn('protocolFeesAllTime', 'All-time', d.estimatedProtocolFeesAllTime, 'min-w-[120px]')
 		]
 	}),
 	columnHelper.group({

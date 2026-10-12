@@ -200,14 +200,14 @@ const columns = (chain: string, blockExplorers: ReturnType<typeof useBlockExplor
 			},
 			enableSorting: false,
 			meta: {
-				headerClassName: 'w-[min(280px,40vw)]'
+				headerClassName: 'min-w-[min(280px,40vw)]'
 			}
 		}),
 		columnHelper.accessor((row) => row.txns ?? undefined, {
 			id: 'txns',
 			header: 'Transactions',
 			meta: {
-				headerClassName: 'w-[120px]',
+				headerClassName: 'min-w-[120px]',
 				align: 'end'
 			}
 		}),
@@ -216,7 +216,7 @@ const columns = (chain: string, blockExplorers: ReturnType<typeof useBlockExplor
 			header: 'Tx Growth',
 			cell: (info) => <Change value={info.getValue()} />,
 			meta: {
-				headerClassName: 'w-[120px]',
+				headerClassName: 'min-w-[120px]',
 				align: 'end'
 			}
 		}),
@@ -224,7 +224,7 @@ const columns = (chain: string, blockExplorers: ReturnType<typeof useBlockExplor
 			id: 'active_accounts',
 			header: 'Active Accounts',
 			meta: {
-				headerClassName: 'w-[150px]',
+				headerClassName: 'min-w-[150px]',
 				align: 'end'
 			}
 		}),
@@ -233,7 +233,7 @@ const columns = (chain: string, blockExplorers: ReturnType<typeof useBlockExplor
 			header: 'Account Growth',
 			cell: (info) => <Change value={info.getValue()} />,
 			meta: {
-				headerClassName: 'w-[150px]',
+				headerClassName: 'min-w-[150px]',
 				align: 'end'
 			}
 		}),
@@ -242,7 +242,7 @@ const columns = (chain: string, blockExplorers: ReturnType<typeof useBlockExplor
 			header: 'Gas Spent',
 			cell: (info) => <>{formatNumber(info.getValue())} ETH</>,
 			meta: {
-				headerClassName: 'w-[120px]',
+				headerClassName: 'min-w-[120px]',
 				align: 'end'
 			}
 		}),
@@ -251,7 +251,7 @@ const columns = (chain: string, blockExplorers: ReturnType<typeof useBlockExplor
 			header: 'Gas Growth',
 			cell: (info) => <Change value={info.getValue()} />,
 			meta: {
-				headerClassName: 'w-[120px]',
+				headerClassName: 'min-w-[120px]',
 				align: 'end'
 			}
 		})

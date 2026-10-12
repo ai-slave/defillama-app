@@ -150,29 +150,28 @@ const NameColumn = (route: string) =>
 			)
 		},
 		meta: {
-			headerClassName: 'w-[180px] sm:w-[240px] md:w-[280px]'
+			headerClassName: 'min-w-[180px] sm:min-w-[240px] md:min-w-[280px]'
 		}
 	})
 
 const metricColumnWidthClassBySize: Record<number, string> = {
-	128: 'w-[128px]',
-	152: 'w-[152px]',
-	160: 'w-[160px]',
-	169: 'w-[169px] min-w-[169px]',
-	172: 'w-[172px] min-w-[172px]',
-	180: 'w-[min(180px,40vw)]',
-	184: 'w-[184px] min-w-[184px]',
-	200: 'w-[min(200px,40vw)]'
+	128: 'min-w-[128px]',
+	160: 'min-w-[160px]',
+	169: 'min-w-[169px]',
+	172: 'min-w-[172px]',
+	180: 'min-w-[min(180px,40vw)]',
+	184: 'min-w-[184px]',
+	200: 'min-w-[min(200px,40vw)]'
 }
 
-const getMetricColumnWidthClass = (size: number) => metricColumnWidthClassBySize[size] ?? 'w-[160px]'
+const getMetricColumnWidthClass = (size: number) => metricColumnWidthClassBySize[size] ?? 'min-w-[160px]'
 
 const metricColumn = (
 	id: string,
 	header: string,
 	accessor: (protocol: ChainRow) => number | null | undefined,
 	headerHelperText: string,
-	size: number,
+	size?: number,
 	csvHeader?: string
 ) =>
 	columnHelper.accessor((row) => accessor(row) ?? undefined, {
@@ -183,7 +182,7 @@ const metricColumn = (
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: getMetricColumnWidthClass(size),
+			...(size ? { headerClassName: getMetricColumnWidthClass(size) } : {}),
 			align: 'center',
 			headerHelperText,
 			...(csvHeader ? { csvHeader } : {})
@@ -193,9 +192,9 @@ const metricColumn = (
 const columnsByType = {
 	Fees: [
 		NameColumn('fees'),
-		metricColumn('total24h', 'Fees 24h', (protocol) => protocol.total24h, definitions.fees.chain['24h'], 128),
+		metricColumn('total24h', 'Fees 24h', (protocol) => protocol.total24h, definitions.fees.chain['24h']),
 		metricColumn('total7d', 'Fees 7d', (protocol) => protocol.total7d, definitions.fees.chain['7d'], 128),
-		metricColumn('total30d', 'Fees 30d', (protocol) => protocol.total30d, definitions.fees.chain['30d'], 128)
+		metricColumn('total30d', 'Fees 30d', (protocol) => protocol.total30d, definitions.fees.chain['30d'])
 	],
 	Revenue: [
 		NameColumn('revenue'),
@@ -301,9 +300,9 @@ const columnsByType = {
 	],
 	'DEX Volume': [
 		NameColumn('dexs'),
-		metricColumn('total24h', 'DEX Volume 24h', (protocol) => protocol.total24h, definitions.dexs.chain['24h'], 152),
-		metricColumn('total7d', 'DEX Volume 7d', (protocol) => protocol.total7d, definitions.dexs.chain['7d'], 152),
-		metricColumn('total30d', 'DEX Volume 30d', (protocol) => protocol.total30d, definitions.dexs.chain['30d'], 152)
+		metricColumn('total24h', 'DEX Volume 24h', (protocol) => protocol.total24h, definitions.dexs.chain['24h']),
+		metricColumn('total7d', 'DEX Volume 7d', (protocol) => protocol.total7d, definitions.dexs.chain['7d']),
+		metricColumn('total30d', 'DEX Volume 30d', (protocol) => protocol.total30d, definitions.dexs.chain['30d'])
 	],
 	'Perp Volume': [
 		NameColumn('perps'),

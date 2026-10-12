@@ -35,7 +35,7 @@ export function createNameColumn({ assetLine = true }: { assetLine?: boolean } =
 				) : (
 					<LeafNameCell leaf={row.original} nested={row.depth > 0} assetLine={assetLine} />
 				),
-			meta: { headerClassName: 'w-[200px] sm:w-[260px]' }
+			meta: { headerClassName: 'min-w-[200px] sm:min-w-[260px]' }
 		}
 	)
 }

@@ -166,7 +166,7 @@ function defaultColumns(type: TokenMetricType) {
 				)
 			},
 			meta: {
-				headerClassName: 'w-[min(280px,40vw)]'
+				headerClassName: 'min-w-[min(280px,40vw)]'
 			}
 		}),
 		columnHelper.accessor('category', {
@@ -178,7 +178,7 @@ function defaultColumns(type: TokenMetricType) {
 				return <TextLink href={getCategoryRoute(slug(value))}>{value}</TextLink>
 			},
 			meta: {
-				headerClassName: 'w-[128px]'
+				headerClassName: 'min-w-[128px]'
 			}
 		})
 	])
@@ -194,7 +194,6 @@ const mcapColumns = columnHelper.columns([
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[128px]',
 			align: 'end'
 		}
 	})
@@ -210,7 +209,7 @@ const fdvColumns = columnHelper.columns([
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[128px]',
+			headerClassName: 'min-w-[128px]',
 			align: 'end'
 		}
 	})
@@ -226,7 +225,7 @@ const priceColumns = columnHelper.columns([
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[128px]',
+			headerClassName: 'min-w-[128px]',
 			align: 'end'
 		}
 	})
@@ -242,7 +241,6 @@ const outstandingFdvColumns = columnHelper.columns([
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[128px]',
 			align: 'end',
 			headerHelperText:
 				'Token price multiplied by outstanding supply.\n\nOutstanding supply is the total supply minus the supply that is not yet allocated to anything (e.g. coins in treasury or reserve).'

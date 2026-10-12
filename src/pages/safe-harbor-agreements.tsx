@@ -157,7 +157,7 @@ const columns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[min(280px,40vw)]'
+			headerClassName: 'min-w-[min(280px,40vw)]'
 		}
 	}),
 	columnHelper.accessor((row) => row.tvl ?? undefined, {
@@ -168,7 +168,7 @@ const columns = columnHelper.columns([
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'min-w-[120px]',
 			align: 'end'
 		}
 	}),
@@ -180,7 +180,6 @@ const columns = columnHelper.columns([
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[100px]',
 			align: 'end'
 		}
 	}),
@@ -192,7 +191,6 @@ const columns = columnHelper.columns([
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[125px]',
 			align: 'end'
 		}
 	}),
@@ -204,7 +202,6 @@ const columns = columnHelper.columns([
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[150px]',
 			align: 'end'
 		}
 	}),
@@ -232,7 +229,6 @@ const columns = columnHelper.columns([
 			</div>
 		),
 		meta: {
-			headerClassName: 'w-[120px]',
 			align: 'end'
 		}
 	})

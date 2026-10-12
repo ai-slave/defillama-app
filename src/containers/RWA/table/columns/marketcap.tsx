@@ -18,7 +18,10 @@ export function createMarketcapColumnGroup(period: RWAChangePeriod) {
 						description={definitions.activeMcap.description}
 					/>
 				),
-				meta: numberColumnMeta('w-[150px]', definitions.activeMcap.description, definitions.activeMcap.label)
+				meta: {
+					headerClassName: 'min-w-[150px]',
+					...numberColumnMeta(definitions.activeMcap.description, definitions.activeMcap.label)
+				}
 			}),
 			columnHelper.accessor((row) => row.metrics.onChainMcap ?? undefined, {
 				id: 'onChainMcap',
@@ -30,7 +33,10 @@ export function createMarketcapColumnGroup(period: RWAChangePeriod) {
 						description={definitions.onChainMcap.description}
 					/>
 				),
-				meta: numberColumnMeta('w-[150px]', definitions.onChainMcap.description, definitions.onChainMcap.label)
+				meta: {
+					headerClassName: 'min-w-[150px]',
+					...numberColumnMeta(definitions.onChainMcap.description, definitions.onChainMcap.label)
+				}
 			}),
 			columnHelper.accessor(
 				(row) =>
@@ -42,11 +48,13 @@ export function createMarketcapColumnGroup(period: RWAChangePeriod) {
 					id: 'activeMcapChange',
 					header: period,
 					cell: ({ getValue }) => <Change value={getValue()} />,
-					meta: numberColumnMeta(
-						'w-[96px]',
-						`Change of Active AUM against the value ${period} earlier, over the rows that have both. Under Group by Chain the prior is split by today's chain share.`,
-						`Active AUM ${period} change`
-					)
+					meta: {
+						headerClassName: 'min-w-[96px]',
+						...numberColumnMeta(
+							`Change of Active AUM against the value ${period} earlier, over the rows that have both. Under Group by Chain the prior is split by today's chain share.`,
+							`Active AUM ${period} change`
+						)
+					}
 				}
 			)
 		]

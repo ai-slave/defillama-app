@@ -272,14 +272,13 @@ const columns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[min(200px,40vw)]'
+			headerClassName: 'min-w-[min(200px,40vw)]'
 		}
 	}),
 	columnHelper.accessor((row) => row.protocols ?? undefined, {
 		id: 'protocols',
 		header: 'Protocols',
 		meta: {
-			headerClassName: 'w-[120px]',
 			align: 'end'
 		}
 	}),
@@ -291,7 +290,7 @@ const columns = columnHelper.columns([
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'min-w-[120px]',
 			align: 'end',
 			headerHelperText: 'Sum of value of all coins held in smart contracts of all the protocols on the chain'
 		}
@@ -301,7 +300,6 @@ const columns = columnHelper.columns([
 		header: '1d TVL Change',
 		cell: (info) => <Change value={info.getValue()} />,
 		meta: {
-			headerClassName: 'w-[140px]',
 			align: 'end',
 			headerHelperText: 'Change in TVL in the last 24 hours'
 		}
@@ -311,7 +309,6 @@ const columns = columnHelper.columns([
 		header: '7d TVL Change',
 		cell: (info) => <Change value={info.getValue()} />,
 		meta: {
-			headerClassName: 'w-[140px]',
 			align: 'end',
 			headerHelperText: 'Change in TVL in the last 7 days'
 		}
@@ -321,7 +318,6 @@ const columns = columnHelper.columns([
 		header: '30d TVL Change',
 		cell: (info) => <Change value={info.getValue()} />,
 		meta: {
-			headerClassName: 'w-[140px]',
 			align: 'end',
 			headerHelperText: 'Change in TVL in the last 30 days'
 		}
@@ -369,7 +365,6 @@ const columns = columnHelper.columns([
 				)
 			},
 			meta: {
-				headerClassName: 'w-[120px]',
 				align: 'end',
 				headerHelperText: 'Value of all tokens held on the chain'
 			}
@@ -383,7 +378,6 @@ const columns = columnHelper.columns([
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[128px]',
 			align: 'end',
 			headerHelperText: 'Sum of market cap of all stablecoins on the chain'
 		}
@@ -397,7 +391,6 @@ const columns = columnHelper.columns([
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[152px]',
 			align: 'end',
 			headerHelperText: 'Sum of 24h volume on all DEXs on the chain. Updated daily at 00:00UTC'
 		}
@@ -411,7 +404,6 @@ const columns = columnHelper.columns([
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[140px]',
 			align: 'end',
 			headerHelperText: definitions.fees.chain['24h']
 		}
@@ -425,7 +417,6 @@ const columns = columnHelper.columns([
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[min(180px,40vw)]',
 			align: 'end',
 			headerHelperText: definitions.appRevenue.chain['24h']
 		}
@@ -440,7 +431,6 @@ const columns = columnHelper.columns([
 				: null
 		},
 		meta: {
-			headerClassName: 'w-[min(180px,40vw)]',
 			align: 'end',
 			headerHelperText: 'Active addresses in the last 24h'
 		}
@@ -450,7 +440,6 @@ const columns = columnHelper.columns([
 		header: 'Mcap / DeFi TVL',
 		cell: (info) => formatRatio(info.getValue()),
 		meta: {
-			headerClassName: 'w-[148px]',
 			align: 'end',
 			headerHelperText: 'Market cap / DeFi TVL ratio'
 		}

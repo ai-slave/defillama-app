@@ -353,7 +353,7 @@ export const datTransactionColumns = columnHelper.columns([
 		enableSorting: false,
 		cell: (info) => info.getValue(),
 		meta: {
-			headerClassName: 'w-[160px]'
+			headerClassName: 'min-w-[160px]'
 		}
 	}),
 	columnHelper.accessor(
@@ -372,7 +372,7 @@ export const datTransactionColumns = columnHelper.columns([
 				)
 			},
 			meta: {
-				headerClassName: 'w-[160px]',
+				headerClassName: 'min-w-[160px]',
 				align: 'end'
 			}
 		}
@@ -385,7 +385,6 @@ export const datTransactionColumns = columnHelper.columns([
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[168px]',
 			align: 'end'
 		}
 	}),
@@ -397,7 +396,6 @@ export const datTransactionColumns = columnHelper.columns([
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[130px]',
 			align: 'end'
 		}
 	}),
@@ -405,7 +403,7 @@ export const datTransactionColumns = columnHelper.columns([
 		header: 'Report Date',
 		cell: (info) => (info.getValue() != null ? formatDate(info.getValue()) : null),
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'min-w-[120px]',
 			align: 'end'
 		}
 	}),
@@ -414,7 +412,7 @@ export const datTransactionColumns = columnHelper.columns([
 		cell: (info) => getType(info.getValue()),
 		enableSorting: false,
 		meta: {
-			headerClassName: 'w-[100px]',
+			headerClassName: 'min-w-[100px]',
 			align: 'end'
 		}
 	}),
@@ -423,7 +421,6 @@ export const datTransactionColumns = columnHelper.columns([
 		cell: (info) => getSourceType(info.getValue()),
 		enableSorting: false,
 		meta: {
-			headerClassName: 'w-[130px]',
 			align: 'end'
 		}
 	}),
@@ -444,10 +441,7 @@ export const datTransactionColumns = columnHelper.columns([
 				</a>
 			)
 		},
-		enableSorting: false,
-		meta: {
-			headerClassName: 'w-[120px]'
-		}
+		enableSorting: false
 	}),
 	columnHelper.accessor('source_note', {
 		header: 'Source Note',
@@ -461,7 +455,7 @@ export const datTransactionColumns = columnHelper.columns([
 		},
 		enableSorting: false,
 		meta: {
-			headerClassName: 'w-[min(1000px,40vw)]'
+			headerClassName: 'min-w-[min(1000px,40vw)]'
 		}
 	})
 ])

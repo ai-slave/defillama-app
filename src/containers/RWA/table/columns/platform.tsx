@@ -56,8 +56,11 @@ function createPlatformColumn(kind: 'spot' | 'perps') {
 			},
 			meta:
 				kind === 'perps'
-					? textColumnMeta('w-[140px]', perpsDefinitions.venue.description, perpsDefinitions.venue.label)
-					: textColumnMeta('w-[168px]', PLATFORM_HELP)
+					? {
+							headerClassName: 'min-w-[140px]',
+							...textColumnMeta(perpsDefinitions.venue.description, perpsDefinitions.venue.label)
+						}
+					: { headerClassName: 'min-w-[168px]', ...textColumnMeta(PLATFORM_HELP) }
 		}
 	)
 }

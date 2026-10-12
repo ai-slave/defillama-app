@@ -73,14 +73,13 @@ const protocolColumns = protocolColumnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[min(220px,40vw)]'
+			headerClassName: 'min-w-[min(220px,40vw)]'
 		}
 	}),
 	protocolColumnHelper.accessor((row) => row.positionCount ?? undefined, {
 		id: 'positionCount',
 		header: 'Positions',
 		meta: {
-			headerClassName: 'w-[110px]',
 			align: 'end'
 		}
 	}),
@@ -88,7 +87,6 @@ const protocolColumns = protocolColumnHelper.columns([
 		id: 'chainCount',
 		header: 'Chains',
 		meta: {
-			headerClassName: 'w-[90px]',
 			align: 'end'
 		}
 	}),
@@ -96,7 +94,6 @@ const protocolColumns = protocolColumnHelper.columns([
 		id: 'collateralCount',
 		header: 'Tokens',
 		meta: {
-			headerClassName: 'w-[80px]',
 			align: 'end'
 		}
 	}),
@@ -106,7 +103,6 @@ const protocolColumns = protocolColumnHelper.columns([
 		cell: ({ getValue }) =>
 			formatUsd(getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
-			headerClassName: 'w-[145px]',
 			align: 'end'
 		}
 	})
@@ -127,14 +123,13 @@ const overviewChainColumns = overviewChainColumnHelper.columns([
 		},
 		enableSorting: false,
 		meta: {
-			headerClassName: 'w-[min(180px,40vw)]'
+			headerClassName: 'min-w-[min(180px,40vw)]'
 		}
 	}),
 	overviewChainColumnHelper.accessor((row) => row.positionCount ?? undefined, {
 		id: 'positionCount',
 		header: 'Positions',
 		meta: {
-			headerClassName: 'w-[110px]',
 			align: 'end'
 		}
 	}),
@@ -142,7 +137,6 @@ const overviewChainColumns = overviewChainColumnHelper.columns([
 		id: 'protocolCount',
 		header: 'Protocols',
 		meta: {
-			headerClassName: 'w-[110px]',
 			align: 'end'
 		}
 	}),
@@ -150,7 +144,6 @@ const overviewChainColumns = overviewChainColumnHelper.columns([
 		id: 'collateralCount',
 		header: 'Tokens',
 		meta: {
-			headerClassName: 'w-[80px]',
 			align: 'end'
 		}
 	}),
@@ -160,7 +153,6 @@ const overviewChainColumns = overviewChainColumnHelper.columns([
 		cell: ({ getValue }) =>
 			formatUsd(getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
-			headerClassName: 'w-[145px]',
 			align: 'end'
 		}
 	})
@@ -181,14 +173,13 @@ const protocolChainColumns = protocolChainColumnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[min(180px,40vw)]'
+			headerClassName: 'min-w-[min(180px,40vw)]'
 		}
 	}),
 	protocolChainColumnHelper.accessor((row) => row.positionCount ?? undefined, {
 		id: 'positionCount',
 		header: 'Positions',
 		meta: {
-			headerClassName: 'w-[110px]',
 			align: 'end'
 		}
 	}),
@@ -196,7 +187,6 @@ const protocolChainColumns = protocolChainColumnHelper.columns([
 		id: 'collateralCount',
 		header: 'Tokens',
 		meta: {
-			headerClassName: 'w-[80px]',
 			align: 'end'
 		}
 	}),
@@ -206,7 +196,6 @@ const protocolChainColumns = protocolChainColumnHelper.columns([
 		cell: ({ getValue }) =>
 			formatUsd(getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
-			headerClassName: 'w-[145px]',
 			align: 'end'
 		}
 	})
@@ -227,7 +216,7 @@ const positionColumns = positionColumnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[min(220px,40vw)]'
+			headerClassName: 'min-w-[min(220px,40vw)]'
 		}
 	}),
 	positionColumnHelper.accessor('chainName', {
@@ -244,7 +233,7 @@ const positionColumns = positionColumnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[140px]'
+			headerClassName: 'min-w-[140px]'
 		}
 	}),
 	positionColumnHelper.accessor('owner', {
@@ -253,7 +242,7 @@ const positionColumns = positionColumnHelper.columns([
 		enableSorting: false,
 		cell: ({ row }) => <LiquidationsOwnerLink position={row.original} />,
 		meta: {
-			headerClassName: 'w-[min(220px,40vw)]'
+			headerClassName: 'min-w-[min(220px,40vw)]'
 		}
 	}),
 	positionColumnHelper.accessor((row) => row.collateral ?? undefined, {
@@ -261,7 +250,7 @@ const positionColumns = positionColumnHelper.columns([
 		header: 'Token',
 		enableSorting: false,
 		meta: {
-			headerClassName: 'w-[80px]',
+			headerClassName: 'min-w-[80px]',
 			align: 'end'
 		}
 	}),
@@ -271,7 +260,6 @@ const positionColumns = positionColumnHelper.columns([
 		cell: ({ getValue }) =>
 			formatUsd(getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
-			headerClassName: 'w-[145px]',
 			align: 'end'
 		}
 	}),
@@ -281,7 +269,6 @@ const positionColumns = positionColumnHelper.columns([
 		cell: ({ getValue }) =>
 			formatCompactNumber(getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
-			headerClassName: 'w-[140px]',
 			align: 'end'
 		}
 	}),
@@ -291,7 +278,6 @@ const positionColumns = positionColumnHelper.columns([
 		cell: ({ getValue }) =>
 			formatUsd(getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
-			headerClassName: 'w-[160px]',
 			align: 'end'
 		}
 	})

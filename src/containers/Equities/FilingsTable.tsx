@@ -35,7 +35,7 @@ const columns = columnHelper.columns([
 		header: 'Filing Date',
 		cell: ({ getValue }) => formatDate(getValue()) ?? '-',
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'min-w-[120px]',
 			align: 'start'
 		}
 	}),
@@ -44,14 +44,14 @@ const columns = columnHelper.columns([
 		header: 'Report Date',
 		cell: ({ getValue }) => formatDate(getValue()) ?? '-',
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'min-w-[120px]',
 			align: 'start'
 		}
 	}),
 	columnHelper.accessor('form', {
 		header: 'Form',
 		meta: {
-			headerClassName: 'w-[84px]',
+			headerClassName: 'min-w-[84px]',
 			align: 'start'
 		}
 	}),
@@ -66,7 +66,7 @@ const columns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[min(520px,40vw)]',
+			headerClassName: 'min-w-[min(520px,40vw)]',
 			align: 'start'
 		}
 	}),
@@ -87,7 +87,7 @@ const columns = columnHelper.columns([
 			</span>
 		),
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'min-w-[120px]',
 			align: 'end'
 		}
 	})

@@ -24,12 +24,7 @@ import { TextLink } from '~/ui/TextLink'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { getTokensChartQueryValue, parseTokensChartState, type TokensPageView } from './chartState'
-import {
-	NAME_COLUMN_WIDTH,
-	TOKENS_HIDEABLE_COLUMN_SPECS,
-	TOKENS_HIDEABLE_COLUMNS_WIDTH,
-	type TokensColumnSpec
-} from './columnSpecs'
+import { TOKENS_HIDEABLE_COLUMN_SPECS, type TokensColumnSpec } from './columnSpecs'
 import { useTokensColumnVisibility } from './columnVisibility'
 import { prepareTokensCsv } from './csv'
 import {
@@ -58,14 +53,10 @@ const tableFeaturesConfig: TokenTableFeatures = tableFeatures({
 })
 
 const PAGE_SIZE_OPTIONS = [50, 100, 200] as const
-export const TOKENS_TABLE_WIDTH_EXCLUDING_RANK = NAME_COLUMN_WIDTH + TOKENS_HIDEABLE_COLUMNS_WIDTH
-// Width of the optional "Markets" expander column (added only in the expandable/watchlist variant).
-export const TOKENS_MARKETS_EXPANDER_COLUMN_WIDTH = 104
 const columnHelper = createColumnHelper<typeof tableFeaturesConfig, TokensTableRow>()
 
 type TokensTableStyle = React.CSSProperties & {
 	'--tokens-rank-column-width': string
-	'--tokens-table-min-width': string
 }
 
 export function getRankColumnWidth(rows: Array<TokensTableRow>): number {
@@ -155,8 +146,7 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 		cell: ({ row }) => <span className="text-secondary">{row.original.rowNumber}</span>,
 		enableHiding: false,
 		meta: {
-			headerClassName:
-				'sticky left-0 z-20 w-(--tokens-rank-column-width) min-w-(--tokens-rank-column-width) bg-surface px-1!',
+			headerClassName: 'sticky left-0 z-20 min-w-(--tokens-rank-column-width) bg-surface px-1!',
 			cellClassName: 'sticky left-0 z-10 bg-surface px-1!',
 			align: 'center',
 			headerHelperText: 'Row number in the current sorted and filtered results'
@@ -168,7 +158,7 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 		cell: ({ row }) => <TokenCell row={row} />,
 		enableHiding: false,
 		meta: {
-			headerClassName: 'sticky left-(--tokens-rank-column-width) z-20 w-[184px] min-w-[184px] bg-surface pl-1!',
+			headerClassName: 'sticky left-(--tokens-rank-column-width) z-20 min-w-[184px] bg-surface pl-1!',
 			cellClassName: 'sticky left-(--tokens-rank-column-width) z-10 bg-surface pl-1!',
 			headerHelperText: 'Token name, symbol, and token page link when available'
 		}
@@ -177,7 +167,7 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 		...specColumn('price'),
 		cell: ({ row }) => <CurrencyValue value={row.original.display.price} />,
 		meta: {
-			headerClassName: 'w-[140px] min-w-[140px]',
+			headerClassName: 'min-w-[140px]',
 			align: 'end',
 			headerHelperText: 'Current token price in USD'
 		}
@@ -187,7 +177,7 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 		cell: ({ row }) =>
 			row.original.priceChange24h == null ? <Dash /> : <Change value={row.original.priceChange24h} />,
 		meta: {
-			headerClassName: 'w-[90px] min-w-[90px]',
+			headerClassName: 'min-w-[90px]',
 			align: 'end',
 			headerHelperText: 'Token price change over the last 24 hours'
 		}
@@ -196,7 +186,7 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 		...specColumn('priceChange7d'),
 		cell: ({ row }) => (row.original.priceChange7d == null ? <Dash /> : <Change value={row.original.priceChange7d} />),
 		meta: {
-			headerClassName: 'w-[90px] min-w-[90px]',
+			headerClassName: 'min-w-[90px]',
 			align: 'end',
 			headerHelperText: 'Token price change over the last 7 days'
 		}
@@ -206,7 +196,7 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 		cell: ({ row }) =>
 			row.original.priceChange30d == null ? <Dash /> : <Change value={row.original.priceChange30d} />,
 		meta: {
-			headerClassName: 'w-[90px] min-w-[90px]',
+			headerClassName: 'min-w-[90px]',
 			align: 'end',
 			headerHelperText: 'Token price change over the last 30 days'
 		}
@@ -215,7 +205,7 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 		...specColumn('marketCap'),
 		cell: ({ row }) => <CurrencyValue value={row.original.display.marketCap} />,
 		meta: {
-			headerClassName: 'w-[120px] min-w-[120px]',
+			headerClassName: 'min-w-[120px]',
 			align: 'end',
 			headerHelperText: 'Market capitalization from token price and circulating supply'
 		}
@@ -224,7 +214,7 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 		...specColumn('fdv'),
 		cell: ({ row }) => <CurrencyValue value={row.original.display.fdv} />,
 		meta: {
-			headerClassName: 'w-[120px] min-w-[120px]',
+			headerClassName: 'min-w-[120px]',
 			align: 'end',
 			headerHelperText: 'Fully diluted valuation from token price and max supply'
 		}
@@ -233,7 +223,7 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 		...specColumn('outstandingFdv'),
 		cell: ({ row }) => <CurrencyValue value={row.original.display.outstandingFdv} />,
 		meta: {
-			headerClassName: 'w-[120px] min-w-[120px]',
+			headerClassName: 'min-w-[120px]',
 			align: 'end',
 			headerHelperText: 'Outstanding FDV using adjusted unlocked/outstanding supply when available'
 		}
@@ -247,7 +237,7 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 			/>
 		),
 		meta: {
-			headerClassName: 'w-[130px] min-w-[130px]',
+			headerClassName: 'min-w-[130px]',
 			align: 'end',
 			headerHelperText: 'Estimated share of max supply currently unlocked or outstanding'
 		}
@@ -256,7 +246,6 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 		...specColumn('spotVolume24h'),
 		cell: ({ row }) => <CurrencyValue value={row.original.display.spotVolume24h} />,
 		meta: {
-			headerClassName: 'w-[120px] min-w-[120px]',
 			align: 'end',
 			headerHelperText: '24h spot trading volume across tracked markets'
 		}
@@ -265,7 +254,6 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 		...specColumn('perpsVolume24h'),
 		cell: ({ row }) => <CurrencyValue value={row.original.display.perpsVolume24h} />,
 		meta: {
-			headerClassName: 'w-[120px] min-w-[120px]',
 			align: 'end',
 			headerHelperText: '24h perpetual futures trading volume across tracked markets'
 		}
@@ -274,7 +262,7 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 		...specColumn('openInterest24h'),
 		cell: ({ row }) => <CurrencyValue value={row.original.display.openInterest24h} />,
 		meta: {
-			headerClassName: 'w-[110px] min-w-[110px]',
+			headerClassName: 'min-w-[110px]',
 			align: 'end',
 			headerHelperText: 'Open interest across tracked perpetual markets'
 		}
@@ -283,7 +271,6 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 		...specColumn('fees24h'),
 		cell: ({ row }) => <CurrencyValue value={row.original.display.fees24h} />,
 		meta: {
-			headerClassName: 'w-[110px] min-w-[110px]',
 			align: 'end',
 			headerHelperText: 'Protocol fees over the last 24 hours when a protocol match exists'
 		}
@@ -292,7 +279,7 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 		...specColumn('revenue24h'),
 		cell: ({ row }) => <CurrencyValue value={row.original.display.revenue24h} />,
 		meta: {
-			headerClassName: 'w-[110px] min-w-[110px]',
+			headerClassName: 'min-w-[110px]',
 			align: 'end',
 			headerHelperText: 'Protocol revenue over the last 24 hours when a protocol match exists'
 		}
@@ -301,7 +288,6 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 		...specColumn('holdersRevenue24h'),
 		cell: ({ row }) => <CurrencyValue value={row.original.display.holdersRevenue24h} />,
 		meta: {
-			headerClassName: 'w-[150px] min-w-[150px]',
 			align: 'end',
 			headerHelperText: '24h revenue directed to token holders when tracked'
 		}
@@ -312,7 +298,7 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 			<ProgressPercentValue value={row.original.display.trsPercent} width={row.original.display.trsPercentWidth} />
 		),
 		meta: {
-			headerClassName: 'w-[120px] min-w-[120px]',
+			headerClassName: 'min-w-[120px]',
 			align: 'end',
 			headerHelperText: 'Token holder revenue as a percentage of protocol revenue'
 		}
@@ -324,7 +310,6 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 		),
 		enableSorting: false,
 		meta: {
-			headerClassName: 'w-[90px] min-w-[90px]',
 			align: 'center',
 			headerHelperText: 'Compact summary of governance, treasury, revenue, buyback, dividend, and burn rights'
 		}
@@ -333,7 +318,6 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 		...specColumn('unlock30dUsd'),
 		cell: ({ row }) => <CurrencyValue value={row.original.display.unlock30dUsd} />,
 		meta: {
-			headerClassName: 'w-[160px] min-w-[160px]',
 			align: 'end',
 			headerHelperText:
 				'Estimated value of cliff and linear releases during the previous 30 days, valued at current token prices'
@@ -343,7 +327,6 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 		...specColumn('upcomingUnlockUsd'),
 		cell: ({ row }) => <CurrencyValue value={row.original.display.upcomingUnlockUsd} />,
 		meta: {
-			headerClassName: 'w-[160px] min-w-[160px]',
 			align: 'end',
 			headerHelperText:
 				'Estimated value of scheduled cliff and linear releases during the next 30 days, valued at current token prices'
@@ -365,7 +348,7 @@ const expanderColumn = columnHelper.display({
 		)
 	},
 	meta: {
-		headerClassName: 'w-[104px] min-w-[104px]',
+		headerClassName: 'min-w-[104px]',
 		headerHelperText: 'Show the exchanges and trading pairs this token is available on'
 	}
 })
@@ -573,14 +556,7 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 		}
 		return next
 	}, [columnVisibility, filters])
-	let visibleColumnsWidth = rankColumnWidth + NAME_COLUMN_WIDTH
-	for (const column of TOKENS_HIDEABLE_COLUMN_SPECS) {
-		if (effectiveColumnVisibility[column.id] !== false) visibleColumnsWidth += column.width
-	}
-	const tableStyle: TokensTableStyle = {
-		'--tokens-rank-column-width': `${rankColumnWidth}px`,
-		'--tokens-table-min-width': `${visibleColumnsWidth}px`
-	}
+	const tableStyle: TokensTableStyle = { '--tokens-rank-column-width': `${rankColumnWidth}px` }
 	const table = useTable({
 		features: tableFeaturesConfig,
 		data: serverTable.rows,
@@ -693,7 +669,6 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 									table={table}
 									pageSizeOptions={PAGE_SIZE_OPTIONS}
 									style={tableStyle}
-									tableClassName="min-w-(--tokens-table-min-width)"
 									stickyHeader
 									interactionDisabled={serverTable.rowsQuery.isFetching}
 								/>

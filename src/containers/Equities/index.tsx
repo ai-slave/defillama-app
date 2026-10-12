@@ -94,7 +94,7 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 		enableSorting: false,
 		cell: ({ row }) => <EquityTickerCell row={row} />,
 		meta: {
-			headerClassName: 'w-[128px] min-w-[128px]',
+			headerClassName: 'min-w-[128px]',
 			align: 'start'
 		}
 	}),
@@ -114,7 +114,7 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 			</span>
 		),
 		meta: {
-			headerClassName: 'w-[76px] min-w-[76px] lg:w-[88px] lg:min-w-[88px] ',
+			headerClassName: 'min-w-[76px] lg:min-w-[88px] ',
 			align: 'start'
 		}
 	}),
@@ -123,7 +123,6 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 		header: defs.marketCap.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
-			headerClassName: 'w-[121px] min-w-[121px]',
 			align: 'end',
 			headerHelperText: defs.marketCap.description
 		}
@@ -137,7 +136,7 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 			</BasicLink>
 		),
 		meta: {
-			headerClassName: 'w-[180px] min-w-[180px]',
+			headerClassName: 'min-w-[180px]',
 			cellClassName: 'truncate',
 			align: 'start'
 		}
@@ -146,7 +145,7 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 		header: 'Sector',
 		enableSorting: false,
 		meta: {
-			headerClassName: 'w-[170px] min-w-[170px]',
+			headerClassName: 'min-w-[170px]',
 			cellClassName: 'truncate',
 			align: 'start'
 		}
@@ -155,7 +154,7 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 		header: 'Industry',
 		enableSorting: false,
 		meta: {
-			headerClassName: 'w-[170px] min-w-[170px]',
+			headerClassName: 'min-w-[170px]',
 			cellClassName: 'truncate',
 			align: 'start'
 		}
@@ -165,7 +164,7 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 		header: defs.currentPrice.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
-			headerClassName: 'w-[96px] min-w-[96px]',
+			headerClassName: 'min-w-[96px]',
 			align: 'end',
 			headerHelperText: defs.currentPrice.description
 		}
@@ -175,7 +174,6 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 		header: defs.fiftyTwoWeekHigh.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
-			headerClassName: 'w-[128px] min-w-[128px]',
 			align: 'end',
 			headerHelperText: defs.fiftyTwoWeekHigh.description
 		}
@@ -185,7 +183,6 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 		header: defs.fiftyTwoWeekLow.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
-			headerClassName: 'w-[128px] min-w-[128px]',
 			align: 'end',
 			headerHelperText: defs.fiftyTwoWeekLow.description
 		}
@@ -198,7 +195,6 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 			return value == null ? '-' : <Change value={value} />
 		},
 		meta: {
-			headerClassName: 'w-[153px] min-w-[153px]',
 			align: 'end',
 			headerHelperText: defs.priceChangePercentage1d.description
 		}
@@ -211,7 +207,6 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 			return value == null ? '-' : <Change value={value} />
 		},
 		meta: {
-			headerClassName: 'w-[156px] min-w-[156px]',
 			align: 'end',
 			headerHelperText: defs.priceChangePercentage7d.description
 		}
@@ -224,7 +219,6 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 			return value == null ? '-' : <Change value={value} />
 		},
 		meta: {
-			headerClassName: 'w-[156px] min-w-[156px]',
 			align: 'end',
 			headerHelperText: defs.priceChangePercentage1m.description
 		}
@@ -234,7 +228,7 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 		header: defs.volume.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue()) ?? '-',
 		meta: {
-			headerClassName: 'w-[95px] min-w-[95px]',
+			headerClassName: 'min-w-[95px]',
 			align: 'end',
 			headerHelperText: defs.volume.description
 		}
@@ -247,7 +241,6 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 			return value == null ? '-' : <Change value={value} unit="usd" />
 		},
 		meta: {
-			headerClassName: 'w-[196px] min-w-[196px]',
 			align: 'end',
 			headerHelperText: defs.marketCapChange1d.description
 		}
@@ -257,7 +250,6 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 		header: defs.circulatingMarketCap.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
-			headerClassName: 'w-[156px] min-w-[156px]',
 			align: 'end',
 			headerHelperText: defs.circulatingMarketCap.description
 		}
@@ -267,7 +259,6 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 		header: defs.enterpriseValue.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
-			headerClassName: 'w-[153px] min-w-[153px]',
 			align: 'end',
 			headerHelperText: defs.enterpriseValue.description
 		}
@@ -277,7 +268,7 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 		header: defs.trailingPE.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue()) ?? '-',
 		meta: {
-			headerClassName: 'w-[87px] min-w-[87px]',
+			headerClassName: 'min-w-[87px]',
 			align: 'end',
 			headerHelperText: defs.trailingPE.description
 		}
@@ -287,7 +278,7 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 		header: defs.priceToRevenue.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue()) ?? '-',
 		meta: {
-			headerClassName: 'w-[87px] min-w-[87px]',
+			headerClassName: 'min-w-[87px]',
 			align: 'end',
 			headerHelperText: defs.priceToRevenue.description
 		}
@@ -297,7 +288,6 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 		header: defs.dividendYield.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '%') ?? '-',
 		meta: {
-			headerClassName: 'w-[140px] min-w-[140px]',
 			align: 'end',
 			headerHelperText: defs.dividendYield.description
 		}
@@ -307,7 +297,6 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 		header: defs.holdersYield.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '%') ?? '-',
 		meta: {
-			headerClassName: 'w-[133px] min-w-[133px]',
 			align: 'end',
 			headerHelperText: defs.holdersYield.description
 		}
@@ -317,7 +306,7 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 		header: defs.priceToBook.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue()) ?? '-',
 		meta: {
-			headerClassName: 'w-[87px] min-w-[87px]',
+			headerClassName: 'min-w-[87px]',
 			align: 'end',
 			headerHelperText: defs.priceToBook.description
 		}
@@ -327,7 +316,6 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 		header: defs.enterpriseValueToEbitda.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue()) ?? '-',
 		meta: {
-			headerClassName: 'w-[118px] min-w-[118px]',
 			align: 'end',
 			headerHelperText: defs.enterpriseValueToEbitda.description
 		}
@@ -337,7 +325,6 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 		header: defs.operatingProfitMarginTTM.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '%') ?? '-',
 		meta: {
-			headerClassName: 'w-[163px] min-w-[163px]',
 			align: 'end',
 			headerHelperText: defs.operatingProfitMarginTTM.description
 		}
@@ -347,7 +334,6 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 		header: defs.revenueTTM.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
-			headerClassName: 'w-[147px] min-w-[147px]',
 			align: 'end',
 			headerHelperText: defs.revenueTTM.description
 		}
@@ -357,7 +343,6 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 		header: defs.grossProfitTTM.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
-			headerClassName: 'w-[168px] min-w-[168px]',
 			align: 'end',
 			headerHelperText: defs.grossProfitTTM.description
 		}
@@ -367,7 +352,6 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 		header: defs.earningsTTM.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
-			headerClassName: 'w-[147px] min-w-[147px]',
 			align: 'end',
 			headerHelperText: defs.earningsTTM.description
 		}
@@ -377,7 +361,6 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 		header: defs.ebitdaTTM.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
-			headerClassName: 'w-[140px] min-w-[140px]',
 			align: 'end',
 			headerHelperText: defs.ebitdaTTM.description
 		}
@@ -387,7 +370,6 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 		header: defs.holdersRevenueTTM.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
-			headerClassName: 'w-[203px] min-w-[203px]',
 			align: 'end',
 			headerHelperText: defs.holdersRevenueTTM.description
 		}
@@ -397,7 +379,6 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 		header: defs.holderEarningsTTM.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
-			headerClassName: 'w-[195px] min-w-[195px]',
 			align: 'end',
 			headerHelperText: defs.holderEarningsTTM.description
 		}
@@ -407,7 +388,6 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 		header: defs.dividendsTTM.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
-			headerClassName: 'w-[155px] min-w-[155px]',
 			align: 'end',
 			headerHelperText: defs.dividendsTTM.description
 		}
@@ -417,7 +397,6 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 		header: defs.stockRepurchaseTTM.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
-			headerClassName: 'w-[154px] min-w-[154px]',
 			align: 'end',
 			headerHelperText: defs.stockRepurchaseTTM.description
 		}
@@ -427,7 +406,6 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 		header: defs.stockIssuanceTTM.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
-			headerClassName: 'w-[190px] min-w-[190px]',
 			align: 'end',
 			headerHelperText: defs.stockIssuanceTTM.description
 		}
@@ -437,7 +415,6 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 		header: defs.stockBasedCompensationTTM.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
-			headerClassName: 'w-[174px] min-w-[174px]',
 			align: 'end',
 			headerHelperText: defs.stockBasedCompensationTTM.description
 		}
@@ -447,7 +424,6 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 		header: defs.cashAndCashEquivalents.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
-			headerClassName: 'w-[136px] min-w-[136px]',
 			align: 'end',
 			headerHelperText: defs.cashAndCashEquivalents.description
 		}
@@ -457,7 +433,6 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 		header: defs.totalAssets.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
-			headerClassName: 'w-[126px] min-w-[126px]',
 			align: 'end',
 			headerHelperText: defs.totalAssets.description
 		}
@@ -467,7 +442,6 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 		header: defs.totalLiabilities.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
-			headerClassName: 'w-[143px] min-w-[143px]',
 			align: 'end',
 			headerHelperText: defs.totalLiabilities.description
 		}
@@ -477,7 +451,6 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 		header: defs.totalShareholdersEquity.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
-			headerClassName: 'w-[116px] min-w-[116px]',
 			align: 'end',
 			headerHelperText: defs.totalShareholdersEquity.description
 		}
@@ -487,7 +460,7 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 		header: defs.totalDebt.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
-			headerClassName: 'w-[113px] min-w-[113px]',
+			headerClassName: 'min-w-[113px]',
 			align: 'end',
 			headerHelperText: defs.totalDebt.description
 		}
@@ -497,7 +470,6 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 		header: defs.circulatingSupply.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue()) ?? '-',
 		meta: {
-			headerClassName: 'w-[125px] min-w-[125px]',
 			align: 'end',
 			headerHelperText: defs.circulatingSupply.description
 		}
@@ -507,7 +479,6 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 		header: defs.totalSupply.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue()) ?? '-',
 		meta: {
-			headerClassName: 'w-[128px] min-w-[128px]',
 			align: 'end',
 			headerHelperText: defs.totalSupply.description
 		}
@@ -517,7 +488,6 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 		header: defs.employeeCount.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue()) ?? '-',
 		meta: {
-			headerClassName: 'w-[117px] min-w-[117px]',
 			align: 'end',
 			headerHelperText: defs.employeeCount.description
 		}

@@ -419,7 +419,7 @@ function DataTable<T>({
 			<h3 className="mb-3 label-md text-secondary">{title}</h3>
 			{/* Auto layout sizes each column to its nowrap cells, so a phone scrolls the table sideways instead of
 			    squashing every column into the card's width. */}
-			<Table table={instance} tableLayout="auto" />
+			<Table table={instance} columnSizing="content" />
 			{data.length > pageSize ? <Pagination table={instance} /> : null}
 		</Card>
 	)

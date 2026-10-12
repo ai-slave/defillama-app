@@ -82,7 +82,7 @@ const columns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[min(280px,40vw)]'
+			headerClassName: 'min-w-[min(280px,40vw)]'
 		}
 	}),
 	columnHelper.accessor((row) => row.total24h ?? undefined, {
@@ -93,7 +93,7 @@ const columns = columnHelper.columns([
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[128px]',
+			headerClassName: 'min-w-[128px]',
 			align: 'center',
 			headerHelperText: definitions.rev.chain['24h']
 		}
@@ -106,7 +106,7 @@ const columns = columnHelper.columns([
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[128px]',
+			headerClassName: 'min-w-[128px]',
 			align: 'center',
 			headerHelperText: definitions.rev.chain['30d']
 		}

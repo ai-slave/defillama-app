@@ -68,13 +68,13 @@ const buildSnapshotNameColumn = (nameHeader: 'Chain' | 'Token') =>
 				</span>
 			)
 		},
-		meta: { headerClassName: 'w-[min(220px,40vw)]' }
+		meta: { headerClassName: 'min-w-[min(220px,40vw)]' }
 	})
 
 const SNAPSHOT_VALUE_COLUMN = snapshotColumnHelper.accessor('value', {
 	header: 'Value',
 	cell: ({ getValue }) => formatUsd(getValue(), { compact: true }),
-	meta: { headerClassName: 'w-[120px]', align: 'end' }
+	meta: { headerClassName: 'min-w-[120px]', align: 'end' }
 })
 
 const buildSnapshotShareColumn = (shareHeader: string) =>
@@ -82,13 +82,13 @@ const buildSnapshotShareColumn = (shareHeader: string) =>
 		header: shareHeader,
 		cell: ({ getValue }) =>
 			formatPercent(getValue(), { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-		meta: { headerClassName: 'w-[130px]', align: 'end' }
+		meta: { headerClassName: 'min-w-[130px]', align: 'end' }
 	})
 
 const SNAPSHOT_INFLOW_COLUMN = snapshotColumnHelper.accessor('value', {
 	header: 'Net Inflow',
 	cell: ({ getValue }) => <Change value={getValue()} unit="usd" />,
-	meta: { headerClassName: 'w-[130px]', align: 'end' }
+	meta: { headerClassName: 'min-w-[130px]', align: 'end' }
 })
 
 const buildSnapshotColumns = (kind: SnapshotTableKind, shareHeader: string) =>

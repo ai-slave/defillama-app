@@ -6,7 +6,7 @@ import type { TableProps, TableCssVars } from './types'
 import { useTableCells } from './useTableCells'
 import { useTableView } from './useTableView'
 
-export type { TableLayout, TableProps } from './types'
+export type { TableProps } from './types'
 
 /**
  * Render the current row model in full. Pagination, if configured, belongs to the table owner; this component never
@@ -18,7 +18,7 @@ export function Table<F extends SortingFeatures & VisibilityFeatures, T extends 
 	stripedBg = false,
 	compact = false,
 	rowRankById,
-	tableLayout = 'fixed',
+	columnSizing = 'declared',
 	className,
 	style
 }: TableProps<F, T>) {
@@ -32,7 +32,7 @@ export function Table<F extends SortingFeatures & VisibilityFeatures, T extends 
 			rowCount={rows.length}
 			isChainPage={isChainPage}
 			compact={compact}
-			tableLayout={tableLayout}
+			columnSizing={columnSizing}
 			className={className}
 			style={style}
 		>

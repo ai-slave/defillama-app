@@ -92,8 +92,8 @@ export const assetTypeColumn = columnHelper.accessor(
 			)
 		},
 		meta: {
+			headerClassName: 'min-w-[168px]',
 			...textColumnMeta(
-				'w-[168px]',
 				`${definitions.assetGroup.description} A platform or venue row lists the asset groups of its assets; an asset row shows its asset class, with the group in the tooltip.`,
 				definitions.assetGroup.label
 			),
@@ -141,7 +141,7 @@ export const categoryColumn = columnHelper.accessor(
 				</Tooltip>
 			)
 		},
-		meta: textColumnMeta('w-[168px]', definitions.category.description)
+		meta: { headerClassName: 'min-w-[168px]', ...textColumnMeta(definitions.category.description) }
 	}
 )
 
@@ -149,7 +149,10 @@ const assetClassColumn = createDistinctTextColumn({
 	id: 'assetClass',
 	header: definitions.assetClass.label,
 	pick: (asset) => asset.assetClass?.join(', '),
-	meta: textColumnMeta('w-[168px]', definitions.assetClass.description, definitions.assetClass.label)
+	meta: {
+		headerClassName: 'min-w-[168px]',
+		...textColumnMeta(definitions.assetClass.description, definitions.assetClass.label)
+	}
 })
 
 /** Colored wherever one value applies: on a leaf, and on a group whose children share it. */
@@ -166,7 +169,7 @@ export function createAccessModelColumn(fold: RWAGroupTextFold) {
 				className={clsx(ACCESS_MODEL_TONE[value])}
 			/>
 		),
-		meta: textColumnMeta('w-[min(180px,40vw)]', definitions.accessModel.description)
+		meta: { headerClassName: 'min-w-[min(180px,40vw)]', ...textColumnMeta(definitions.accessModel.description) }
 	})
 }
 
@@ -188,7 +191,10 @@ export const rwaClassificationColumn = columnHelper.accessor(
 					: undefined
 			return <DefinedValueCell value={value} definition={definition} className={asset?.trueRWA ? 'text-success' : ''} />
 		},
-		meta: textColumnMeta('w-[min(180px,40vw)]', definitions.rwaClassification.description)
+		meta: {
+			headerClassName: 'min-w-[min(180px,40vw)]',
+			...textColumnMeta(definitions.rwaClassification.description)
+		}
 	}
 )
 
@@ -197,7 +203,7 @@ const issuerColumn = createDistinctTextColumn({
 	id: 'issuer',
 	header: definitions.issuer.label,
 	pick: (asset) => asset.issuer,
-	meta: textColumnMeta('w-[168px]', definitions.issuer.description)
+	meta: { headerClassName: 'min-w-[168px]', ...textColumnMeta(definitions.issuer.description) }
 })
 
 /** Export only; the name cell shows the flag as an icon. */

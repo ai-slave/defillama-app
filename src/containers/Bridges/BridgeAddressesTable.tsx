@@ -44,7 +44,7 @@ export function BridgeAddressesTable({ data }: { data: Array<BridgeAddressTableR
 						)
 					},
 					meta: {
-						headerClassName: 'w-[120px]'
+						headerClassName: 'min-w-[120px]'
 					}
 				}),
 				columnHelper.display({
@@ -57,7 +57,7 @@ export function BridgeAddressesTable({ data }: { data: Array<BridgeAddressTableR
 							urlType: 'address'
 						})?.chainDisplayName ?? null,
 					meta: {
-						headerClassName: 'w-[120px]',
+						headerClassName: 'min-w-[120px]',
 						align: 'end'
 					}
 				}),
@@ -73,7 +73,7 @@ export function BridgeAddressesTable({ data }: { data: Array<BridgeAddressTableR
 								})
 							: null,
 					meta: {
-						headerClassName: 'w-[120px]',
+						headerClassName: 'min-w-[120px]',
 						align: 'end'
 					}
 				}),
@@ -89,7 +89,7 @@ export function BridgeAddressesTable({ data }: { data: Array<BridgeAddressTableR
 								})
 							: null,
 					meta: {
-						headerClassName: 'w-[120px]',
+						headerClassName: 'min-w-[120px]',
 						align: 'end'
 					}
 				}),
@@ -97,7 +97,7 @@ export function BridgeAddressesTable({ data }: { data: Array<BridgeAddressTableR
 					id: 'txs',
 					header: 'Total Transactions',
 					meta: {
-						headerClassName: 'w-[120px]',
+						headerClassName: 'min-w-[120px]',
 						align: 'end'
 					}
 				})

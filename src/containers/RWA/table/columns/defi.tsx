@@ -37,13 +37,13 @@ export function createDefiColumnGroup(period: RWAChangePeriod) {
 						/>
 					)
 				},
-				meta: numberColumnMeta('w-[150px]', definitions.defiActiveTvl.description, definitions.defiActiveTvl.label)
+				meta: numberColumnMeta(definitions.defiActiveTvl.description, definitions.defiActiveTvl.label)
 			}),
 			columnHelper.accessor((row) => getDefiUtilization(row.metrics), {
 				id: 'utilization',
 				header: 'Utilization',
 				cell: ({ getValue }) => (getValue() != null ? formatPercent(getValue(), { input: 'percent' }) : null),
-				meta: numberColumnMeta('w-[120px]', 'DeFi Active TVL / Active AUM', 'DeFi Utilization')
+				meta: numberColumnMeta('DeFi Active TVL / Active AUM', 'DeFi Utilization')
 			}),
 			columnHelper.accessor(
 				(row) =>
@@ -55,11 +55,13 @@ export function createDefiColumnGroup(period: RWAChangePeriod) {
 					id: 'defiActiveTvlChange',
 					header: period,
 					cell: ({ getValue }) => <Change value={getValue()} />,
-					meta: numberColumnMeta(
-						'w-[96px]',
-						`Change of DeFi Active TVL against the value ${period} earlier, over the rows that have both. Under Group by Chain the prior is split by today's chain share.`,
-						`DeFi Active TVL ${period} change`
-					)
+					meta: {
+						headerClassName: 'min-w-[96px]',
+						...numberColumnMeta(
+							`Change of DeFi Active TVL against the value ${period} earlier, over the rows that have both. Under Group by Chain the prior is split by today's chain share.`,
+							`DeFi Active TVL ${period} change`
+						)
+					}
 				}
 			)
 		]

@@ -21,25 +21,23 @@ const columns = [
 		enableSorting: false,
 		cell: (info) => info.getValue(),
 		meta: {
-			headerClassName: 'w-[180px]',
+			headerClassName: 'min-w-[180px]',
 			headerHelperText: 'Venue identity help'
 		}
 	}),
 	columnHelper.accessor('mcap', {
 		header: 'Market Cap',
 		cell: (info) => info.getValue(),
-		meta: { headerClassName: 'w-[120px]', align: 'end' }
+		meta: { headerClassName: 'min-w-[120px]', align: 'end' }
 	})
 ]
 
 function TestVirtualTable({
 	rowSize,
-	tableLayout,
 	compact = false,
 	renderer = 'virtual'
 }: {
 	rowSize?: number
-	tableLayout?: 'fixed' | 'auto'
 	compact?: boolean
 	renderer?: 'standard' | 'virtual'
 }) {
@@ -53,9 +51,8 @@ function TestVirtualTable({
 		columns
 	})
 
-	if (renderer === 'standard')
-		return <Table table={instance} rowSize={rowSize} tableLayout={tableLayout} compact={compact} />
-	return <VirtualTable table={instance} rowSize={rowSize} tableLayout={tableLayout} compact={compact} />
+	if (renderer === 'standard') return <Table table={instance} rowSize={rowSize} compact={compact} />
+	return <VirtualTable table={instance} rowSize={rowSize} compact={compact} />
 }
 
 describe('VirtualTable SSR', () => {
@@ -75,18 +72,18 @@ describe('VirtualTable SSR', () => {
 })
 
 const groupedColumns = columnHelper.columns([
-	columnHelper.accessor('name', { header: 'Name', meta: { headerClassName: 'w-[180px]' } }),
+	columnHelper.accessor('name', { header: 'Name', meta: { headerClassName: 'min-w-[180px]' } }),
 	columnHelper.group({
 		id: 'metrics',
 		header: 'Metrics',
 		columns: [
-			columnHelper.accessor('mcap', { header: 'Market Cap', meta: { headerClassName: 'w-[120px]' } }),
+			columnHelper.accessor('mcap', { header: 'Market Cap', meta: { headerClassName: 'min-w-[120px]' } }),
 			columnHelper.group({
 				id: 'changes',
 				header: 'Changes',
 				columns: [
-					columnHelper.display({ id: 'day', header: 'Day', meta: { headerClassName: 'w-[100px]' } }),
-					columnHelper.display({ id: 'week', header: 'Week', meta: { headerClassName: 'w-[100px]' } })
+					columnHelper.display({ id: 'day', header: 'Day', meta: { headerClassName: 'min-w-[100px]' } }),
+					columnHelper.display({ id: 'week', header: 'Week', meta: { headerClassName: 'min-w-[100px]' } })
 				]
 			})
 		]

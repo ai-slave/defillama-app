@@ -39,7 +39,6 @@ import type {
 	VisibilityFeatures
 } from './features/contracts'
 import { getPaginationControls } from './paginationControls'
-import { TableColumnGroup } from './TableColumnGroup'
 import { TableEmptyRow } from './TableEmptyRow'
 import { TablePager } from './TablePager'
 import { TableWatermark } from './TableWatermark'
@@ -248,8 +247,9 @@ export function PaginatedTable<F extends PaginationFeatures & SortingFeatures & 
 		<TokenPageTableScroller className="bg-surface" onScroll={stickyHeader ? handleTableScroll : undefined}>
 			{interactionDisabled ? <SurfaceLoadingOverlay label={loadingLabel} /> : null}
 			<TableWatermark rowCount={rows.length} />
-			<TokenPageTable className={`relative ${tableClassName ?? ''}`} style={{ tableLayout: 'fixed', width: '100%' }}>
-				<TableColumnGroup columns={visibleLeafColumns} />
+			{/* Body cells stay out of the width calculation, so columns take their header or declared min-width and the
+			    sticky header copy, which has no body, lays out to the same widths. See "Column widths" in README.md. */}
+			<TokenPageTable className={`relative [&>tbody>tr>td]:max-w-0 ${tableClassName ?? ''}`} style={{ width: '100%' }}>
 				{renderHeader({ interactive: !stickyHeader })}
 				<Subscribe source={table.store}>
 					{() => (
@@ -306,12 +306,7 @@ export function PaginatedTable<F extends PaginationFeatures & SortingFeatures & 
 								className={`w-full ${tableClassName ?? ''}`}
 								style={{ willChange: 'transform' }}
 							>
-								<TokenPageTable
-									role="presentation"
-									className="z-10 bg-surface"
-									style={{ tableLayout: 'fixed', width: '100%' }}
-								>
-									<TableColumnGroup columns={visibleLeafColumns} />
+								<TokenPageTable role="presentation" className="z-10 bg-surface" style={{ width: '100%' }}>
 									{renderHeader({ stickyMirror: true })}
 								</TokenPageTable>
 							</div>
