@@ -16,9 +16,9 @@ const verified: VerifiedBlock = {
 const NOW = Date.parse('2026-08-27T09:00:00Z')
 
 describe('verified snapshot', () => {
-	test('compares like-for-like daily base APY and names an uncapped queue', () => {
-		expect(buildVerifiedSnapshot(verified, [{ label: '24h', verified: 2.28 }], NOW)).toEqual({
-			baseApy: 2.28,
+	test('compares like-for-like 30d base APY and names an uncapped queue', () => {
+		expect(buildVerifiedSnapshot(verified, [{ label: '30d', verified: 2.23 }], NOW)).toEqual({
+			baseApy: 2.23,
 			lastVerifiedApy: null,
 			current: true,
 			exitHeadline: 'Queued ~3 days',

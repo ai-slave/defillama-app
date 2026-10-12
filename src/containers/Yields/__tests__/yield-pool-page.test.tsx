@@ -237,7 +237,7 @@ describe('/yields/pool/[pool]', () => {
 			stability: { score: 0.9, rating: 'stable' },
 			supplyChart: null
 		})
-		expect(props.supply).toMatchObject({ apy: { base: 2.3 }, metrics: [{ label: 'TVL', value: 1000 }] })
+		expect(props.supply).toMatchObject({ apy: { base: 2.1 }, metrics: [{ label: 'TVL', value: 1000 }] })
 		expect(http.urls().filter((url) => url.includes('/history'))).toEqual([])
 	})
 

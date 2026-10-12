@@ -48,7 +48,7 @@ export function matchesTriState(state: TriState, value: boolean | null): boolean
 }
 
 export function parseApyWindow(query: ApiQuery): ApyWindow {
-	return queryEnum(query, 'apyWindow', APY_WINDOWS) ?? 'current'
+	return queryEnum(query, 'apyWindow', APY_WINDOWS) ?? 'avg_30d'
 }
 
 // `base` is always implied; default view is `base,reward`.

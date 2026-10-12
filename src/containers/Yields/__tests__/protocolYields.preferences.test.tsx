@@ -90,7 +90,7 @@ afterEach(async () => {
 })
 
 test('restores APY preferences before fetching and keeps protocol scope when toggling and clearing', async () => {
-	localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_30d')
+	localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_7d')
 	localStorage.setItem(APY_COMPONENTS_PREF.storageKey, 'intrinsic')
 	localStorage.setItem(TABLE_PAGE_SIZE_PREF.storageKey, '100')
 	const html = renderToString(element())
@@ -108,7 +108,7 @@ test('restores APY preferences before fetching and keeps protocol scope when tog
 	const restored = mocks.router.replace.mock.calls[0][0].query
 	expect(restored).toMatchObject({
 		protocol: 'aave',
-		apyWindow: 'avg_30d',
+		apyWindow: 'avg_7d',
 		apyComponents: 'intrinsic',
 		pageSize: '100'
 	})
@@ -116,19 +116,19 @@ test('restores APY preferences before fetching and keeps protocol scope when tog
 	await act(async () => root.render(element()))
 	await waitForUi(() => expect(container.textContent).toContain('aave-pool'))
 	expect(lastRequest().getAll('protocol')).toEqual(['Aave V2', 'Aave V3'])
-	expect(lastRequest().get('apyWindow')).toBe('avg_30d')
+	expect(lastRequest().get('apyWindow')).toBe('avg_7d')
 	expect(lastRequest().get('apyComponents')).toBe('intrinsic')
 	expect(lastRequest().get('pageSize')).toBe('100')
 	expect(button('Intrinsic').getAttribute('aria-pressed')).toBe('true')
 	expect(button('Reward').getAttribute('aria-pressed')).toBe('false')
-	expect(container.querySelector('input[value="avg_30d"]')?.getAttribute('aria-checked')).toBe('true')
+	expect(container.querySelector('input[value="avg_7d"]')?.getAttribute('aria-checked')).toBe('true')
 
 	await act(async () => button('Reward').click())
 	const changed = mocks.router.push.mock.calls.at(-1)![0]
 	expect(changed.pathname).toBe('/protocol/yields/aave')
 	expect(changed.query).toEqual({
 		chain: 'Ethereum',
-		apyWindow: 'avg_30d',
+		apyWindow: 'avg_7d',
 		apyComponents: 'reward,intrinsic',
 		pageSize: '100'
 	})
@@ -142,7 +142,7 @@ test('restores APY preferences before fetching and keeps protocol scope when tog
 	const cleared = mocks.router.push.mock.calls.at(-1)![0]
 	expect(cleared).toEqual({
 		pathname: '/protocol/yields/aave',
-		query: { apyWindow: 'avg_30d', apyComponents: 'reward,intrinsic', pageSize: '100' }
+		query: { apyWindow: 'avg_7d', apyComponents: 'reward,intrinsic', pageSize: '100' }
 	})
 	mocks.router = { ...mocks.router, query: { protocol: 'aave', ...cleared.query } }
 	await act(async () => root.render(element()))
@@ -153,7 +153,7 @@ test('restores APY preferences before fetching and keeps protocol scope when tog
 })
 
 test('does not fetch or restore preferences for a protocol without yield pools', async () => {
-	localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_30d')
+	localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_7d')
 	await act(async () => root.render(element({ ...props, protocolNames: [] })))
 	expect(container.textContent).toBe('No yield pools for this protocol')
 	expect(mocks.fetchJson).not.toHaveBeenCalled()

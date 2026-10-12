@@ -24,8 +24,8 @@ const LOCKED = { verifiedAccess: false } as const
 function apyOf(total: number | null): ApyWindows {
 	return {
 		current: { base: total, reward: null, total },
-		avg_7d: { base: total, reward: null, total },
-		avg_30d: NULL_TRIPLE
+		avg_7d: NULL_TRIPLE,
+		avg_30d: { base: total, reward: null, total }
 	}
 }
 
@@ -75,24 +75,24 @@ describe('getEarnPage verified fields', () => {
 	test('swaps the measured base into the headline APY, keeping the reported one for disclosure', async () => {
 		useRows([row('a', 5, { verified: VERIFIED })])
 
-		const current = await getEarnPage({})
-		// `now.apy_24h` is null across the real dataset, so `current` resolves via avg_1d.
-		expect(current.rows[0].verifiedApy).toBe(2.2)
-		expect(current.rows[0].apy).toBe(2.2)
-		expect(current.rows[0].apyBase).toBe(2.2)
-		expect(current.rows[0].reportedApyBase).toBe(5)
-		expect(current.rows[0].verified).toEqual(VERIFIED)
-
-		const monthly = await getEarnPage({ apyWindow: 'avg_30d' })
-		// Each window reads the measured figure for that same window.
+		const monthly = await getEarnPage({})
+		// The default window is 30d, so the headline reads avg_30d.
 		expect(monthly.rows[0].verifiedApy).toBe(2.4)
+		expect(monthly.rows[0].apy).toBe(2.4)
+		expect(monthly.rows[0].apyBase).toBe(2.4)
+		expect(monthly.rows[0].reportedApyBase).toBe(5)
+		expect(monthly.rows[0].verified).toEqual(VERIFIED)
+
+		const weekly = await getEarnPage({ apyWindow: 'avg_7d' })
+		// Each window reads the measured figure for that same window.
+		expect(weekly.rows[0].verifiedApy).toBe(2.3)
 	})
 
 	// The intrinsic leg is the source pool's own yield, so where that pool is measured its reading
 	// replaces the reported leg: in the headline, and so in the sort, filters and median.
 	test('swaps a measured source pool into the intrinsic leg', async () => {
 		const intrinsic = {
-			apy: { current: { base: 2.29 }, avg_7d: { base: 2.29 }, avg_30d: { base: null } },
+			apy: { current: { base: 2.29 }, avg_7d: { base: null }, avg_30d: { base: 2.29 } },
 			source_pool: { id: 'weeth', pool_token: null, symbol: 'weETH' }
 		}
 		useRows([row('weeth', 2.27, { verified: VERIFIED }), row('aweeth', 0.5, { intrinsic })])
@@ -100,10 +100,10 @@ describe('getEarnPage verified fields', () => {
 		const { rows } = await getEarnPage({ apyComponents: 'base,intrinsic' })
 		const held = rows.find((r) => r.id === 'aweeth')!
 
-		expect(held.verifiedIntrinsicApy).toBe(2.2)
+		expect(held.verifiedIntrinsicApy).toBe(2.4)
 		expect(held.reportedIntrinsicApy).toBe(2.29)
-		expect(held.resolvedApy.intrinsic).toBe(2.2)
-		expect(held.apy).toBeCloseTo(2.7, 6)
+		expect(held.resolvedApy.intrinsic).toBe(2.4)
+		expect(held.apy).toBeCloseTo(2.9, 6)
 		// The pool's own base is still the protocol's figure.
 		expect(held.verifiedApy).toBeNull()
 
@@ -123,10 +123,10 @@ describe('getEarnPage verified fields', () => {
 			apy: {
 				current: { base: 2.38, reward: 0.45, total: 2.83 },
 				avg_7d: NULL_TRIPLE,
-				avg_30d: NULL_TRIPLE
+				avg_30d: { base: 2.38, reward: 0.45, total: 2.83 }
 			},
 			reward_tokens: [{ address: '0xabc', symbol: 'MORPHO', decimals: 18 }],
-			verified: { ...VERIFIED, apy: { avg_1d: 2.58, avg_7d: null, avg_30d: null } }
+			verified: { ...VERIFIED, apy: { avg_1d: 2.58, avg_7d: null, avg_30d: 2.58 } }
 		})
 		useRows([withReward])
 
@@ -145,9 +145,13 @@ describe('getEarnPage verified fields', () => {
 	test('replaces a rewardless unsplit total but leaves one that may hide emissions alone', async () => {
 		const unsplit = (id: string, rewardTokens: EarnRow['reward_tokens']) =>
 			row(id, null, {
-				apy: { current: { base: null, reward: null, total: 4.52 }, avg_7d: NULL_TRIPLE, avg_30d: NULL_TRIPLE },
+				apy: {
+					current: { base: null, reward: null, total: 4.52 },
+					avg_7d: NULL_TRIPLE,
+					avg_30d: { base: null, reward: null, total: 4.52 }
+				},
 				reward_tokens: rewardTokens,
-				verified: { ...VERIFIED, apy: { avg_1d: 5.68, avg_7d: null, avg_30d: null } }
+				verified: { ...VERIFIED, apy: { avg_1d: 5.68, avg_7d: null, avg_30d: 5.68 } }
 			})
 		useRows([unsplit('rewardless', []), unsplit('rewarded', [{ address: '0xabc', symbol: 'CVX', decimals: 18 }])])
 
@@ -167,7 +171,7 @@ describe('getEarnPage verified fields', () => {
 	test('runs the APY range filters on the measured headline', async () => {
 		useRows([row('a', 5, { verified: VERIFIED })])
 
-		// Reported 5% passes, measured 2.2% does not.
+		// Reported 5% passes, measured 2.4% does not.
 		expect((await getEarnPage({ minApy: '4' })).rows).toHaveLength(0)
 		expect((await getEarnPage({ minApy: '2' })).rows.map((r) => r.id)).toEqual(['a'])
 	})
@@ -184,19 +188,19 @@ describe('getEarnPage verified fields', () => {
 	})
 
 	test('reports null for a measured pool with no reading in the active window', async () => {
-		const noThirtyDay: VerifiedBlock = {
+		const noSevenDay: VerifiedBlock = {
 			...VERIFIED,
-			apy: { ...VERIFIED.apy, avg_30d: null }
+			apy: { ...VERIFIED.apy, avg_7d: null }
 		}
-		useRows([row('a', 5, { verified: noThirtyDay })])
+		useRows([row('a', 5, { verified: noSevenDay })])
 
-		const { rows } = await getEarnPage({ apyWindow: 'avg_30d' })
+		const { rows } = await getEarnPage({ apyWindow: 'avg_7d' })
 
 		expect(rows[0].verifiedApy).toBeNull()
 		expect(rows[0].reportedApyBase).toBeNull()
 		expect(rows[0].verified).not.toBeNull()
 		// Nothing to substitute, so the reported composition passes through untouched — here the
-		// fixture reports no 30d window either, so the cell stays empty rather than borrowing a
+		// fixture reports no 7d window either, so the cell stays empty rather than borrowing a
 		// measurement from another window.
 		expect(rows[0].apy).toBeNull()
 	})
@@ -217,7 +221,7 @@ describe('getEarnPage verified fields', () => {
 		test('runs the APY range filters on the reported figure, so filtered rows match what is shown', async () => {
 			useRows([row('a', 5, { verified: VERIFIED })])
 
-			// Measured 2.2% would fail this; reported 5% passes, and 5% is what the cell renders.
+			// Measured 2.4% would fail this; reported 5% passes, and 5% is what the cell renders.
 			expect((await getEarnPage({ minApy: '4' }, LOCKED)).rows.map((r) => r.id)).toEqual(['a'])
 		})
 
@@ -232,7 +236,7 @@ describe('getEarnPage verified fields', () => {
 
 			const { rows } = await getEarnPage({ sortBy: 'apy', sortDesc: 'true' }, LOCKED)
 
-			// Measured 2.2 would sort this row last; reported 5 puts it first.
+			// Measured 2.4 would sort this row last; reported 5 puts it first.
 			expect(rows.map((r) => r.id)).toEqual(['measured', 'other'])
 		})
 
@@ -245,7 +249,7 @@ describe('getEarnPage verified fields', () => {
 
 			expect(rows[0].verifiedLocked).toBe(true)
 			expect(rows[0].verifiedUnsubstitutedApy).toBeNull()
-			expect(wire).not.toContain('2.2')
+			expect(wire).not.toContain('2.4')
 			expect(wire).not.toContain('confidence')
 			expect(wire).not.toContain('exit_liquidity')
 			expect(rows[0].exitStatus).toBeNull()
@@ -273,7 +277,7 @@ describe('getEarnPage verified fields', () => {
 			const unlocked = await getEarnPageFromSnapshot(snapshot, {}, { verifiedAccess: true })
 			const locked = await getEarnPageFromSnapshot(snapshot, {}, LOCKED)
 
-			expect(unlocked.rows[0].apy).toBe(2.2)
+			expect(unlocked.rows[0].apy).toBe(2.4)
 			expect(locked.rows[0].apy).toBe(5)
 			expect(locked.rows[0].verified).toBeNull()
 		})

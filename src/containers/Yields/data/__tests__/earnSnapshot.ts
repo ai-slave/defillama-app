@@ -10,8 +10,10 @@ export const ATTRIBUTES: EarnAttributes = {
 	impermanent_loss_risk: false
 }
 
+// The default window is 30d, so a fixture carries its figure there as well as under `current`.
 export function apyOf(total: number | null): ApyWindows {
-	return { current: { base: total, reward: null, total }, avg_7d: NULL_TRIPLE, avg_30d: NULL_TRIPLE }
+	const triple = { base: total, reward: null, total }
+	return { current: triple, avg_7d: NULL_TRIPLE, avg_30d: triple }
 }
 
 /** A raw earn artifact row; protocol and chain names join to the fixture meta during enrichment. */

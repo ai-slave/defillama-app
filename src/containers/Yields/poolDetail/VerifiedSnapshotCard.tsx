@@ -32,8 +32,8 @@ export function buildVerifiedSnapshot(
 	windows: Array<VerifiedWindowRow>,
 	now: number
 ): VerifiedSnapshotModel {
-	const daily = windows.find((row) => row.label === '24h') ?? null
-	const reading = daily?.verified ?? verified.apy.avg_1d
+	const month = windows.find((row) => row.label === '30d') ?? null
+	const reading = month?.verified ?? verified.apy.avg_30d
 	const current = isVerifiedCurrent(verified.apy_as_of, now)
 	const baseApy = current ? reading : null
 	// The dollar figure gets its own row on an instant lane, so the detail carries the share instead.

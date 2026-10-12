@@ -97,7 +97,9 @@ async function mountRefresh({ filter }: { filter: boolean }) {
 			expect(earnRequests()).toHaveLength(0)
 			const control =
 				kind === 'sort'
-					? [...container.querySelectorAll<HTMLButtonElement>('thead button')].find((b) => b.textContent === 'APY')
+					? [...container.querySelectorAll<HTMLButtonElement>('thead button')].find(
+							(b) => b.textContent === 'APY (30d)'
+						)
 					: container.querySelector<HTMLButtonElement>('[aria-label="Go to next page"]')
 			await act(async () => {
 				control!.focus()

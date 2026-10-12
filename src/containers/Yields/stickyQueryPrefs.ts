@@ -37,7 +37,7 @@ export function writeStickyPref(pref: StickyQueryPref, value: string | undefined
 export const APY_WINDOW_PREF: StickyQueryPref = {
 	queryKey: 'apyWindow',
 	storageKey: 'yields-apy-window',
-	isValid: (value) => value === 'avg_7d' || value === 'avg_30d'
+	isValid: (value) => value === 'current' || value === 'avg_7d'
 }
 
 // Non-default outputs of ApyViewControls' encodeComponents.

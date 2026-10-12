@@ -15,7 +15,7 @@ import { HelpDefs, HelpIcon } from './ui'
 // URL-param-driven APY view toggle for the /yields page. Pushes `apyWindow` and
 // `apyComponents` router query params (shallow); `useYieldsServerTable` forwards the
 // whole router query to the earn route, which recomputes resolvedApy / sparkline /
-// stability server-side. Defaults (current window, base+reward) push NO params so
+// stability server-side. Defaults (30d window, base+reward) push NO params so
 // URLs stay clean and the request stays byte-identical to the no-toggle baseline.
 //
 // Inline dials from `sm` up; below that one trigger opening a sheet with the same controls.
@@ -49,10 +49,10 @@ const APY_HELP = (
 	/>
 )
 
-// Mirror the server's parseApyWindow default ('current').
+// Mirror the server's parseApyWindow default ('avg_30d').
 function decodeWindow(value: string | Array<string> | undefined): ApyWindow {
 	const raw = readSingleQueryValue(value)
-	return raw === 'avg_7d' || raw === 'avg_30d' ? raw : 'current'
+	return raw === 'current' || raw === 'avg_7d' ? raw : 'avg_30d'
 }
 
 // Mirror the server's parseApyComponents: absent → base+reward.
@@ -97,7 +97,7 @@ export function ApyViewControls({ ready = true }: { ready?: boolean }) {
 	// Write storage before navigation to prevent restoring the previous choice.
 	const setWindow = (next: ApyWindow) => {
 		if (next !== window) trackYieldsEvent(YIELDS_EVENTS.APY_WINDOW, { window: next })
-		const apyWindow = next === 'current' ? undefined : next
+		const apyWindow = next === 'avg_30d' ? undefined : next
 		writeStickyPref(APY_WINDOW_PREF, apyWindow)
 		void pushYieldsQuery(router, { apyWindow })
 	}

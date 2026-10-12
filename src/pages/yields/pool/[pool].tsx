@@ -99,7 +99,7 @@ async function buildBorrowOnlyProps(
 	const rewardTokens = rewardTokenSymbols(market.reward_tokens)
 
 	// Supply leg: base + reward + intrinsic (matches the earn supply composition).
-	const supplyParts = resolveApy(market.supply_apy, market.intrinsic?.supply, 'current', DETAIL_APY_COMPONENTS)
+	const supplyParts = resolveApy(market.supply_apy, market.intrinsic?.supply, 'avg_30d', DETAIL_APY_COMPONENTS)
 	const supply: PoolSide = {
 		apyLabel: 'Supply APY',
 		apy: {
@@ -114,7 +114,7 @@ async function buildBorrowOnlyProps(
 	}
 
 	// Borrow leg carries no intrinsic yield (matches the dual-pool borrow side).
-	const borrowParts = resolveApy(market.borrow_cost_apy, null, 'current', BORROW_APY_COMPONENTS)
+	const borrowParts = resolveApy(market.borrow_cost_apy, null, 'avg_30d', BORROW_APY_COMPONENTS)
 	const borrow: PoolSide = {
 		apyLabel: 'Borrow APY',
 		apy: {
@@ -301,13 +301,13 @@ const getServerSidePropsHandler: GetServerSideProps<PoolDetailViewProps> = async
 		: null
 
 	// When this pool is also a borrow market, surface the borrow side (APY + borrowed /
-	// available) from the borrow-markets dataset row (same id), resolved at current
+	// available) from the borrow-markets dataset row (same id), resolved at the 30d
 	// base+reward — the borrow leg has no intrinsic yield.
 	let borrow: PoolSide | null = null
 	if (available.borrow) {
 		const market = borrowMarket
 		if (market) {
-			const borrowParts = resolveApy(market.borrow_cost_apy, null, 'current', BORROW_APY_COMPONENTS)
+			const borrowParts = resolveApy(market.borrow_cost_apy, null, 'avg_30d', BORROW_APY_COMPONENTS)
 			borrow = {
 				apyLabel: 'Borrow APY',
 				apy: {
@@ -326,7 +326,7 @@ const getServerSidePropsHandler: GetServerSideProps<PoolDetailViewProps> = async
 		}
 	}
 
-	const parts = resolveApy(pool.apy, pool.intrinsic, 'current', DETAIL_APY_COMPONENTS)
+	const parts = resolveApy(pool.apy, pool.intrinsic, 'avg_30d', DETAIL_APY_COMPONENTS)
 	const supply: PoolSide = {
 		apyLabel: 'Supply APY',
 		apy: {

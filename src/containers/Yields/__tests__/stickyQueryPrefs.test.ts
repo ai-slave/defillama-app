@@ -17,11 +17,11 @@ afterEach(() => vi.unstubAllGlobals())
 
 describe('applyStickyPrefs', () => {
 	test('fills the keys the URL lacks from valid stored values and keeps the rest of the query', () => {
-		window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_30d')
+		window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_7d')
 		window.localStorage.setItem(TABLE_PAGE_SIZE_PREF.storageKey, '100')
 		expect(applyStickyPrefs({ chain: 'Ethereum' }, YIELDS_TABLE_PREFS)).toEqual({
 			chain: 'Ethereum',
-			apyWindow: 'avg_30d',
+			apyWindow: 'avg_7d',
 			pageSize: '100'
 		})
 	})
@@ -45,7 +45,7 @@ describe('applyStickyPrefs', () => {
 	})
 
 	test('ignores default or invalid stored values', () => {
-		window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'current')
+		window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_30d')
 		window.localStorage.setItem(APY_COMPONENTS_PREF.storageKey, 'reward')
 		window.localStorage.setItem(TABLE_PAGE_SIZE_PREF.storageKey, '50')
 		expect(applyStickyPrefs({}, YIELDS_TABLE_PREFS)).toBeNull()
@@ -54,8 +54,8 @@ describe('applyStickyPrefs', () => {
 
 describe('writeStickyPref', () => {
 	test('stores a non-default value and clears on the default or an invalid value', () => {
-		writeStickyPref(APY_WINDOW_PREF, 'avg_7d')
-		expect(window.localStorage.getItem(APY_WINDOW_PREF.storageKey)).toBe('avg_7d')
+		writeStickyPref(APY_WINDOW_PREF, 'current')
+		expect(window.localStorage.getItem(APY_WINDOW_PREF.storageKey)).toBe('current')
 		writeStickyPref(APY_WINDOW_PREF, undefined)
 		expect(window.localStorage.getItem(APY_WINDOW_PREF.storageKey)).toBeNull()
 
@@ -68,9 +68,9 @@ describe('writeStickyPref', () => {
 
 describe('table pref validators accept only valid non-default wire values', () => {
 	test.each([
+		{ pref: APY_WINDOW_PREF, value: 'current', expected: true },
 		{ pref: APY_WINDOW_PREF, value: 'avg_7d', expected: true },
-		{ pref: APY_WINDOW_PREF, value: 'avg_30d', expected: true },
-		{ pref: APY_WINDOW_PREF, value: 'current', expected: false },
+		{ pref: APY_WINDOW_PREF, value: 'avg_30d', expected: false },
 		{ pref: APY_COMPONENTS_PREF, value: 'base', expected: true },
 		{ pref: APY_COMPONENTS_PREF, value: 'intrinsic', expected: true },
 		{ pref: APY_COMPONENTS_PREF, value: 'reward,intrinsic', expected: true },

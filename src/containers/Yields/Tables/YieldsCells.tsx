@@ -10,6 +10,7 @@ import { Tooltip } from '~/ui/Tooltip'
 import { formatRatio, formatUsd, formatPercent, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { exitWithdrawableUsd, withdrawableFraction } from '../data/exit'
 import { getDepegWarningSeverity, hasPart } from '../domain/apyPresentation'
+import { windowSuffix } from '../domain/csvApy'
 import {
 	EXIT_TONE_CLASS,
 	exitCoverageLine,
@@ -29,13 +30,11 @@ import { ExitStatusIcon } from './ExitStatusIcon'
 import { MeasuredCard, MeasuredExitOffer, MeasuredLock, MeasuredSeal } from './Measured'
 import type { IYieldTableRow } from './types'
 
-// APY column headers name their window when it deviates from the default latest
-// snapshot, so the numbers stay self-documenting outside the controls' viewport.
+// APY column headers name an averaged window, so the numbers stay self-documenting outside
+// the controls' viewport; the latest reading is the bare APY.
 export function ApyWindowHeader({ label }: { label: string }) {
 	const { query } = useRouter()
-	const window = typeof query.apyWindow === 'string' ? query.apyWindow : undefined
-	const suffix = window === 'avg_7d' ? ' (7d)' : window === 'avg_30d' ? ' (30d)' : ''
-	return <>{`${label}${suffix}`}</>
+	return <>{`${label}${windowSuffix(query)}`}</>
 }
 
 // --- formatting helpers -------------------------------------------------------------------

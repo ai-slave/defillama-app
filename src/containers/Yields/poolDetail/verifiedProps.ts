@@ -70,16 +70,16 @@ const SUPPLY_APY_COMPONENTS: Array<ApyComponent> = ['base', 'reward', 'intrinsic
 
 function buildMeasuredApy(pool: PoolDetail, sourceVerified: VerifiedBlock | null, now: number): MeasuredApy | null {
 	if (!pool.verified) return null
-	const reported = resolveApy(pool.apy, pool.intrinsic, 'current', SUPPLY_APY_COMPONENTS)
+	const reported = resolveApy(pool.apy, pool.intrinsic, 'avg_30d', SUPPLY_APY_COMPONENTS)
 	const measured = applyMeasuredBase(
 		reported,
-		pool.apy.current,
+		pool.apy.avg_30d,
 		pool.verified,
-		'current',
+		'avg_30d',
 		pool.reward_tokens.length > 0,
 		now
 	)
-	return applyMeasuredIntrinsic(measured, sourceVerified, 'current', now)
+	return applyMeasuredIntrinsic(measured, sourceVerified, 'avg_30d', now)
 }
 
 export function buildPoolVerifiedProps({

@@ -4,9 +4,11 @@ import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
 import { BasicLink } from '~/components/Link'
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
+import type { ApiQuery } from '~/server/api/types'
 import { StatusBadge } from '~/ui/StatusBadge'
 import { Definition, Tooltip } from '~/ui/Tooltip'
 import { formatCompactNumber, formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
+import { windowSuffix } from '../domain/csvApy'
 import { parseSelectedEarnColumns } from '../Filters/columnOptions'
 import { stabilityStatus, YIELD_PERCENT_OPTIONS } from '../poolDetail/format'
 import { MeasuredColumnHint, MeasuredExitColumnHint } from './Measured'
@@ -72,17 +74,12 @@ const OPTIONAL_COLUMN_IDS = new Set([
 ])
 const EMPTY_SORTING_STATE: SortingState = []
 
-function apyHeader(query: Record<string, unknown>, label: string) {
-	const suffix = query.apyWindow === 'avg_7d' ? ' (7d)' : query.apyWindow === 'avg_30d' ? ' (30d)' : ''
-	return `${label}${suffix}`
+function apyHeader(query: ApiQuery, label: string) {
+	return `${label}${windowSuffix(query)}`
 }
 
-function createEarnColumns(
-	query: Record<string, unknown>,
-	median?: EarnApyMedian,
-	defaultColumns: ReadonlyArray<string> = []
-) {
-	const selected = new Set(parseSelectedEarnColumns(query.column as string | Array<string> | undefined, defaultColumns))
+function createEarnColumns(query: ApiQuery, median?: EarnApyMedian, defaultColumns: ReadonlyArray<string> = []) {
+	const selected = new Set(parseSelectedEarnColumns(query.column, defaultColumns))
 	const columns = columnHelper.columns([
 		columnHelper.accessor('pool', {
 			id: 'pool',

@@ -75,25 +75,25 @@ describe('useLegacyYieldsUrlNormalizer sticky view preferences', () => {
 	})
 
 	test('seeds a stored window into a URL that lacks it and gates until the replace lands', async () => {
-		window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_30d')
+		window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_7d')
 		await render({})
 		expect(settled).toBe(false)
 		expect(routerMock.replace).toHaveBeenCalledTimes(1)
 		expect(routerMock.replace).toHaveBeenCalledWith(
-			{ pathname: '/yields', hash: '', query: { apyWindow: 'avg_30d' } },
+			{ pathname: '/yields', hash: '', query: { apyWindow: 'avg_7d' } },
 			undefined,
 			REPLACE_OPTIONS
 		)
 
-		await render({ apyWindow: 'avg_30d' })
+		await render({ apyWindow: 'avg_7d' })
 		expect(settled).toBe(true)
 		expect(routerMock.replace).toHaveBeenCalledTimes(1)
 	})
 
 	test('re-applies whenever the param is dropped again, but not once the default was chosen', async () => {
-		window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_30d')
+		window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_7d')
 		await render({})
-		await render({ apyWindow: 'avg_30d' })
+		await render({ apyWindow: 'avg_7d' })
 		// A later navigation drops the param: the same restore target must run again.
 		await render({})
 		expect(routerMock.replace).toHaveBeenCalledTimes(2)
@@ -107,17 +107,17 @@ describe('useLegacyYieldsUrlNormalizer sticky view preferences', () => {
 	})
 
 	test('retries a canceled replace instead of leaving pool fetching disabled', async () => {
-		window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_30d')
+		window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_7d')
 		routerMock.replace.mockResolvedValueOnce(false)
 		await render({})
 		expect(routerMock.replace).toHaveBeenCalledTimes(2)
 		expect(settled).toBe(false)
-		await render({ apyWindow: 'avg_30d' })
+		await render({ apyWindow: 'avg_7d' })
 		expect(settled).toBe(true)
 	})
 
 	test.each(['cancelled', 'rejected'])('releases the fetch gate after repeated %s replaces', async (outcome) => {
-		window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_30d')
+		window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_7d')
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
 		if (outcome === 'cancelled') routerMock.replace.mockResolvedValue(false)
 		else routerMock.replace.mockRejectedValue(new Error('Navigation failed'))
@@ -134,7 +134,7 @@ describe('useLegacyYieldsUrlNormalizer sticky view preferences', () => {
 	})
 
 	test('a navigation that has only started supersedes the pending restore', async () => {
-		window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_30d')
+		window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_7d')
 		let cancel: (completed: boolean) => void = () => {}
 		routerMock.replace.mockImplementationOnce(
 			() =>
@@ -144,7 +144,7 @@ describe('useLegacyYieldsUrlNormalizer sticky view preferences', () => {
 		)
 		await render({})
 		await act(async () => {
-			routerMock.events.emit('routeChangeStart', '/yields?apyWindow=avg_30d')
+			routerMock.events.emit('routeChangeStart', '/yields?apyWindow=avg_7d')
 			routerMock.events.emit('routeChangeStart', '/yields/borrow')
 			cancel(false)
 		})
@@ -156,7 +156,7 @@ describe('useLegacyYieldsUrlNormalizer sticky view preferences', () => {
 	})
 
 	test('a new navigation arriving before the restore start also takes priority', async () => {
-		window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_30d')
+		window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_7d')
 		let cancel: (completed: boolean) => void = () => {}
 		routerMock.replace.mockImplementationOnce(
 			() =>
@@ -167,7 +167,7 @@ describe('useLegacyYieldsUrlNormalizer sticky view preferences', () => {
 		await render({})
 		await act(async () => {
 			routerMock.events.emit('routeChangeStart', '/yields/borrow')
-			routerMock.events.emit('routeChangeStart', '/yields?apyWindow=avg_30d')
+			routerMock.events.emit('routeChangeStart', '/yields?apyWindow=avg_7d')
 			cancel(false)
 		})
 		expect(routerMock.replace).toHaveBeenCalledTimes(1)
@@ -175,14 +175,11 @@ describe('useLegacyYieldsUrlNormalizer sticky view preferences', () => {
 	})
 
 	test('recognizes its own start on dynamic routes with reordered query parameters', async () => {
-		window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_30d')
+		window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_7d')
 		routerMock.pathname = '/yields/pool/[pool]'
 		window.history.replaceState({}, '', '/yields/pool/pool-1#chart')
 		routerMock.replace.mockImplementationOnce(async () => {
-			routerMock.events.emit(
-				'routeChangeStart',
-				'/yields/pool/pool-1?apyWindow=avg_30d&chain=Ethereum&chain=Base#chart'
-			)
+			routerMock.events.emit('routeChangeStart', '/yields/pool/pool-1?apyWindow=avg_7d&chain=Ethereum&chain=Base#chart')
 			return false
 		})
 		await render({ pool: 'pool-1', chain: ['Ethereum', 'Base'] })
@@ -191,7 +188,7 @@ describe('useLegacyYieldsUrlNormalizer sticky view preferences', () => {
 	})
 
 	test('removes its listener and cannot retry after unmounting', async () => {
-		window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_30d')
+		window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_7d')
 		let cancel: (completed: boolean) => void = () => {}
 		routerMock.replace.mockImplementationOnce(
 			() =>
@@ -209,12 +206,12 @@ describe('useLegacyYieldsUrlNormalizer sticky view preferences', () => {
 	})
 
 	test('preserves a URL fragment during preference restoration', async () => {
-		window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_30d')
+		window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_7d')
 		window.location.hash = '#pools'
 		try {
 			await render({})
 			expect(routerMock.replace).toHaveBeenCalledWith(
-				{ pathname: '/yields', hash: '#pools', query: { apyWindow: 'avg_30d' } },
+				{ pathname: '/yields', hash: '#pools', query: { apyWindow: 'avg_7d' } },
 				undefined,
 				REPLACE_OPTIONS
 			)
@@ -224,14 +221,14 @@ describe('useLegacyYieldsUrlNormalizer sticky view preferences', () => {
 	})
 
 	test('the URL wins over storage, and legacy params are canonicalized in the same replace', async () => {
-		window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_30d')
-		await render({ apyWindow: 'avg_7d' })
+		window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_7d')
+		await render({ apyWindow: 'current' })
 		expect(settled).toBe(true)
 		expect(routerMock.replace).not.toHaveBeenCalled()
 
 		await render({ project: 'Lido' })
 		expect(routerMock.replace).toHaveBeenCalledWith(
-			{ pathname: '/yields', hash: '', query: { protocol: 'Lido', apyWindow: 'avg_30d' } },
+			{ pathname: '/yields', hash: '', query: { protocol: 'Lido', apyWindow: 'avg_7d' } },
 			undefined,
 			REPLACE_OPTIONS
 		)
@@ -255,7 +252,7 @@ describe('useLegacyYieldsUrlNormalizer hydration', () => {
 		// The browser has a stored window the server could not know about. On a static page with
 		// a bare URL the router is already ready during hydration, so the first client render
 		// must still match the server HTML; storage is applied on the next render.
-		window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_30d')
+		window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_7d')
 		const container = document.createElement('div')
 		document.body.appendChild(container)
 		container.innerHTML = html
@@ -269,7 +266,7 @@ describe('useLegacyYieldsUrlNormalizer hydration', () => {
 		expect(container.textContent).toBe('false')
 		expect(routerMock.replace).toHaveBeenCalledTimes(1)
 		expect(routerMock.replace).toHaveBeenCalledWith(
-			{ pathname: '/yields', hash: '', query: { apyWindow: 'avg_30d' } },
+			{ pathname: '/yields', hash: '', query: { apyWindow: 'avg_7d' } },
 			undefined,
 			{ shallow: true, scroll: false }
 		)

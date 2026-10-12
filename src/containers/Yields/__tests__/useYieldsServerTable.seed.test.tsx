@@ -153,7 +153,7 @@ describe('useYieldsServerTable ISR seed', () => {
 		expect(html).toContain('Loading APY preferences')
 		expect(html).not.toContain('seeded-1')
 		expect(html).not.toContain('role="radio"')
-		if (saved) window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_30d')
+		if (saved) window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_7d')
 		await act(async () => root.unmount())
 		container.innerHTML = html
 		const onRecoverableError = vi.fn()
@@ -166,7 +166,7 @@ describe('useYieldsServerTable ISR seed', () => {
 		expect(container.textContent.includes('Loading pools')).toBe(saved)
 		if (saved) {
 			fetchJson.mockResolvedValue({ ...initialData, rows: [{ id: 'saved-pool', tvl: 42 }] })
-			routerMock.query = { apyWindow: 'avg_30d' }
+			routerMock.query = { apyWindow: 'avg_7d' }
 			await act(async () => root.render(element()))
 		}
 		await waitForUi(async () => {
@@ -178,7 +178,7 @@ describe('useYieldsServerTable ISR seed', () => {
 	})
 
 	test('restores a canceled preference navigation before fetching the matching rows', async () => {
-		window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_30d')
+		window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_7d')
 		routerMock.replace.mockResolvedValueOnce(false)
 		fetchJson.mockResolvedValue({ ...initialData, rows: [{ id: '30d-pool', tvl: 42 }] })
 		await render(true)
@@ -186,14 +186,14 @@ describe('useYieldsServerTable ISR seed', () => {
 		expect(fetchJson).not.toHaveBeenCalled()
 		expect(latest.isLoading).toBe(true)
 
-		routerMock.query = { apyWindow: 'avg_30d' }
+		routerMock.query = { apyWindow: 'avg_7d' }
 		await render(true)
 		await waitForUi(async () => {
 			await act(async () => {})
 			expect(latest.rows[0]?.id).toBe('30d-pool')
 		})
 		expect(fetchJson).toHaveBeenCalledTimes(1)
-		expect(String(fetchJson.mock.calls[0]?.[0])).toContain('apyWindow=avg_30d')
+		expect(String(fetchJson.mock.calls[0]?.[0])).toContain('apyWindow=avg_7d')
 		expect(latest.isLoading).toBe(false)
 	})
 

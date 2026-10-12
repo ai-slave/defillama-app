@@ -31,14 +31,14 @@ test.each([
 	},
 	{
 		name: 'mixed saved choices',
-		filters: { chain: 'Ethereum', apyWindow: 'avg_7d', pageSize: 200 },
-		query: { chain: 'Ethereum', apyWindow: 'avg_7d', pageSize: 200, apyComponents: undefined, page: undefined },
-		prefs: ['avg_7d', null, '200']
+		filters: { chain: 'Ethereum', apyWindow: 'current', pageSize: 200 },
+		query: { chain: 'Ethereum', apyWindow: 'current', pageSize: 200, apyComponents: undefined, page: undefined },
+		prefs: ['current', null, '200']
 	},
 	{
 		name: 'explicit defaults',
-		filters: { apyWindow: 'current', apyComponents: 'reward', pageSize: 50 },
-		query: { apyWindow: 'current', apyComponents: 'reward', pageSize: 50, page: undefined },
+		filters: { apyWindow: 'avg_30d', apyComponents: 'reward', pageSize: 50 },
+		query: { apyWindow: 'avg_30d', apyComponents: 'reward', pageSize: 50, page: undefined },
 		prefs: [null, null, null]
 	}
 ])('loading $name clears other URL keys and stores only its own preferences', ({ filters, query, prefs }) => {

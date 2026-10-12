@@ -29,9 +29,9 @@ describe('prepareYieldPoolsCsv', () => {
 			'Reference',
 			'Protocol',
 			'Chain',
-			'APY Base',
-			'APY Reward',
-			'APY',
+			'APY Base (30d)',
+			'APY Reward (30d)',
+			'APY (30d)',
 			'30d Stability Rating',
 			'30d Stability Score',
 			'TVL',
@@ -56,13 +56,13 @@ describe('prepareYieldPoolsCsv', () => {
 
 	test('base-only view collapses to a single APY column', () => {
 		const csv = prepareYieldPoolsCsv([], { apyComponents: 'base' })
-		expect(csv.rows[0]).toContain('APY')
-		expect(csv.rows[0]).not.toContain('APY Base')
+		expect(csv.rows[0]).toContain('APY (30d)')
+		expect(csv.rows[0]).not.toContain('APY Base (30d)')
 	})
 
 	test('non-Latest window suffixes APY headers', () => {
-		const csv = prepareYieldPoolsCsv([], { apyWindow: 'avg_30d', apyComponents: 'base' })
-		expect(csv.rows[0]).toContain('APY (30d)')
+		const csv = prepareYieldPoolsCsv([], { apyWindow: 'avg_7d', apyComponents: 'base' })
+		expect(csv.rows[0]).toContain('APY (7d)')
 	})
 
 	test('optional columns export only when selected', () => {
