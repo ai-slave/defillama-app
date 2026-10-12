@@ -68,6 +68,8 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 		updateQueryFromSelected(router, sectorKeys.include, sectorKeys.exclude, sectorOptions, values)
 	const setListingStatuses = (values: Array<string>) =>
 		updateQueryFromSelected(router, listingKeys.include, listingKeys.exclude, [...listingKeys.all], values)
+	// The sort stays local like every column-header sort (docs/url-state.md): the Filter sheet's "Sort by" is the phone's
+	// way to the same header sort, not a ranking the page presents.
 	const [sort, setSort] = useState<UtrSort>({ key: 'rank', desc: false })
 	const [filtersOpen, setFiltersOpen] = useState(false)
 	const filterButtonRef = useRef<HTMLButtonElement>(null)

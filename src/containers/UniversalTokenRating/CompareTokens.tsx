@@ -1,5 +1,4 @@
 import { useRouter } from 'next/router'
-import { useState } from 'react'
 import { Change } from '~/ui/Change'
 import { Logo } from '~/ui/Logo'
 import { Panel } from '~/ui/Panel'
@@ -7,6 +6,7 @@ import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { EmptyState } from '~/ui/Status'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatNumber } from '~/utils/numberFormat'
+import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import { CategoryBreakdownTable, rowBreakdownColumns } from './CategoryBreakdown'
 import { LISTING_STATUS_LABELS } from './constants'
 import { GradeBadge, ScoreBar } from './grades'
@@ -158,10 +158,10 @@ export function CompareTokens({
 	scoringConfig?: UtrScoringConfig | null
 }) {
 	const router = useRouter()
-	const queryToken = typeof router.query.token === 'string' ? router.query.token : null
-	const [tokenAState, setTokenAState] = useState<string | null>(null)
-	const [tokenB, setTokenB] = useState<string | null>(null)
-	const tokenA = tokenAState ?? queryToken
+	// Both picks live in the URL so a reload or a shared link opens the same pair. Token A keeps the `token` key the
+	// leaderboard's Compare links write; either column can be picked first, so each has its own key.
+	const tokenA = readSingleQueryValue(router.query.token) ?? null
+	const tokenB = readSingleQueryValue(router.query.vs) ?? null
 
 	if (universe.rows.length === 0) return null
 
@@ -173,7 +173,7 @@ export function CompareTokens({
 				selected={tokenA}
 				exclude={tokenB}
 				grading={scoringConfig?.grading}
-				onSelect={setTokenAState}
+				onSelect={(asset) => void pushShallowQuery(router, { token: asset })}
 			/>
 			<div className="hidden w-px bg-(--border-subtle) lg:block" />
 			<CompareColumn
@@ -182,7 +182,7 @@ export function CompareTokens({
 				selected={tokenB}
 				exclude={tokenA}
 				grading={scoringConfig?.grading}
-				onSelect={setTokenB}
+				onSelect={(asset) => void pushShallowQuery(router, { vs: asset })}
 			/>
 		</div>
 	)

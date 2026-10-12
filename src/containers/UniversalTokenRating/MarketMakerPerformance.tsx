@@ -1,8 +1,10 @@
+import { useRouter } from 'next/router'
 import { useMemo, useState } from 'react'
 import MultiSeriesChart from '~/components/ECharts/MultiSeriesChart'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { chartColor, OTHERS_COLOR } from '~/constants/colors'
+import { THRESHOLD_TO_BUCKET } from '~/containers/MarketMakers/constants'
 import { Button } from '~/ui/Button'
 import { ChartPanelBody, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
@@ -14,6 +16,7 @@ import { StatusBadge } from '~/ui/StatusBadge'
 import { TabPanel, Tabs } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
+import { pushShallowQuery } from '~/utils/routerQuery'
 import { UTR_PERCENT_OPTIONS, UTR_TIME_DATASET } from './constants'
 import { LpPerformanceInsights } from './LiquidityProviders'
 import { GradeFooterColumns } from './TokenPage'
@@ -152,10 +155,32 @@ function PerformanceSummary({ providers }: { providers: Array<UtrMarketMakerProv
 	)
 }
 
-type BreakdownMode = 'depth' | 'volume'
-type DepthSide = 'bidAsk' | 'bid' | 'ask'
-type DepthBand = 'depth50' | 'depth100' | 'depth200'
-type VolumeSide = 'total' | 'maker' | 'taker'
+// The metric, side and depth band pick the data the panel shows, so they live in the URL, the first entry of each list
+// as the default; the unit and the chart or table switch only change how the daily breakdown draws, so they stay local.
+// `threshold` keeps the market makers Depth leaderboard's key and values.
+const BREAKDOWN_METRIC_OPTIONS = [
+	{ value: 'depth', label: 'Depth' },
+	{ value: 'volume', label: 'Volume' }
+] as const
+const DEPTH_SIDE_OPTIONS = [
+	{ value: 'bidAsk', label: 'Bid & Ask' },
+	{ value: 'bid', label: 'Bid' },
+	{ value: 'ask', label: 'Ask' }
+] as const
+const DEPTH_THRESHOLD_OPTIONS = [
+	{ value: '2', label: '±2.00%' },
+	{ value: '1', label: '±1.00%' },
+	{ value: '0.5', label: '±0.50%' }
+] as const
+const VOLUME_SIDE_OPTIONS = [
+	{ value: 'total', label: 'Total' },
+	{ value: 'maker', label: 'Maker' },
+	{ value: 'taker', label: 'Taker' }
+] as const
+type BreakdownMode = (typeof BREAKDOWN_METRIC_OPTIONS)[number]['value']
+type DepthSide = (typeof DEPTH_SIDE_OPTIONS)[number]['value']
+type DepthBand = (typeof THRESHOLD_TO_BUCKET)[keyof typeof THRESHOLD_TO_BUCKET]
+type VolumeSide = (typeof VOLUME_SIDE_OPTIONS)[number]['value']
 type ValueUnit = 'usd' | 'percent'
 
 function selectBreakdownMetric(
@@ -200,13 +225,15 @@ function breakdownSeries(metric: UtrMarketMakerBreakdownMetric, unit: ValueUnit)
 }
 
 function PerformanceBreakdown({ breakdown }: { breakdown: UtrMarketMakerPerformanceBreakdown }) {
-	const [mode, setMode] = useState<BreakdownMode>('depth')
-	const [depthSide, setDepthSide] = useState<DepthSide>('bidAsk')
-	const [depthBand, setDepthBand] = useState<DepthBand>('depth200')
-	const [volumeSide, setVolumeSide] = useState<VolumeSide>('total')
+	const router = useRouter()
+	const mode = BREAKDOWN_METRIC_OPTIONS.find((option) => option.value === router.query.metric)?.value ?? 'depth'
+	// One `side` key serves both metrics, and a metric switch drops it.
+	const depthSide = DEPTH_SIDE_OPTIONS.find((option) => option.value === router.query.side)?.value ?? 'bidAsk'
+	const volumeSide = VOLUME_SIDE_OPTIONS.find((option) => option.value === router.query.side)?.value ?? 'total'
+	const threshold = DEPTH_THRESHOLD_OPTIONS.find((option) => option.value === router.query.threshold)?.value ?? '2'
+	const metric = selectBreakdownMetric(breakdown, mode, depthSide, THRESHOLD_TO_BUCKET[threshold], volumeSide)
 	const [unit, setUnit] = useState<ValueUnit>('usd')
 	const [display, setDisplay] = useState<'chart' | 'table'>('chart')
-	const metric = selectBreakdownMetric(breakdown, mode, depthSide, depthBand, volumeSide)
 	const series = useMemo(() => (metric ? breakdownSeries(metric, unit) : []), [metric, unit])
 	const providerShare = metric?.avgBreakdown.marketMakersPercentage ?? null
 
@@ -219,11 +246,10 @@ function PerformanceBreakdown({ breakdown }: { breakdown: UtrMarketMakerPerforma
 					variant="default"
 					size="md"
 					value={mode}
-					onValueChange={(value) => setMode(value as BreakdownMode)}
-					options={[
-						{ value: 'depth', label: 'Depth' },
-						{ value: 'volume', label: 'Volume' }
-					]}
+					onValueChange={(value) =>
+						void pushShallowQuery(router, { metric: value === 'depth' ? undefined : value, side: undefined })
+					}
+					options={BREAKDOWN_METRIC_OPTIONS}
 				/>
 				{mode === 'depth' ? (
 					<>
@@ -232,24 +258,16 @@ function PerformanceBreakdown({ breakdown }: { breakdown: UtrMarketMakerPerforma
 							variant="default"
 							size="md"
 							value={depthSide}
-							onValueChange={(value) => setDepthSide(value as DepthSide)}
-							options={[
-								{ value: 'bidAsk', label: 'Bid & Ask' },
-								{ value: 'bid', label: 'Bid' },
-								{ value: 'ask', label: 'Ask' }
-							]}
+							onValueChange={(value) => void pushShallowQuery(router, { side: value === 'bidAsk' ? undefined : value })}
+							options={DEPTH_SIDE_OPTIONS}
 						/>
 						<SegmentedControl
 							label="Depth band"
 							variant="default"
 							size="md"
-							value={depthBand}
-							onValueChange={(value) => setDepthBand(value as DepthBand)}
-							options={[
-								{ value: 'depth50', label: '±0.50%' },
-								{ value: 'depth100', label: '±1.00%' },
-								{ value: 'depth200', label: '±2.00%' }
-							]}
+							value={threshold}
+							onValueChange={(value) => void pushShallowQuery(router, { threshold: value === '2' ? undefined : value })}
+							options={DEPTH_THRESHOLD_OPTIONS}
 						/>
 					</>
 				) : (
@@ -258,12 +276,8 @@ function PerformanceBreakdown({ breakdown }: { breakdown: UtrMarketMakerPerforma
 						variant="default"
 						size="md"
 						value={volumeSide}
-						onValueChange={(value) => setVolumeSide(value as VolumeSide)}
-						options={[
-							{ value: 'total', label: 'Total' },
-							{ value: 'maker', label: 'Maker' },
-							{ value: 'taker', label: 'Taker' }
-						]}
+						onValueChange={(value) => void pushShallowQuery(router, { side: value === 'total' ? undefined : value })}
+						options={VOLUME_SIDE_OPTIONS}
 					/>
 				)}
 			</PanelHeader>
