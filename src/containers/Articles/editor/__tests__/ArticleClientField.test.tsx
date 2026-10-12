@@ -61,7 +61,7 @@ async function render(initial: ArticleClient | null) {
 	)
 }
 
-const trigger = () => container.querySelector<HTMLButtonElement>('[aria-label="Article client"]')!
+const trigger = () => container.querySelector<HTMLButtonElement>('[aria-label="Trusted by"]')!
 const radio = (name: string) =>
 	[...container.querySelectorAll('label')].find((label) => label.textContent === name)!.querySelector('input')!
 const clientPuts = () =>
@@ -79,9 +79,9 @@ async function pickClient(name: string) {
 	await act(async () => option.click())
 }
 
-test('picking a client, its relation, and No client each save right away and show the saved client', async () => {
+test('picking a client, its relation, and Not set each save right away and show the saved client', async () => {
 	await render(null)
-	expect(trigger().textContent).toBe('No client')
+	expect(trigger().textContent).toBe('Not set')
 	expect(radio('Sponsored').disabled).toBe(true)
 
 	await pickClient('Starknet')
@@ -90,8 +90,8 @@ test('picking a client, its relation, and No client each save right away and sho
 	await act(async () => radio('Sponsored').click())
 	await waitForUi(() => expect(radio('Sponsored').checked).toBe(true))
 
-	await pickClient('No client')
-	await waitForUi(() => expect(trigger().textContent).toBe('No client'))
+	await pickClient('Not set')
+	await waitForUi(() => expect(trigger().textContent).toBe('Not set'))
 
 	expect(clientPuts()).toEqual([
 		{ sponsorId: 's1', relation: null },

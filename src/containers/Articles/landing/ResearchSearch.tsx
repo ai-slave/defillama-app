@@ -357,7 +357,7 @@ function ResultsTitle({ query, tag, clientName }: { query: string; tag: string; 
 	if (clientName) {
 		return (
 			<h1 className={cls}>
-				<span className="text-tertiary">Client </span>
+				<span className="text-tertiary">Trusted by </span>
 				<span>{clientName}</span>
 			</h1>
 		)
@@ -377,14 +377,12 @@ function ClientFilter({
 	const router = useRouter()
 	const { query: q, tag, section, client } = searchQuery
 	if (clients.length === 0) return null
-	const selectedName = client
-		? (clients.find((option) => option.id === client)?.displayName ?? 'Unknown client')
-		: 'All clients'
+	const selectedName = client ? (clients.find((option) => option.id === client)?.displayName ?? 'Unknown') : 'All'
 
 	return (
 		<SelectWithCombobox
 			allValues={[
-				{ key: ALL_CLIENTS, name: 'All clients' },
+				{ key: ALL_CLIENTS, name: 'All' },
 				...clients.map((option) => ({ key: option.id, name: option.displayName }))
 			]}
 			selectedValues={[client || ALL_CLIENTS]}
@@ -400,7 +398,7 @@ function ClientFilter({
 				})
 				router.push(href, undefined, { shallow: false, scroll: false })
 			}}
-			label="Client"
+			label="Trusted by"
 			labelType="regular"
 			singleSelect
 			variant="filter"

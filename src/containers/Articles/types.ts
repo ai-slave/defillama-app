@@ -468,8 +468,9 @@ export type SponsoredResearchReportSummary = {
 export type ResearchSponsorSummary = {
 	id: string
 	displayName: string
-	entityType: ResearchSponsorEntityType
-	entitySlug: string
+	entityType: ResearchSponsorEntityType | null
+	entitySlug: string | null
+	websiteUrl: string | null
 	createdAt: string
 	updatedAt: string
 }
@@ -496,8 +497,9 @@ export type ResearchSponsorAdmin = ResearchSponsorSummary & {
 
 export type ResearchSponsorPayload = {
 	displayName: string
-	entityType: ResearchSponsorEntityType
-	entitySlug: string
+	entityType?: ResearchSponsorEntityType | null
+	entitySlug?: string | null
+	websiteUrl?: string | null
 }
 
 export type ResearchSponsorLookupResult = {

@@ -51,6 +51,9 @@ beforeEach(async () => {
 			totalItems: 1
 		}
 	})
+	http.serve({
+		[`${FEATURES_SERVER}/research/clients`]: { clients: [{ id: 'c1', displayName: 'Forgd' }] }
+	})
 	client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 	container = document.createElement('div')
 	document.body.append(container)
@@ -142,4 +145,37 @@ test('an empty feed leaves the count blank instead of saying 0 newest', async ()
 		expect(document.querySelector('[role="dialog"]')?.textContent).toContain('No published content yet')
 	)
 	expect(document.querySelector('[role="dialog"] [aria-live="polite"]')?.textContent).toBe('')
+})
+
+test('a Trusted by pick narrows Research to that company, leaves newsletters out, and All restores them', async () => {
+	await click(container.querySelector<HTMLButtonElement>('button')!)
+	await expectResults(['Liquidity report', 'Weekly research notes'])
+
+	const trustedBy = () =>
+		[...document.querySelectorAll<HTMLElement>('[role="dialog"] button')].find((b) =>
+			b.textContent?.startsWith('Trusted by')
+		)!
+	const pick = async (name: string) => {
+		await click(trustedBy())
+		const option = await waitForUi(() => {
+			const match = [...document.querySelectorAll<HTMLElement>('[role="option"]')].find((o) => o.textContent === name)
+			expect(match).toBeDefined()
+			return match!
+		})
+		await click(option)
+	}
+
+	const newsletterRequests = () =>
+		http.requests.filter(({ url }) => url.pathname === '/api/public/research/newsletters').length
+	await pick('Forgd')
+	const newslettersBefore = newsletterRequests()
+	await expectResults(['Liquidity report'])
+	expect(http.requests.findLast(({ url }) => url.href.startsWith(articlesUrl))?.url.searchParams.get('client')).toBe(
+		'c1'
+	)
+	expect(newsletterRequests()).toBe(newslettersBefore)
+	expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Trusted by Forgd')
+
+	await pick('All')
+	await expectResults(['Liquidity report', 'Weekly research notes'])
 })

@@ -2,7 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRef, useState } from 'react'
-import { listArticles } from '~/containers/Articles/api'
+import { listArticles, listResearchClients } from '~/containers/Articles/api'
 import { ResearchPill } from '~/containers/Articles/landing/ResearchPill'
 import { articleHref, formatDate, readingMinutes } from '~/containers/Articles/landing/utils'
 import { listResearchNewsletterItems, type ResearchNewsletterItem } from '~/containers/Articles/newsletterFeed'
@@ -16,6 +16,7 @@ import { ListRow } from '~/ui/ListRow'
 import { MetaLine } from '~/ui/MetaLine'
 import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { EmptyState, InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Tag } from '~/ui/Tag'
 import { Tooltip } from '~/ui/Tooltip'
@@ -24,6 +25,7 @@ import { queryReadFailed, type QueryRetry } from '~/utils/query'
 
 const RESEARCH_SEARCH_LIMIT = 10
 const LATEST_RESEARCH_LIMIT = 6
+const ALL_CLIENTS = 'all'
 
 type SearchContentType = ArticleSection | 'newsletter'
 type SearchDialogVariant = 'desktop' | 'article' | 'mobile'
@@ -128,14 +130,17 @@ function publishedAtTimestamp(item: ResearchSearchItem) {
 async function searchResearchContent(
 	query: string,
 	section: SearchContentType | null,
+	client: string | null,
 	limit: number
 ): Promise<ResearchSearchResponse> {
 	const includeResearch = section !== 'newsletter'
-	const includeNewsletters = section === null || section === 'newsletter'
+	const includeNewsletters = !client && (section === null || section === 'newsletter')
 	const articleSection = section && section !== 'newsletter' ? section : undefined
 
 	const [researchResult, newsletterResult] = await Promise.allSettled([
-		includeResearch ? listArticles({ query, limit, section: articleSection, sort: 'newest' }) : Promise.resolve(null),
+		includeResearch
+			? listArticles({ query, limit, section: articleSection, client: client ?? undefined, sort: 'newest' })
+			: Promise.resolve(null),
 		includeNewsletters ? listResearchNewsletterItems({ query, limit }) : Promise.resolve(null)
 	])
 
@@ -277,8 +282,24 @@ function TopicExplorer({ onSelect }: { onSelect: (query: string) => void }) {
 	)
 }
 
-function ResearchSearchEmpty({ query, section }: { query: string; section: SearchContentType | null }) {
+function ResearchSearchEmpty({
+	query,
+	section,
+	clientName
+}: {
+	query: string
+	section: SearchContentType | null
+	clientName: string | null
+}) {
 	const sectionLabel = section ? SECTION_FILTERS.find((filter) => filter.value === section)?.label : null
+
+	if (clientName && !query) {
+		return (
+			<EmptyState size="md" icon="search" title={`Nothing trusted by ${clientName} yet`} className="min-h-56">
+				Choose another company or search across all content.
+			</EmptyState>
+		)
+	}
 
 	return (
 		<EmptyState
@@ -357,6 +378,7 @@ function SearchResultsHeader({
 	failed,
 	query,
 	section,
+	clientName,
 	activeSection
 }: {
 	data: ResearchSearchResponse | undefined
@@ -364,6 +386,7 @@ function SearchResultsHeader({
 	failed: boolean
 	query: string
 	section: SearchContentType | null
+	clientName: string | null
 	activeSection: SectionFilter | undefined
 }) {
 	let resultCount = failed ? '' : 'Searching…'
@@ -380,7 +403,13 @@ function SearchResultsHeader({
 	return (
 		<div className="flex shrink-0 items-center justify-between gap-3 border-b border-subtle px-4 py-2">
 			<p className="label-sm text-secondary">
-				{query ? 'Search results' : section ? activeSection?.label : 'Featured & latest'}
+				{query
+					? 'Search results'
+					: clientName
+						? `Trusted by ${clientName}`
+						: section
+							? activeSection?.label
+							: 'Featured & latest'}
 			</p>
 			<p className="body-sm text-tertiary" aria-live="polite">
 				{resultCount}
@@ -395,6 +424,7 @@ function SearchResults({
 	failedRead,
 	query,
 	section,
+	clientName,
 	activeSection,
 	onSelectTopic,
 	onSelectResult
@@ -405,6 +435,7 @@ function SearchResults({
 	failedRead: QueryRetry | null
 	query: string
 	section: SearchContentType | null
+	clientName: string | null
 	activeSection: SectionFilter | undefined
 	onSelectTopic: (query: string) => void
 	onSelectResult: () => void
@@ -423,7 +454,7 @@ function SearchResults({
 		return <SurfaceBodyLoadingStatus label="Searching Research and newsletters" className="min-h-64" />
 	}
 
-	if (!data?.items.length) return <ResearchSearchEmpty query={query} section={section} />
+	if (!data?.items.length) return <ResearchSearchEmpty query={query} section={section} clientName={clientName} />
 
 	return (
 		<div className="space-y-2">
@@ -465,14 +496,22 @@ export function ResearchSearchDialog({ variant }: { variant: SearchDialogVariant
 function ResearchSearch({ onSelectResult }: { onSelectResult: () => void }) {
 	const [query, setQuery] = useState('')
 	const [section, setSection] = useState<SearchContentType | null>(null)
+	const [selectedClient, setSelectedClient] = useState<string | null>(null)
 	const inputRef = useRef<HTMLInputElement>(null)
 	const debouncedQuery = useDebouncedValue(query.trim(), 250)
 	const resultLimit = debouncedQuery ? RESEARCH_SEARCH_LIMIT : LATEST_RESEARCH_LIMIT
 	const activeSection = SECTION_FILTERS.find((filter) => filter.value === section)
+	const { data: clients = [] } = useQuery({
+		queryKey: ['research', 'clients'],
+		queryFn: () => listResearchClients(),
+		retry: false
+	})
+	const client = section === 'newsletter' ? null : selectedClient
+	const clientName = clients.find((option) => option.id === client)?.displayName ?? null
 
 	const searchQuery = useQuery({
-		queryKey: ['research', 'search-dialog', debouncedQuery, section, resultLimit],
-		queryFn: () => searchResearchContent(debouncedQuery, section, resultLimit),
+		queryKey: ['research', 'search-dialog', debouncedQuery, section, client, resultLimit],
+		queryFn: () => searchResearchContent(debouncedQuery, section, client, resultLimit),
 		retry: false,
 		staleTime: 60_000
 	})
@@ -500,6 +539,25 @@ function ResearchSearch({ onSelectResult }: { onSelectResult: () => void }) {
 						value={section ?? 'all'}
 						onValueChange={(value) => setSection(value === 'all' ? null : (value as SearchContentType))}
 					/>
+					{clients.length > 0 && section !== 'newsletter' ? (
+						<SelectWithCombobox
+							allValues={[
+								{ key: ALL_CLIENTS, name: 'All' },
+								...clients.map((option) => ({ key: option.id, name: option.displayName }))
+							]}
+							selectedValues={[client ?? ALL_CLIENTS]}
+							setSelectedValues={(values) => {
+								const next = values[0]
+								if (next) setSelectedClient(next === ALL_CLIENTS ? null : next)
+							}}
+							label="Trusted by"
+							labelType="regular"
+							singleSelect
+							variant="filter"
+							size="md"
+							className="w-fit"
+						/>
+					) : null}
 				</div>
 			</DialogToolbar>
 			<SearchResultsHeader
@@ -507,6 +565,7 @@ function ResearchSearch({ onSelectResult }: { onSelectResult: () => void }) {
 				failed={queryReadFailed(searchQuery)}
 				query={debouncedQuery}
 				section={section}
+				clientName={clientName}
 				activeSection={activeSection}
 			/>
 			<DialogBody kind="list">
@@ -516,6 +575,7 @@ function ResearchSearch({ onSelectResult }: { onSelectResult: () => void }) {
 					failedRead={queryReadFailed(searchQuery) ? searchQuery : null}
 					query={debouncedQuery}
 					section={section}
+					clientName={clientName}
 					activeSection={activeSection}
 					onSelectTopic={(nextQuery) => {
 						setQuery(nextQuery)

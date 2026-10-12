@@ -317,7 +317,7 @@ function MetaSheet({
 							</Field>
 						</MetaSection>
 
-						<MetaSection title="Client">
+						<MetaSection title="Trusted by">
 							<ArticleClientField articleId={article.id} client={article.client ?? null} onSaved={setClient} />
 						</MetaSection>
 

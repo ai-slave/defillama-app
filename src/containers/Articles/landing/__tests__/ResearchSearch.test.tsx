@@ -218,7 +218,7 @@ test('a client filter narrows the results, names the client, survives paging, an
 
 	const articleRequest = http.requests.find((request) => request.url.pathname === '/articles')!
 	expect(articleRequest.url.searchParams.get('client')).toBe('c1')
-	expect(container.querySelector('h1')?.textContent).toBe('Client Starknet')
+	expect(container.querySelector('h1')?.textContent).toBe('Trusted by Starknet')
 	const clientLinks = [...container.querySelectorAll('li a')].filter(
 		(a) => a.getAttribute('href') === '/research?client=c1'
 	)
@@ -233,7 +233,7 @@ test('a client filter narrows the results, names the client, survives paging, an
 	const trigger = [...container.querySelectorAll('button')].find((b) => b.textContent?.includes('Starknet'))!
 	await act(async () => trigger.click())
 	const allClients = await waitForUi(() => {
-		const option = [...document.querySelectorAll('[role="option"]')].find((o) => o.textContent === 'All clients')
+		const option = [...document.querySelectorAll('[role="option"]')].find((o) => o.textContent === 'All')
 		expect(option).toBeDefined()
 		return option as HTMLElement
 	})

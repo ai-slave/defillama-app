@@ -74,10 +74,10 @@ export default function ResearchAdminHubPage() {
 								</span>
 							</Card>
 							<Card as={Link} padding="md" href="/research/admin/sponsors" className="group hover-wash-card grid gap-2">
-								<span className="label-xs tracking-[0.18em] text-tertiary uppercase">Clients</span>
-								<span className="heading-xs text-primary group-hover:text-link">Clients</span>
+								<span className="label-xs tracking-[0.18em] text-tertiary uppercase">Research filter</span>
+								<span className="heading-xs text-primary group-hover:text-link">Trusted by filter</span>
 								<span className="body-md text-secondary">
-									Keep the client list and link each Research article to its client.
+									Keep the list readers filter Research by and link each article to its company.
 								</span>
 							</Card>
 						</div>

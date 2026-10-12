@@ -53,9 +53,9 @@ export function ArticleClientField({
 		{ value: 'collaboration', label: ARTICLE_CLIENT_RELATION_LABELS.collaboration, disabled: disabled || !client }
 	]
 	const error = save.error
-		? httpErrorMessage(save.error, "Couldn't update the client.")
+		? httpErrorMessage(save.error, "Couldn't update Trusted by.")
 		: queryReadFailed(sponsors)
-			? "Couldn't load clients."
+			? "Couldn't load the Trusted by list."
 			: null
 
 	return (
@@ -71,16 +71,16 @@ export function ArticleClientField({
 				}}
 			>
 				<ComboboxSelectTrigger
-					aria-label="Article client"
+					aria-label="Trusted by"
 					disabled={disabled}
 					className={`${selectTriggerStyles('input', 'md')} w-full`}
 				>
-					<span className="truncate">{client?.displayName ?? 'No client'}</span>
+					<span className="truncate">{client?.displayName ?? 'Not set'}</span>
 					<Ariakit.ComboboxSelectArrow className="ml-auto shrink-0 text-tertiary" />
 				</ComboboxSelectTrigger>
-				<ComboboxSurface variant="panel" heading="Client" sameWidth>
+				<ComboboxSurface variant="panel" heading="Trusted by" sameWidth>
 					<PopoverList divided>
-						{[{ id: NO_CLIENT, displayName: 'No client' }, ...(sponsors.data ?? [])].map((option) => (
+						{[{ id: NO_CLIENT, displayName: 'Not set' }, ...(sponsors.data ?? [])].map((option) => (
 							<PopoverRow
 								key={option.id}
 								render={<Ariakit.ComboboxItem value={option.id} />}
@@ -91,11 +91,11 @@ export function ArticleClientField({
 							</PopoverRow>
 						))}
 					</PopoverList>
-					{sponsors.isPending && listOpen ? <ListLoading label="Loading clients" /> : null}
+					{sponsors.isPending && listOpen ? <ListLoading label="Loading the Trusted by list" /> : null}
 				</ComboboxSurface>
 			</Ariakit.ComboboxProvider>
 			<SegmentedControl
-				label="Client relation"
+				label="Trusted by relation"
 				variant="field"
 				size="md"
 				options={relationOptions}
@@ -112,8 +112,8 @@ export function ArticleClientField({
 			) : (
 				<MetaFieldHint>
 					{articleId
-						? 'Optional. Saves immediately, no republish needed. Manage the list in Research admin → Clients.'
-						: 'Save the draft first to set a client.'}
+						? 'Optional. Saves immediately, no republish needed. Manage the list in Research admin → Trusted by filter.'
+						: 'Save the draft first to set Trusted by.'}
 				</MetaFieldHint>
 			)}
 		</div>

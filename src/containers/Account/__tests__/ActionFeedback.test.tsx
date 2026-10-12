@@ -417,10 +417,10 @@ test('deletion stays pending through the list refresh, then hands focus to Add l
 	await waitForUi(() => expect(dialog()).toBeUndefined())
 	await waitForUi(() => expect(document.activeElement?.textContent?.trim()).toBe('Add logo'))
 })
-test('Add client with no page picked marks the page search invalid, describes it by its error, and focuses it', async () => {
+test('Add with no page picked marks the page search invalid, describes it by its error, and focuses it', async () => {
 	await mount(<ResearchSponsorsAdminView />)
-	await waitForUi(() => expect(button('Add client')).toBeDefined())
-	await click('Add client')
+	await waitForUi(() => expect(button('Add')).toBeDefined())
+	await click('Add')
 	const label = [...document.querySelectorAll('label')].find((el) => el.textContent === 'DefiLlama page')!
 	const search = document.getElementById(label.htmlFor)!
 	expect(search.getAttribute('aria-invalid')).toBe('true')
