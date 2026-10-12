@@ -153,7 +153,7 @@ function AirdropHint({ raiseValuationUsd }: { raiseValuationUsd?: number | null 
 					</span>
 				)
 			}
-			className="shrink-0 body-sm"
+			render={<span className="shrink-0 body-sm" />}
 		>
 			{raiseValuationUsd != null ? '\u{1F4B8}' : '\u{1FA82}'}
 		</Tooltip>

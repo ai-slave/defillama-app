@@ -1,6 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { cloneElement, createElement, isValidElement } from 'react'
 import { tw } from '~/ui/tw'
+import { definitionMarkStyles } from './internal/definitionMark'
 
 interface ITooltip extends Ariakit.TooltipOptions {
 	content: string | null | React.ReactNode
@@ -41,6 +42,12 @@ interface ITooltip extends Ariakit.TooltipOptions {
 
    A definition on text (a label, a value, a heading) is a `Definition` (below), which owns its mark and tab stop. A
    control anchor keeps its own cursor and focus (policy: check-focus-handoff).
+
+   Tooltip adds a tooltip, never a look. Its `className` reaches whichever element anchors it, the default span or the
+   `render` element, and only places it and aligns what the trigger box holds (`gap-*`, `items-*`, `justify-*`;
+   policy: check-part-classes). A button's look comes from the Button passed as
+   `render` (an icon-only one is `variant="ghost" square`), a status dot is `StatusDot`, and colored text is a
+   `Definition`.
 
    The default span is a trigger box (`flex shrink-0 items-center`): it centers an icon beside its text and a long
    sibling never squeezes it, so its `className` only places it (ms-auto, w-fit); classes that shrink, truncate or
@@ -176,7 +183,8 @@ export function Tooltip({
    label whose definition is optional stays one call.
 
    Only text: a control explains itself with a `Tooltip` anchored on the control, a "?" beside a label is a
-   `QuestionHelper`, structured content is a `Hovercard`. A part of the anchor that the underline should skip (a gap
+   `QuestionHelper`, and text whose explanation is structured (a breakdown, a list) is a `Hovercard` with
+   `definition`, which draws the same mark. A part of the anchor that the underline should skip (a gap
    or a change beside the value) sits beside the Definition, not inside it. */
 export function Definition({
 	content,
@@ -203,7 +211,7 @@ export function Definition({
 		<Tooltip
 			content={content}
 			tabIndex={tabIndex}
-			className={`cursor-help underline decoration-dotted underline-offset-2 ${className ?? ''}`}
+			className={`${definitionMarkStyles} ${className ?? ''}`}
 			{...(as ? { render: createElement(as) } : {})}
 		>
 			{children}

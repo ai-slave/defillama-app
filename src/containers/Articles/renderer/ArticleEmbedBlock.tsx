@@ -122,7 +122,7 @@ function LinkCard({ config, action }: { config: ArticleEmbedConfig; action: stri
 			href={config.sourceUrl}
 			target="_blank"
 			rel="noreferrer noopener"
-			className="group hover-wash-card flex flex-col gap-2 no-underline"
+			className="group hover-wash-card flex flex-col gap-2"
 		>
 			<div className="flex items-baseline justify-between gap-4">
 				<div className="min-w-0 flex-1 title-lg text-primary group-hover:text-link">

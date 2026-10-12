@@ -30,7 +30,7 @@ export function IrTabMenu({
 	return (
 		<Ariakit.MenuProvider>
 			<Ariakit.MenuButton
-				render={<TabLink as="button" type="button" className="group flex items-center gap-1.5" />}
+				render={<TabLink as="button" type="button" className="group" />}
 				aria-current={active ? 'page' : undefined}
 				{...umamiProps}
 			>

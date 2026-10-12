@@ -1,4 +1,3 @@
-import * as Ariakit from '@ariakit/react'
 import type * as echarts from 'echarts/core'
 import {
 	type Dispatch,
@@ -53,7 +52,7 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
-import { Tab, TabPanel, Tabs } from '~/ui/Tabs'
+import { TabPanel, Tabs, UnderlineTabList } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
@@ -799,7 +798,7 @@ function ChartLoadingPlaceholder({ chartTypes }: { chartTypes: Array<string> | u
 	const label = chartTypes?.length
 		? `Creating ${chartTypes.join(', ')} visualization${chartTypes.length > 1 ? 's' : ''}`
 		: 'Creating visualization'
-	return <SurfaceBodyLoadingStatus label={label} className="px-4 text-center" />
+	return <SurfaceBodyLoadingStatus label={label} />
 }
 
 // Readers see one plain sentence; a builder's exception text ("Cannot read properties of undefined") is not for them.
@@ -907,17 +906,11 @@ function ChartRendererImpl({
 		<div className="flex flex-col gap-2 rounded-lg border border-subtle bg-surface pt-2">
 			{hasMultipleCharts ? (
 				<Tabs value={activeChartId!} onValueChange={setSelectedChartId} values={charts.map((chart) => chart.id)}>
-					<Ariakit.TabList aria-label="Charts" className="-mt-2 flex border-b border-subtle">
-						{charts.map((chart) => (
-							<Tab
-								key={chart.id}
-								value={chart.id}
-								className="border-b-2 border-transparent px-2 py-1.5 label-sm text-secondary not-data-[active=true]:hover:text-primary data-[active=true]:border-brand data-[active=true]:text-link"
-							>
-								{chart.title}
-							</Tab>
-						))}
-					</Ariakit.TabList>
+					<UnderlineTabList
+						label="Charts"
+						tabs={charts.map((chart) => ({ id: chart.id, label: chart.title }))}
+						className="-mt-2"
+					/>
 					{charts.map((chart) => (
 						<TabPanel key={chart.id} value={chart.id}>
 							{renderChart(chart)}

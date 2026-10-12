@@ -111,8 +111,8 @@ export function ProjectsSidebarSection({
 			</button>
 
 			{!isOpen ? null : isLocked ? (
-				<Button as={BasicLink} href="/subscription" size="md" className="w-full justify-between">
-					<span className="flex items-center gap-1">
+				<Button as={BasicLink} href="/subscription" size="md" className="w-full">
+					<span className="flex flex-1 items-center gap-1">
 						<Icon name="folder-plus" className="size-3.5" />
 						Upgrade for projects
 					</span>

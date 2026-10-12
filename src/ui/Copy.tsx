@@ -32,7 +32,7 @@ export function useCopy() {
 	return { copied, copy }
 }
 
-export function CopyHelper({ toCopy, size = 'size-3.5', ...props }: CopyHelperProps) {
+export function CopyHelper({ toCopy, size = 'size-3.5', className, ...props }: CopyHelperProps) {
 	const { copied, copy } = useCopy()
 	// The icon swap is silent, so a polite status says the copy landed. It sits beside the button because the
 	// button's aria-label replaces anything inside it.
@@ -40,7 +40,7 @@ export function CopyHelper({ toCopy, size = 'size-3.5', ...props }: CopyHelperPr
 		<>
 			<button
 				type="button"
-				className="flex shrink-0 items-center p-0.5 text-secondary hover:text-primary focus-visible:text-primary"
+				className={`flex shrink-0 items-center p-0.5 text-secondary hover:text-primary focus-visible:text-primary ${className ?? ''}`.trim()}
 				onClick={() => {
 					void copy(toCopy)
 				}}

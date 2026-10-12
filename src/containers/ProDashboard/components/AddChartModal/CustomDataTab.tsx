@@ -222,7 +222,7 @@ function CustomDataForm({
 						Upload CSV file
 					</FileButton>
 
-					<Field label="Or paste CSV" error={csvError} className="min-h-0 flex-1">
+					<Field label="Or paste CSV" error={csvError} className="flex-1">
 						{(control) => (
 							<Textarea
 								{...control}

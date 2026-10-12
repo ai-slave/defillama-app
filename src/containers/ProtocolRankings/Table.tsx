@@ -45,7 +45,7 @@ import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { SurfaceLoadingOverlay } from '~/ui/Status'
 import { TextLink } from '~/ui/TextLink'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition, Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { formatRatio, formatUsd } from '~/utils/numberFormat'
 import { parseNumberQueryParam, pushShallowQuery } from '~/utils/routerQuery'
@@ -366,9 +366,9 @@ function ChainProtocolsTableInner({
 
 						if (result.status === 'error') {
 							return (
-								<Tooltip content={result.error} className="cursor-help text-error">
+								<Definition content={result.error} className="text-error">
 									Err
-								</Tooltip>
+								</Definition>
 							)
 						}
 

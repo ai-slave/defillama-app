@@ -141,7 +141,7 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Arr
 			<>
 				<WatchListTabs />
 				<Card padding="none" className="flex-1">
-					<SurfaceBodyLoadingStatus className="p-2" />
+					<SurfaceBodyLoadingStatus />
 				</Card>
 			</>
 		)
@@ -181,11 +181,11 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Arr
 						/>
 					</TableToolbar>
 					{hasSavedTokens && queryReadFailed(tokensQuery) ? (
-						<SurfaceBodyStatus variant="error" retry={tokensQuery} className="p-2">
+						<SurfaceBodyStatus variant="error" retry={tokensQuery}>
 							Couldn&apos;t load token data. Your saved tokens are unchanged.
 						</SurfaceBodyStatus>
 					) : hasSavedTokens && isLoading ? (
-						<SurfaceBodyLoadingStatus className="p-2" />
+						<SurfaceBodyLoadingStatus />
 					) : hasSavedTokens && rows.length > 0 ? (
 						<PaginatedTable
 							table={table}

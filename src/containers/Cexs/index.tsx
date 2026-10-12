@@ -16,7 +16,7 @@ import { QuestionHelper } from '~/ui/QuestionHelper'
 import { Skeleton } from '~/ui/Skeleton'
 import { TextLink } from '~/ui/TextLink'
 import { TableToolbar } from '~/ui/Toolbar'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition, Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { formatDate } from '~/utils/dateFormat'
 import { letterLogoDataUri } from '~/utils/icons'
@@ -65,17 +65,17 @@ function CustomRangeCell({ state, value }: { state: CustomRangeState; value: num
 		case 'failed': {
 			const message = "Couldn't load inflows for this date range."
 			return (
-				<Tooltip content={message} className="ml-auto text-error">
-					<Icon name="alert-triangle" className="size-3.5" aria-hidden="true" />
+				<Tooltip content={message} className="ml-auto">
+					<Icon name="alert-triangle" className="size-3.5 text-error" aria-hidden="true" />
 					<span className="sr-only">{message}</span>
 				</Tooltip>
 			)
 		}
 		case 'missing':
 			return (
-				<Tooltip className="text-tertiary" content="No inflow data available for this date range">
+				<Definition className="text-tertiary" content="No inflow data available for this date range">
 					N/A
-				</Tooltip>
+				</Definition>
 			)
 		case 'measured':
 			return <Change value={value} unit="usd" />

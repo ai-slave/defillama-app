@@ -176,9 +176,6 @@ const CHAT_PANEL_LAYOUT = {
 
 const SHRINK_TO_RIGHT_ANIMATION = 'motion-safe:lg:animate-[shrinkToRight_0.1s_ease-out]'
 
-const HEADER_ICON_BUTTON =
-	'flex size-6 items-center justify-center rounded-sm bg-brand-tint text-link not-disabled:not-aria-disabled:hover:bg-brand-tint-strong focus-visible:bg-brand-tint-strong'
-
 const DashboardPanel = lazy(() =>
 	import('~/containers/LlamaAI/components/DashboardPanel').then((m) => ({ default: m.DashboardPanel }))
 )
@@ -2974,9 +2971,11 @@ export function AgenticChat({
 														content="Hide chat"
 														placement="bottom-end"
 														render={
-															<Ariakit.Button
+															<Button
+																variant="ghost"
+																size="sm"
+																square
 																id="terminal-chat-hide"
-																type="button"
 																// The header leaves with this button; the rail's Show chat takes its place.
 																onClick={() =>
 																	keepFocus(
@@ -2988,9 +2987,8 @@ export function AgenticChat({
 																data-umami-event-action="collapse"
 															/>
 														}
-														className={HEADER_ICON_BUTTON}
 													>
-														<Icon name="chevrons-right" className="size-3.5" />
+														<Icon name="chevrons-right" className="size-4" />
 														<span className="sr-only">Hide chat</span>
 													</Tooltip>
 												) : effectiveMessages.length > 0 ? (
@@ -2998,8 +2996,10 @@ export function AgenticChat({
 														content={isSessionSaved ? SHARE_TOOLTIP : SHARE_PENDING_TOOLTIP}
 														placement="bottom-end"
 														render={
-															<Ariakit.Button
-																type="button"
+															<Button
+																variant="ghost"
+																size="sm"
+																square
 																onClick={() => openShareModal()}
 																disabled={!isSessionSaved}
 																accessibleWhenDisabled
@@ -3007,9 +3007,8 @@ export function AgenticChat({
 																data-umami-event-source="header_controls"
 															/>
 														}
-														className={`${HEADER_ICON_BUTTON} aria-disabled:cursor-not-allowed aria-disabled:text-disabled`}
 													>
-														<Icon name="share" className="size-3.5" />
+														<Icon name="share" className="size-4" />
 														<span className="sr-only">{SHARE_TOOLTIP}</span>
 													</Tooltip>
 												) : null}
@@ -3167,15 +3166,16 @@ export const ChatControls = memo(function ChatControls({
 			<Tooltip
 				content={tooltipContent}
 				render={
-					<button
-						type="button"
+					<Button
+						variant="ghost"
+						size="sm"
+						square
 						onClick={toggleSidebar}
 						data-umami-event="llamaai-sidebar-toggle"
 						data-umami-event-action="open"
 						data-umami-event-source="collapsed_controls"
 					/>
 				}
-				className="flex size-6 items-center justify-center gap-2 rounded-sm bg-brand-tint text-link not-disabled:not-aria-disabled:hover:bg-brand-tint-strong focus-visible:bg-brand-tint-strong"
 			>
 				<Icon name="panel-left-open" className="size-4" />
 				<span className="sr-only">Open chat history</span>
@@ -3199,8 +3199,10 @@ export const ChatControls = memo(function ChatControls({
 				<Tooltip
 					content={isSessionSaved ? SHARE_TOOLTIP : SHARE_PENDING_TOOLTIP}
 					render={
-						<Ariakit.Button
-							type="button"
+						<Button
+							variant="ghost"
+							size="sm"
+							square
 							onClick={onShare}
 							disabled={!isSessionSaved}
 							accessibleWhenDisabled
@@ -3208,9 +3210,8 @@ export const ChatControls = memo(function ChatControls({
 							data-umami-event-source="header_controls"
 						/>
 					}
-					className="flex size-6 items-center justify-center rounded-sm bg-brand-tint text-link not-disabled:not-aria-disabled:hover:bg-brand-tint-strong focus-visible:bg-brand-tint-strong aria-disabled:cursor-not-allowed aria-disabled:bg-disabled aria-disabled:text-disabled"
 				>
-					<Icon name="share" className="size-3.5" />
+					<Icon name="share" className="size-4" />
 					<span className="sr-only">{SHARE_TOOLTIP}</span>
 				</Tooltip>
 			) : null}

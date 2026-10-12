@@ -823,7 +823,7 @@ export function ClaimTokenProfile({
 						type="button"
 						variant="primary"
 						size="md"
-						className="w-full justify-center"
+						className="w-full"
 						pendingLabel="Submitting…"
 						pending={submit.isPending}
 						accessibleWhenDisabled

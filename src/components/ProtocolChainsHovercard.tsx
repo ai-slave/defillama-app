@@ -3,14 +3,14 @@ import { Hovercard } from '~/ui/Hovercard'
 
 /** "N chains" label that reveals the full chain list (logo + name per row)
     in a hovercard. Replaces the per-file ProtocolChainsComponent copies. */
-export function ProtocolChainsHovercard({ chains, className }: { chains: Array<string>; className?: string }) {
+export function ProtocolChainsHovercard({ chains }: { chains: Array<string> }) {
 	if (chains.length === 0) return null
 
 	return (
 		<Hovercard
 			// self-start: the label sits under the name in a flex column, where a stretched anchor would span the
 			// name's width and push the card away from the label.
-			className={`self-start ${className ?? 'body-sm text-secondary'}`}
+			className="self-start"
 			placement="right-start"
 			content={
 				<span className="flex flex-col gap-1">
@@ -23,7 +23,7 @@ export function ProtocolChainsHovercard({ chains, className }: { chains: Array<s
 				</span>
 			}
 		>
-			{`${chains.length} chain${chains.length > 1 ? 's' : ''}`}
+			<span className="body-sm text-secondary">{`${chains.length} chain${chains.length > 1 ? 's' : ''}`}</span>
 		</Hovercard>
 	)
 }

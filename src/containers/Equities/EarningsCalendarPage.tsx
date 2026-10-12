@@ -215,10 +215,15 @@ function WeekExposure({
 						<Hovercard
 							key={day.date}
 							placement="bottom-start"
+							// A day row is a wide, padded summary that no Button size draws, so its wash sits on the anchor button.
 							render={
-								<button type="button" aria-label={`${weekday}: ${formatCap(day.marketCap)} across ${companies}`} />
+								<button
+									type="button"
+									aria-label={`${weekday}: ${formatCap(day.marketCap)} across ${companies}`}
+									className="hover-wash rounded-md text-left"
+								/>
 							}
-							className="hover-wash w-full rounded-md text-left"
+							className="w-full"
 							width="md"
 							content={
 								<div className="flex flex-col gap-2">

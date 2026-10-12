@@ -651,16 +651,18 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 		<Tooltip
 			content="Scroll to bottom"
 			render={
-				<button
-					type="button"
+				<Button
+					variant="floating"
+					size="md"
+					square
 					onClick={() => {
 						scrollToBottom()
 						// The button hides once the thread is at the bottom; the composer there takes focus.
 						promptInputRef.current?.focus({ preventScroll: true })
 					}}
+					className={`mx-auto ${showScrollToBottom ? 'pointer-events-auto' : 'pointer-events-none'}`}
 				/>
 			}
-			className={`mx-auto flex size-8 items-center justify-center rounded-full border border-medium bg-overlay text-primary shadow-overlay not-disabled:not-aria-disabled:hover:bg-hover-row focus-visible:bg-hover-row ${showScrollToBottom ? 'pointer-events-auto' : 'pointer-events-none'}`}
 		>
 			<Icon name="arrow-down" className="size-4" />
 			<span className="sr-only">Scroll to bottom</span>

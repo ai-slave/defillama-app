@@ -47,6 +47,11 @@ import { LoadingSpinner } from './internal/Loaders'
                   over the picture holds ghost-like buttons instead
    - onBrand:     a control on the brand-blue mobile header: translucent
                   white fill, white icon. Header squares are lg (44px)
+   - ghostOnBrand: ghost on a solid brand fill (the current page's row in
+                  the pinned nav): on-brand text, the translucent white
+                  wash on hover and focus, the white focus ring. A row that
+                  is brand only while current picks it while current and
+                  ghost otherwise
    - link:        a standalone text action: text-link with no padding, no
                   height and no type of its own, so it inherits the label or
                   row it sits in, case included (preflight resets a button's
@@ -187,6 +192,7 @@ type ButtonVariant =
 	| 'overlay'
 	| 'onMedia'
 	| 'onBrand'
+	| 'ghostOnBrand'
 	| 'ghostDestructive'
 type ButtonSize = 'sm' | 'md' | 'lg'
 
@@ -215,6 +221,8 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
 		'border border-media-control bg-media-control text-media-control shadow-raised backdrop-blur-sm not-disabled:not-aria-disabled:hover:bg-media-control-hover focus-visible:bg-media-control-hover not-disabled:not-aria-disabled:active:bg-media-control-pressed',
 	onBrand:
 		'border border-transparent bg-on-brand-control text-on-brand shadow-raised not-disabled:not-aria-disabled:hover:bg-on-brand-control-hover focus-visible:bg-on-brand-control-hover focus-visible:focus-ring-on-brand not-disabled:not-aria-disabled:active:bg-on-brand-control-pressed',
+	ghostOnBrand:
+		'border border-transparent text-on-brand not-disabled:not-aria-disabled:hover:bg-on-brand-control-hover focus-visible:bg-on-brand-control-hover focus-visible:focus-ring-on-brand not-disabled:not-aria-disabled:active:bg-on-brand-control-pressed',
 	ghostDestructive:
 		'border border-transparent text-secondary pointer-coarse:text-error not-disabled:not-aria-disabled:hover:bg-error-tint not-disabled:not-aria-disabled:hover:text-error focus-visible:bg-error-tint focus-visible:text-error not-disabled:not-aria-disabled:active:bg-error-tint-pressed'
 }
@@ -243,6 +251,7 @@ const DISABLED_CLASSES: Record<ButtonVariant, string> = {
 	overlay: DISABLED_BORDER,
 	onMedia: DISABLED_ON_MEDIA,
 	onBrand: DISABLED_ON_BRAND,
+	ghostOnBrand: DISABLED_ON_BRAND,
 	ghostDestructive: ''
 }
 
@@ -289,7 +298,7 @@ function buttonStyles(look: ButtonLook, truncate: boolean): string {
 	if (look.variant === 'link') return LINK_CLASSES
 	if (look.variant === 'inlineLink') return INLINE_LINK_CLASSES
 	const { variant = 'secondary', size, square = false } = look
-	return `touch-target flex ${truncate ? 'min-w-0' : 'min-w-fit shrink-0'} cursor-pointer items-center justify-center whitespace-nowrap disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:cursor-not-allowed aria-busy:cursor-progress ${variant === 'onMedia' || variant === 'onBrand' ? '' : DISABLED_TEXT} ${DISABLED_CLASSES[variant]} ${
+	return `touch-target flex ${truncate ? 'min-w-0' : 'min-w-fit shrink-0'} cursor-pointer items-center justify-center whitespace-nowrap disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:cursor-not-allowed aria-busy:cursor-progress ${variant === 'onMedia' || variant === 'onBrand' || variant === 'ghostOnBrand' ? '' : DISABLED_TEXT} ${DISABLED_CLASSES[variant]} ${
 		square ? SQUARE_SIZE_CLASSES[size] : SIZE_CLASSES[size]
 	} ${variant === 'filter' || (variant === 'onMedia' && square) ? 'rounded-full' : RADIUS_CLASSES[size]} ${VARIANT_CLASSES[variant]}`
 }

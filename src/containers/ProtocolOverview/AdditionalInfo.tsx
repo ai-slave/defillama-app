@@ -15,6 +15,7 @@ import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { Menu } from '~/ui/Menu'
 import { MetricRow } from '~/ui/MetricPrimitives'
+import { PanelTitle } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { TextLink } from '~/ui/TextLink'
 import { Definition } from '~/ui/Tooltip'
@@ -25,26 +26,6 @@ import { getProtocolInfoCategories } from './category'
 import type { IProtocolOverviewPageData } from './types'
 
 const EMPTY_COMPETITORS: Array<{ name: string; tvl: number }> = []
-
-interface SectionHeaderProps {
-	id: string
-	children: React.ReactNode
-}
-
-function SectionHeader({ id, children }: SectionHeaderProps) {
-	return (
-		<h2 className="group relative flex items-center gap-1 heading-xs" id={id}>
-			{children}
-			<a
-				aria-hidden="true"
-				tabIndex={-1}
-				href={`#${id}`}
-				className="absolute top-0 right-0 z-10 flex size-full items-center"
-			/>
-			<Icon name="link" className="invisible size-3.5 group-hover:visible group-focus-visible:visible" />
-		</h2>
-	)
-}
 
 export function AdditionalInfo(props: IProtocolOverviewPageData) {
 	const cardsToStackOnLeft =
@@ -166,9 +147,9 @@ export function ProtocolInfo(props: IProtocolOverviewPageData) {
 
 	return (
 		<Card as="section" padding="sm" className="col-span-1 flex flex-col gap-3 body-md">
-			<SectionHeader id="protocol-information">
+			<PanelTitle anchor="protocol-information">
 				{props.isCEX ? 'Exchange Information' : 'Protocol Information'}
-			</SectionHeader>
+			</PanelTitle>
 			{props.description ? <p>{props.description}</p> : null}
 			<div className="flex flex-wrap gap-3">
 				{props.website ? (
@@ -275,7 +256,7 @@ function ChildProtocolRow({ child }: { child: NonNullable<IProtocolOverviewPageD
 function Methodology(props: IProtocolOverviewPageData) {
 	return (
 		<Card as="section" padding="sm" className="col-span-1 flex flex-col gap-3 body-md">
-			<SectionHeader id="methodology">Methodology</SectionHeader>
+			<PanelTitle anchor="methodology">Methodology</PanelTitle>
 			{!props.isOracleProtocol && props.tvlMethodologyUrl ? (
 				<a href={props.tvlMethodologyUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
 					<span className="font-medium text-secondary">{props.isCEX ? 'Total Assets:' : 'TVL:'}</span>{' '}
@@ -417,7 +398,7 @@ function Yields(props: IProtocolOverviewPageData) {
 			: `${formatPercent(yields.averageAPY, { input: 'percent', compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`
 	return (
 		<Card as="section" padding="sm" className="col-span-1 flex flex-col gap-3 body-md">
-			<SectionHeader id="yields">Yields</SectionHeader>
+			<PanelTitle anchor="yields">Yields</PanelTitle>
 			<div>
 				<MetricRow label="Pools Tracked" value={yields.noOfPoolsTracked} />
 				<MetricRow label="Average Supply APY" value={averageApy} />
@@ -439,7 +420,7 @@ export function Hacks(props: Pick<IProtocolOverviewPageData, 'hacks' | 'id' | 'n
 	if (!props.hacks?.length) return null
 	return (
 		<Card as="section" padding="sm" className="col-span-1 flex flex-col gap-3 body-md">
-			<SectionHeader id="hacks">Hacks</SectionHeader>
+			<PanelTitle anchor="hacks">Hacks</PanelTitle>
 			<div className="flex flex-col">
 				{props.hacks.map((hack) => (
 					<div
@@ -563,7 +544,7 @@ function Competitors(props: IProtocolOverviewPageData) {
 	return (
 		<Card as="section" padding="sm" className="col-span-1 flex flex-col gap-3 body-md">
 			<div className="flex items-center justify-between gap-2">
-				<SectionHeader id="competitors">Competitors</SectionHeader>
+				<PanelTitle anchor="competitors">Competitors</PanelTitle>
 				{comparisonHref ? (
 					<Button
 						as={ButtonLink}

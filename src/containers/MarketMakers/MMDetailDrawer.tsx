@@ -181,7 +181,7 @@ function VenueSection({ title, venues }: { title: string; venues: Array<Venue> }
 			<h3 className="label-md text-primary">{title}</h3>
 			<div className="flex flex-wrap gap-2">
 				{venues.map((venue) => (
-					<Tag key={venue.key} className="gap-1.5">
+					<Tag key={venue.key}>
 						{venue.icon ? (
 							<img src={venue.icon} alt={venue.name} width={18} height={18} className="rounded-full" />
 						) : null}

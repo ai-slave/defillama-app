@@ -9,7 +9,6 @@ import { Definition, Tooltip } from '~/ui/Tooltip'
 import { Cell, Example, type Family, type KnobValues, NotApplicable, REST_HOVER_FOCUS, StateGrid } from '../shared'
 
 const DEFINITION = "Total value locked in the protocol's contracts."
-const DOTTED = 'cursor-help label-sm text-secondary underline decoration-dotted underline-offset-4'
 
 function IconTooltip({ disabled }: { disabled?: boolean }) {
 	return (
@@ -94,7 +93,7 @@ const HOVERCARD_CONTENT: Record<HovercardWidth, ReactNode> = {
 
 function TextHovercard({ width = 'md' }: { width?: HovercardWidth }) {
 	return (
-		<Hovercard className={DOTTED} width={width} content={HOVERCARD_CONTENT[width]}>
+		<Hovercard definition width={width} content={HOVERCARD_CONTENT[width]}>
 			Total value locked
 		</Hovercard>
 	)

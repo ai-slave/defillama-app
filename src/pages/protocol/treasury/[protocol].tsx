@@ -385,7 +385,6 @@ export default function Protocols(props: TreasuryPageProps) {
 							label="Include own tokens"
 							checked={includeOwnTokens}
 							onChange={toggleIncludeOwnTokens}
-							className="gap-2"
 						/>
 					) : null
 				}

@@ -11,9 +11,14 @@ export function HelpIcon({ content, label }: { content: ReactNode; label?: strin
 			// Anchor the panel's left edge to the glyph and grow rightward (not centered) so it never
 			// overflows onto the left nav when the icon sits near the page edge.
 			placement="top-start"
-			className="text-tertiary hover:text-secondary"
 			width="lg"
-			render={<button type="button" aria-label={label} />}
+			render={
+				<button
+					type="button"
+					aria-label={label}
+					className="flex shrink-0 cursor-help items-center text-tertiary hover:text-secondary"
+				/>
+			}
 		>
 			<Icon name="help-circle" className="size-3.5" />
 		</Hovercard>

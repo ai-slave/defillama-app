@@ -5,6 +5,7 @@ import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Keycap } from '~/ui/Keycap'
 import { SearchField } from '~/ui/SearchField'
+import { Tag } from '~/ui/Tag'
 import { Tooltip } from '~/ui/Tooltip'
 import { CopyTextButton } from './CopyTextButton'
 import {
@@ -123,10 +124,8 @@ function TechniqueChips({ techniques }: { techniques: Array<TechniqueName> }) {
 		<ul aria-label="Techniques" className="flex flex-wrap gap-1.5">
 			{techniques.map((t) => (
 				<li key={t}>
-					<Tooltip content={TECHNIQUE_DOCS[t]} tabIndex={0} className="rounded-md">
-						<span className="inline-flex min-h-6 cursor-help items-center rounded-md border border-medium px-1.5 mono-sm text-secondary">
-							{t}
-						</span>
+					<Tooltip content={TECHNIQUE_DOCS[t]} tabIndex={0} render={<Tag className="cursor-help" />}>
+						<span className="mono-sm">{t}</span>
 					</Tooltip>
 				</li>
 			))}

@@ -25,9 +25,10 @@ import type { ComponentPropsWithRef, ElementType } from 'react'
  * re-points the brand tokens around the card (`.ai-violet-accent` for LlamaAI), never a product tone here. Each
  * featured card keeps its own tint; they are not unified onto one. A plain data card never takes a tone.
  *
- * `className` is for layout placement only (grid column, margins, flex behavior); never pass visual overrides (bg-*,
- * border-*, rounded-*, p-*, hover/focus colors, type styles). A hoverable or focusable card uses `.hover-wash-card`,
- * which stacks a card-strength wash over bg-surface instead of replacing it.
+ * `className` places the card (grid column, margins, width) and lays out and styles what it holds (flex-col, gap-3,
+ * body-md text-secondary), since the card draws no text of its own. It never changes what the card draws: no bg-*,
+ * border-*, rounded-*, p-* (padding is `padding`), shadow or hover color (policy: check-part-classes). A card that is
+ * a link or button uses `hover-wash-card`, which stacks a card-strength wash over bg-surface instead of replacing it.
  *
  * Information and methodology cards: `gap-3`, a heading-xs heading, body-md content. Metadata labels are
  * `label-md text-secondary` with `text-primary` values; run-in labels ("TVL:", adapter titles) are

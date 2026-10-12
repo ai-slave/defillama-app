@@ -552,10 +552,10 @@ export function OnboardingWalkthrough({
 											variant="secondary"
 											size="md"
 											onClick={() => handlePromptClick(p.prompt)}
-											className="w-full justify-start"
+											className="w-full"
 										>
 											<Icon name={p.icon} className="size-3.5 shrink-0" />
-											<span>{p.label}</span>
+											<span className="flex-1 text-left">{p.label}</span>
 										</Button>
 									))}
 								</div>

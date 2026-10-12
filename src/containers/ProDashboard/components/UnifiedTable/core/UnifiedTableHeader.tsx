@@ -228,8 +228,10 @@ export function UnifiedTableHeader({
 								</Button>
 							) : (
 								<Tag key={chip.id}>
-									<span className="font-medium text-primary">{chip.label}</span>
-									{chip.value ? <span>: {chip.value}</span> : null}
+									<span>
+										<span className="font-medium text-primary">{chip.label}</span>
+										{chip.value ? `: ${chip.value}` : null}
+									</span>
 								</Tag>
 							)
 						)}

@@ -171,9 +171,10 @@ export function ManageSeatsModal({ onClose, subscription }: ManageSeatsModalProp
 											step={1}
 											readOnly={!canChangeTeamBilling}
 											inputMode="numeric"
+											variant="stepper"
 											value={seatInput}
 											onChange={(e) => setSeatInput(e.target.value)}
-											className="w-20 text-center"
+											className="w-20"
 										/>
 									}
 								/>

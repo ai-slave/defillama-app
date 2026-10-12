@@ -181,7 +181,7 @@ export function TokenPricingCheck({ chainDisplayNames }: { chainDisplayNames: Re
 										singleSelect
 										searchPlaceholder="Search chains…"
 										popoverWidth="trigger"
-										className={`w-full justify-between ${selectedChain ? 'pl-9' : ''}`}
+										className={`w-full ${selectedChain ? 'pl-9' : ''}`}
 										triggerProps={{
 											...control,
 											'aria-label': 'Chain',

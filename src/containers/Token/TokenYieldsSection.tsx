@@ -29,7 +29,6 @@ import { useFormatYieldQueryParams } from '~/containers/Yields/hooks'
 import type { IYieldTableRow } from '~/containers/Yields/Tables/types'
 import { useVerifiedAccess } from '~/containers/Yields/useVerifiedAccess'
 import { useIsClient } from '~/hooks/useIsClient'
-import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { InlineStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { TableToolbarControlGroup } from '~/ui/Toolbar'
@@ -196,18 +195,8 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 		// tabIndex: the deferred pager hands focus here when the full table replaces it.
 		<Panel tabIndex={-1} className={hasPlaceholderState ? 'min-h-[80dvh] sm:min-h-[572px]' : undefined}>
 			<PanelHeader>
-				<PanelTitle
-					className="group relative flex min-w-0 scroll-mt-24 items-center gap-1"
-					id={TOKEN_YIELDS_SECTION_ID}
-				>
+				<PanelTitle className="scroll-mt-24" anchor={TOKEN_YIELDS_SECTION_ID}>
 					Yields
-					<a
-						aria-hidden="true"
-						tabIndex={-1}
-						href={`#${TOKEN_YIELDS_SECTION_ID}`}
-						className="absolute top-0 right-0 z-10 flex size-full items-center"
-					/>
-					<Icon name="link" className="invisible size-3.5 group-hover:visible group-focus-visible:visible" />
 				</PanelTitle>
 				{!showInitialLoader && !showRetry && summaryText ? (
 					<p className="body-sm text-secondary sm:text-right">{summaryText}</p>

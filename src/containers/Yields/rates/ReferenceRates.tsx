@@ -222,7 +222,7 @@ function ReferenceRatesSummary({
 	const chartRef = useRef<echarts.ECharts | null>(null)
 	return (
 		<Panel role="region" aria-labelledby="reference-rates-title">
-			<PanelHeader className="items-start">
+			<PanelHeader>
 				<div className="mr-auto flex min-w-0 flex-col gap-0.5">
 					<PanelTitle as="h1" id="reference-rates-title">
 						Stablecoin reference rates

@@ -58,7 +58,6 @@ export function ChainOverview(props: Omit<IChainOverviewData, 'extraTvlCharts'>)
 							type="button"
 							onClick={() => goToTab(undefined)}
 							aria-current={!irActive ? 'page' : undefined}
-							className="flex items-center"
 						>
 							Overview
 						</TabLink>
@@ -71,7 +70,6 @@ export function ChainOverview(props: Omit<IChainOverviewData, 'extraTvlCharts'>)
 							data-umami-event-entity-type="chain"
 							data-umami-event-entity={entitySlug}
 							data-umami-event-dashboard-id={investorRelations.dashboard.dashboardId}
-							className="flex items-center gap-1.5"
 						>
 							<IrTabLabel
 								label={investorRelations.dashboard.tabLabel}

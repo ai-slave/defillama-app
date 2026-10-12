@@ -88,7 +88,7 @@ export function RiskTabs({ tabs, defaultId }: { tabs: Array<RiskTab>; defaultId:
 									render={<TabLink as="button" />}
 									key={t.id}
 									type="button"
-									className="inline-flex flex-1 items-center justify-center gap-1.5 sm:flex-initial"
+									className="inline-flex flex-1 sm:flex-initial"
 								>
 									<Icon name={t.icon} className={`size-4${t.iconFlipY ? ' -scale-y-100' : ''}`} aria-hidden />
 									{t.label}

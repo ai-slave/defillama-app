@@ -17,7 +17,6 @@ import { ResponsiveFilterLayout } from '~/components/Filters/ResponsiveFilterLay
 import type { RouteTableRow } from '~/containers/Yields/data/types'
 import { useIsClient } from '~/hooks/useIsClient'
 import type { FormSubmitEvent } from '~/types/forms'
-import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
@@ -317,18 +316,8 @@ export function TokenBorrowSection({
 		// tabIndex: the deferred pager hands focus here when the full table replaces it.
 		<Panel tabIndex={-1} className={hasPlaceholderState ? 'min-h-[80dvh] sm:min-h-[572px]' : undefined}>
 			<PanelHeader>
-				<PanelTitle
-					className="group relative flex min-w-0 scroll-mt-24 items-center gap-1"
-					id={TOKEN_BORROW_SECTION_ID}
-				>
+				<PanelTitle className="scroll-mt-24" anchor={TOKEN_BORROW_SECTION_ID}>
 					Borrow
-					<a
-						aria-hidden="true"
-						tabIndex={-1}
-						href={`#${TOKEN_BORROW_SECTION_ID}`}
-						className="absolute top-0 right-0 z-10 flex size-full items-center"
-					/>
-					<Icon name="link" className="invisible size-3.5 group-hover:visible group-focus-visible:visible" />
 				</PanelTitle>
 				{!showInitialLoader && !showRetry && summaryText ? (
 					<p className="body-sm text-secondary sm:text-right">{summaryText}</p>

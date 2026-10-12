@@ -17,7 +17,6 @@ import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { EmptyState, InlineLoading, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
-import { Tooltip } from '~/ui/Tooltip'
 import { VirtualizedSelect, type VirtualizedSelectOption } from '~/ui/VirtualizedSelect'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
 import { shouldSuppressAdvancedTvlTokenBreakdown } from '../../services/protocolTvl'
@@ -273,20 +272,15 @@ export function AdvancedTvlChartTab({
 					isLoading={protocolsLoading}
 				/>
 
-				<Tooltip
-					content={!hasProtocolSelection ? 'Select protocol first' : null}
-					className={`w-full ${!hasProtocolSelection ? 'pointer-events-none opacity-50' : ''}`}
-					render={<div />}
-				>
-					<VirtualizedSelect
-						variant="field"
-						label="Chart type"
-						options={chartTypeOptions}
-						selectedValue={selectedAdvancedTvlChartType}
-						onChange={(option) => onSelectedAdvancedTvlChartTypeChange(option.value)}
-						placeholder="Select chart type…"
-					/>
-				</Tooltip>
+				<VirtualizedSelect
+					variant="field"
+					label="Chart type"
+					options={chartTypeOptions}
+					selectedValue={selectedAdvancedTvlChartType}
+					onChange={(option) => onSelectedAdvancedTvlChartTypeChange(option.value)}
+					placeholder={hasProtocolSelection ? 'Select chart type…' : 'Select a protocol first'}
+					disabled={!hasProtocolSelection}
+				/>
 
 				{hasProtocolSelection && isLoading ? <InlineLoading label="Loading selected chart" /> : null}
 			</div>

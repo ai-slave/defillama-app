@@ -303,7 +303,6 @@ export function ProtocolOverviewLayout({
 								data-umami-event-entity-type="protocol"
 								data-umami-event-entity={entitySlug}
 								data-umami-event-dashboard-id={irDashboard.dashboardId}
-								className="flex items-center gap-1.5"
 							>
 								<IrTabLabel
 									label={irDashboard.tabLabel}

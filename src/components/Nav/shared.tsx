@@ -100,6 +100,12 @@ export function SidebarDivider({ className = '' }: { className?: string }) {
 	return <hr className={`w-full max-w-53 border-t border-medium ${className}`} />
 }
 
+/** Whether a nav link's route is the current page: the route itself, or a page under it unless `exactMatch`. */
+export function isNavRouteActive(route: string, asPath: string, exactMatch = false) {
+	const cleanAsPath = navPath(asPath)
+	return exactMatch ? route === cleanAsPath : cleanAsPath === route || cleanAsPath.startsWith(`${route}/`)
+}
+
 export function LinkToPage({
 	route,
 	name,
@@ -123,8 +129,7 @@ export function LinkToPage({
 }) {
 	const isLlamaAI = name === 'LlamaAI'
 	const freeLabel = useLlamaAIFreeLabel(isLlamaAI)
-	const cleanAsPath = navPath(asPath)
-	const isActive = exactMatch ? route === cleanAsPath : cleanAsPath === route || cleanAsPath.startsWith(`${route}/`)
+	const isActive = isNavRouteActive(route, asPath, exactMatch)
 	const isExternal = route.startsWith('http')
 
 	return (

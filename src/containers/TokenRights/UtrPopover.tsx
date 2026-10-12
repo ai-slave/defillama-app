@@ -5,7 +5,7 @@ import { Button } from '~/ui/Button'
 import { Change } from '~/ui/Change'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatDate } from '~/utils/dateFormat'
 import { formatNumber } from '~/utils/numberFormat'
@@ -97,10 +97,10 @@ export function UtrPopover({
 							<span className="mono-md-bold">{utr.score != null ? formatScore(utr.score) : 'N/A'}</span>
 							<span className="label-xs text-tertiary">/ 100</span>
 							{utr.momChangePct != null ? (
-								<Tooltip content="Change over the last month" className="gap-1 label-sm text-tertiary tabular-nums">
+								<span className="flex items-baseline gap-1 label-sm text-tertiary tabular-nums">
 									<Change value={utr.momChangePct} />
-									MoM
-								</Tooltip>
+									<Definition content="Change over the last month">MoM</Definition>
+								</span>
 							) : null}
 						</span>
 					</div>
@@ -153,10 +153,17 @@ export function UtrGradeHovercard({
 		<Hovercard
 			content={<UtrPopover name={name} utr={utr} rights={rights} />}
 			placement="right-start"
-			className={`h-5 w-fit min-w-8 justify-center rounded-sm px-1 label-xs font-semibold ${utrGradeColor(utr.grade).tinted} ${utrGradeColor(utr.grade).text}`}
+			className="w-fit min-w-8 justify-center"
 			// An impression is the card being seen: hovered open on desktop, tapped open on touch.
 			onOpen={() => trackUmamiEvent('utr-impression', { entity: name, grade: utr.grade })}
-			render={<button type="button" aria-label={`Universal Token Rating ${utr.grade}`} />}
+			// No src/ui part draws a grade-tinted chip, so the chip's look sits on the button that anchors the card.
+			render={
+				<button
+					type="button"
+					aria-label={`Universal Token Rating ${utr.grade}`}
+					className={`h-5 rounded-sm px-1 label-xs font-semibold ${utrGradeColor(utr.grade).tinted} ${utrGradeColor(utr.grade).text}`}
+				/>
+			}
 		>
 			{utr.grade}
 		</Hovercard>

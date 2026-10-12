@@ -39,7 +39,8 @@ const BUTTON_VARIANTS = [
 	'floating',
 	'overlay',
 	'onMedia',
-	'onBrand'
+	'onBrand',
+	'ghostOnBrand'
 ] as const
 type Variant = (typeof BUTTON_VARIANTS)[number]
 const SELECTABLE = new Set<Variant>(['ghost', 'filter', 'toggle'])
@@ -49,7 +50,8 @@ const SQUARES: ReadonlyArray<[Variant, ReadonlyArray<'sm' | 'md' | 'lg'>]> = [
 	['ghostDestructive', ['md', 'sm']],
 	['primary', ['md', 'sm']],
 	['onMedia', ['md']],
-	['onBrand', ['lg']]
+	['onBrand', ['lg']],
+	['ghostOnBrand', ['sm']]
 ]
 
 /** The surroundings a variant is built for: the overlay arrow waits for its rail's hover, so its rail is forced
@@ -70,7 +72,8 @@ function Backdrop({ variant, children }: { variant: Variant; children: ReactNode
 				{children}
 			</div>
 		)
-	if (variant === 'onBrand') return <div className="flex items-center gap-2 rounded-md bg-brand p-1.5">{children}</div>
+	if (variant === 'onBrand' || variant === 'ghostOnBrand')
+		return <div className="flex items-center gap-2 rounded-md bg-brand p-1.5">{children}</div>
 	return <div className="flex items-center gap-2">{children}</div>
 }
 

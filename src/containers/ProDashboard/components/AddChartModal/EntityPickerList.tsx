@@ -106,12 +106,7 @@ export function EntityPickerList({
 
 	// With nothing picked, the search takes the error and the focus: picking starts there.
 	return (
-		<Field
-			hideLabel
-			label={`Search ${mode === 'chain' ? 'chains' : 'protocols'}`}
-			error={error}
-			className="h-full min-h-0"
-		>
+		<Field hideLabel label={`Search ${mode === 'chain' ? 'chains' : 'protocols'}`} error={error} className="h-full">
 			{(control) => (
 				<div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-subtle">
 					<div className="flex items-center justify-between border-b border-subtle bg-surface px-3 py-2">

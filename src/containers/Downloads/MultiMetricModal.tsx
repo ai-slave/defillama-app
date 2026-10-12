@@ -789,7 +789,7 @@ function ParamPickerEmpty({
 						onChange={onSelect}
 						placeholder={labels.verb}
 						autoFocus
-						className="w-full text-left"
+						className="w-full"
 					/>
 
 					{suggestions.length > 0 ? (

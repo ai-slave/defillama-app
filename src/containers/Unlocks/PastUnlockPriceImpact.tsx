@@ -4,7 +4,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { Change } from '~/ui/Change'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition, Tooltip } from '~/ui/Tooltip'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import { getEmissionEventAmount } from './eventAmount'
@@ -106,12 +106,12 @@ export function PastUnlockPriceImpact({ data, title, className, initialNowSec }:
 
 	return (
 		<div className={`flex flex-col gap-3 text-primary ${className ?? ''}`}>
-			<Tooltip
-				className="heading-xs text-primary"
+			<Definition
+				className="heading-xs"
 				content="Observed price change during the 7 days after the most recent unlock, excluding non-circulating and farming emissions. This does not imply causation. Sorted by absolute price change."
 			>
 				{title}
-			</Tooltip>
+			</Definition>
 
 			{topImpacts.map((impact) => {
 				const summaries: Array<{ label: string; amount: number; displayUnit: '' | 'per week' }> = []

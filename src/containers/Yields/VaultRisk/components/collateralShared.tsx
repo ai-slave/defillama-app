@@ -63,7 +63,7 @@ function ptPricingMeta(pt: string): { label: string; note?: string } {
 export function PtPricingChip({ pricing }: { pricing: string }) {
 	const { label, note } = ptPricingMeta(pricing)
 	const chip = (
-		<Tag className="shrink-0 gap-1">
+		<Tag className="shrink-0">
 			<span className="text-tertiary">PT</span>
 			{label}
 		</Tag>

@@ -251,7 +251,8 @@ function DeleteAccountConfirmationForm({
 									value={otp}
 									onChange={(event) => onOtpChange(event.target.value.replace(/\D/g, ''))}
 									placeholder="000000"
-									className="w-full tracking-widest"
+									variant="oneTimeCode"
+									className="w-full"
 								/>
 							)}
 						</Field>

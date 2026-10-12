@@ -274,8 +274,11 @@ export function LinkToMetricOrToolPage({
 			>
 				<span className="flex w-full flex-wrap items-center gap-1">
 					<span className="label-md">{page.name}</span>
-					{/* On touch the pin is always shown in this corner instead. */}
-					<Icon name="arrow-right" className="ml-auto size-4 pointer-coarse:invisible" />
+					{/* The pin shows in this corner on hover, focus, touch and once pinned; the arrow steps aside for it. */}
+					<Icon
+						name="arrow-right"
+						className="ml-auto size-4 group-focus-within:invisible group-hover:invisible group-data-[pinned=true]:invisible pointer-coarse:invisible"
+					/>
 				</span>
 				{totalTrackedByMetric && page.totalTrackedKey ? (
 					<span className="body-sm text-link">{getTotalTracked(totalTrackedByMetric, page.totalTrackedKey)}</span>
@@ -286,8 +289,13 @@ export function LinkToMetricOrToolPage({
 			<Tooltip
 				content={isPinned ? 'Unpin from navigation' : 'Pin to navigation'}
 				render={
-					<button
-						type="button"
+					<Button
+						// Shown on hover, on keyboard focus inside the card, and always on touch, which has no hover. Only a
+						// pinned page is a brand square, so a grid of cards on touch is not a grid of brand squares.
+						variant={isPinned ? 'primary' : 'ghost'}
+						size="sm"
+						square
+						className="invisible absolute top-1 right-1 group-focus-within:visible group-hover:visible group-data-[pinned=true]:visible pointer-coarse:visible"
 						aria-label={isPinned ? 'Unpin from navigation' : 'Pin to navigation'}
 						onClick={(e) => {
 							const currentPinnedMetrics = JSON.parse(window.localStorage.getItem('pinned-metrics') || '[]')
@@ -304,11 +312,8 @@ export function LinkToMetricOrToolPage({
 						}}
 					/>
 				}
-				// Shown on hover, on keyboard focus inside the card, and always on touch, which has no hover; unpinned it stays
-				// quiet there so a grid of cards is not a grid of brand squares.
-				className={`touch-target absolute top-1 right-1 hidden rounded-md p-1.5 group-focus-within:block group-hover:block group-data-[pinned=true]:block pointer-coarse:block ${isPinned ? 'bg-brand text-on-brand' : 'bg-brand text-on-brand pointer-coarse:bg-transparent pointer-coarse:text-tertiary'}`}
 			>
-				<Icon name="pin" className={isPinned ? 'size-3.5 fill-current' : 'size-3.5'} />
+				<Icon name="pin" className={isPinned ? 'size-4 fill-current' : 'size-4'} />
 			</Tooltip>
 		</div>
 	)

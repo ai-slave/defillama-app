@@ -126,8 +126,7 @@ export function ProjectSessionItem({
 					{s.hasUnseenCompletion ? (
 						<Tooltip
 							content="New response ready"
-							render={<span aria-label="Unseen completion" />}
-							className="size-1.5 shrink-0 rounded-full bg-brand"
+							render={<span aria-label="Unseen completion" className="size-1.5 shrink-0 rounded-full bg-brand" />}
 						>
 							{null}
 						</Tooltip>

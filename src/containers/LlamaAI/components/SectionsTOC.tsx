@@ -93,11 +93,10 @@ export function SectionsTOC({
 											active={isActive}
 											onClick={() => handleClick(i)}
 											aria-current={isActive ? 'location' : undefined}
-											className="items-start"
 										/>
 									}
 								>
-									<span className="flex h-lh shrink-0 items-center">
+									<span className="flex h-lh shrink-0 items-center self-start">
 										<span
 											className={`flex size-5 items-center justify-center rounded-sm label-xs ${
 												isActive ? 'bg-brand-tint-strong text-link' : 'bg-surface-elevated-1 text-tertiary'

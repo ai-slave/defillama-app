@@ -73,10 +73,10 @@ export function ArticleClientField({
 				<ComboboxSelectTrigger
 					aria-label="Article client"
 					disabled={disabled}
-					className={`${selectTriggerStyles('input', 'md')} w-full justify-between`}
+					className={`${selectTriggerStyles('input', 'md')} w-full`}
 				>
 					<span className="truncate">{client?.displayName ?? 'No client'}</span>
-					<Ariakit.ComboboxSelectArrow className="shrink-0 text-tertiary" />
+					<Ariakit.ComboboxSelectArrow className="ml-auto shrink-0 text-tertiary" />
 				</ComboboxSelectTrigger>
 				<ComboboxSurface variant="panel" heading="Client" sameWidth>
 					<PopoverList divided>

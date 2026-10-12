@@ -243,7 +243,7 @@ export function PreIpoOverview({ companies, updatedAt }: PreIpoOverviewPageProps
 				</TableToolbar>
 				<PaginatedTable table={table} pageSizeOptions={PAGE_SIZE_OPTIONS} tableClassName="min-w-max!" />
 			</Panel>
-			<StaleText as="p" className="px-1 body-sm text-tertiary">
+			<StaleText as="p" className="body-sm text-tertiary">
 				{`Updated ${formatDateTime(updatedAt, { timeZone: 'local', timeZoneName: 'short' }) ?? '-'}.`}
 			</StaleText>
 		</div>

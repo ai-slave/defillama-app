@@ -34,7 +34,8 @@ import { tw } from './tw'
    Multiline fields are `Textarea`. Code, hex colors, addresses and formulas
    take `variant="code"` on either: the same field in the mono family at the
    same sizes, so phones still get 16px. A verification code is
-   `<Input variant="oneTimeCode">`. Fixed text inside the box (a URL prefix,
+   `<Input variant="oneTimeCode">`; a count between − and + buttons is
+   `<Input variant="stepper">`. Fixed text inside the box (a URL prefix,
    a unit) is `prefix` / `suffix`: the box then draws around the text and the
    value, with the recipe's hover, focus and error, because a wrapper's own
    :focus never fires. Variants are props, never recipe strings glued to a
@@ -79,6 +80,10 @@ const codeTextareaStyles = `${fieldSurfaceStyles} py-2 max-sm:font-mono max-sm:p
 /** A one-time code (email verification, account link): centered digits spaced apart, the hint at normal spacing. */
 const oneTimeCodeInputStyles = `${inputStyles} text-center tracking-[0.4em] placeholder:tracking-normal`
 
+/** A count between a − and a + button (seats on a plan): centered digits of one width, so the value stays put as it
+    changes. The caller gives it a width that fits the largest count. */
+const stepperInputStyles = `${inputStyles} text-center tabular-nums`
+
 /* A field with fixed text inside its box (a URL prefix, a unit): the frame draws the recipe's box, hover, focus and
    error around a borderless `fieldFrameInputStyles` input, because a wrapper's own :focus never fires. */
 const fieldFrameStyles = tw`flex min-h-8 min-w-0 cursor-text items-center gap-1 rounded-lg border border-medium bg-page bg-clip-padding px-3 body-lg text-primary focus-within:border-brand not-focus-within:not-has-[:disabled,[aria-disabled=true],[aria-invalid=true]]:hover:border-strong has-[:disabled,[aria-disabled=true]]:cursor-not-allowed has-[:disabled,[aria-disabled=true]]:border-disabled has-[:disabled,[aria-disabled=true]]:bg-disabled has-[:disabled,[aria-disabled=true]]:text-disabled has-[[aria-busy=true]]:cursor-progress has-[[aria-invalid=true]]:border-error sm:body-sm sheet:min-h-11`
@@ -97,6 +102,7 @@ const INPUT_VARIANTS = {
 	text: inputStyles,
 	code: codeInputStyles,
 	oneTimeCode: oneTimeCodeInputStyles,
+	stepper: stepperInputStyles,
 	inline: inlineInputStyles
 } as const
 

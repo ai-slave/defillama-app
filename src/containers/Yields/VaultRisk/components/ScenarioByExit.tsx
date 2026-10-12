@@ -131,7 +131,7 @@ function ScenarioRow({
 					{unquantified ? '—' : worstCaseLabel(s, supplyUsd)}
 				</td>
 				<td className="px-3 py-3 text-right align-middle">
-					<Tag className="gap-1">
+					<Tag>
 						{noEscape ? null : <Icon name="clock" className="size-3" aria-hidden />}
 						{exitLabel(s)}
 					</Tag>

@@ -294,7 +294,8 @@ function SwitchToEmailDialog({ isOpen, onClose, defaultEmail }: SwitchToEmailMod
 													clearError()
 												}}
 												placeholder="000000"
-												className="w-full tracking-widest"
+												variant="oneTimeCode"
+												className="w-full"
 											/>
 										}
 									/>

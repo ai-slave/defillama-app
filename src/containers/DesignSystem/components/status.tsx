@@ -181,10 +181,10 @@ export const status: Family = {
 			source: 'src/ui/Status.tsx',
 			note: 'The content stays visible underneath.',
 			render: () => (
-				<Panel className="min-h-[140px] w-80 p-4">
+				<Card padding="md" className="relative min-h-[140px] w-80">
 					<p className="body-md text-secondary">Ethereum $52.1b, Solana $9.8b, Arbitrum $2.4b, Base $2.1b.</p>
 					<SurfaceLoadingOverlay label="Refreshing pools" />
-				</Panel>
+				</Card>
 			)
 		},
 		{

@@ -1,6 +1,6 @@
 import type { ReactNode, Ref } from 'react'
-import { Icon } from '~/ui/Icon'
 import { Watermark } from '~/ui/Watermark'
+import { SectionAnchor } from './internal/SectionAnchor'
 
 interface KeyMetricsPanelProps {
 	/** Anchor id; when set the heading gets a hover-revealed self link. */
@@ -25,17 +25,7 @@ export function KeyMetricsPanel({ id, rowsRef, footer, headingAs: Heading = 'h2'
 			<div className="flex items-center justify-between gap-2">
 				<Heading className="group relative flex items-center gap-1 title-md" id={id}>
 					Key Metrics
-					{id ? (
-						<>
-							<a
-								aria-hidden="true"
-								tabIndex={-1}
-								href={`#${id}`}
-								className="absolute top-0 right-0 z-10 flex size-full items-center"
-							/>
-							<Icon name="link" className="invisible size-3.5 group-hover:visible group-focus-visible:visible" />
-						</>
-					) : null}
+					{id ? <SectionAnchor id={id} /> : null}
 				</Heading>
 				<Watermark />
 			</div>

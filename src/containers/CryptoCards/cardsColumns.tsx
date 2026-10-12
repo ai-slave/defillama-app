@@ -185,8 +185,8 @@ function PerksValue({ perks }: { perks: Array<string> }) {
 			{hidden.length > 0 ? (
 				<Hovercard
 					placement="right-start"
-					render={<button type="button" />}
-					className={`${perkChipStyles} text-primary`}
+					// The counter keeps the look of the perk chips beside it.
+					render={<button type="button" className={`${perkChipStyles} text-primary`} />}
 					content={
 						<div className="flex max-w-72 flex-wrap gap-1">
 							<PerkChips perks={hidden} />

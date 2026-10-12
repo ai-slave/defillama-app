@@ -39,7 +39,7 @@ import {
 import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButton'
 import type { UploadScope } from '~/containers/Articles/upload/useImageUpload'
 import { Button } from '~/ui/Button'
-import { ComboboxSelectTrigger } from '~/ui/ComboboxSelectTrigger'
+import { ComboboxSelectTrigger, selectTriggerStyles } from '~/ui/ComboboxSelectTrigger'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { Field, FieldGroup } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
@@ -261,20 +261,13 @@ export function BannerForm({ banner }: Props) {
 										update({ section: next as ArticleSection })
 									}}
 								>
-									<ComboboxSelectTrigger
-										{...control}
-										className={`flex h-10 items-center justify-between gap-2 rounded-md border bg-page px-3 body-md transition-colors data-[state=open]:border-brand ${
-											shown.section
-												? 'border-error-strong text-primary'
-												: state.section
-													? 'border-medium text-primary'
-													: 'border-medium text-tertiary'
-										}`}
-									>
-										<span className="truncate text-left">
-											{state.section ? ARTICLE_SECTION_LABELS[state.section as ArticleSection] : 'Select a section…'}
-										</span>
-										<Ariakit.ComboboxSelectArrow className="shrink-0 text-tertiary" />
+									<ComboboxSelectTrigger {...control} className={selectTriggerStyles('input', 'md')}>
+										{state.section ? (
+											<span className="truncate">{ARTICLE_SECTION_LABELS[state.section as ArticleSection]}</span>
+										) : (
+											<span className="truncate text-tertiary">Select a section…</span>
+										)}
+										<Ariakit.ComboboxSelectArrow className="ml-auto shrink-0 text-tertiary" />
 									</ComboboxSelectTrigger>
 									<ComboboxSurface variant="panel" heading="Section" sameWidth>
 										<PopoverList divided>

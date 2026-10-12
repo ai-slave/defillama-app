@@ -374,7 +374,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 				}}
 				variant="input"
 				size="md"
-				className="w-full justify-between"
+				className="w-full"
 				triggerProps={{ 'aria-label': `${config.label} operator` }}
 			/>
 			{filter.operator === 'between' ? (

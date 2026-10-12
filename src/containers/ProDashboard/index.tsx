@@ -604,8 +604,7 @@ function ProDashboardContent() {
 				<div className="ml-auto flex flex-wrap items-center justify-end gap-1">
 					<Tooltip
 						content="Views"
-						render={<p />}
-						className="flex min-h-8 items-center gap-1.5 px-2 label-md text-tertiary"
+						render={<p className="flex min-h-8 items-center gap-1.5 px-2 label-md text-tertiary" />}
 					>
 						<Icon name="eye" className="size-3.5" />
 						<span className="tabular-nums">{formatNumber(currentDashboard?.viewCount ?? 0)}</span>

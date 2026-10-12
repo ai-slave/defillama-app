@@ -4,7 +4,7 @@ import { keepFocus, neighborRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { mutatePinnedMetrics } from '../pinnedUtils'
-import { LinkToPage } from '../shared'
+import { isNavRouteActive, LinkToPage } from '../shared'
 import type { TNavLink } from '../types'
 
 const ReorderablePinnedPages = React.lazy(() => import('./ReorderablePinnedPages'))
@@ -61,7 +61,8 @@ export function PinnedPages({ pinnedPages, asPath }: { pinnedPages: Array<TNavLi
 								content="Unpin from navigation"
 								render={
 									<Button
-										variant="ghost"
+										// The current page's row is solid brand, so its x draws on that fill.
+										variant={isNavRouteActive(page.route, asPath) ? 'ghostOnBrand' : 'ghost'}
 										size="sm"
 										square
 										aria-label={`Unpin ${page.name}`}
@@ -80,10 +81,9 @@ export function PinnedPages({ pinnedPages, asPath }: { pinnedPages: Array<TNavLi
 										}}
 									/>
 								}
-								// On the active row (solid brand fill) the x takes the row's on-brand text and ring.
-								className="absolute top-1/2 right-1 -translate-y-1/2 not-group-focus-within:not-group-hover:hidden group-has-[[aria-current=page]]:focus-visible:focus-ring-on-brand"
+								className="absolute top-1/2 right-1 -translate-y-1/2 not-group-focus-within:not-group-hover:hidden"
 							>
-								<Icon name="x" className="size-4 group-has-[[aria-current=page]]:text-on-brand" />
+								<Icon name="x" className="size-4" />
 							</Tooltip>
 						</span>
 					))}

@@ -216,7 +216,7 @@ export function TokenPageHero({
 					<summary className="flex flex-nowrap items-end justify-between gap-8">
 						<span className="flex flex-wrap items-center gap-x-3 gap-y-1">
 							<span className="basis-full text-secondary">Token Price</span>
-							<StaleText className="min-h-8 mono-xl">{price}</StaleText>
+							<StaleText className="mono-xl">{price}</StaleText>
 							<Icon
 								name="chevron-down"
 								className="size-4.5 text-tertiary transition-transform duration-100 group-open/price:rotate-180"

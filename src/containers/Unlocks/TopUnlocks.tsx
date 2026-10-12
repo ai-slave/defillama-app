@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition, Tooltip } from '~/ui/Tooltip'
 import { formatUsd } from '~/utils/numberFormat'
 import { getEmissionAmountBreakdownOverInterval } from './eventAmount'
 import type { EnrichedProtocolEmission } from './queries'
@@ -56,12 +56,12 @@ export function TopUnlocks({ data, period, title, className, initialNowSec }: To
 
 	return (
 		<div className={`flex flex-col gap-3 text-primary ${className ?? ''}`}>
-			<Tooltip
-				className="heading-xs text-primary"
+			<Definition
+				className="heading-xs"
 				content={`Top cliff and linear token releases accrued during the previous ${period} ${period === 1 ? 'day' : 'days'}. Events without a known amount or valid snapshot price are excluded.`}
 			>
 				{title}
-			</Tooltip>
+			</Definition>
 
 			{topUnlocks.map((unlock) => (
 				<TopThreeRow

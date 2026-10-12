@@ -176,11 +176,11 @@ export function ColumnManagementPanel({
 												data-row
 												ref={focusNeighborOnLeave(() => searchRef.current)}
 												onClick={() => toggleColumnVisibility(column.id)}
-												className="w-full justify-start"
+												className="w-full"
 											>
 												<Icon name="plus" className="size-3.5" />
-												{column.name}
-												{column.id.endsWith('_share') ? <Tag className="ml-auto">%</Tag> : null}
+												<span className="flex-1 text-left">{column.name}</span>
+												{column.id.endsWith('_share') ? <Tag>%</Tag> : null}
 											</Button>
 										))}
 								</div>

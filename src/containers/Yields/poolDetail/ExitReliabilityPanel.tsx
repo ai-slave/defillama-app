@@ -270,7 +270,7 @@ function CrowdingNote({ verified, holders }: { verified: VerifiedBlock; holders:
 		<div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 border-t border-subtle px-3 py-2">
 			<Definition
 				content="Each holder's share of the receipt supply times total deposits, compared against the measured instant lane. Positions are point-in-time and holders rarely exit together — this flags concentration against capacity, not a prediction."
-				className="label-xs tracking-widest text-tertiary"
+				className="label-xs text-tertiary"
 			>
 				CROWDING
 			</Definition>

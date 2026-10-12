@@ -628,7 +628,7 @@ export function ChartStyleEditor({
 										hideLabel
 										label={`Y-axis ${i + 1} max`}
 										error={submitted ? axisErrors[i] : null}
-										className="pl-5.5"
+										className="ml-5.5"
 									>
 										{(control) => (
 											<div className="flex items-center gap-2">

@@ -63,7 +63,7 @@ export function UsdBreakdownCell({
 			placement="right-start"
 			content={<BreakdownTooltipContent breakdown={breakdown} description={description} />}
 			width="md"
-			className="underline decoration-dotted"
+			definition
 		>
 			{formatted}
 		</Hovercard>

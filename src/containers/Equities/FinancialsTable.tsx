@@ -77,10 +77,10 @@ function FinancialRow({
 								event.stopPropagation()
 								setIsExpanded((expanded) => !expanded)
 							}}
-							className="-m-1 flex w-full items-center gap-1 text-left font-semibold"
+							className="-m-1 w-full"
 						>
 							<Icon name={isExpanded ? 'chevron-down' : 'chevron-right'} className="size-3.5" />
-							<span className="truncate">{row.label}</span>
+							<span className="truncate font-semibold">{row.label}</span>
 						</Button>
 					) : (
 						<div className="flex items-center gap-1">

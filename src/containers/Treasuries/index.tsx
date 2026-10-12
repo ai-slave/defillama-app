@@ -98,8 +98,9 @@ const columns = columnHelper.columns([
 				<Hovercard
 					placement="right-start"
 					content={<BreakdownTooltipContent dominance={dominance} protocolName={info.row.original.name} />}
-					render={<button type="button" />}
-					className="h-5 w-full bg-surface-elevated-2 align-middle"
+					// The bar's track is drawn by the button that anchors the card.
+					render={<button type="button" className="h-5 bg-surface-elevated-2" />}
+					className="w-full align-middle"
 				>
 					{dominance.map((dom) => {
 						const color = breakdownColor(dom[0])

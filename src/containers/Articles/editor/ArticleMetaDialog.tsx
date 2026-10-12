@@ -310,7 +310,7 @@ function MetaSheet({
 										heading="Section"
 										variant="input"
 										size="md"
-										className="w-full justify-between"
+										className="w-full"
 										triggerProps={{ ...control }}
 									/>
 								)}

@@ -278,7 +278,26 @@ export const surfaces: Family = {
 			source: 'src/ui/Panel.tsx',
 			knobs: [{ name: 'header', values: ['title', 'controls'], default: 'title', prop: false }],
 			note: 'The controls header puts a Select, a SegmentedControl and a Button in the 32px row.',
-			render: (values) => <PanelDemo values={values} />
+			render: (values) => <PanelDemo values={values} />,
+			states: () => (
+				<Example
+					name="Section link"
+					prop="anchor"
+					note="Hover the title: the link icon shows, and the title links to its own section."
+				>
+					<div className="w-full max-w-sm">
+						<Panel>
+							<PanelHeader>
+								<PanelTitle as="h4" anchor="design-system-panel-anchor">
+									Markets
+								</PanelTitle>
+								<Button size="md">.csv</Button>
+							</PanelHeader>
+							<p className="p-4 body-sm text-secondary">A section the page's nav and shared links point at.</p>
+						</Panel>
+					</div>
+				</Example>
+			)
 		},
 		{
 			name: 'EntityTitleStrip',

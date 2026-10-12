@@ -1,4 +1,5 @@
 import { useRef, type RefObject } from 'react'
+import { Button } from '~/ui/Button'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
@@ -8,9 +9,6 @@ import {
 	setTerminalChatCollapsed,
 	setTerminalChatRatio
 } from './terminalViewStore'
-
-const RAIL_BUTTON_CLASSES =
-	'flex size-6 items-center justify-center rounded-sm bg-brand-tint text-link hover:bg-brand-tint-strong focus-visible:bg-brand-tint-strong'
 
 export function TerminalSplitter({
 	ratio,
@@ -30,9 +28,11 @@ export function TerminalSplitter({
 					content="Show chat"
 					placement="left"
 					render={
-						<button
+						<Button
+							variant="ghost"
+							size="sm"
+							square
 							id="terminal-chat-show"
-							type="button"
 							// The rail leaves with this button; the chat header's Hide chat takes its place.
 							onClick={() =>
 								keepFocus(
@@ -44,7 +44,6 @@ export function TerminalSplitter({
 							data-umami-event-action="expand"
 						/>
 					}
-					className={RAIL_BUTTON_CLASSES}
 				>
 					<Icon name="chevrons-left" className="size-4" />
 					<span className="sr-only">Show chat</span>

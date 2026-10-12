@@ -23,7 +23,7 @@ import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TextLink } from '~/ui/TextLink'
 import { TableToolbar } from '~/ui/Toolbar'
-import { Definition, Tooltip } from '~/ui/Tooltip'
+import { Definition } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
 import { formatCompactNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import type { IDATOverviewDataByAssetProps } from './types'
@@ -53,13 +53,13 @@ export function DATByAsset({
 			<RowLinksWithDropdown heading="Assets" links={allAssets} activeLink={metadata.name} />
 			<SummaryCardGrid>
 				<SummaryStatsCard>
-					<Tooltip
-						render={<h1 />}
+					<Definition
+						as="h1"
 						content={`Institutions that own ${metadata.name} as part of their corporate treasury`}
 						className="heading-sm"
 					>
 						{metadata.name} Treasury Holdings
-					</Tooltip>
+					</Definition>
 					<div className="flex flex-col">
 						<MetricRow label="Total Institution" value={metadata.companies} />
 						<MetricRow

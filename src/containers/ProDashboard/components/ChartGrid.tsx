@@ -896,7 +896,7 @@ export function ChartGrid({ onAddChartClick, onEditItem, tabQueryParam }: ChartG
 							) : layout.shared.length > 0 || !isReadOnly ? (
 								<div className="flex flex-col gap-2">
 									{isReadOnly ? null : (
-										<MetaLine className="px-1">
+										<MetaLine className="mx-1">
 											<>
 												<Icon name="pin" className="size-3" />
 												Shown on every tab

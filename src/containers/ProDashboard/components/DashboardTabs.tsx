@@ -114,7 +114,7 @@ export function DashboardTabs({
 					key={tab.section.id}
 					value={tab.section.id}
 					unmountOnHide
-					className="flex animate-pro-fade-in flex-col gap-2 pt-2 data-leave:hidden"
+					className="flex animate-pro-fade-in flex-col gap-2 pt-3 data-leave:hidden"
 				>
 					{renderTab(tab)}
 				</TabPanel>

@@ -741,7 +741,7 @@ export const SettingsModal = memo(function SettingsModal({
 															labelType="none"
 															variant="input"
 															size="md"
-															className="w-full justify-between"
+															className="w-full"
 															triggerProps={{ ...control }}
 														/>
 													)}
@@ -773,7 +773,7 @@ export const SettingsModal = memo(function SettingsModal({
 																labelType="none"
 																variant="input"
 																size="md"
-																className="w-full justify-between"
+																className="w-full"
 																triggerProps={{ ...control }}
 															/>
 														)}

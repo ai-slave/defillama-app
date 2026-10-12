@@ -175,7 +175,7 @@ function VenueList({
 			<h4 className="label-md text-primary">{title}</h4>
 			<div className="flex flex-wrap gap-2">
 				{keyedOccurrences(venues, (venue) => venue.name).map(({ item: venue, key }) => (
-					<Tag key={key} className="gap-1.5">
+					<Tag key={key}>
 						{venue.logoUrl ? (
 							<img src={venue.logoUrl} alt={venue.displayName} width={18} height={18} className="rounded-full" />
 						) : null}
@@ -557,11 +557,11 @@ export function TokenPageLive({
 					</div>
 				</div>
 				<div className="flex items-center gap-2 max-lg:w-full">
-					<Button type="button" size="md" onClick={() => setAboutOpen(true)} className="justify-center max-lg:flex-1">
+					<Button type="button" size="md" onClick={() => setAboutOpen(true)} className="max-lg:flex-1">
 						About {asset.symbol}
 						<Icon name="help-circle" className="size-3.5" />
 					</Button>
-					<Button type="button" size="md" className="justify-center max-lg:flex-1">
+					<Button type="button" size="md" className="max-lg:flex-1">
 						Share
 						<Icon name="share" className="size-3.5" />
 					</Button>

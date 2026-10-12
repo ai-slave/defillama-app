@@ -6,9 +6,13 @@ import * as Ariakit from '@ariakit/react'
 
    - Callers choose the trigger `variant` and `size`; product surfaces pin
      their own values instead of inheriting a default.
-   - A picker's `className` appends placement and layout classes (`ml-auto`,
-     `w-full`, `flex-1`). `triggerProps` cannot carry a `className`, because
-     replacing the trigger's classes would override its `variant` and `size`.
+   - A picker's `className` is placement only (`ml-auto`, `w-full`,
+     `flex-1`; policy: check-part-classes). The arrow carries `ml-auto`, so in
+     a trigger wider than its content the arrow sits at the end and everything
+     before it (a logo, a label, a value) stays together at the start; never
+     `justify-between`, which would also pull a logo away from its name.
+     `triggerProps` cannot carry a `className`, because replacing the
+     trigger's classes would override its `variant` and `size`.
    - A picker's trigger is named `{label} dropdown` unless `triggerProps`
      gives it an `id`: inside a `Field` the visible label names it, so never
      also pass an `aria-label` there. With `labelType="none"`, an empty
@@ -25,7 +29,7 @@ const SELECT_TRIGGER_VARIANTS = {
 	default:
 		'touch-target label-sm flex cursor-pointer flex-nowrap items-center gap-2 rounded-lg bg-surface-elevated-1 px-3 py-2 text-primary hover:bg-surface-elevated-2 focus-visible:bg-surface-elevated-2 press-wash',
 	filter:
-		'touch-target label-sm relative flex min-h-6 cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-md border border-medium px-2 py-0.5 text-primary hover:bg-hover-row focus-visible:bg-hover-row not-disabled:not-aria-disabled:active:bg-pressed-row aria-invalid:border-error',
+		'touch-target label-sm relative flex min-h-6 cursor-pointer flex-nowrap items-center gap-2 rounded-md border border-medium px-2 py-0.5 text-primary hover:bg-hover-row focus-visible:bg-hover-row not-disabled:not-aria-disabled:active:bg-pressed-row aria-invalid:border-error',
 	/* Input-style trigger for form-like filter panels: a bg-page field with the
 	   field's outline (border-medium, border-strong on hover) and a
 	   focus:border-brand indicator (outline-hidden is valid per the focus
@@ -41,7 +45,7 @@ export type SelectTriggerVariant = keyof typeof SELECT_TRIGGER_VARIANTS
    in a phone sheet's rows it is 44px like Button md. */
 const SELECT_TRIGGER_MD_VARIANTS: Partial<Record<SelectTriggerVariant, string>> = {
 	filter:
-		'touch-target label-sm relative flex min-h-8 cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-lg border border-medium px-3 py-1.5 text-primary hover:bg-hover-row focus-visible:bg-hover-row not-disabled:not-aria-disabled:active:bg-pressed-row disabled:not-aria-busy:cursor-not-allowed disabled:not-aria-busy:border-disabled disabled:not-aria-busy:text-disabled aria-busy:cursor-progress aria-invalid:border-error sheet:min-h-11 sheet:label-md'
+		'touch-target label-sm relative flex min-h-8 cursor-pointer flex-nowrap items-center gap-2 rounded-lg border border-medium px-3 py-1.5 text-primary hover:bg-hover-row focus-visible:bg-hover-row not-disabled:not-aria-disabled:active:bg-pressed-row disabled:not-aria-busy:cursor-not-allowed disabled:not-aria-busy:border-disabled disabled:not-aria-busy:text-disabled aria-busy:cursor-progress aria-invalid:border-error sheet:min-h-11 sheet:label-md'
 }
 
 export type SelectTriggerSize = 'sm' | 'md'

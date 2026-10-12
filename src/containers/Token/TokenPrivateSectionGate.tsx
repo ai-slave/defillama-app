@@ -5,7 +5,6 @@ import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { Button } from '~/ui/Button'
-import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { EmptyState, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { httpErrorMessage } from '~/utils/async'
@@ -56,15 +55,8 @@ export function TokenPrivateSectionGate({
 		<>
 			<Panel className={hasPlaceholderState ? 'min-h-[80dvh] sm:min-h-[572px]' : undefined}>
 				<PanelHeader>
-					<PanelTitle className="group relative flex scroll-mt-24 items-center gap-1" id={sectionId}>
+					<PanelTitle className="scroll-mt-24" anchor={sectionId}>
 						{title}
-						<a
-							aria-hidden="true"
-							tabIndex={-1}
-							href={`#${sectionId}`}
-							className="absolute top-0 right-0 z-10 flex size-full items-center"
-						/>
-						<Icon name="link" className="invisible size-3.5 group-hover:visible group-focus-visible:visible" />
 					</PanelTitle>
 
 					{headerActions}

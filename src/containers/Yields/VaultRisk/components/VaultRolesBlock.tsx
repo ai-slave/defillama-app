@@ -28,7 +28,7 @@ function EntityBadge({ entity }: { entity: RoleEntity }) {
 		)
 	}
 	return (
-		<Tag className="gap-1">
+		<Tag>
 			<Icon name={ENTITY_ICON[entity.kind] ?? 'help-circle'} className="size-3" aria-hidden />
 			{roleEntityLabel(entity)}
 		</Tag>

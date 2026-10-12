@@ -5,9 +5,9 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { IconTile } from '~/ui/IconTile'
+import { QuestionHelper } from '~/ui/QuestionHelper'
 import { type Status, StatusBadge } from '~/ui/StatusBadge'
 import { Tag } from '~/ui/Tag'
-import { Tooltip } from '~/ui/Tooltip'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import {
@@ -32,15 +32,7 @@ export function MetadataSource({ source }: { source: ExchangeMetadataSource | un
 	return (
 		<span className="flex flex-wrap items-center justify-end gap-1.5">
 			{source.asOf ? <span className="label-sm text-tertiary">As of {formatMetadataAsOf(source.asOf)}</span> : null}
-			{source.note ? (
-				<Tooltip
-					content={source.note}
-					render={<button type="button" aria-label="Source methodology note" />}
-					className="text-tertiary hover:text-primary focus-visible:text-primary"
-				>
-					<Icon name="help-circle" className="size-3.5" />
-				</Tooltip>
-			) : null}
+			{source.note ? <QuestionHelper text={source.note} /> : null}
 			<Button as={BasicLink} href={source.url} target="_blank" rel="noopener noreferrer" size="sm">
 				Source
 				<Icon name="external-link" className="size-3.5" />

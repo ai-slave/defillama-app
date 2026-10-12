@@ -16,11 +16,12 @@ import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
 import { ChartPanelBody, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
+import { PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Select } from '~/ui/Select'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { TableToolbarControlGroup } from '~/ui/Toolbar'
-import { Definition, Tooltip } from '~/ui/Tooltip'
+import { Definition } from '~/ui/Tooltip'
 import { formatMonthYear } from '~/utils/dateFormat'
 import { tokenIconUrl } from '~/utils/icons'
 import { formatUsd, formatPercent } from '~/utils/numberFormat'
@@ -561,16 +562,9 @@ export function IncomeStatement({
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				{showTitles ? (
 					<div>
-						<h2 className={`group relative flex items-center gap-1 heading-xs ${titleClassName ?? ''}`} id={headerId}>
+						<PanelTitle anchor={headerId} className={titleClassName}>
 							Income statement for {name}
-							<a
-								aria-hidden="true"
-								tabIndex={-1}
-								href={`#${headerId}`}
-								className="absolute top-0 right-0 z-10 flex size-full items-center"
-							/>
-							<Icon name="link" className="invisible size-3.5 group-hover:visible group-focus-visible:visible" />
-						</h2>
+						</PanelTitle>
 						{description ? <p className="mt-1 body-sm text-secondary">{description}</p> : null}
 					</div>
 				) : null}
@@ -628,12 +622,12 @@ export function IncomeStatement({
 											{i === 0 && groupBy !== 'Cumulative' ? (
 												<span className="-mr-2 flex items-center justify-start gap-1">
 													<span className="truncate">{header[1]}</span>
-													<Tooltip
+													<Definition
 														content={`Current ${groupBy.toLowerCase()} data is incomplete`}
 														className="title-sm text-warning"
 													>
 														*
-													</Tooltip>
+													</Definition>
 												</span>
 											) : (
 												header[1]
@@ -915,13 +909,6 @@ function IncomeStatementByLabel({
 											groupBy={groupBy}
 											dataType={dataType}
 										/>
-									}
-									className={
-										isEarnings
-											? currentValue >= 0
-												? 'decoration-(--border-data-up-muted)'
-												: 'decoration-(--border-data-down-muted)'
-											: undefined
 									}
 								>
 									{formatUsd(currentValue, { compact: true })}

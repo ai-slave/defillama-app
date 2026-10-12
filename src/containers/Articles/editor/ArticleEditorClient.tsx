@@ -872,7 +872,7 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 					size="lg"
 					headingAs="h1"
 					title="Research not found"
-					className="mx-auto w-full max-w-[760px] px-4 sm:px-6"
+					className="mx-auto w-full max-w-[760px]"
 					actions={
 						<Button as={BasicLink} href="/research/mine" size="md">
 							Back to my research

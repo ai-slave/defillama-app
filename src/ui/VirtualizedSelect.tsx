@@ -63,6 +63,9 @@ type PickerBaseProps<T extends string = string> = {
 	placeholder: string
 	/** The options are still loading: the trigger waits, disabled, with a spinner. */
 	isLoading?: boolean
+	/** The pick is not available yet (it depends on another field). The placeholder says why, in words a reader sees
+	    without hovering: "Select a protocol first". */
+	disabled?: boolean
 	/** Server search: the caller passes the matching `options`, so the list shows them unfiltered. */
 	onSearchChange?: (value: string) => void
 	/** A server search is in flight; the list says so instead of "No results". */
@@ -303,11 +306,12 @@ function PickerTrigger({
 	picked,
 	logo,
 	isLoading,
+	disabled = false,
 	triggerRef,
 	autoFocus,
 	error,
 	className
-}: Pick<PickerBaseProps, 'label' | 'labelAction' | 'triggerRef' | 'autoFocus' | 'error' | 'className'> & {
+}: Pick<PickerBaseProps, 'label' | 'labelAction' | 'triggerRef' | 'autoFocus' | 'error' | 'className' | 'disabled'> & {
 	variant: PickerVariant
 	text: string
 	/** Whether `text` names a pick, or is the placeholder. */
@@ -334,7 +338,7 @@ function PickerTrigger({
 			<ComboboxSelectTrigger
 				ref={triggerRef}
 				autoFocus={autoFocus}
-				disabled={isLoading}
+				disabled={isLoading || disabled}
 				aria-busy={isLoading || undefined}
 				className={`${selectTriggerStyles('filter', 'md')} max-w-72 shrink-0 ${className ?? ''}`}
 			>
@@ -343,7 +347,7 @@ function PickerTrigger({
 		)
 	}
 	return (
-		<div data-invalid={error ? '' : undefined} className={`flex min-w-0 flex-col gap-1 ${className ?? ''}`}>
+		<div data-invalid={error ? '' : undefined} className={`flex min-w-0 flex-col gap-1 text-start ${className ?? ''}`}>
 			<FieldLabel id={labelId} htmlFor={triggerId} label={label} action={labelAction} />
 			<ComboboxSelectTrigger
 				ref={triggerRef}
@@ -352,7 +356,7 @@ function PickerTrigger({
 				aria-labelledby={`${labelId} ${triggerId}`}
 				aria-invalid={error ? true : undefined}
 				aria-describedby={error ? errorId : undefined}
-				disabled={isLoading}
+				disabled={isLoading || disabled}
 				aria-busy={isLoading || undefined}
 				className={`${selectTriggerStyles('input', 'md')} w-full`}
 			>

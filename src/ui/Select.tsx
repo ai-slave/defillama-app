@@ -258,7 +258,7 @@ export function Select(props: ISelect) {
 				) : (
 					<>{label}</>
 				)}
-				<Ariakit.ComboboxSelectArrow className="text-tertiary" />
+				<Ariakit.ComboboxSelectArrow className="ml-auto text-tertiary" />
 			</ComboboxSelectTrigger>
 			{/* Select has no search and holds short lists, so its phone drawer hugs its rows. */}
 			<ComboboxSurface variant="panel" hideOnInteractOutside heading={heading ?? labelText} width={popoverWidth}>

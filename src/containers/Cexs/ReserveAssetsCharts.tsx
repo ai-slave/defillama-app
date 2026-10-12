@@ -54,7 +54,6 @@ export function IncludeOwnTokensSwitch({ ownToken }: { ownToken: string }) {
 			label={`Include own tokens (${ownToken})`}
 			checked={includeOwnTokens}
 			onChange={toggleIncludeOwnTokens}
-			className="gap-2"
 		/>
 	)
 }

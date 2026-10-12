@@ -147,12 +147,12 @@ function ColumnButton(props: ColumnButtonProps) {
 					data-row
 					ref={focusNeighborOnLeave(() => searchRef.current)}
 					onClick={() => toggleColumnVisibility(columnKey, true)}
-					className="w-full justify-start"
+					className="w-full"
 				/>
 			}
 		>
 			<Icon name="plus" className="size-3.5" />
-			{metadata.name}
+			<span className="flex-1 text-left">{metadata.name}</span>
 		</Tooltip>
 	)
 }

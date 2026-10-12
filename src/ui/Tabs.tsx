@@ -25,7 +25,14 @@ import { tw } from './tw'
 
    Item: label-md, px-3 py-2, inactive text-secondary (primary on hover),
    active = text-primary + 2px bg-brand underline bar with rounded top
-   corners, inset 4px from the edges.
+   corners, inset 4px from the edges. An icon before the label or a count
+   after it sits 6px away, laid out by the item itself; a tab wider than its
+   content (`flex-1` on a phone) centers it.
+
+   Panel: `TabPanel` draws nothing, so it is the content's region: its
+   `className` sets the content's layout and inset (a dialog body's p-4, a
+   scrolling sidebar's p-3). A page section's panel directly under an
+   underline track starts 12px below it (`pt-3`).
 
    Track: the subtle bottom border the items sit on, scrolling sideways when
    they overflow, with no scrollbar, like the app's other sideways strips
@@ -85,7 +92,7 @@ export function UnderlineTabList({
 
 type TabLinkProps<T extends ElementType> = {
 	as?: T
-	/** Layout placement only — never colors or spacing. */
+	/** Placement only (policy: check-part-classes). */
 	className?: string
 } & Omit<ComponentPropsWithRef<T>, 'as' | 'className'>
 
@@ -93,7 +100,7 @@ export function TabLink<T extends ElementType = 'a'>({ as, className, ...props }
 	const Component = (as ?? 'a') as ElementType
 	return (
 		<Component
-			className={`relative shrink-0 cursor-pointer px-3 py-2 label-md whitespace-nowrap text-secondary after:absolute after:right-1 after:bottom-0 after:left-1 after:h-0.5 after:rounded-t-xs after:bg-brand after:opacity-0 hover:text-primary focus-visible:text-primary aria-[current=page]:text-primary aria-[current=page]:after:opacity-100 data-[active=true]:text-primary data-[active=true]:after:opacity-100 ${className ?? ''}`.trim()}
+			className={`relative flex shrink-0 cursor-pointer items-center justify-center gap-1.5 px-3 py-2 label-md whitespace-nowrap text-secondary after:absolute after:right-1 after:bottom-0 after:left-1 after:h-0.5 after:rounded-t-xs after:bg-brand after:opacity-0 hover:text-primary focus-visible:text-primary aria-[current=page]:text-primary aria-[current=page]:after:opacity-100 data-[active=true]:text-primary data-[active=true]:after:opacity-100 ${className ?? ''}`.trim()}
 			{...props}
 		/>
 	)

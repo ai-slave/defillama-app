@@ -3,21 +3,12 @@ import Layout from '~/layout'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
-import { Icon } from '~/ui/Icon'
+import { PanelTitle } from '~/ui/Panel'
 
 function Definition({ header, id, children }: { header: string; id: string; children: React.ReactNode }) {
 	return (
-		<Card as="section" aria-labelledby={`${id}-title`} id={id} padding="sm" className="flex flex-col gap-4">
-			<h2 className="group relative flex items-center gap-1 heading-xs" id={`${id}-title`}>
-				{header}
-				<a
-					aria-hidden="true"
-					tabIndex={-1}
-					href={`#${id}`}
-					className="absolute top-0 right-0 z-10 flex size-full items-center"
-				/>
-				<Icon name="link" className="invisible size-3.5 group-hover:visible group-focus-visible:visible" />
-			</h2>
+		<Card as="section" aria-labelledby={id} padding="sm" className="flex flex-col gap-4">
+			<PanelTitle anchor={id}>{header}</PanelTitle>
 			<hr className="border-subtle" />
 			{children}
 		</Card>

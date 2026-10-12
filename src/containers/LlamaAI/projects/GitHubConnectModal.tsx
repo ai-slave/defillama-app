@@ -242,7 +242,7 @@ function GitHubConnectForm({
 										labelType="none"
 										variant="input"
 										size="md"
-										className="w-full justify-between"
+										className="w-full"
 										triggerProps={{
 											...control,
 											// A retry that succeeds replaces its button with this control, which takes the focus it drops.

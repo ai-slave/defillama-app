@@ -188,7 +188,7 @@ export default function NetworkStats() {
 	return (
 		<div className="flex flex-col gap-6">
 			{/* Live Burn Counter */}
-			<Card padding="md" className="p-6">
+			<Card padding="md">
 				<div className="flex items-start justify-between gap-4">
 					<div>
 						<div className="flex items-center gap-3">

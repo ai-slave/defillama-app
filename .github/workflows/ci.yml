@@ -70,6 +70,9 @@ jobs:
       - name: Check status parts policy
         run: bun scripts/policies/check-status-parts.ts --self-test && bun scripts/policies/check-status-parts.ts
 
+      - name: Check part classes policy
+        run: bun scripts/policies/check-part-classes.ts --self-test && bun scripts/policies/check-part-classes.ts
+
       - name: Check form validation policy
         run: bun scripts/policies/check-form-validation.ts --self-test && bun scripts/policies/check-form-validation.ts
 

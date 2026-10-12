@@ -15,12 +15,7 @@ export function AddressActions({
 	return (
 		<span className="inline-flex items-center gap-0.5">
 			<span className="mono-sm text-secondary">{short}</span>
-			<CopyHelper
-				toCopy={address}
-				size="size-3"
-				aria-label={`Copy ${label}`}
-				className="flex shrink-0 items-center p-0.5 text-secondary hover:text-primary"
-			/>
+			<CopyHelper toCopy={address} size="size-3" aria-label={`Copy ${label}`} />
 			{url ? (
 				<a
 					href={url}

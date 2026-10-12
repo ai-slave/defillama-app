@@ -6,6 +6,7 @@ import { Button } from '~/ui/Button'
 import { focusNeighborOnLeave, keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { InlineRenameInput } from '~/ui/InlineTextField'
+import { ListRow } from '~/ui/ListRow'
 import { BusyGlyph, EmptyState } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 
@@ -54,7 +55,7 @@ export function SavedQueriesPanel({ queries, busyTaskId, onApply }: SavedQueries
 						}`}
 					>
 						{isRenaming ? (
-							<span className="flex min-w-0 flex-1 flex-col gap-0.5 py-2">
+							<span className="flex min-w-0 flex-1 flex-col gap-0.5 px-3 py-2">
 								<InlineRenameInput
 									initial={query.name}
 									label="Saved query name"
@@ -76,15 +77,15 @@ export function SavedQueriesPanel({ queries, busyTaskId, onApply }: SavedQueries
 								content={<span className="mono-sm whitespace-pre-wrap">{query.sql}</span>}
 								data-fullwidth
 								render={
-									<Ariakit.Button
-										type="button"
+									<ListRow
+										as={Ariakit.Button}
 										onClick={() => onApply(query)}
 										disabled={isDisabled || isBusy}
 										accessibleWhenDisabled
 										aria-busy={isBusy}
+										className="group/apply flex-1"
 									/>
 								}
-								className="group/apply min-w-0 flex-1 py-2 text-left aria-disabled:cursor-not-allowed"
 							>
 								<span className="flex w-full min-w-0 flex-col gap-0.5">
 									<span className="flex items-center gap-2">

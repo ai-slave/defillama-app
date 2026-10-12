@@ -15,7 +15,6 @@ import type {
 } from '~/containers/Markets/api.types'
 import { MaterialChangeCell, MetricStat, MetricStatStrip } from '~/containers/Markets/marketMetrics'
 import type { Segment } from '~/containers/Markets/segments'
-import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -328,15 +327,8 @@ export function TokenMarketsSection({ geckoId, tokenSymbol, variant = 'section' 
 
 	const sectionHeader = (
 		<PanelHeader>
-			<PanelTitle as="h2" className="group relative flex scroll-mt-24 items-center gap-1" id={TOKEN_MARKETS_SECTION_ID}>
+			<PanelTitle as="h2" className="scroll-mt-24" anchor={TOKEN_MARKETS_SECTION_ID}>
 				Markets
-				<a
-					aria-hidden="true"
-					tabIndex={-1}
-					href={`#${TOKEN_MARKETS_SECTION_ID}`}
-					className="absolute top-0 right-0 z-10 flex size-full items-center"
-				/>
-				<Icon name="link" className="invisible size-3.5 group-hover:visible group-focus-visible:visible" />
 			</PanelTitle>
 			{data?.last_updated ? (
 				<RelativeTime className="label-sm text-secondary" value={data.last_updated} prefix="Updated" />
@@ -362,12 +354,12 @@ export function TokenMarketsSection({ geckoId, tokenSymbol, variant = 'section' 
 
 	if (marketsQuery.isLoading) {
 		if (embedded) {
-			return <SurfaceBodyLoadingStatus label={`Loading ${tokenSymbol} markets`} className="min-h-[200px] p-3" />
+			return <SurfaceBodyLoadingStatus label={`Loading ${tokenSymbol} markets`} className="min-h-[200px]" />
 		}
 		return (
 			<Panel className="flex-1">
 				{sectionHeader}
-				<SurfaceBodyLoadingStatus label={`Loading ${tokenSymbol} markets`} className="p-2" />
+				<SurfaceBodyLoadingStatus label={`Loading ${tokenSymbol} markets`} />
 			</Panel>
 		)
 	}

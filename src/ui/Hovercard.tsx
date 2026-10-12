@@ -1,6 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { isValidElement, type ReactElement } from 'react'
 import { Button } from './Button'
+import { definitionMarkStyles } from './internal/definitionMark'
 import { SURFACE_WIDTH_LADDER, surfaceMotionStyles } from './internal/Popover'
 
 interface IHovercard {
@@ -23,6 +24,8 @@ interface IHovercard {
 	showOnClick?: boolean
 	/** Called each time the card opens, whether by hover, focus or tap. */
 	onOpen?: () => void
+	/** The anchor is text that explains itself (a value with a breakdown): it draws Definition's dotted mark. */
+	definition?: boolean
 }
 
 const WIDTH = {
@@ -54,6 +57,8 @@ const SIDE_FALLBACKS: Record<string, string> = {
  * inner `<span className="truncate">` with `max-w-full` on the anchor; a bar that fills its cell adds `w-full`; an
  * anchor with no text (a pie, a bar) adds `align-middle` so it leaves the text baseline. In a `flex-col` parent the
  * anchor stretches to the column's width, and a side card opens past the widest sibling; add `self-start`.
+ * `className` places the anchor and aligns what it holds; it never styles it (policy: check-part-classes). Text that
+ * explains itself passes `definition` for Definition's dotted mark, and a control is the `render` anchor.
  *
  * Placement: an anchor in a table cell opens to the side (`right-start`, or `left-start` near the table's end). A card
  * above or below covers the neighboring row, and Ariakit keeps it open while the pointer moves toward it, so it
@@ -86,7 +91,8 @@ export function Hovercard({
 	width = 'fit',
 	contentClassName,
 	showOnClick = true,
-	onOpen
+	onOpen,
+	definition = false
 }: IHovercard) {
 	const store = Ariakit.useHovercardStore({
 		placement,
@@ -105,7 +111,7 @@ export function Hovercard({
 		<Ariakit.HovercardProvider store={store}>
 			<Ariakit.HovercardAnchor
 				store={store}
-				className={`inline-flex shrink-0 items-center ${className ?? ''}`}
+				className={`inline-flex shrink-0 items-center ${definition ? definitionMarkStyles : ''} ${className ?? ''}`}
 				render={render ?? <span />}
 				aria-expanded={anchorIsButton ? open : undefined}
 				aria-haspopup={anchorIsButton ? 'dialog' : undefined}

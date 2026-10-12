@@ -12,7 +12,7 @@ import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { PromoBadge } from '~/ui/PromoBadge'
 import { InlineStatus } from '~/ui/Status'
-import { Tooltip } from '~/ui/Tooltip'
+import { Definition } from '~/ui/Tooltip'
 import { CoveragePricingContent } from './sections/SubscriptionCoverage'
 
 const PLAN_TIER: Record<PlanKey, number> = { free: 0, pro: 1, api: 2, enterprise: 3 }
@@ -82,11 +82,11 @@ function FeatureBullet({ item }: { item: FeatureItem }) {
 					{/* The icon is the only sign of whether the plan has the feature, so it carries a name. */}
 					<span className="sr-only">{item.availability === 'check' ? 'Included: ' : 'Not included: '}</span>
 					{item.availability === 'check' ? (
-						<Icon name="check" className="size-6 text-link sm:h-5 sm:w-5" />
+						<Icon name="check" className="size-6 text-link sm:size-5" />
 					) : item.availability === 'x' ? (
-						<Icon name="x" className="size-6 text-error sm:h-5 sm:w-5" />
+						<Icon name="x" className="size-6 text-error sm:size-5" />
 					) : (
-						<Icon name="minus" className="size-6 text-tertiary sm:h-5 sm:w-5" />
+						<Icon name="minus" className="size-6 text-tertiary sm:size-5" />
 					)}
 				</span>
 			)}
@@ -595,15 +595,9 @@ export function ComparisonCell({
 			{isIncluded ? (
 				<Icon name="check" className="size-6 text-link" aria-hidden="true" />
 			) : isLimited ? (
-				// Focusable so keyboards reach the limit's explanation, and tappable on touch, not hover-only.
-				<Tooltip
-					content={tooltip}
-					tabIndex={tooltip ? 0 : undefined}
-					placement="top"
-					className="cursor-help rounded-sm px-1"
-				>
-					<span className="label-md text-warning">Limited</span>
-				</Tooltip>
+				<Definition content={tooltip} className="label-md text-warning">
+					Limited
+				</Definition>
 			) : (
 				<Icon name="minus" className="size-6 text-tertiary" aria-hidden="true" />
 			)}

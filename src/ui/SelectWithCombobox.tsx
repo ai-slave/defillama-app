@@ -374,7 +374,7 @@ export function SelectWithCombobox({
 				) : (
 					<span>{label}</span>
 				)}
-				<Ariakit.ComboboxSelectArrow className="text-tertiary" />
+				<Ariakit.ComboboxSelectArrow className="ml-auto text-tertiary" />
 			</ComboboxSelectTrigger>
 			<ComboboxSurface
 				variant={searchable ? 'list' : 'panel'}

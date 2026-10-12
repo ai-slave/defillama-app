@@ -336,9 +336,15 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 										<td>
 											<Tooltip
 												content="Add token"
-												render={<button type="button" onClick={dialogStore.toggle} aria-label="Add token to compare" />}
 												// The control is the whole 48px matrix cell, so it keeps the cell's own look, not a Button.
-												className="flex size-12 items-center justify-center text-link hover:bg-hover-row focus-visible:bg-hover-row"
+												render={
+													<button
+														type="button"
+														onClick={dialogStore.toggle}
+														aria-label="Add token to compare"
+														className="flex size-12 items-center justify-center text-link hover:bg-hover-row focus-visible:bg-hover-row"
+													/>
+												}
 											>
 												<Icon name="plus" className="size-4" />
 											</Tooltip>
@@ -377,9 +383,15 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 										<td>
 											<Tooltip
 												content="Add token"
-												render={<button type="button" onClick={dialogStore.toggle} aria-label="Add token to compare" />}
 												// The control is the whole 48px matrix cell, so it keeps the cell's own look, not a Button.
-												className="flex size-12 items-center justify-center text-link hover:bg-hover-row focus-visible:bg-hover-row"
+												render={
+													<button
+														type="button"
+														onClick={dialogStore.toggle}
+														aria-label="Add token to compare"
+														className="flex size-12 items-center justify-center text-link hover:bg-hover-row focus-visible:bg-hover-row"
+													/>
+												}
 											>
 												<Icon name="plus" className="size-4" />
 											</Tooltip>

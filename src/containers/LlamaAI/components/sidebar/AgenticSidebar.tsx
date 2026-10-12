@@ -396,7 +396,7 @@ function SidebarPanel({
 				as="aside"
 				padding="none"
 				ref={sidebarRef}
-				className={`llamaai-agentic-sidebar relative flex size-full max-w-[272px] flex-col max-lg:absolute max-lg:top-0 max-lg:right-0 max-lg:bottom-0 max-lg:left-0 max-lg:z-10 lg:mr-2 ${shouldAnimate ? 'motion-safe:animate-[slideInRight_0.15s_ease-out]' : ''}`}
+				className={`relative flex size-full max-w-[272px] flex-col max-lg:absolute max-lg:top-0 max-lg:right-0 max-lg:bottom-0 max-lg:left-0 max-lg:z-10 lg:mr-2 ${shouldAnimate ? 'motion-safe:animate-[slideInRight_0.15s_ease-out]' : ''}`}
 			>
 				<header className="flex flex-col gap-2 border-b border-subtle p-4">
 					<div className="-mx-2 flex items-center gap-1">
@@ -637,8 +637,13 @@ function SidebarPanel({
 							{showBalance && onOpenBalanceSettings ? <SidebarBalance onOpen={onOpenBalanceSettings} /> : null}
 							<Tooltip
 								content="Get the mobile app · iOS & Android"
-								render={<BasicLink href="/app" data-umami-event="mobile-app-chat-sidebar-click" />}
-								className="flex shrink-0 items-center justify-center rounded-br-lg px-4 text-secondary not-disabled:not-aria-disabled:hover:bg-hover-row not-disabled:not-aria-disabled:hover:text-primary"
+								render={
+									<BasicLink
+										href="/app"
+										data-umami-event="mobile-app-chat-sidebar-click"
+										className="flex shrink-0 items-center justify-center rounded-br-lg px-4 text-secondary not-disabled:not-aria-disabled:hover:bg-hover-row not-disabled:not-aria-disabled:hover:text-primary"
+									/>
+								}
 							>
 								<Icon name="download" className="size-4" />
 								<span className="sr-only">Get the mobile app</span>
@@ -658,8 +663,13 @@ function SidebarBalance({ onOpen }: { onOpen: () => void }) {
 	return (
 		<Tooltip
 			content="External Data Balance: credits that let LlamaAI access premium external data sources like onchain data, X profiles, LinkedIn, and more."
-			render={<button type="button" onClick={onOpen} />}
-			className={`flex shrink-0 items-center px-2 mono-sm-bold not-disabled:not-aria-disabled:hover:bg-hover-row ${totalAvailable < 1 ? 'text-warning' : 'text-primary'}`}
+			render={
+				<button
+					type="button"
+					onClick={onOpen}
+					className={`flex shrink-0 items-center px-2 mono-sm-bold not-disabled:not-aria-disabled:hover:bg-hover-row ${totalAvailable < 1 ? 'text-warning' : 'text-primary'}`}
+				/>
+			}
 		>
 			<span className="sr-only">External Data Balance</span>
 			{formatUsd(totalAvailable, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}

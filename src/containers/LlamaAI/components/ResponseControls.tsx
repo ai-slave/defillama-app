@@ -295,7 +295,7 @@ export function ResponseControls({
 						</Tooltip>
 					) : null}
 				</div>
-				<MetaLine className="px-2 tabular-nums">
+				<MetaLine className="ml-2 tabular-nums">
 					{messageMetadata?.x402CostUsd != null
 						? `External data ${formatResponseCost(Number(messageMetadata.x402CostUsd))}`
 						: null}

@@ -158,9 +158,9 @@ export default function TrendingContracts() {
 						</InlineStatus>
 					</div>
 				) : query.isLoading ? (
-					<SurfaceBodyLoadingStatus label="Loading trending contracts" className="p-2" />
+					<SurfaceBodyLoadingStatus label="Loading trending contracts" />
 				) : results.length === 0 ? (
-					<SurfaceBodyStatus variant="empty" className="p-2">
+					<SurfaceBodyStatus variant="empty">
 						No trending contracts found for this chain and time range.
 					</SurfaceBodyStatus>
 				) : (

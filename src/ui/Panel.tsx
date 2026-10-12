@@ -1,4 +1,5 @@
 import type { ComponentProps, ComponentPropsWithoutRef, ElementType } from 'react'
+import { SectionAnchor } from './internal/SectionAnchor'
 
 /* ----------------------------------------------------------------------------
    Panel — the titled chart/table shell. Not for standalone title strips
@@ -16,8 +17,14 @@ import type { ComponentProps, ComponentPropsWithoutRef, ElementType } from 'reac
            inset. Any other surface is a Card (./Card.tsx), which has the
            padding steps.
 
-   `className` is for LAYOUT PLACEMENT ONLY (col-span, min-h, …), same
-   contract as Button/Card.
+   `className` on Panel places it and lays out its content (col-span, min-h,
+   flex-col); it is a box (policy: check-part-classes). PanelHeader and
+   PanelTitle take placement only.
+
+   A section a page links to passes `anchor` to its PanelTitle: the id lands on
+   the heading, and the whole heading links to it with a link icon on hover. A
+   page with the sticky section nav adds `scroll-mt-24` so the jump clears it. A heading outside a panel that links to itself is still a
+   PanelTitle with `anchor`; never rebuild the link and icon.
 ---------------------------------------------------------------------------- */
 
 type PanelProps = Omit<ComponentProps<'div'>, 'className'> & {
@@ -44,11 +51,34 @@ export function PanelHeader({ className, ...props }: ComponentPropsWithoutRef<'d
 
 type PanelTitleProps<T extends ElementType> = {
 	as?: T
-	/** Layout placement only — the type/color comes from the recipe. */
+	/** Placement only — the type and color come from the recipe. */
 	className?: string
+	/** The section's id: the heading takes it as its `id` and links to itself (see the header). */
+	anchor?: string
 } & Omit<ComponentPropsWithoutRef<T>, 'as' | 'className'>
 
-export function PanelTitle<T extends ElementType = 'h2'>({ as, className, ...props }: PanelTitleProps<T>) {
+export function PanelTitle<T extends ElementType = 'h2'>({
+	as,
+	className,
+	anchor,
+	children,
+	...props
+}: PanelTitleProps<T>) {
 	const Component = (as ?? 'h2') as ElementType
-	return <Component className={`mr-auto heading-xs ${className ?? ''}`.trim()} {...props} />
+	if (!anchor)
+		return (
+			<Component className={`mr-auto heading-xs ${className ?? ''}`.trim()} {...props}>
+				{children}
+			</Component>
+		)
+	return (
+		<Component
+			id={anchor}
+			className={`group relative mr-auto flex min-w-0 items-center gap-1 heading-xs ${className ?? ''}`.trim()}
+			{...props}
+		>
+			{children}
+			<SectionAnchor id={anchor} />
+		</Component>
+	)
 }

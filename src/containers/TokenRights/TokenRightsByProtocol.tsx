@@ -11,6 +11,7 @@ import { CopyHelper } from '~/ui/Copy'
 import { DividedGrid } from '~/ui/DividedGrid'
 import { Icon } from '~/ui/Icon'
 import { MetaLine } from '~/ui/MetaLine'
+import { PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StatusBadge, type Status } from '~/ui/StatusBadge'
 import { Tabs, TabPanel } from '~/ui/Tabs'
@@ -313,23 +314,13 @@ export function TokenRightsByProtocol({
 			values={TOKEN_RIGHTS_VIEW_OPTIONS.map((option) => option.value)}
 			id={TOKEN_RIGHTS_PANEL_PREFIX}
 		>
-			<div
-				id={isEmbedded ? TOKEN_RIGHTS_SECTION_ID : undefined}
-				className={isEmbedded ? 'scroll-mt-24 rounded-lg border border-subtle bg-surface' : 'grid grid-cols-1 gap-2'}
-			>
+			<div className={isEmbedded ? 'rounded-lg border border-subtle bg-surface' : 'grid grid-cols-1 gap-2'}>
 				{showHeader ? (
 					headerVariant === 'embedded' ? (
 						<div className="flex flex-wrap items-center gap-2 border-b border-subtle p-2">
-							<h2 className="group relative flex items-center gap-1 heading-xs">
+							<PanelTitle className="scroll-mt-24" anchor={TOKEN_RIGHTS_SECTION_ID}>
 								Token rights and value accrual
-								<a
-									aria-hidden="true"
-									tabIndex={-1}
-									href={`#${TOKEN_RIGHTS_SECTION_ID}`}
-									className="absolute top-0 right-0 z-10 flex size-full items-center"
-								/>
-								<Icon name="link" className="invisible size-3.5 group-hover:visible group-focus-visible:visible" />
-							</h2>
+							</PanelTitle>
 							<TokenRightsHeaderControls updatedLabel={overview.lastUpdatedLabel} />
 						</div>
 					) : (
@@ -669,11 +660,19 @@ function RaiseHistorySection({ tooltip, raises }: { tooltip?: string; raises: Ar
 											<Tooltip
 												content={r.source}
 												render={
-													<a href={r.source} target="_blank" rel="noopener noreferrer" aria-label="View source" />
+													<Button
+														as="a"
+														href={r.source}
+														target="_blank"
+														rel="noopener noreferrer"
+														variant="ghost"
+														size="sm"
+														square
+														aria-label="View source"
+													/>
 												}
-												className="text-secondary hover:text-primary"
 											>
-												<Icon name="external-link" className="size-3.5" />
+												<Icon name="external-link" className="size-4" />
 											</Tooltip>
 										) : null}
 									</td>

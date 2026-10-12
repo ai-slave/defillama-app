@@ -288,7 +288,7 @@ export function GovernanceBlock({
 									}}
 								/>
 							</span>
-							<Tooltip
+							<Definition
 								content={
 									concentration >= 0.99
 										? 'Top-10 holders control effectively all voting power — they decide every vote.'
@@ -296,7 +296,7 @@ export function GovernanceBlock({
 											? 'A small set of holders can pass proposals on their own.'
 											: 'Voting power is relatively distributed.'
 								}
-								{...(concentrationHigh ? { className: toneClasses('danger').text } : {})}
+								className={concentrationHigh ? toneClasses('danger').text : undefined}
 							>
 								{formatPercent(concentration, {
 									input: 'fraction',
@@ -304,7 +304,7 @@ export function GovernanceBlock({
 									maximumFractionDigits: 1,
 									useGrouping: false
 								})}
-							</Tooltip>
+							</Definition>
 						</span>
 					</LabelValueRow>
 				) : null}
@@ -326,7 +326,7 @@ export function GovernanceBlock({
 								</span>
 							</Definition>
 							{g.top10_clears_quorum != null && g.voting_power_top10_tokens != null ? (
-								<Tooltip
+								<Definition
 									content={
 										g.top10_clears_quorum
 											? 'More voting power than quorum sits with the top 10 holders — they could pass a proposal with nobody else voting.'
@@ -335,7 +335,7 @@ export function GovernanceBlock({
 									className={g.top10_clears_quorum ? toneClasses('danger').text : 'text-secondary'}
 								>
 									{`· top 10 hold ${formatCompactNumber(g.voting_power_top10_tokens, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`}
-								</Tooltip>
+								</Definition>
 							) : null}
 						</span>
 					</LabelValueRow>

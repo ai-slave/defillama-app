@@ -191,7 +191,7 @@ export function ProfileMetrics({
 							<MetricRow label={`${segment.label} volume`} tooltip={VOLUME_TOOLTIPS[segment.segment]} value={value} />
 							{nvol ? (
 								<SubMetricRow
-									className="relative pl-6"
+									className="relative"
 									label={
 										<>
 											<span aria-hidden className="absolute top-0 left-2 h-1/2 w-0.5 bg-border-medium" />
@@ -199,7 +199,7 @@ export function ProfileMetrics({
 												aria-hidden
 												className="absolute top-1/2 left-2 h-0.5 w-3 -translate-y-1/2 bg-border-medium"
 											/>
-											Normalized
+											<span className="ps-6">Normalized</span>
 										</>
 									}
 									tooltip={nvol.tooltip}
@@ -258,7 +258,6 @@ export function ProfileMetrics({
 				{profile.nativeToken ? (
 					<MetricRow
 						label="Native Token"
-						className="items-center"
 						value={
 							<BasicLink
 								href={profile.nativeToken.url}
@@ -276,7 +275,7 @@ export function ProfileMetrics({
 								<Change value={profile.nativeToken.change24h} />
 							</BasicLink>
 						}
-						valueClassName="mono-md-bold ml-auto"
+						valueClassName="mono-md-bold ml-auto self-center"
 					/>
 				) : null}
 			</div>

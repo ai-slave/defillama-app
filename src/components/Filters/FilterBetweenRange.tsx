@@ -79,10 +79,10 @@ export function FilterBetweenRange({
 		<Ariakit.PopoverProvider store={popover}>
 			<Ariakit.PopoverDisclosure
 				// The trigger opens a picker-like panel, so it wears the Select trigger beside the other filters.
-				className={`${selectTriggerStyles(variant === 'primary' ? 'filter' : 'default', size)} justify-between`}
+				className={selectTriggerStyles(variant === 'primary' ? 'filter' : 'default', size)}
 			>
 				{trigger}
-				<Ariakit.PopoverDisclosureArrow className="size-3 shrink-0" />
+				<Ariakit.PopoverDisclosureArrow className="ml-auto size-3 shrink-0" />
 			</Ariakit.PopoverDisclosure>
 
 			<PopoverSurface

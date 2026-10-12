@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import type { BlockExplorersResponse } from '~/api/types'
 import { TokenLogo } from '~/components/TokenLogo'
-import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { Tag } from '~/ui/Tag'
 import { CollateralView } from './components/CollateralView'
@@ -35,7 +34,7 @@ interface VaultRiskSectionProps {
 
 function ChainChip({ chain }: { chain: string }) {
 	return (
-		<Tag className="gap-1.5">
+		<Tag>
 			<TokenLogo name={chain.toLowerCase()} kind="chain" size={14} />
 			{chain}
 		</Tag>
@@ -55,23 +54,16 @@ function Shell({
 	return (
 		<section aria-labelledby={SECTION_ID}>
 			<Panel>
-				<PanelHeader className="items-start gap-x-3 gap-y-3">
+				<PanelHeader>
 					<div className="mr-auto min-w-0">
-						<PanelTitle className="group relative flex min-w-0 scroll-mt-24 items-center gap-1" id={SECTION_ID}>
+						<PanelTitle className="scroll-mt-24" anchor={SECTION_ID}>
 							Risk
-							<a
-								aria-hidden="true"
-								tabIndex={-1}
-								href={`#${SECTION_ID}`}
-								className="absolute top-0 right-0 z-10 flex size-full items-center"
-							/>
-							<Icon name="link" className="invisible size-3.5 group-hover:visible group-focus-visible:visible" />
 						</PanelTitle>
 						<p className="mt-1 max-w-3xl body-md text-secondary">
 							{`Depositing into ${poolName || 'this pool'} means underwriting risks you usually can't see: how much you could lose, whether you'd get out in time, and what would cover it.`}
 						</p>
 					</div>
-					{chips ? <div className="flex flex-wrap items-center gap-1.5">{chips}</div> : null}
+					{chips ? <div className="flex flex-wrap items-center gap-1.5 self-start">{chips}</div> : null}
 				</PanelHeader>
 				<div className="flex flex-1 flex-col divide-y divide-(--border-subtle)">{children}</div>
 			</Panel>
@@ -126,7 +118,7 @@ export function VaultRiskUnmapped({
 			chips={
 				protocolId || showChain ? (
 					<>
-						{protocolId ? <Tag className="gap-1.5">{protocolId}</Tag> : null}
+						{protocolId ? <Tag>{protocolId}</Tag> : null}
 						{showChain ? <ChainChip chain={chain} /> : null}
 					</>
 				) : undefined
@@ -243,17 +235,17 @@ export function VaultRiskSection({ data, poolName, chain, explorers, standalone 
 				poolName={vm.vaultName ?? poolName}
 				chips={
 					<>
-						<Tag className="gap-1.5">
+						<Tag>
 							<TokenLogo name={vm.protocolId} kind="token" size={14} />
 							{prettyProtocolSlug(vm.protocolId)}
 						</Tag>
 						{/* the standalone /risk page header already carries chain + contract — repeat
 						    them only on the embedded pool-page view, where this row is the sole identity */}
 						{standalone ? null : <ChainChip chain={vm.chain} />}
-						<Tag className="gap-1.5">{poolTypeLabel}</Tag>
+						<Tag>{poolTypeLabel}</Tag>
 						{/* the same brand can run two vaults with one name+chain — the contract disambiguates */}
 						{!standalone && vm.vaultAddress ? (
-							<Tag className="gap-1.5">
+							<Tag>
 								<AddressActions
 									address={vm.vaultAddress}
 									url={explorerUrl(vm.vaultAddress, vm.chain, explorers)}

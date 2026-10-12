@@ -185,7 +185,7 @@ export function RWAFlowVsPriceStrip({
 		<p className="flex flex-wrap items-baseline gap-x-2 gap-y-1 px-2 pt-2 body-sm">
 			{flowDrivenCopy ? (
 				<>
-					<Definition content={flowDrivenCopy.tooltip} className="font-medium">
+					<Definition content={flowDrivenCopy.tooltip} className="label-sm">
 						{flowDrivenCopy.label}
 					</Definition>
 					<span aria-hidden className="text-tertiary">

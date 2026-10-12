@@ -689,6 +689,31 @@ const RULES = [
 		pattern: /\bthin-scrollbar\b/g
 	},
 	{
+		id: 'unpositioned-flex-pseudo',
+		description:
+			'a before:/after: utility on a flex or grid row with a gap or justify-between, and no before:absolute/after:absolute: the pseudo-element becomes an empty item, so the gap pads the content (design.md → Flex rows). Position it, or write pointer-coarse:before: for a touch-target tweak',
+		// One class string: a flex or grid display, a gap or justify-between, and a bare before:/after: utility with no
+		// positioning beside it. Variant-scoped pseudo utilities (pointer-coarse:before:) exist only where they apply.
+		match: (content) => {
+			const hits = []
+			for (const [, classes] of withoutComments(content).matchAll(
+				/(?:className=|tw`|['"`])([^'"`]*\b(?:flex|grid)\b[^'"`]*)/g
+			)) {
+				const tokens = classes.split(/\s+/)
+				if (!tokens.some((t) => /^(flex|inline-flex|grid|inline-grid)$/.test(t))) continue
+				if (!tokens.some((t) => /^(gap(-x)?-|justify-between$)/.test(t.split(':').pop()))) continue
+				if (!tokens.some((t) => /^(before|after):/.test(t))) continue
+				if (tokens.some((t) => /^(before|after):(absolute|fixed)$/.test(t))) continue
+				hits.push(classes)
+			}
+			return hits.length > 0 ? hits : null
+		},
+		exceptions: {
+			'src/ui/Button.tsx':
+				"ReservedLabel's pseudo-element is the reserved label itself, an in-flow item beside the icon slot on purpose"
+		}
+	},
+	{
 		id: 'ungated-hover',
 		description:
 			'a hand-written :hover rule outside @media (hover: hover) sticks after a tap on a touch screen; put the :hover selector inside the media query and keep :focus-visible and :active outside it (design.md → Hover)',
@@ -989,20 +1014,6 @@ const RULES = [
 		pattern: /className="px-\d pt-\d (?:pb-\d )?body-sm text-(?:tertiary|data-down)"/g,
 		// src/ui/ScopeNote owns the one note.
 		uiOwned: true
-	},
-	{
-		id: 'surface-class-override',
-		description:
-			'chrome or size classes passed to MenuSurface/PopoverSurface/ComboboxSurface (shadow, bg, border, rounded, padding, w-*, min-w-*, max-w-*, h-*, min-h-*, max-h-*, overflow-*) — the variant owns the chrome, `width` and `maxHeight` own the size; className is placement only',
-		pattern:
-			/<(?:MenuSurface|PopoverSurface|ComboboxSurface)\b[^>]*?className="[^"]*(?<![\w-])(?:shadow|bg|border|rounded|p[xytblr]?|w|min-w|max-w|h|min-h|max-h|overflow(?:-[xy])?)-[^\s"]*/g
-	},
-	{
-		// ChartPanelToolbar takes no className, so only the parts that keep a placement className are read.
-		id: 'toolbar-justify-override',
-		description:
-			'justify-* passed to TableToolbar/TableToolbarControlGroup/PanelHeader — they own justify-end; give the left-side item (search, title, view switch) mr-auto instead',
-		pattern: /<(?:TableToolbar|TableToolbarControlGroup|PanelHeader)\b[^>]*?className="[^"]*(?<![\w-])justify-[a-z]+/g
 	},
 	{
 		id: 'chart-toolbar-auto-margin',

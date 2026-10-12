@@ -72,7 +72,6 @@ export function MarketMakersTabs({ active }: { active: string }) {
 						key={tab.to}
 						href={tab.to + periodQuery}
 						aria-current={tab.label === active ? 'page' : undefined}
-						className="flex items-center gap-1.5"
 					>
 						<Icon name={tab.icon} className="size-3.5 shrink-0" aria-hidden />
 						{tab.label}

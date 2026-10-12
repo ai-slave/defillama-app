@@ -14,11 +14,12 @@ import { Icon } from './Icon'
  *
  * Not a filter chip and not a selection pill — those are Button `filter`/`toggle`
  * and `MetricChip`, which own their brand active states. A state colored by
- * whether it is good (Live, Failed) is `StatusBadge`. `className` is for
- * layout placement only, never colors, radius, or type styles.
+ * whether it is good (Live, Failed) is `StatusBadge`. An icon beside the label
+ * sits 4px from it, the same gap in all three. `className` is placement only
+ * (policy: check-part-classes).
  */
 const TAG_CLASSES =
-	'inline-flex items-center rounded-sm border border-medium bg-surface-elevated-1 px-2 py-0.5 body-sm text-secondary'
+	'inline-flex items-center gap-1 rounded-sm border border-medium bg-surface-elevated-1 px-2 py-0.5 body-sm text-secondary'
 
 export function Tag({ className, ...props }: ComponentPropsWithoutRef<'span'>) {
 	return <span className={`${TAG_CLASSES} ${className ?? ''}`.trim()} {...props} />
@@ -28,7 +29,7 @@ export function TagLink({ className, children, ...props }: ComponentPropsWithout
 	// The trailing arrow says it opens something, where a plain Tag beside it does not; a hover wash alone never shows on
 	// touch or to keyboard readers. Up-right opens a new tab, right moves within the site.
 	return (
-		<a className={`${TAG_CLASSES} hover-wash gap-1 ${className ?? ''}`.trim()} {...props}>
+		<a className={`${TAG_CLASSES} hover-wash ${className ?? ''}`.trim()} {...props}>
 			{children}
 			<Icon
 				name={props.target === '_blank' ? 'arrow-up-right' : 'arrow-right'}

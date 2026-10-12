@@ -323,7 +323,7 @@ function ContractItem({ address, explorerUrl }: { address: string; explorerUrl?:
 			) : (
 				<p className="flex items-center gap-1 label-sm break-all">
 					<span>{truncatedAddress}</span>
-					<CopyHelper toCopy={address} className="size-3" />
+					<CopyHelper toCopy={address} size="size-3" />
 				</p>
 			)}
 		</div>
