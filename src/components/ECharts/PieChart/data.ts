@@ -1,4 +1,5 @@
 import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import { buildWatermarkGraphic } from '~/components/ECharts/shared/watermark'
 import { assignUniqueColors, chartColor, OTHERS_COLOR } from '~/constants/colors'
 
 type PieInputRow = Record<string, unknown>
@@ -202,39 +203,12 @@ export function buildPieLayoutOption({
 	const cx = Math.round(availableW / 2)
 	const cy = Math.round((Number.parseFloat(centerY) / 100) * height)
 	const minDim = Math.max(1, Math.min(height, width - reservedRight))
-	let watermarkHeight = 40
-	let watermarkWidth = Math.round(watermarkHeight * (389 / 133))
-	const maxWidth = minDim * 0.6
-	if (watermarkWidth > maxWidth) {
-		const scale = maxWidth / watermarkWidth
-		watermarkWidth = Math.round(watermarkWidth * scale)
-		watermarkHeight = Math.max(20, Math.round(watermarkHeight * scale))
-	}
+	const pieBox = { x: cx - minDim / 2, y: cy - minDim / 2, width: minDim, height: minDim }
 
 	return {
 		series: {
 			center: !showLegend || isSmall || reservedRight <= 0 ? ['50%', centerY] : [cx, centerY]
 		},
-		...(canvasWatermarkEnabled
-			? {
-					graphic: [
-						{
-							id: 'defillama-watermark',
-							type: 'image' as const,
-							zlevel: 10,
-							z: 999,
-							silent: true,
-							left: Math.round(cx - watermarkWidth / 2),
-							top: Math.round(cy - watermarkHeight / 2),
-							style: {
-								image: isDark ? '/assets/defillama-light-neutral.webp' : '/assets/defillama-dark-neutral.webp',
-								width: watermarkWidth,
-								height: watermarkHeight,
-								opacity: 0.3
-							}
-						}
-					]
-				}
-			: {})
+		...(canvasWatermarkEnabled ? { graphic: [buildWatermarkGraphic(isDark, pieBox, 'over')] } : {})
 	}
 }

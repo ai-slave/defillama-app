@@ -26,6 +26,14 @@ A prop that does the same job on two renderers has the same name on both.
 | Export a treemap as PNG               | Native ECharts labels only, set at series, level and data-item scope, with animation off on the treemap series                                                       | `src/components/ChartExport/chartPngExport.ts`                      |
 | Center a pie with outside labels      | `centerY` on `PieChart`, so the pie and its labels center together                                                                                                   | `src/containers/BridgedTVL/BridgedTVLByChain.tsx`                   |
 
+## Watermark
+
+- Every chart with a plot draws the DefiLlama logo through `chartWatermarkGraphic` in `shared/watermark.ts`, centered on its plot: the first grid's plot area, or the canvas for a chart without a grid. Never position a logo with fixed offsets; a small chart puts them on its axis labels.
+- The logo is 14% of the plot height, between 20px and 40px, and no wider than 60% of the plot (`watermarkSize`). A full-size chart reaches 40px.
+- Charts whose marks leave the plot mostly empty draw it `under` the series; treemaps, pies and bar charts with opaque fills draw it `over`.
+- Every chart reads `useCanvasWatermarkEnabled`, so Pro dashboards and embeds show no logo on screen. PNG export always stamps an 80px centered logo, with or without one on screen.
+- Sparklines carry no logo: they are thumbnails inside a row or card.
+
 ## Treemap labels
 
 - Black or white text by relative-luminance contrast against the resolved tile fill, compositing a transparent fill over its background.

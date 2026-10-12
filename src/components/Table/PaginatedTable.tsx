@@ -42,6 +42,7 @@ import { getPaginationControls } from './paginationControls'
 import { TableColumnGroup } from './TableColumnGroup'
 import { TableEmptyRow } from './TableEmptyRow'
 import { TablePager } from './TablePager'
+import { TableWatermark } from './TableWatermark'
 import { useTableCells } from './useTableCells'
 
 interface PaginatedTableProps<F extends PaginationFeatures & SortingFeatures & VisibilityFeatures, T extends RowData> {
@@ -246,29 +247,8 @@ export function PaginatedTable<F extends PaginationFeatures & SortingFeatures & 
 	const tableContent = (
 		<TokenPageTableScroller className="bg-surface" onScroll={stickyHeader ? handleTableScroll : undefined}>
 			{interactionDisabled ? <SurfaceLoadingOverlay label={loadingLabel} /> : null}
-			{/* The watermark sits at mid-height, where an empty table shows its message. */}
-			{rows.length > 0 ? (
-				<div className="pointer-events-none sticky left-0 z-0 h-0 w-full max-sm:hidden" style={{ top: '50%' }}>
-					<img
-						src="/assets/defillama-dark-neutral.webp"
-						alt=""
-						height={53}
-						width={155}
-						className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-30 dark:hidden"
-					/>
-					<img
-						src="/assets/defillama-light-neutral.webp"
-						alt=""
-						height={53}
-						width={155}
-						className="absolute left-1/2 hidden -translate-x-1/2 -translate-y-1/2 opacity-30 dark:block"
-					/>
-				</div>
-			) : null}
-			<TokenPageTable
-				className={`z-10 bg-surface ${tableClassName ?? ''}`}
-				style={{ tableLayout: 'fixed', width: '100%' }}
-			>
+			<TableWatermark rowCount={rows.length} />
+			<TokenPageTable className={`relative ${tableClassName ?? ''}`} style={{ tableLayout: 'fixed', width: '100%' }}>
 				<TableColumnGroup columns={visibleLeafColumns} />
 				{renderHeader({ interactive: !stickyHeader })}
 				<Subscribe source={table.store}>

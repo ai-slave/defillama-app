@@ -17,6 +17,7 @@ import { Definition, Tooltip } from '~/ui/Tooltip'
 import type { SortingFeatures, VisibilityFeatures } from './features/contracts'
 import { TableColumnGroup } from './TableColumnGroup'
 import { TableEmptyRow } from './TableEmptyRow'
+import { TableWatermark } from './TableWatermark'
 import type { TableCssVars, TableLayout } from './types'
 
 interface StickyHeaderLayout {
@@ -360,8 +361,10 @@ export function TableFrame<F extends SortingFeatures & VisibilityFeatures, T ext
 			)}
 			style={{ maxWidth: '100%', WebkitOverflowScrolling: 'touch', ...style }}
 		>
+			<TableWatermark rowCount={rowCount} />
 			<table
 				style={{
+					position: 'relative',
 					width: '100%',
 					minWidth: '100%',
 					tableLayout,

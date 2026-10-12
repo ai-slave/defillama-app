@@ -358,7 +358,7 @@ describe('buildPieLayoutOption', () => {
 	})
 
 	test('shrinks the watermark to fit a small pie and follows the canvas height', () => {
-		expect(watermark(layout({ width: 150, height: 100 }))).toEqual({ left: 45, top: 40, width: 60, height: 21 })
+		expect(watermark(layout({ width: 150, height: 100 }))).toEqual({ left: 46, top: 40, width: 58, height: 20 })
 		expect(watermark(layout({ height: 500 })).top).toBe(230)
 	})
 

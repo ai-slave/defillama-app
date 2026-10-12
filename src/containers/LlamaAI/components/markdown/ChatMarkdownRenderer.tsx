@@ -1,4 +1,5 @@
 import * as Ariakit from '@ariakit/react'
+import type { Element } from 'hast'
 import {
 	type ComponentPropsWithoutRef,
 	type ReactNode,
@@ -10,7 +11,8 @@ import {
 	useState,
 	useSyncExternalStore
 } from 'react'
-import type { Components } from 'react-markdown'
+import type { Components, ExtraProps } from 'react-markdown'
+import { TableWatermark } from '~/components/Table/TableWatermark'
 import { readTableRows, TableImageButtons } from '~/components/TableImage/TableImageButtons'
 import { EntityPreviewLink } from '~/containers/Articles/renderer/EntityPreviewLink'
 import type { ArticleEntityType } from '~/containers/Articles/types'
@@ -76,16 +78,12 @@ function HeadingWithId({
 	return createElement(`h${level}`, attrs, children)
 }
 
-/** Match `HBarChart` / `TreemapChart` graphic watermark sizing */
-const TABLE_WATERMARK_HEIGHT = 40
-const TABLE_WATERMARK_WIDTH = Math.round((389 / 133) * TABLE_WATERMARK_HEIGHT)
-
 type EntityLinkProps = ComponentPropsWithoutRef<'a'> & {
 	onExternalLinkClick?: (href: string) => void
 	allowedExternalHosts?: ReadonlySet<string>
 }
 type MarkdownAnchorProps = EntityLinkProps & { node?: unknown }
-type MarkdownTableProps = ComponentPropsWithoutRef<'table'> & { node?: unknown }
+type MarkdownTableProps = ComponentPropsWithoutRef<'table'> & ExtraProps
 type MarkdownCellProps = ComponentPropsWithoutRef<'th'> & { node?: unknown }
 type MarkdownDataCellProps = ComponentPropsWithoutRef<'td'> & { node?: unknown }
 type MarkdownListProps = ComponentPropsWithoutRef<'ul'> & { node?: unknown }
@@ -99,36 +97,26 @@ const LLAMA_PREVIEW_ENTITY_TYPES = {
 	cex: 'cex'
 } satisfies Record<string, ArticleEntityType>
 
-// Decorative: the table and its export carry the content, so the mark has no accessible name.
-function TableWatermark() {
-	return (
-		<div className="pointer-events-none sticky left-0 z-0 h-0 w-full max-sm:hidden" style={{ top: '50%' }}>
-			<img
-				src="/assets/defillama-dark-neutral.webp"
-				alt=""
-				height={TABLE_WATERMARK_HEIGHT}
-				width={TABLE_WATERMARK_WIDTH}
-				className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-30 dark:hidden"
-			/>
-			<img
-				src="/assets/defillama-light-neutral.webp"
-				alt=""
-				height={TABLE_WATERMARK_HEIGHT}
-				width={TABLE_WATERMARK_WIDTH}
-				className="absolute left-1/2 hidden -translate-x-1/2 -translate-y-1/2 opacity-30 dark:block"
-			/>
-		</div>
-	)
+// The logo counts body rows from the parsed table, so it shows only on a table long enough for it.
+function countBodyRows(table: Element | undefined) {
+	let count = 0
+	for (const section of table?.children ?? []) {
+		if (section.type !== 'element' || section.tagName !== 'tbody') continue
+		for (const row of section.children) if (row.type === 'element' && row.tagName === 'tr') count++
+	}
+	return count
 }
 
 function TableWrapper({
 	children,
+	bodyRowCount,
 	isStreaming = false,
 	tableProps,
 	onTableFullscreenOpen,
 	messageId
 }: {
 	children: ReactNode
+	bodyRowCount: number
 	isStreaming: boolean
 	tableProps?: ComponentPropsWithoutRef<'table'>
 	onTableFullscreenOpen?: () => void
@@ -137,7 +125,7 @@ function TableWrapper({
 	const tableRef = useRef<HTMLDivElement>(null)
 	const fullscreenDialogStore = Ariakit.useDialogStore()
 
-	const mergedTableClassName = `z-10 w-full border-collapse border border-medium body-sm ${tableProps?.className ?? ''}`
+	const mergedTableClassName = `relative w-full border-collapse border border-medium body-sm ${tableProps?.className ?? ''}`
 	const inlineTableClassName = `llamaai-table-inline ${mergedTableClassName}`
 	const fullscreenTableClassName = `llamaai-table-fullscreen ${mergedTableClassName}`
 
@@ -190,8 +178,8 @@ function TableWrapper({
 			<Dialog size="xl" store={fullscreenDialogStore} portal unmountOnHide>
 				<DialogHeader title="Table" />
 				<DialogBody kind="flush">
-					<div className="relative">
-						<TableWatermark />
+					<div className="relative bg-surface">
+						<TableWatermark rowCount={bodyRowCount} />
 						<table {...tableProps} className={fullscreenTableClassName}>
 							{children}
 						</table>
@@ -220,8 +208,8 @@ function TableWrapper({
 					prepareCsv={isStreaming ? undefined : prepareCsv}
 				/>
 			</div>
-			<div ref={tableRef} className="relative overflow-x-auto">
-				<TableWatermark />
+			<div ref={tableRef} className="relative overflow-x-auto bg-surface">
+				<TableWatermark rowCount={bodyRowCount} />
 				<table {...tableProps} className={inlineTableClassName}>
 					{children}
 				</table>
@@ -477,11 +465,12 @@ function MarkdownAnchor(props: EntityLinkProps) {
 	)
 }
 
-function MarkdownTable({ children, ...props }: ComponentPropsWithoutRef<'table'> & { children?: ReactNode }) {
+function MarkdownTable({ children, node, ...props }: MarkdownTableProps) {
 	const current = useContext(MarkdownRenderContextProvider)
 	return (
 		<InTableContext.Provider value>
 			<TableWrapper
+				bodyRowCount={countBodyRows(node)}
 				isStreaming={current?.isStreaming ?? false}
 				tableProps={props}
 				onTableFullscreenOpen={current?.onTableFullscreenOpen}
@@ -530,9 +519,7 @@ const markdownComponents = {
 		</MarkdownHeading>
 	),
 	a: ({ node: _node, ...props }: MarkdownAnchorProps) => <MarkdownAnchor {...props} />,
-	table: ({ children, node: _node, ...props }: MarkdownTableProps) => (
-		<MarkdownTable {...props}>{children}</MarkdownTable>
-	),
+	table: MarkdownTable,
 	th: ({ children, node: _node, ...props }: MarkdownCellProps) => (
 		<th
 			{...props}
@@ -544,7 +531,7 @@ const markdownComponents = {
 	td: ({ children, node: _node, ...props }: MarkdownDataCellProps) => (
 		<td
 			{...props}
-			className={`border border-medium bg-surface px-3 py-2 align-top whitespace-nowrap text-primary [.llamaai-table-fullscreen_&]:[overflow-wrap:anywhere] [.llamaai-table-fullscreen_&]:break-words [.llamaai-table-fullscreen_&]:whitespace-normal ${props.className ?? ''}`}
+			className={`border border-medium px-3 py-2 align-top whitespace-nowrap text-primary [.llamaai-table-fullscreen_&]:[overflow-wrap:anywhere] [.llamaai-table-fullscreen_&]:break-words [.llamaai-table-fullscreen_&]:whitespace-normal ${props.className ?? ''}`}
 		>
 			{children}
 		</td>

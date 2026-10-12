@@ -121,6 +121,25 @@ test('composes search, visibility, sorting, reset, and CSV without rerendering t
 	}
 })
 
+test('shows the logo behind 8 rows and drops it when a search leaves 7', async () => {
+	const container = document.createElement('div')
+	const root = createRoot(container)
+	const assets = Array.from({ length: 8 }, (_, i) => ({ name: i === 0 ? 'Beta' : `Asset ${i}`, value: i }))
+	const logo = () => container.querySelector('img[src^="/assets/defillama-"]')
+	try {
+		await act(async () => root.render(<Fixture rows={assets} />))
+		expect(logo()).not.toBeNull()
+		const input = container.querySelector('input')!
+		await act(async () => {
+			Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, 'Asset')
+			input.dispatchEvent(new Event('input', { bubbles: true }))
+		})
+		expect(container.querySelectorAll('tbody tr')).toHaveLength(7)
+		expect(logo()).toBeNull()
+	} finally {
+		await act(async () => root.unmount())
+	}
+})
 test.each([false, true])('refreshes same-ID columns and data through the provider (virtual: %s)', async (virtual) => {
 	const container = document.createElement('div')
 	const root = createRoot(container)

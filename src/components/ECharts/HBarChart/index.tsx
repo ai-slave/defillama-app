@@ -13,7 +13,7 @@ import { CHART_INSET, CHART_LEGEND_RESERVE } from '../shared/chartSpacing'
 import { resolveChartColor, useChartTheme } from '../shared/chartTheme'
 import { formatTooltipValue } from '../shared/formatters'
 import { useLoadedIconUrls } from '../shared/icon'
-import { buildWatermarkGraphic, useCanvasWatermarkEnabled } from '../shared/watermark'
+import { chartWatermarkGraphic, useCanvasWatermarkEnabled } from '../shared/watermark'
 import { formatHBarTooltip } from './tooltip'
 import type { IHBarChartProps } from './types'
 
@@ -233,7 +233,7 @@ function HBarChart({
 		const leftGridWidth = hasLogos ? LEFT_PAD + LOGO_SIZE + LOGO_GAP + overlayLabelWidth + 8 : CHART_INSET
 
 		const option: EChartsOption = {
-			...(canvasWatermarkEnabled ? { graphic: [buildWatermarkGraphic(isThemeDark)] } : {}),
+			...(canvasWatermarkEnabled ? { graphic: chartWatermarkGraphic(instance, isThemeDark, 'over') } : {}),
 			...(grouped
 				? {
 						legend: {

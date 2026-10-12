@@ -1,6 +1,6 @@
 import type { EChartsOption } from 'echarts'
 import { RadarChart as ERadarChart } from 'echarts/charts'
-import { RadarComponent, TooltipComponent } from 'echarts/components'
+import { GraphicComponent, RadarComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useEffectEvent, useRef } from 'react'
@@ -11,8 +11,9 @@ import { formatNumber } from '~/utils/numberFormat'
 import { usePersistentEChartsLifecycle, withEChartsRenderVisibility } from '../renderVisibility'
 import { type ChartTheme, useChartTheme } from '../shared/chartTheme'
 import { escapeHtml } from '../shared/escapeHtml'
+import { chartWatermarkGraphic, useCanvasWatermarkEnabled } from '../shared/watermark'
 
-echarts.use([ERadarChart, RadarComponent, TooltipComponent, CanvasRenderer])
+echarts.use([ERadarChart, RadarComponent, TooltipComponent, GraphicComponent, CanvasRenderer])
 
 export interface RadarIndicator {
 	/** Axis label; a `\n` wraps it on the chart and becomes a space in the tooltip. */
@@ -63,6 +64,7 @@ export function buildRadarOption(
 
 function RadarChart({ indicators, values, height = '280px', onReady }: IRadarChartProps) {
 	const [isDark] = useDarkModeManager()
+	const canvasWatermarkEnabled = useCanvasWatermarkEnabled()
 	const chartTheme = useChartTheme(isDark)
 	const containerRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
@@ -90,8 +92,16 @@ function RadarChart({ indicators, values, height = '280px', onReady }: IRadarCha
 	}, [persistentLifecycle])
 
 	useEffect(() => {
-		chartRef.current?.setOption(buildRadarOption(indicators, values, chartTheme), { notMerge: true })
-	}, [indicators, values, chartTheme])
+		const instance = chartRef.current
+		if (!instance) return
+		instance.setOption(
+			{
+				...buildRadarOption(indicators, values, chartTheme),
+				graphic: canvasWatermarkEnabled ? chartWatermarkGraphic(instance, isDark, 'under') : []
+			},
+			{ notMerge: true }
+		)
+	}, [indicators, values, chartTheme, canvasWatermarkEnabled, isDark])
 
 	return <div ref={containerRef} className="w-full" style={{ height }} />
 }

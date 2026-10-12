@@ -49,7 +49,12 @@ test('the fullscreen table opens under a visible title and Escape returns focus 
 	expect(document.activeElement).toBe(open)
 })
 
-test('the table watermark is decorative and adds nothing for a screen reader to announce', async () => {
-	await act(async () => root.render(<ChatMarkdownRenderer content={table} />))
+test('a table of 8 rows carries a decorative logo, and a shorter one carries none', async () => {
+	const rows = Array.from({ length: 8 }, (_, i) => `| Protocol ${i} | ${i} |\n`).join('')
+	await act(async () =>
+		root.render(<ChatMarkdownRenderer content={`| Protocol | Revenue |\n| --- | ---: |\n${rows}`} />)
+	)
 	expect([...container.querySelectorAll('img')].map((img) => img.getAttribute('alt'))).toEqual(['', ''])
+	await act(async () => root.render(<ChatMarkdownRenderer content={table} />))
+	expect(container.querySelectorAll('img')).toHaveLength(0)
 })

@@ -23,6 +23,7 @@ import { usePersistentEChartsLifecycle, withEChartsRenderVisibility } from '../r
 import { CHART_INSET } from '../shared/chartSpacing'
 import { useChartTheme } from '../shared/chartTheme'
 import { useLoadedIconUrls } from '../shared/icon'
+import { chartWatermarkGraphic, useCanvasWatermarkEnabled } from '../shared/watermark'
 import type {
 	IScatterChartProps,
 	ScatterChartDatum,
@@ -94,6 +95,7 @@ function ScatterChart({
 	onReady
 }: IScatterChartProps) {
 	const [isDark] = useDarkModeManager()
+	const canvasWatermarkEnabled = useCanvasWatermarkEnabled()
 	const chartTheme = useChartTheme(isDark)
 	const containerRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
@@ -447,6 +449,7 @@ function ScatterChart({
 						dataZoom: [{ type: 'inside', start: 0, end: 100, filterMode: 'none' }]
 					}),
 			labelLayout: { hideOverlap: true },
+			graphic: canvasWatermarkEnabled ? chartWatermarkGraphic(instance, isDark, 'under') : [],
 			series
 		}
 		if (showCategoricalLegend) {
@@ -486,7 +489,9 @@ function ScatterChart({
 		logScale,
 		domain,
 		pinnableTooltip,
-		loadedIcons
+		loadedIcons,
+		canvasWatermarkEnabled,
+		isDark
 	])
 
 	return (

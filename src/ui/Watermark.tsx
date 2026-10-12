@@ -1,4 +1,7 @@
-/** Small DefiLlama logo for the corner of a data card. Matches the PNG export mark. */
+/**
+ * Small DefiLlama logo for the corner of a data card. Matches the PNG export mark. Only for a title row with no
+ * controls: charts carry their logo on the plot and tables behind their rows, never in a header beside buttons.
+ */
 export function Watermark({ className = '' }: { className?: string }) {
 	return (
 		<span

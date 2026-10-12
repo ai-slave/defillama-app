@@ -15,33 +15,13 @@ export type ResolvedMultiSeriesChartOptions = Omit<MultiSeriesChartOptions, 'yAx
 
 export function buildDefaultChartSettings({
 	chartTheme,
-	canvasWatermarkEnabled,
-	isThemeDark,
-	isSmall,
 	valueSymbol
 }: {
 	chartTheme: ChartTheme
-	canvasWatermarkEnabled: boolean
-	isThemeDark: boolean
-	isSmall: boolean
 	valueSymbol: string
 }): ResolvedMultiSeriesChartOptions {
 	const themeColor = chartTheme.text
 	const axisLabelColor = chartTheme.axisLabel
-
-	const graphic = canvasWatermarkEnabled
-		? {
-				type: 'image',
-				z: 0,
-				style: {
-					image: isThemeDark ? '/assets/defillama-light-neutral.webp' : '/assets/defillama-dark-neutral.webp',
-					height: 40,
-					opacity: 0.3
-				},
-				left: isSmall ? '40%' : '45%',
-				top: '130px'
-			}
-		: undefined
 
 	const xAxis: XAXisComponentOption = {
 		type: 'time',
@@ -112,7 +92,7 @@ export function buildDefaultChartSettings({
 		}
 	]
 
-	return { graphic, xAxis, yAxis, legend, dataZoom }
+	return { xAxis, yAxis, legend, dataZoom }
 }
 
 function mergeOption<T>(base: T | undefined, override: T): T {
@@ -135,10 +115,6 @@ export function mergeChartOptions(
 		} else merged.dataZoom = mergeOption(defaults.dataZoom, override)
 	}
 
-	if (Object.hasOwn(overrides, 'graphic')) {
-		if (overrides.graphic === undefined) delete merged.graphic
-		else merged.graphic = mergeOption(defaults.graphic, overrides.graphic)
-	}
 	if (Object.hasOwn(overrides, 'grid')) {
 		if (overrides.grid === undefined) delete merged.grid
 		else merged.grid = mergeOption(defaults.grid, overrides.grid)

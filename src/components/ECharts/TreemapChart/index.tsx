@@ -13,7 +13,7 @@ import { CHART_INSET } from '../shared/chartSpacing'
 import { getChartTheme } from '../shared/chartTheme'
 import { escapeHtml } from '../shared/escapeHtml'
 import { formatChartValue } from '../shared/formatters'
-import { buildWatermarkGraphic, useCanvasWatermarkEnabled } from '../shared/watermark'
+import { chartWatermarkGraphic, useCanvasWatermarkEnabled } from '../shared/watermark'
 import { clearTreemapFocus, registerTreemapFocusTracking } from './focus'
 import { formatNarrativeTreemapLabel, formatNarrativeTreemapTooltip } from './formatters'
 import { formatRwaTreemapTooltip } from './rwaFormatting'
@@ -129,7 +129,7 @@ function TreemapChart({
 		if (!instance) return
 
 		const option: TreemapOption = {
-			...(canvasWatermarkEnabled ? { graphic: [buildWatermarkGraphic(isDark)] } : {}),
+			...(canvasWatermarkEnabled ? { graphic: chartWatermarkGraphic(instance, isDark, 'over') } : {}),
 			tooltip: {
 				className: 'defillama-echarts-tooltip',
 				backgroundColor: 'transparent',

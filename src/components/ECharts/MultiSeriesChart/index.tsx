@@ -21,10 +21,9 @@ import { CanvasRenderer } from 'echarts/renderers'
 import { useContext, useEffect, useEffectEvent, useMemo, useRef } from 'react'
 import type { ChartCsvSource } from '~/components/ChartExport/ChartCsvExportButton'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import { useCanvasWatermarkEnabled } from '~/components/ECharts/shared/watermark'
+import { chartWatermarkGraphic, useCanvasWatermarkEnabled } from '~/components/ECharts/shared/watermark'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
-import { useMedia } from '~/hooks/useMedia'
 import { prefersReducedMotion } from '~/hooks/usePrefersReducedMotion'
 import { useStableCallback } from '~/hooks/useStableCallback'
 import { slug } from '~/utils'
@@ -141,7 +140,6 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 	const isThemeDark = isThemeDarkOverride ?? managedIsThemeDark
 	// Legend icons render only once their image URL has been probed, so the probe result is series input.
 	const chartTheme = useChartTheme(isThemeDark)
-	const isSmall = useMedia(`(max-width: 37.5rem)`)
 	const chartDomRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 	const categoryLogosOverlayRef = useRef<HTMLDivElement>(null)
@@ -174,8 +172,8 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 	const groupBySafe: GroupBy = groupBy ?? 'daily'
 
 	const defaultChartSettings = useMemo(
-		() => buildDefaultChartSettings({ chartTheme, canvasWatermarkEnabled, isThemeDark, isSmall, valueSymbol }),
-		[canvasWatermarkEnabled, chartTheme, isThemeDark, valueSymbol, isSmall]
+		() => buildDefaultChartSettings({ chartTheme, valueSymbol }),
+		[chartTheme, valueSymbol]
 	)
 
 	const datasetDimensions = dataset.dimensions
@@ -558,7 +556,6 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 
 		const {
 			legend,
-			graphic,
 			xAxis,
 			yAxis: _configuredYAxis,
 			grid: _configuredGrid,
@@ -778,7 +775,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		}
 		const renderedLegend = finalLegend ?? legend
 		if (showLegend && renderedLegend !== undefined) option.legend = renderedLegend
-		if (graphic !== undefined) option.graphic = graphic
+		if (canvasWatermarkEnabled) option.graphic = chartWatermarkGraphic(instance, isThemeDark, 'under')
 		if (finalXAxis !== undefined) option.xAxis = finalXAxis
 		// Time axes default to UTC so ticks agree with the UTC tooltip and zoom labels; only an explicit
 		// `false` opts a chart into local time.
@@ -846,7 +843,8 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		syncCategoryLogos,
 		markPointedSeries,
 		chartMotion,
-		hasEnteredRef
+		hasEnteredRef,
+		canvasWatermarkEnabled
 	])
 
 	useEffect(() => {

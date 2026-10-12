@@ -15,7 +15,7 @@ import { formatPercentChange, formatUsd } from '~/utils/numberFormat'
 import { CHART_INSET } from '../../shared/chartSpacing'
 import { formatChartValue } from '../../shared/formatters'
 import { asTooltipDataRecord, normalizeTooltipItems } from '../../shared/tooltip'
-import { buildWatermarkGraphic } from '../../shared/watermark'
+import { chartWatermarkGraphic, useCanvasWatermarkEnabled } from '../../shared/watermark'
 import { clearTreemapFocus, registerTreemapFocusTracking } from '../focus'
 import {
 	CHG_SIZES,
@@ -294,6 +294,7 @@ export default function MarketTreemapChart({
 	onReady
 }: MarketTreemapChartProps) {
 	const [isDark] = useDarkModeManager()
+	const canvasWatermarkEnabled = useCanvasWatermarkEnabled()
 	const containerRef = useRef<HTMLDivElement | null>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
@@ -380,7 +381,6 @@ export default function MarketTreemapChart({
 		const instance = chartRef.current
 		if (!instance) return
 		const option: MarketTreemapOption = {
-			graphic: [buildWatermarkGraphic(isDark)],
 			tooltip: {
 				className: 'defillama-echarts-tooltip',
 				backgroundColor: 'transparent',
@@ -480,20 +480,35 @@ export default function MarketTreemapChart({
 				}
 			]
 		}
+		// The logo is read at each apply, so an icon refresh after a resize keeps it on the current plot.
+		const withWatermark = (): MarketTreemapOption => ({
+			...option,
+			graphic: canvasWatermarkEnabled ? chartWatermarkGraphic(instance, isDark, 'over') : []
+		})
 		clearTreemapFocus(instance)
-		instance.setOption(option, { notMerge: true })
+		instance.setOption(withWatermark(), { notMerge: true })
 		applyOptionRef.current = () => {
 			if (instance.isDisposed()) return
 			// Hide the tooltip before replacing its backing leaf data.
 			instance.dispatchAction({ type: 'hideTip' })
 			clearTreemapFocus(instance)
-			instance.setOption(option, { notMerge: true })
+			instance.setOption(withWatermark(), { notMerge: true })
 		}
 
 		return () => {
 			applyOptionRef.current = null
 		}
-	}, [chartDataTree, colorLabel, formatSizeValue, groupItemsLabel, hasGroups, isDark, showMarketCapRow, sizeLabel])
+	}, [
+		canvasWatermarkEnabled,
+		chartDataTree,
+		colorLabel,
+		formatSizeValue,
+		groupItemsLabel,
+		hasGroups,
+		isDark,
+		showMarketCapRow,
+		sizeLabel
+	])
 
 	return (
 		<div

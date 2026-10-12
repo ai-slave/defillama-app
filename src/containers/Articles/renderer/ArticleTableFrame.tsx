@@ -1,4 +1,5 @@
 import { useCallback, useRef, type ReactNode } from 'react'
+import { TableWatermark } from '~/components/Table/TableWatermark'
 import {
 	headingAbove,
 	readColumnWidths,
@@ -6,15 +7,12 @@ import {
 	TableImageButtons
 } from '~/components/TableImage/TableImageButtons'
 
-const WATERMARK_HEIGHT = 40
-const WATERMARK_WIDTH = Math.round((389 / 133) * WATERMARK_HEIGHT)
-
 // The export control is hidden until hover so a research page stays a reading
 // surface. Coarse pointers have no hover, so it stays visible there.
 const CONTROL_CLASS =
 	'flex items-center justify-center gap-1 rounded-md px-2 py-1 label-xs tracking-wider text-secondary uppercase transition-colors not-disabled:hover:bg-hover-row not-disabled:hover:text-primary focus-visible:bg-hover-row disabled:text-disabled'
 
-export function ArticleTableFrame({ children }: { children: ReactNode }) {
+export function ArticleTableFrame({ children, rowCount }: { children: ReactNode; rowCount: number }) {
 	const wrapRef = useRef<HTMLDivElement>(null)
 
 	const getSource = useCallback(() => {
@@ -36,22 +34,7 @@ export function ArticleTableFrame({ children }: { children: ReactNode }) {
 				</div>
 			</div>
 			<div ref={wrapRef} className="article-table-wrap not-prose relative overflow-x-auto">
-				<div className="pointer-events-none sticky left-0 z-0 h-0 w-full max-sm:hidden" style={{ top: '50%' }}>
-					<img
-						src="/assets/defillama-dark-neutral.webp"
-						alt=""
-						height={WATERMARK_HEIGHT}
-						width={WATERMARK_WIDTH}
-						className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-30 dark:hidden"
-					/>
-					<img
-						src="/assets/defillama-light-neutral.webp"
-						alt=""
-						height={WATERMARK_HEIGHT}
-						width={WATERMARK_WIDTH}
-						className="absolute left-1/2 hidden -translate-x-1/2 -translate-y-1/2 opacity-30 dark:block"
-					/>
-				</div>
+				<TableWatermark rowCount={rowCount} />
 				{children}
 			</div>
 		</div>

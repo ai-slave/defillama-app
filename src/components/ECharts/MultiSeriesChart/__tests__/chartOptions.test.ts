@@ -10,21 +10,7 @@ import {
 	withChartGroupBy
 } from '../chartOptions'
 
-const lightDefaults = (canvasWatermarkEnabled = true) =>
-	buildDefaultChartSettings({
-		chartTheme: getChartTheme(false),
-		canvasWatermarkEnabled,
-		isThemeDark: false,
-		isSmall: false,
-		valueSymbol: '$'
-	})
-
-describe('default chart settings', () => {
-	test('draws the canvas watermark except inside Pro dashboards', () => {
-		expect(lightDefaults(true).graphic).toMatchObject({ type: 'image' })
-		expect(lightDefaults(false).graphic).toBeUndefined()
-	})
-})
+const lightDefaults = () => buildDefaultChartSettings({ chartTheme: getChartTheme(false), valueSymbol: '$' })
 
 describe('mergeChartOptions', () => {
 	test('merges array data zoom overrides into the two default controllers by index', () => {

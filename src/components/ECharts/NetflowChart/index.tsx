@@ -14,6 +14,7 @@ import { formatCompactNumber } from '~/utils/numberFormat'
 import { chartGrid } from '../shared/chartSpacing'
 import { useChartTheme } from '../shared/chartTheme'
 import { normalizeTooltipItems } from '../shared/tooltip'
+import { chartWatermarkGraphic, useCanvasWatermarkEnabled } from '../shared/watermark'
 import { buildNetflowBars } from './data'
 
 echarts.use([BarChart, TooltipComponent, GridComponent, DatasetComponent, GraphicComponent, CanvasRenderer])
@@ -26,6 +27,7 @@ export interface NetflowChartProps {
 
 export default function NetflowChart({ height, onReady, data: allData }: NetflowChartProps) {
 	const [isThemeDark] = useDarkModeManager()
+	const canvasWatermarkEnabled = useCanvasWatermarkEnabled()
 	const chartTheme = useChartTheme(isThemeDark)
 	const [period, setPeriod] = useState<BridgeNetflowPeriod>('month')
 	const containerRef = useRef<HTMLDivElement>(null)
@@ -176,24 +178,11 @@ export default function NetflowChart({ height, onReady, data: allData }: Netflow
 				dimensions: ['Chain', 'Inflow', 'Outflow', 'Net Flow'],
 				source: csvSource
 			},
-			graphic: [
-				{
-					type: 'image',
-					id: 'logo',
-					left: 'center',
-					top: 'center',
-					style: {
-						image: isThemeDark ? '/assets/defillama-light-neutral.webp' : '/assets/defillama-dark-neutral.webp',
-						height: 40,
-						opacity: 0.3
-					},
-					z: -1
-				}
-			]
+			graphic: canvasWatermarkEnabled ? chartWatermarkGraphic(instance, isThemeDark, 'under') : []
 		}
 
 		instance.setOption(option, { notMerge: true })
-	}, [chains, positiveData, negativeData, isThemeDark, chartTheme, csvSource])
+	}, [chains, positiveData, negativeData, isThemeDark, chartTheme, csvSource, canvasWatermarkEnabled])
 
 	useEffect(() => {
 		const instance = chartRef.current

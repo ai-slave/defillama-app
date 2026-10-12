@@ -28,7 +28,6 @@ import { useEffect, useEffectEvent, useMemo, useRef } from 'react'
 import { chartColor, oldBlue } from '~/constants/colors'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
-import { useMedia } from '~/hooks/useMedia'
 import { usePersistentEChartsLifecycle, withEChartsRenderVisibility } from '../renderVisibility'
 import {
 	CHART_INSET,
@@ -39,6 +38,7 @@ import {
 import { useChartTheme } from '../shared/chartTheme'
 import { formatChartEmphasisDate, formatTooltipChartDate, formatTooltipValue } from '../shared/formatters'
 import { normalizeTooltipItems } from '../shared/tooltip'
+import { chartWatermarkGraphic, useCanvasWatermarkEnabled } from '../shared/watermark'
 import { candlestickLegendData } from './legend'
 import type { ICandlestickChartProps } from './types'
 
@@ -73,7 +73,7 @@ function CandleStickAndVolumeChart({
 	onReady
 }: ICandlestickChartProps) {
 	const [isThemeDark] = useDarkModeManager()
-	const isSmall = useMedia(`(max-width: 37.5rem)`)
+	const canvasWatermarkEnabled = useCanvasWatermarkEnabled()
 	const chartTheme = useChartTheme(isThemeDark)
 	const containerRef = useRef<HTMLDivElement | null>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
@@ -222,17 +222,6 @@ function CandleStickAndVolumeChart({
 		return {
 			// Match the UTC tooltip and zoom labels: ticks sit on UTC-midnight candles in every timezone.
 			useUTC: true,
-			graphic: {
-				type: 'image',
-				z: 0,
-				style: {
-					image: isThemeDark ? '/assets/defillama-light-neutral.webp' : '/assets/defillama-dark-neutral.webp',
-					height: 40,
-					opacity: 0.3
-				},
-				left: isSmall ? '40%' : '45%',
-				top: '130px'
-			},
 			legend: {
 				show: showLegend,
 				data: legendData,
@@ -292,7 +281,7 @@ function CandleStickAndVolumeChart({
 				}
 			]
 		}
-	}, [isSmall, isThemeDark, chartTheme, panels, overlays, hasVolume, firstPanelGrid])
+	}, [chartTheme, panels, overlays, hasVolume, firstPanelGrid])
 
 	const series = useMemo(() => {
 		const result: Array<CandlestickSeriesOption | BarSeriesOption | LineSeriesOption> = [
@@ -451,6 +440,8 @@ function CandleStickAndVolumeChart({
 
 		const option: EChartsOption = {
 			...defaultChartSettings,
+			// The price panel is grid 0, so the logo centers on it.
+			graphic: canvasWatermarkEnabled ? chartWatermarkGraphic(instance, isThemeDark, 'under') : [],
 			dataset: { source: data },
 			series
 		}
@@ -461,7 +452,7 @@ function CandleStickAndVolumeChart({
 			// (making grid.left/right look like they "don't apply"). Replace-merge fixes that.
 			{ replaceMerge: ['grid', 'xAxis', 'yAxis', 'series', 'dataZoom', 'dataset'] }
 		)
-	}, [series, data, defaultChartSettings])
+	}, [series, data, defaultChartSettings, canvasWatermarkEnabled, isThemeDark])
 
 	return (
 		<div

@@ -447,7 +447,7 @@ function renderTable(node: TiptapJson, key: string, ctx: RenderContext) {
 	const hasColWidths = hasStoredColumnWidths(node)
 
 	return (
-		<ArticleTableFrame key={key}>
+		<ArticleTableFrame key={key} rowCount={bodyRows.length}>
 			<table
 				className={`article-table relative z-10 w-full border-collapse body-md ${hasColWidths ? 'table-fixed' : ''}`}
 			>

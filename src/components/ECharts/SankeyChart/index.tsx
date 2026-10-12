@@ -1,4 +1,4 @@
-import type { EChartsOption, GraphicComponentOption, TooltipComponentOption } from 'echarts'
+import type { EChartsOption, TooltipComponentOption } from 'echarts'
 import { SankeyChart as ESankeyChart, type SankeySeriesOption } from 'echarts/charts'
 import { GraphicComponent, GridComponent, TitleComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
@@ -6,7 +6,7 @@ import { LabelLayout } from 'echarts/features'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
-import { useCanvasWatermarkEnabled } from '~/components/ECharts/shared/watermark'
+import { chartWatermarkGraphic, useCanvasWatermarkEnabled } from '~/components/ECharts/shared/watermark'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { useMedia } from '~/hooks/useMedia'
@@ -167,19 +167,6 @@ function SankeyChart({
 	])
 
 	const option = useMemo<EChartsOption>(() => {
-		const graphic: GraphicComponentOption = canvasWatermarkEnabled
-			? {
-					type: 'image',
-					z: 0,
-					style: {
-						image: isDark ? '/assets/defillama-light-neutral.webp' : '/assets/defillama-dark-neutral.webp',
-						height: 40,
-						opacity: 0.3
-					},
-					left: isSmall ? '35%' : '40%',
-					top: '50%'
-				}
-			: undefined
 		const tooltip: TooltipComponentOption = {
 			trigger: 'item',
 			triggerOn: isSmall ? 'click' : 'mousemove',
@@ -205,11 +192,10 @@ function SankeyChart({
 		}
 
 		return {
-			graphic,
 			tooltip,
 			series
 		}
-	}, [canvasWatermarkEnabled, series, isDark, isSmall, useMobileLayout, nodeMetadata, formatSankeyValue])
+	}, [series, isSmall, useMobileLayout, nodeMetadata, formatSankeyValue])
 
 	const getOption = useCallback(
 		(element: HTMLDivElement): EChartsOption => {
@@ -232,8 +218,14 @@ function SankeyChart({
 		const instance = chartRef.current
 		const element = containerRef.current
 		if (!isVisibleRef.current || !instance || instance.isDisposed() || !element) return
-		instance.setOption(getOption(element), { notMerge: true })
-	}, [getOption])
+		instance.setOption(
+			{
+				...getOption(element),
+				graphic: canvasWatermarkEnabled ? chartWatermarkGraphic(instance, isDark, 'under') : []
+			},
+			{ notMerge: true }
+		)
+	}, [getOption, canvasWatermarkEnabled, isDark])
 
 	const initializeChart = useCallback(() => {
 		const currentInstance = chartRef.current

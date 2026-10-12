@@ -98,7 +98,7 @@ export type MultiSeriesYAxisOverride =
  * This prevents a typed option from being silently ignored by the modular ECharts
  * runtime; series and dataset remain canonical renderer props.
  */
-export type MultiSeriesChartOptions = Pick<EChartsOption, 'dataZoom' | 'graphic' | 'legend'> & {
+export type MultiSeriesChartOptions = Pick<EChartsOption, 'dataZoom' | 'legend'> & {
 	series?: never
 	dataset?: never
 	/** The renderer owns one Cartesian coordinate system. */

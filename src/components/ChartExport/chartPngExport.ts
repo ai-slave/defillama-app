@@ -818,7 +818,12 @@ export function ensureExportWatermarkGraphic(
 ): Array<any> {
 	if (graphic.some((g) => (g.elements ?? [g]).some(isWatermarkGraphicElement))) return graphic
 	const { height, width, top, left } = exportWatermarkGeometry(exportHeight)
-	const watermark = buildWatermarkGraphic(isDark, height)
+	// The export logo keeps its fixed 80px, so only the image and opacity come from the shared builder.
+	const watermark = buildWatermarkGraphic(
+		isDark,
+		{ x: 0, y: 0, width: IMAGE_EXPORT_WIDTH, height: exportHeight },
+		'under'
+	)
 	return [
 		{
 			...(graphic[0]?.elements ? graphic[0] : {}),

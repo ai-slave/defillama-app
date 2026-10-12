@@ -5,11 +5,10 @@ import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useEffectEvent, useRef } from 'react'
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
-import { useCanvasWatermarkEnabled } from '~/components/ECharts/shared/watermark'
+import { chartWatermarkGraphic, useCanvasWatermarkEnabled } from '~/components/ECharts/shared/watermark'
 import { TreemapLabelContrast } from '~/components/ECharts/TreemapChart/labelContrast'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
-import { useMedia } from '~/hooks/useMedia'
 import { formatPercent } from '~/utils/numberFormat'
 import { usePersistentEChartsLifecycle, withEChartsRenderVisibility } from '../../renderVisibility'
 import { clearTreemapFocus, registerTreemapFocusTracking } from '../focus'
@@ -45,7 +44,6 @@ function normalizeTreemapFormatterParams(params: unknown): TreemapFormatterParam
 function BuilderTreemapChart({ data, height, containerClassName, onReady }: BuilderTreemapChartProps) {
 	const canvasWatermarkEnabled = useCanvasWatermarkEnabled()
 	const [isDark] = useDarkModeManager()
-	const isSmall = useMedia(`(max-width: 37.5rem)`)
 	const containerRef = useRef<HTMLDivElement | null>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 	const persistentLifecycle = usePersistentEChartsLifecycle()
@@ -87,22 +85,8 @@ function BuilderTreemapChart({ data, height, containerClassName, onReady }: Buil
 
 		const total = data.reduce((sum, item) => sum + item.value, 0)
 
-		const graphic = canvasWatermarkEnabled
-			? {
-					type: 'image',
-					z: 100,
-					style: {
-						image: isDark ? '/assets/defillama-light-neutral.webp' : '/assets/defillama-dark-neutral.webp',
-						height: 40,
-						opacity: 0.3
-					},
-					left: isSmall ? '40%' : '45%',
-					top: '45%'
-				}
-			: undefined
-
 		const option: EChartsOption = {
-			graphic,
+			graphic: canvasWatermarkEnabled ? chartWatermarkGraphic(instance, isDark, 'over') : [],
 			toolbox: {
 				show: false,
 				feature: {
@@ -189,7 +173,7 @@ function BuilderTreemapChart({ data, height, containerClassName, onReady }: Buil
 
 		clearTreemapFocus(instance)
 		instance.setOption(option, true)
-	}, [canvasWatermarkEnabled, data, isDark, isSmall])
+	}, [canvasWatermarkEnabled, data, isDark])
 
 	return (
 		<div
