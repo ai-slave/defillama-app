@@ -2,6 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { Button } from '~/ui/Button'
 import { Checkbox } from '~/ui/Checkbox'
+import { DisclosureArrow } from '~/ui/ComboboxSelectTrigger'
 import { DrawerDismiss, PopoverSurface } from '~/ui/PopoverSurface'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Skeleton } from '~/ui/Skeleton'
@@ -182,7 +183,7 @@ function ApyViewSheet({
 				<span className={isDefault ? 'text-secondary' : undefined}>APY</span>
 				<span>{WINDOW_LABELS[window]}</span>
 				<span className="sr-only">view settings: {spoken}</span>
-				<Ariakit.PopoverDisclosureArrow className="size-4 shrink-0 text-tertiary" />
+				<DisclosureArrow />
 			</Ariakit.PopoverDisclosure>
 			<PopoverSurface variant="panel" dismiss="own" overflowPadding={16} width="lg">
 				<div className="flex items-center justify-between gap-2 border-b border-subtle py-1 pr-1 pl-4">

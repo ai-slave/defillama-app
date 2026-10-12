@@ -2,7 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useRef, useState, type InputHTMLAttributes, type ReactNode } from 'react'
 import type { FormSubmitHandler } from '~/types/forms'
 import { Button } from '~/ui/Button'
-import { selectTriggerStyles } from '~/ui/ComboboxSelectTrigger'
+import { PopoverSelectTrigger } from '~/ui/ComboboxSelectTrigger'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Input } from '~/ui/Input'
@@ -77,13 +77,9 @@ export function FilterBetweenRange({
 
 	return (
 		<Ariakit.PopoverProvider store={popover}>
-			<Ariakit.PopoverDisclosure
-				// The trigger opens a picker-like panel, so it wears the Select trigger beside the other filters.
-				className={selectTriggerStyles(variant === 'primary' ? 'filter' : 'default', size)}
-			>
+			<PopoverSelectTrigger variant={variant === 'primary' ? 'filter' : 'default'} size={size}>
 				{trigger}
-				<Ariakit.PopoverDisclosureArrow className="ml-auto size-3 shrink-0" />
-			</Ariakit.PopoverDisclosure>
+			</PopoverSelectTrigger>
 
 			<PopoverSurface
 				variant="list"

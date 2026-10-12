@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { CHART_COLORS } from '~/constants/colors'
-import { selectTriggerStyles } from '~/ui/ComboboxSelectTrigger'
+import { PopoverSelectTrigger } from '~/ui/ComboboxSelectTrigger'
 import { focusNeighborOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { PopoverRow, PopoverSurface } from '~/ui/PopoverSurface'
@@ -202,16 +202,17 @@ function YSeriesPicker({
 	return (
 		<div className="flex items-center gap-1.5">
 			<Ariakit.PopoverProvider>
-				<Ariakit.PopoverDisclosure
+				<PopoverSelectTrigger
 					aria-label="Y series"
 					disabled={splitByActive}
-					className={`${selectTriggerStyles('filter', 'md')} max-w-72 shrink-0`}
+					variant="filter"
+					size="md"
+					className="max-w-72 shrink-0"
 				>
 					{/* Reads "y: value" like the x and split-by chips beside it. */}
 					<span className="shrink-0">y: </span>
 					<span className="truncate text-link">{label}</span>
-					<Icon name="chevron-down" className="size-3 shrink-0 text-tertiary" />
-				</Ariakit.PopoverDisclosure>
+				</PopoverSelectTrigger>
 				<PopoverSurface variant="panel" heading="Y series" aria-label="Y series settings" gutter={4} width="md">
 					<div className="flex flex-col gap-1 p-2">
 						{yCols.length > 0 ? (

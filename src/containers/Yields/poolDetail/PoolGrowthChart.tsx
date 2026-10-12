@@ -15,6 +15,7 @@ import { useDebouncedCallback } from '~/hooks/useDebounce'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Change } from '~/ui/Change'
 import { ChartPanelBody } from '~/ui/ChartPanel'
+import { DisclosureArrow } from '~/ui/ComboboxSelectTrigger'
 import { Field } from '~/ui/Field'
 import { Input } from '~/ui/Input'
 import { MetricSeriesToggle } from '~/ui/MetricChip'
@@ -455,7 +456,7 @@ function GrowthReadout({
 						className={`${readoutFieldStyles} inline-flex items-center gap-1.5`}
 					>
 						{anchoredOn ? (formatDate(anchoredOn) ?? anchoredOn) : '—'}
-						<Ariakit.PopoverDisclosureArrow className="size-3.5 shrink-0 text-tertiary" />
+						<DisclosureArrow />
 					</Ariakit.PopoverDisclosure>
 					<PopoverSurface variant="panel" dismiss="own" width="md">
 						<div className="flex items-center justify-between gap-2 border-b border-subtle py-1 pr-1 pl-3">

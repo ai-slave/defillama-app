@@ -4,9 +4,9 @@ import utc from 'dayjs/plugin/utc'
 import { useState } from 'react'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
+import { DisclosureArrow } from '~/ui/ComboboxSelectTrigger'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
-import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { PopoverSurface } from '~/ui/PopoverSurface'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -75,10 +75,8 @@ export function CustomTimePeriodPicker({
 				render={<Button size="md" type="button" variant="toggle" data-active={isActive} />}
 				disabled={disabled}
 			>
-				<span className="flex items-center gap-1">
-					{isActive ? formatCompactLabel(customPeriod) : 'Custom'}
-					<Icon name="chevron-down" className="size-3.5" />
-				</span>
+				{isActive ? formatCompactLabel(customPeriod) : 'Custom'}
+				<DisclosureArrow />
 			</Ariakit.PopoverDisclosure>
 
 			<PopoverSurface variant="list" heading="Custom time period" gutter={8} style={{ minWidth: '300px' }}>

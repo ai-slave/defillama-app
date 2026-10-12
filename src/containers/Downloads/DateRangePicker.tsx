@@ -2,10 +2,9 @@ import * as Ariakit from '@ariakit/react'
 import { useState, type Ref } from 'react'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
-import { selectTriggerStyles } from '~/ui/ComboboxSelectTrigger'
+import { PopoverSelectTrigger } from '~/ui/ComboboxSelectTrigger'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
-import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { PopoverSurface } from '~/ui/PopoverSurface'
 import { formatDate } from '~/utils/dateFormat'
@@ -75,17 +74,18 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled, t
 
 	return (
 		<Ariakit.PopoverProvider store={popover}>
-			<Ariakit.PopoverDisclosure
+			<PopoverSelectTrigger
 				ref={triggerRef}
 				disabled={disabled}
-				className={`${selectTriggerStyles('filter', 'md')} max-w-72 shrink-0`}
+				variant="filter"
+				size="md"
+				className="max-w-72 shrink-0"
 			>
 				<span className="shrink-0">Date range: </span>
 				<span className={`truncate ${isActive ? 'text-link' : 'text-tertiary'}`}>
 					{isActive && value ? formatDateRangeLong(value) : 'All'}
 				</span>
-				<Icon name="chevron-down" className="size-3.5 shrink-0 text-tertiary" />
-			</Ariakit.PopoverDisclosure>
+			</PopoverSelectTrigger>
 
 			<PopoverSurface variant="panel" heading="Date range" width="lg">
 				<div className="flex flex-col gap-3 p-3">

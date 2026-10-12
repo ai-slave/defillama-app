@@ -1,10 +1,9 @@
 import * as Ariakit from '@ariakit/react'
 import { useState } from 'react'
 import { Button } from '~/ui/Button'
-import { selectTriggerStyles } from '~/ui/ComboboxSelectTrigger'
+import { PopoverSelectTrigger } from '~/ui/ComboboxSelectTrigger'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
-import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { PopoverSurface } from '~/ui/PopoverSurface'
 import { formatNumber } from '~/utils/numberFormat'
@@ -45,18 +44,14 @@ export function RowLimitPicker({ value, totalRows, onChange, disabled }: RowLimi
 
 	return (
 		<Ariakit.PopoverProvider store={popover}>
-			<Ariakit.PopoverDisclosure
-				disabled={disabled}
-				className={`${selectTriggerStyles('filter', 'md')} max-w-72 shrink-0`}
-			>
+			<PopoverSelectTrigger disabled={disabled} variant="filter" size="md" className="max-w-72 shrink-0">
 				<span className="shrink-0">Row limit: </span>
 				<span className={`truncate ${isActive ? 'text-link' : 'text-tertiary'}`}>
 					{isActive && value
 						? `Top ${formatNumber(value)}${totalRows > 0 ? ` of ${formatNumber(totalRows)}` : ''}`
 						: 'All'}
 				</span>
-				<Icon name="chevron-down" className="size-3.5 shrink-0 text-tertiary" />
-			</Ariakit.PopoverDisclosure>
+			</PopoverSelectTrigger>
 
 			<PopoverSurface variant="panel" heading="Row limit" width="md">
 				<div className="flex flex-col gap-3 p-3">

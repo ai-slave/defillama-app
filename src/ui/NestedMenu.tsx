@@ -1,6 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useId, type ReactNode } from 'react'
 import { Button } from './Button'
+import { DisclosureArrow } from './ComboboxSelectTrigger'
 import { Icon } from './Icon'
 import { Check } from './internal/Check'
 import { nestedMenuDisclosureIconStyles, nestedMenuRootRowStyles, nestedMenuSelectRowStyles } from './internal/Popover'
@@ -25,13 +26,7 @@ export function NestedMenu({ label, children, combobox, ...props }: NestedMenuPr
 				render={menu.parent ? <Ariakit.MenuItem hideOnClick={false} render={props.render} /> : <Button size="md" />}
 			>
 				<span className={labelClassName}>{label}</span>
-				{menu.parent ? (
-					<Icon name="chevron-right" className={nestedMenuDisclosureIconStyles} />
-				) : (
-					<span>
-						<Ariakit.MenuButtonArrow className="size-4 shrink-0" />
-					</span>
-				)}
+				{menu.parent ? <Icon name="chevron-right" className={nestedMenuDisclosureIconStyles} /> : <DisclosureArrow />}
 			</Ariakit.MenuButton>
 			<MenuSurface
 				{...(menu.parent ? { variant: 'nested' as const } : { variant: 'list' as const, dismiss: 'own' as const })}

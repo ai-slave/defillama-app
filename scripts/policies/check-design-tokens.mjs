@@ -912,15 +912,20 @@ const RULES = [
 	{
 		id: 'hand-built-picker',
 		description:
-			'a picker assembled from Ariakit combobox or select parts, or ComboboxSelectTrigger, outside src/ui — a short list is Select, a mid-sized one SelectWithCombobox, a long one VirtualizedSelect (design.md "Which component for which job"); ComboboxSelectTrigger draws the arrow, so a caller never adds one',
-		pattern: /<(?:Ariakit\.(?:ComboboxSelect|Select|ComboboxSelectArrow|SelectArrow)|ComboboxSelectTrigger)\b/g,
+			'a picker or picker-like trigger assembled by hand outside src/ui: Ariakit combobox or select parts, ComboboxSelectTrigger, selectTriggerStyles, or an Ariakit arrow. A short list is Select, a mid-sized one SelectWithCombobox, a long one VirtualizedSelect (design.md "Which component for which job"); a popover that opens a picker-like panel is PopoverSelectTrigger; a Button that opens a list or names a value ends with DisclosureArrow',
+		pattern:
+			/<(?:Ariakit\.(?:ComboboxSelect|Select|ComboboxSelectArrow|SelectArrow|PopoverDisclosureArrow|MenuButtonArrow)|ComboboxSelectTrigger)\b|\bselectTriggerStyles\(/g,
 		uiOwned: true,
 		skipTests: true,
 		exceptions: {
 			'src/components/Nav/Mobile/Settings.tsx':
 				'an icon-only button whose list mixes the TVL toggles with Dark Mode; no picker renders an icon trigger',
 			'src/containers/Articles/editor/ArticleClientField.tsx':
-				'loads the Trusted by list only when it opens and shows that load inside the list; no picker takes a lazy option list'
+				'loads the Trusted by list only when it opens and shows that load inside the list; no picker takes a lazy option list',
+			'src/containers/CompareTokens/index.tsx':
+				'a field-look button that opens a token search dialog, with a search icon instead of an arrow; no picker opens a dialog',
+			'src/containers/TokenPnl/index.tsx':
+				'a field-look button that opens a token search dialog, with a search icon instead of an arrow; no picker opens a dialog'
 		}
 	},
 	{

@@ -9,14 +9,14 @@ import { BusyGlyph } from './Status'
      their own values instead of inheriting a default.
    - A picker's `className` is placement only (`ml-auto`, `w-full`,
      `flex-1`; policy: check-part-classes).
-   - The trigger draws its own arrow after its children, so a caller never
-     adds or restyles one. The arrow carries `ml-auto`, so in a trigger wider
-     than its content the arrow sits at the end and everything before it (a
-     logo, a label, a value) stays together at the start; never
-     `justify-between`, which would also pull a logo away from its name.
-     While the trigger is `aria-busy` a spinner takes the arrow's place. An
-     icon-only trigger (the mobile Settings button) passes `arrow={false}`:
-     it shows no value for an arrow to sit beside.
+   - The trigger draws its own arrow, `DisclosureArrow`, after its
+     children, so a caller never adds or restyles one. The arrow carries
+     `ml-auto`, so in a trigger wider than its content the arrow sits at the
+     end and everything before it (a logo, a label, a value) stays together
+     at the start; never `justify-between`, which would also pull a logo away
+     from its name. While the trigger is `aria-busy` a spinner takes the
+     arrow's place. An icon-only trigger (the mobile Settings button) passes
+     `arrow={false}`: it shows no value for an arrow to sit beside.
      `triggerProps` cannot carry a `className`, because replacing the
      trigger's classes would override its `variant` and `size`.
    - A picker's trigger is named `{label} dropdown` unless `triggerProps`
@@ -29,9 +29,16 @@ import { BusyGlyph } from './Status'
    by field) or an icon-only trigger (the mobile Settings button). It
    renders this trigger, so Escape behaves as in the pickers. A short static
    list is a `Select`, even inside a `Field` (policy: hand-built-picker
-   lists the allowed sites). `selectTriggerStyles` also dresses a popover
-   disclosure that opens a picker-like panel (a date range, a row limit),
-   which no picker can be.
+   lists the allowed sites).
+
+   PopoverSelectTrigger is the same trigger on a popover disclosure, for a
+   picker-like panel no picker can be (a range, a date range, a row limit),
+   so it matches the pickers beside it. A popover disclosure or menu button
+   drawn as a `Button` that names a value or opens a list (a protocol
+   switcher, a Filters button, an overflow menu of links) ends with
+   `DisclosureArrow`; an action or icon button carries none. The
+   hand-built-picker policy refuses Ariakit's arrows and
+   `selectTriggerStyles` outside src/ui.
 ---------------------------------------------------------------------------- */
 
 const SELECT_TRIGGER_VARIANTS = {
@@ -66,6 +73,13 @@ export function selectTriggerStyles(variant: SelectTriggerVariant, size: SelectT
 	return SELECT_TRIGGER_VARIANTS[variant]
 }
 
+/** The arrow every trigger that opens a list or a picker-like panel ends with. Ariakit points it by the store's
+    `placement`: down, or up for a `top-*` placement; a list that flips above for lack of room keeps it pointing down.
+    It reads the combobox, popover or menu store from context, which each of those triggers has. */
+export function DisclosureArrow() {
+	return <Ariakit.PopoverDisclosureArrow className="ml-auto shrink-0 text-tertiary" />
+}
+
 /** Ariakit's ComboboxSelect, for every picker trigger. A list without a search field keeps focus on its trigger, inside
     any dialog around it. Ariakit closes the list on Escape and lets the key go on to that dialog, which closes too and
     drops its draft. While the list is open, the trigger takes Escape for the list alone, before Ariakit's own handler. */
@@ -91,8 +105,28 @@ export function ComboboxSelectTrigger({
 					<BusyGlyph decorative size={14} />
 				</span>
 			) : (
-				<Ariakit.ComboboxSelectArrow className="ml-auto shrink-0 text-tertiary" />
+				<DisclosureArrow />
 			)}
 		</Ariakit.ComboboxSelect>
+	)
+}
+
+/** A popover disclosure dressed as a picker trigger, with its arrow. `className` is placement only. */
+export function PopoverSelectTrigger({
+	variant,
+	size,
+	className,
+	children,
+	...props
+}: Omit<Ariakit.PopoverDisclosureProps, 'className' | 'render'> & {
+	variant: SelectTriggerVariant
+	size: SelectTriggerSize
+	className?: string
+}) {
+	return (
+		<Ariakit.PopoverDisclosure {...props} className={`${selectTriggerStyles(variant, size)} ${className ?? ''}`}>
+			{children}
+			<DisclosureArrow />
+		</Ariakit.PopoverDisclosure>
 	)
 }

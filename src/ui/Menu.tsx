@@ -2,6 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { type ReactElement, useMemo } from 'react'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { Button } from './Button'
+import { DisclosureArrow } from './ComboboxSelectTrigger'
 import { popoverRowWithBorderStyles } from './internal/Popover'
 import { MenuSurface } from './PopoverSurface'
 
@@ -47,7 +48,7 @@ export function Menu({
 				render={render ?? <Button size="md" className={`max-w-fit justify-between ${className ?? ''}`} />}
 			>
 				{name}
-				<Ariakit.MenuButtonArrow />
+				<DisclosureArrow />
 			</Ariakit.MenuButton>
 			<MenuSurface variant="panel" heading={name} hideOnInteractOutside portal={shouldPortalMenu}>
 				{_options.map(({ item: value, key }) =>

@@ -11,7 +11,7 @@ import { IrTabMenu } from '~/containers/Investors/IrTabMenu'
 import { getMainSiteIrBaseHref } from '~/containers/Investors/mainSiteDashboards'
 import Layout from '~/layout'
 import { Button } from '~/ui/Button'
-import { Icon } from '~/ui/Icon'
+import { DisclosureArrow } from '~/ui/ComboboxSelectTrigger'
 import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
 import { InlineStatus } from '~/ui/Status'
 import { TabLink, TabNav } from '~/ui/Tabs'
@@ -197,7 +197,7 @@ export function ProtocolOverviewLayout({
 							<Ariakit.MenuButton render={<Button size="sm" className="my-auto mr-4" />}>
 								<TokenLogo name={name} kind="token" size={16} alt={`Logo of ${name}`} />
 								<span className="whitespace-nowrap">{name === otherProtocols?.[0] ? `${name} (Combined)` : name}</span>
-								<Icon name="chevron-down" className="size-3.5 shrink-0 text-tertiary" />
+								<DisclosureArrow />
 							</Ariakit.MenuButton>
 							<MenuSurface variant="actions">
 								{otherProtocols?.map((value, i) => (

@@ -2,6 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useState } from 'react'
 import { Button } from '~/ui/Button'
 import { Checkbox } from '~/ui/Checkbox'
+import { DisclosureArrow } from '~/ui/ComboboxSelectTrigger'
 import { Field } from '~/ui/Field'
 import { Input } from '~/ui/Input'
 import { NoResults } from '~/ui/NoResults'
@@ -61,7 +62,7 @@ function MenuTrigger({ label }: { label: string }) {
 	return (
 		<Ariakit.MenuButton render={<Button size="md" />}>
 			{label}
-			<Ariakit.MenuButtonArrow />
+			<DisclosureArrow />
 		</Ariakit.MenuButton>
 	)
 }
@@ -148,7 +149,7 @@ function SurfaceDemo({ values }: { values: KnobValues }) {
 			<Ariakit.PopoverProvider>
 				<Ariakit.PopoverDisclosure render={<Button size="md" />}>
 					Save view
-					<Ariakit.PopoverDisclosureArrow />
+					<DisclosureArrow />
 				</Ariakit.PopoverDisclosure>
 				<PopoverSurface variant="panel" heading="Save view" width={width}>
 					<div className="flex flex-col gap-3 p-3">
@@ -164,7 +165,7 @@ function SurfaceDemo({ values }: { values: KnobValues }) {
 		<Ariakit.PopoverProvider>
 			<Ariakit.PopoverDisclosure render={<Button size="md" />}>
 				Chains
-				<Ariakit.PopoverDisclosureArrow />
+				<DisclosureArrow />
 			</Ariakit.PopoverDisclosure>
 			<PopoverSurface variant="list" heading="Chains" width={width}>
 				{CHAIN_ROWS}
@@ -203,7 +204,7 @@ function PopoverHeaderDemo({ values }: { values: KnobValues }) {
 		<Ariakit.PopoverProvider>
 			<Ariakit.PopoverDisclosure render={<Button size="md" />}>
 				Chains
-				<Ariakit.PopoverDisclosureArrow />
+				<DisclosureArrow />
 			</Ariakit.PopoverDisclosure>
 			<PopoverSurface variant="list" heading="Chains" width="md">
 				<PopoverHeader
@@ -250,7 +251,7 @@ function ChainRowsPopover({
 		<Ariakit.PopoverProvider>
 			<Ariakit.PopoverDisclosure render={<Button size="md" />}>
 				Chains
-				<Ariakit.PopoverDisclosureArrow />
+				<DisclosureArrow />
 			</Ariakit.PopoverDisclosure>
 			<PopoverSurface variant="list" heading="Chains" width="sm">
 				<PopoverList divided={divided}>

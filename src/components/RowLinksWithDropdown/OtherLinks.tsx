@@ -3,7 +3,7 @@ import { matchSorter } from 'match-sorter'
 import { useRouter } from 'next/router'
 import { startTransition, useDeferredValue, useMemo, useRef, useState } from 'react'
 import { Button } from '~/ui/Button'
-import { Icon } from '~/ui/Icon'
+import { DisclosureArrow } from '~/ui/ComboboxSelectTrigger'
 import { Input } from '~/ui/Input'
 import { NoResults } from '~/ui/NoResults'
 import { PopoverHeader } from '~/ui/PopoverHeader'
@@ -64,7 +64,7 @@ export function OtherLinks({ options, heading, name, keyPrefix = 'row-links', is
 					}
 				>
 					<span>{name}</span>
-					<Icon name="chevron-down" className="size-3.5 shrink-0 text-tertiary" />
+					<DisclosureArrow />
 				</Ariakit.MenuButton>
 
 				{/* Stays mounted: header menu that must open instantly on phones (#2640). */}

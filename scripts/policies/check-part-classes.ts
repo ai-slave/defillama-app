@@ -132,6 +132,7 @@ const PARTS: Record<string, Part> = {
 	OptionTile: { kind: 'placement' },
 	PanelHeader: { kind: 'placement' },
 	PanelTitle: { kind: 'placement' },
+	PopoverSelectTrigger: { kind: 'placement' },
 	PromoBadge: { kind: 'placement' },
 	RailItem: { kind: 'placement' },
 	SearchField: { kind: 'placement' },

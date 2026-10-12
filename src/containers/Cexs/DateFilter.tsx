@@ -8,6 +8,7 @@ import { setSignupSource } from '~/auth/signupSource'
 import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
+import { DisclosureArrow } from '~/ui/ComboboxSelectTrigger'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
@@ -140,7 +141,7 @@ export function DateFilter({
 								: null}
 						</span>
 					) : null}
-					<Ariakit.PopoverDisclosureArrow className="size-3 shrink-0" />
+					<DisclosureArrow />
 				</Ariakit.PopoverDisclosure>
 				<PopoverSurface
 					variant="list"

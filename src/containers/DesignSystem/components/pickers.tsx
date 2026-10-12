@@ -1,5 +1,8 @@
+import * as Ariakit from '@ariakit/react'
 import { useState } from 'react'
+import { PopoverSelectTrigger } from '~/ui/ComboboxSelectTrigger'
 import { MultiSelectCombobox } from '~/ui/MultiSelectCombobox'
+import { PopoverSurface } from '~/ui/PopoverSurface'
 import { Select } from '~/ui/Select'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { VirtualizedMultiSelect, VirtualizedSelect } from '~/ui/VirtualizedSelect'
@@ -181,6 +184,33 @@ function VirtualizedMultiSelectDemo({ values }: { values: KnobValues }) {
 	)
 }
 
+/** Beside a Select of the same variant and size, so the two triggers read as one row of filters. */
+function PopoverSelectTriggerDemo({ values }: { values: KnobValues }) {
+	const [chain, setChain] = useState('Ethereum')
+	const variant = values.variant as TriggerVariant
+	const size = values.size as 'md' | 'sm'
+	return (
+		<Row>
+			<Select
+				label="Chain"
+				allValues={CHAINS}
+				selectedValues={chain}
+				setSelectedValues={setChain}
+				variant={variant}
+				size={size}
+			/>
+			<Ariakit.PopoverProvider>
+				<PopoverSelectTrigger variant={variant} size={size}>
+					TVL range
+				</PopoverSelectTrigger>
+				<PopoverSurface variant="panel" heading="TVL range" width="sm">
+					<p className="p-3 body-sm text-secondary">A picker-like panel: a range form, presets, a date range.</p>
+				</PopoverSurface>
+			</Ariakit.PopoverProvider>
+		</Row>
+	)
+}
+
 export const pickers: Family = {
 	id: 'pickers',
 	title: 'Pickers',
@@ -254,6 +284,16 @@ export const pickers: Family = {
 			],
 			note: 'Select all leads the list while every option fits under the cap; with cap on, the rest disable at three picks.',
 			render: (values) => <VirtualizedMultiSelectDemo values={values} />
+		},
+		{
+			name: 'PopoverSelectTrigger',
+			source: 'src/ui/ComboboxSelectTrigger.tsx',
+			knobs: [
+				{ name: 'variant', values: TRIGGER_VARIANTS },
+				{ name: 'size', values: ['md', 'sm'] }
+			],
+			note: 'A popover that is not a list wears the picker trigger and its arrow, so it matches the Select beside it.',
+			render: (values) => <PopoverSelectTriggerDemo values={values} />
 		},
 		{
 			name: 'MultiSelectCombobox',
