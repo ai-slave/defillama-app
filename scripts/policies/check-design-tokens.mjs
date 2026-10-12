@@ -20,7 +20,9 @@
 //
 // A rule's `exceptions` names files where the pattern is a deliberate choice,
 // each with its reason; they are not counted, so a baseline above zero is
-// always debt. Add one only with a reason the shared part cannot meet.
+// always debt. Add one only with a reason the shared part cannot meet. The
+// baseline pins each excepted file's own count (`exceptions`), so a second copy
+// in that file fails like any other, and `--update` records a new exception.
 import { execSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -539,6 +541,16 @@ function matchHandBuiltChevron(content) {
 	return found.length > 0 ? found : null
 }
 
+// A checkbox drawn by hand: a native one, or an Ariakit.Checkbox that renders something other than the parts a chip,
+// row or tile checkbox draws (a toggle Button, ListRow, OptionTile).
+function matchHandBuiltCheckbox(content) {
+	const found = [...content.matchAll(/\btype=["'{]+checkbox\b/g)].map((match) => match[0])
+	for (const tag of openingTags(content, ['Ariakit\\.Checkbox'])) {
+		if (!/\brender=\{\s*<(?:Button|ListRow|OptionTile)\b/.test(tag)) found.push(tag.slice(0, 60))
+	}
+	return found.length > 0 ? found : null
+}
+
 function matchHandBuiltField(content) {
 	const found = []
 	for (const tag of openingTags(content, ['input', 'textarea', 'select'])) {
@@ -998,8 +1010,8 @@ const RULES = [
 	{
 		id: 'hand-built-checkbox',
 		description:
-			'a native checkbox outside src/ui — a checkbox is `Checkbox` (src/ui/Checkbox.tsx); a chip or tile that toggles is Ariakit.Checkbox rendered as a toggle Button, OptionTile or ListRow',
-		pattern: /\btype=["'{]+checkbox\b/g,
+			'a checkbox drawn by hand outside src/ui — a checkbox is `Checkbox` (src/ui/Checkbox.tsx); a chip, row or tile that toggles is Ariakit.Checkbox rendered as a toggle Button, ListRow or OptionTile',
+		match: matchHandBuiltCheckbox,
 		uiOwned: true,
 		skipTests: true,
 		exceptions: {
@@ -1460,7 +1472,8 @@ const offenders = Object.fromEntries(
 	buckets.map((bucket) => [bucket, Object.fromEntries(RULES.map((r) => [r.id, new Map()]))])
 )
 
-const exceptionHits = new Set()
+// `rule-id file` -> matches in a listed exception's file.
+const exceptionHits = new Map()
 for (const file of files) {
 	const content = fs.readFileSync(path.join(ROOT, file), 'utf8')
 	const bucket = isProductSurfaceFile(file) ? 'product' : 'core'
@@ -1495,7 +1508,7 @@ for (const file of files) {
 		const matches = rule.match ? rule.match(source) : source.match(rule.pattern)
 		// A listed exception is a deliberate choice with its reason beside it, not debt: it is shown, not counted.
 		if (rule.exceptions?.[file]) {
-			if (matches) exceptionHits.add(`${rule.id} ${file}`)
+			if (matches) exceptionHits.set(`${rule.id} ${file}`, matches.length)
 			continue
 		}
 		if (matches) {
@@ -1506,8 +1519,9 @@ for (const file of files) {
 }
 
 if (process.argv.includes('--update')) {
-	fs.writeFileSync(BASELINE_PATH, `${JSON.stringify(counts, null, '\t')}\n`)
-	console.log('baseline updated:', counts)
+	const exceptions = Object.fromEntries([...exceptionHits.entries()].sort(([a], [b]) => a.localeCompare(b)))
+	fs.writeFileSync(BASELINE_PATH, `${JSON.stringify({ ...counts, exceptions }, null, '\t')}\n`)
+	console.log('baseline updated:', counts, exceptions)
 	process.exit(0)
 }
 
@@ -1517,16 +1531,32 @@ const baseline = 'core' in persistedBaseline ? persistedBaseline : { core: persi
 if (!baseline.product && baseline.excluded) baseline.product = baseline.excluded
 let failed = false
 
-// An exception whose file no longer matches would sit in the list unseen and excuse the next real violation there.
-console.log('\nlisted exceptions (not counted)')
+// An exception whose file no longer matches would sit in the list unseen and excuse the next real violation there. Its
+// count is pinned too: the reason covers the copies it was written for, not the next one added beside them.
+console.log('\nlisted exceptions (not counted against the rule)')
 for (const rule of RULES) {
 	if (!rule.exceptions) continue
-	const listed = Object.keys(rule.exceptions)
-	const stale = listed.filter((file) => !exceptionHits.has(`${rule.id} ${file}`))
-	console.log(`${(stale.length > 0 ? 'FAIL' : 'ok').padEnd(9)} ${rule.id}: ${listed.length}`)
-	for (const file of stale) {
+	const problems = []
+	for (const file of Object.keys(rule.exceptions)) {
+		const key = `${rule.id} ${file}`
+		const now = exceptionHits.get(key) ?? 0
+		const was = baseline.exceptions?.[key]
+		if (now === 0) problems.push(`stale: ${file} no longer matches; remove it from the rule's exceptions`)
+		else if (was === undefined)
+			problems.push(
+				`new: ${file} has ${now}; run \`bun scripts/policies/check-design-tokens.mjs --update\` to record it`
+			)
+		else if (now > was)
+			problems.push(`${file}: ${now} (baseline ${was}); a new copy needs the shared part or its own reason`)
+		else if (now < was)
+			problems.push(
+				`${file}: ${now} (baseline ${was}); run \`bun scripts/policies/check-design-tokens.mjs --update\` to lock it in`
+			)
+	}
+	console.log(`${(problems.length > 0 ? 'FAIL' : 'ok').padEnd(9)} ${rule.id}: ${Object.keys(rule.exceptions).length}`)
+	for (const problem of problems) {
 		failed = true
-		console.log(`  stale: ${file} no longer matches; remove it from the rule's exceptions`)
+		console.log(`  ${problem}`)
 	}
 }
 

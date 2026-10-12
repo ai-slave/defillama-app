@@ -43,6 +43,13 @@ import { tw } from './tw'
    `UnderlineTabList` passes `ref` to the track, for a caller that measures
    its overflow to show scroll arrows over it (a Pro dashboard's sections).
 
+   Rail: a vertical list of panel tabs (a settings dialog's sections, a
+   sidebar of categories) is an Ariakit `TabList` with `RailItem` tabs. The
+   rails differ in everything around the list (a phone strip, a bordered
+   sidebar, group headings), so they share RailItem, not a list part;
+   raw-tab-list lists each one. A rail that drifts from the others, or a
+   fifth one, is the time to add the part.
+
    Route navigation: `TabNav` is the labeled `<nav>`, and the current
    page's item carries `aria-current="page"`, which also draws it active:
    <TabNav label="…"> <TabLink href … aria-current={…}> </TabNav>
