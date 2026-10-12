@@ -1,6 +1,6 @@
 import { Card } from '~/ui/Card'
-import { formatNumber, formatPercent } from '~/utils/numberFormat'
-import { GradeBadge, ScoreBar } from './grades'
+import { formatNumber } from '~/utils/numberFormat'
+import { GradeBadge, PercentileBar, ScoreBar } from './grades'
 import type { UtrCategoryBreakdown, UtrGradeScaleEntry, UtrRubricScore } from './types'
 
 export type BreakdownColumn = {
@@ -48,28 +48,6 @@ export function columnsFromRubrics(rubrics: Array<UtrRubricScore>): Array<Breakd
 	}))
 }
 
-function PercentileCell({ percentile }: { percentile: number | null }) {
-	const width = Math.max(0, Math.min(100, percentile ?? 0))
-	return (
-		<span className="flex items-center justify-between gap-2">
-			<span className="tabular-nums">
-				{percentile == null
-					? 'N/A'
-					: formatPercent(percentile, {
-							input: 'percent',
-							minimumFractionDigits: 2,
-							maximumFractionDigits: 2,
-							smallValueDisplay: 'rounded',
-							useGrouping: false
-						})}
-			</span>
-			<span className="h-2 w-10 shrink-0 overflow-hidden rounded-full bg-surface-elevated-1">
-				<span className="block h-full rounded-full bg-(--text-primary)" style={{ width: `${width}%` }} />
-			</span>
-		</span>
-	)
-}
-
 export function CategoryBreakdownTable({
 	title,
 	columns,
@@ -105,7 +83,7 @@ export function CategoryBreakdownTable({
 						{columns.map((column) => (
 							<td key={column.key} className="border-l border-subtle px-4 py-2">
 								<span className="flex items-center justify-between gap-2">
-									<span className="tabular-nums">
+									<span className="whitespace-nowrap tabular-nums">
 										{column.score == null
 											? 'N/A'
 											: formatNumber(column.score, {
@@ -130,7 +108,7 @@ export function CategoryBreakdownTable({
 						<td className="px-4 py-2 text-secondary">Percentile</td>
 						{columns.map((column) => (
 							<td key={column.key} className="border-l border-subtle px-4 py-2">
-								<PercentileCell percentile={column.percentile} />
+								<PercentileBar percentile={column.percentile} className="w-full justify-between" />
 							</td>
 						))}
 					</tr>

@@ -79,7 +79,7 @@ function breakdownValue(column: BreakdownColumn, mode: BreakdownMode, gradingSca
 		return <GradeBadge score={column.score} scale={10} grade={column.grade} gradingScale={gradingScale} />
 	if (mode === 'score')
 		return (
-			<span className="tabular-nums">
+			<span className="whitespace-nowrap tabular-nums">
 				{column.score == null
 					? 'N/A'
 					: formatNumber(column.score, {

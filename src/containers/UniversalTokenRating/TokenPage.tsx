@@ -7,11 +7,16 @@ import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { Tooltip } from '~/ui/Tooltip'
-import { formatNumber, formatPercent } from '~/utils/numberFormat'
-import { UTR_PERCENT_OPTIONS } from './constants'
+import { formatNumber } from '~/utils/numberFormat'
 import { resolveUtrGradeOrLabel, utrGradeColor } from './gradeBands'
-import { GradeBadge, ScoreBar } from './grades'
+import { GradeBadge, PercentileBar, ScoreBar } from './grades'
 import type { UtrGradeScaleEntry } from './types'
+
+// One row needs 451px of card width at its widest values ("10.00", "100.00%"), so it starts at 28.5rem (456px); a
+// narrower card keeps each label above its value. The card decides, not the screen: at 1024px two cards share a row
+// beside the sidebar and each is too narrow for one line.
+const INLINE_GROUP =
+	'flex flex-col gap-1.5 label-sm text-secondary @min-[28.5rem]:flex-row @min-[28.5rem]:items-center @min-[28.5rem]:gap-2'
 
 export function GradeFooter({
 	score,
@@ -26,32 +31,25 @@ export function GradeFooter({
 	percentile?: number | null
 	divider?: boolean
 }) {
-	const percentileLabel = formatPercent(percentile, UTR_PERCENT_OPTIONS) ?? 'N/A'
-	const percentileWidth = percentile == null ? 0 : Math.max(0, Math.min(100, percentile))
 	return (
-		<div
-			className={`flex items-start justify-between gap-2 px-4 py-2.5 lg:items-center ${divider ? 'border-t border-subtle' : ''}`}
-		>
-			<span className="flex flex-col gap-1.5 label-sm text-secondary lg:flex-row lg:items-center lg:gap-2">
-				Grade
-				<GradeBadge score={score} scale={10} grade={grade ?? undefined} gradingScale={gradingScale} />
-			</span>
-			<span className="flex flex-col gap-1.5 label-sm text-secondary lg:flex-row lg:items-center lg:gap-2">
-				Score
-				<span className="flex items-center gap-2">
-					<ScoreBar score={score} scale={10} grade={grade ?? undefined} gradingScale={gradingScale} />
-					<QuestionHelper text="Scored on the standardized 0–10 scale against the published rubric." />
+		<div className={`@container ${divider ? 'border-t border-subtle' : ''}`}>
+			<div className="flex items-start justify-between gap-2 px-4 py-2.5 @min-[28.5rem]:items-center">
+				<span className={INLINE_GROUP}>
+					Grade
+					<GradeBadge score={score} scale={10} grade={grade ?? undefined} gradingScale={gradingScale} />
 				</span>
-			</span>
-			<span className="flex flex-col gap-1.5 label-sm text-secondary lg:flex-row lg:items-center lg:gap-2">
-				Percentile
-				<span className="flex items-center gap-2">
-					<span className="text-primary tabular-nums">{percentileLabel}</span>
-					<span className="h-2 w-10 shrink-0 overflow-hidden rounded-full bg-surface-elevated-1">
-						<span className="block h-full rounded-full bg-(--text-primary)" style={{ width: `${percentileWidth}%` }} />
+				<span className={INLINE_GROUP}>
+					Score
+					<span className="flex items-center gap-2">
+						<ScoreBar score={score} scale={10} grade={grade ?? undefined} gradingScale={gradingScale} />
+						<QuestionHelper text="Scored on the standardized 0–10 scale against the published rubric." />
 					</span>
 				</span>
-			</span>
+				<span className={INLINE_GROUP}>
+					Percentile
+					<PercentileBar percentile={percentile} className="text-primary" />
+				</span>
+			</div>
 		</div>
 	)
 }
@@ -92,6 +90,11 @@ export function UtrDisclaimer() {
 	)
 }
 
+// Columns need 303px of card width at their widest values, so they start at 19rem (304px); a narrower card falls back
+// to one label-and-value row per figure.
+const COLUMN =
+	'flex min-h-6 items-center justify-between gap-2 @min-[19rem]:flex-col @min-[19rem]:items-start @min-[19rem]:justify-start @min-[19rem]:gap-1.5'
+
 export function GradeFooterColumns({
 	score,
 	grade,
@@ -103,35 +106,33 @@ export function GradeFooterColumns({
 	gradingScale?: Array<UtrGradeScaleEntry> | null
 	percentile?: number | null
 }) {
-	const percentileLabel = formatPercent(percentile, UTR_PERCENT_OPTIONS) ?? 'N/A'
-	const percentileWidth = percentile == null ? 0 : Math.max(0, Math.min(100, percentile))
 	return (
-		<div className="flex items-start gap-x-2 border-t border-subtle px-4 py-2.5">
-			<div className="flex flex-col gap-1.5">
-				<span className="label-sm text-secondary">Grade</span>
-				<GradeBadge score={score} scale={10} grade={grade ?? undefined} gradingScale={gradingScale} />
-			</div>
-			<div className="flex-[2]" />
-			<div className="flex flex-col gap-1.5">
-				<span className="label-sm text-secondary">Score</span>
-				<span className="flex items-center gap-2">
-					<ScoreBar score={score} scale={10} grade={grade ?? undefined} gradingScale={gradingScale} />
-					<QuestionHelper text="Scored on the standardized 0–10 scale against the published rubric." />
-				</span>
-			</div>
-			<div className="flex-[1]" />
-			<div className="flex flex-col gap-1.5">
-				<span className="label-sm text-secondary">Percentile</span>
-				<span className="flex items-center gap-2">
-					<span className="mono-sm text-primary tabular-nums">{percentileLabel}</span>
-					<span className="h-2 w-10 shrink-0 overflow-hidden rounded-full bg-surface-elevated-1">
-						<span className="block h-full rounded-full bg-(--text-primary)" style={{ width: `${percentileWidth}%` }} />
+		<div className="@container border-t border-subtle">
+			<div className="flex flex-col px-4 py-1.5 @min-[19rem]:flex-row @min-[19rem]:items-start @min-[19rem]:gap-x-2 @min-[19rem]:py-2.5">
+				<div className={COLUMN}>
+					<span className="label-sm text-secondary">Grade</span>
+					<GradeBadge score={score} scale={10} grade={grade ?? undefined} gradingScale={gradingScale} />
+				</div>
+				<div className="hidden flex-[2] @min-[19rem]:block" />
+				<div className={COLUMN}>
+					<span className="label-sm text-secondary">Score</span>
+					<span className="flex items-center gap-2">
+						<ScoreBar score={score} scale={10} grade={grade ?? undefined} gradingScale={gradingScale} />
+						<QuestionHelper text="Scored on the standardized 0–10 scale against the published rubric." />
 					</span>
-				</span>
+				</div>
+				<div className="hidden flex-[1] @min-[19rem]:block" />
+				<div className={COLUMN}>
+					<span className="label-sm text-secondary">Percentile</span>
+					<PercentileBar percentile={percentile} className="mono-sm text-primary" />
+				</div>
 			</div>
 		</div>
 	)
 }
+
+// A card too narrow for a label and its value side by side wraps the value under the label, still right-aligned.
+const STACKED_ROW = 'flex min-h-6 flex-wrap items-center justify-between gap-x-2'
 
 export function GradeFooterStacked({
 	score,
@@ -144,29 +145,28 @@ export function GradeFooterStacked({
 	gradingScale?: Array<UtrGradeScaleEntry> | null
 	percentile?: number | null
 }) {
-	const percentileLabel = formatPercent(percentile, UTR_PERCENT_OPTIONS) ?? 'N/A'
-	const percentileWidth = percentile == null ? 0 : Math.max(0, Math.min(100, percentile))
 	return (
 		<div className="flex flex-col border-t border-subtle px-4 py-1.5">
-			<div className="flex min-h-6 items-center justify-between gap-2">
+			<div className={STACKED_ROW}>
 				<span className="label-sm text-secondary">Grade</span>
-				<GradeBadge score={score} scale={10} grade={grade ?? undefined} gradingScale={gradingScale} />
+				<GradeBadge
+					score={score}
+					scale={10}
+					grade={grade ?? undefined}
+					gradingScale={gradingScale}
+					className="ml-auto"
+				/>
 			</div>
-			<div className="flex min-h-6 items-center justify-between gap-2">
+			<div className={STACKED_ROW}>
 				<span className="label-sm text-secondary">Score</span>
-				<span className="flex items-center gap-2">
+				<span className="ml-auto flex items-center gap-2">
 					<ScoreBar score={score} scale={10} grade={grade ?? undefined} gradingScale={gradingScale} />
 					<QuestionHelper text="Scored on the standardized 0–10 scale against the published rubric." />
 				</span>
 			</div>
-			<div className="flex min-h-6 items-center justify-between gap-2">
+			<div className={STACKED_ROW}>
 				<span className="label-sm text-secondary">Percentile</span>
-				<span className="flex items-center gap-2">
-					<span className="mono-sm text-primary tabular-nums">{percentileLabel}</span>
-					<span className="h-2 w-10 shrink-0 overflow-hidden rounded-full bg-surface-elevated-1">
-						<span className="block h-full rounded-full bg-(--text-primary)" style={{ width: `${percentileWidth}%` }} />
-					</span>
-				</span>
+				<PercentileBar percentile={percentile} className="ml-auto mono-sm text-primary" />
 			</div>
 		</div>
 	)
@@ -292,7 +292,7 @@ export function TickScoreStrip({
 				<span className="label-md text-secondary">
 					{label} <span className={color.text}>{grade ?? 'N/A'}</span>
 				</span>
-				<span className="mono-md tabular-nums">
+				<span className="shrink-0 mono-md whitespace-nowrap tabular-nums">
 					{score == null
 						? 'N/A'
 						: formatNumber(score, { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}

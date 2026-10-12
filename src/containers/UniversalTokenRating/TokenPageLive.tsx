@@ -664,14 +664,14 @@ export function TokenPageLive({
 												<span className="body-sm text-primary">
 													{DISCLOSURE_CRITERION_TITLES[item.key] ?? item.label}
 												</span>
-												<span className="flex items-center gap-2">
+												<span className="flex shrink-0 items-center gap-2">
 													<GradeBadge
 														score={item.score}
 														scale={10}
 														grade={item.grade}
 														gradingScale={scoringConfig?.grading.disclosure.scale}
 													/>
-													<span className="min-w-[8ch] text-right mono-sm tabular-nums">
+													<span className="min-w-[8ch] text-right mono-sm whitespace-nowrap tabular-nums">
 														{item.score == null ? 'N/A' : formatNumber(item.score, NUMBER_OPTIONS)}
 														<span className="text-tertiary"> /10</span>
 													</span>

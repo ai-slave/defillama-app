@@ -253,6 +253,7 @@ Spacing is Tailwind's 4px-based scale; never an arbitrary value such as `p-[10px
 | Card sections                           | `gap-6`                        |
 
 - Layout is gap, padding and `min-h` driven. Space siblings with flex or grid `gap`, size boxes with padding and `min-h`, and let text wrap. Margins only opt out of a parent's rhythm (`mt-auto`, a negative bleed).
+- Every element can shrink below its content: `src/tailwind.css` sets `min-width: 0` on `*`, so truncation and charts work in any flex or grid without a `min-w-0` on each ancestor. A value that must stay whole (a number, a percentage, a badge, a meter's bar) needs `shrink-0` or `whitespace-nowrap`; otherwise a squeezed row slides its neighbors over it. A row that cannot fit its fixed-width parts switches layout by its container's width (`@container` with `@min-[…]:` variants), not the screen's, because the same card is narrow beside a sibling and wide alone.
 - Cards side by side keep their header rows level: the same header padding and height, so titles and header actions line up across the row.
 - Responsive spacing picks both ends from the palette (`gap-2 lg:gap-4`), never a fluid in-between value: this is a density-first app, so big screens get more data, not bigger chrome.
 - Dividers are 1px with `border-subtle` as the minimum; `border-very-subtle` is invisible at 1px.
