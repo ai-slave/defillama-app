@@ -4,13 +4,13 @@ import { sortedTableFeatures } from '~/components/Table/features/sorting'
 import { Button } from '~/ui/Button'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { Select } from '~/ui/Select'
 import { EmptyState, SurfaceBodyLoadingStatus } from '~/ui/Status'
-import type { ColumnConfig, DisplayMode, Threshold } from '../constants'
+import { type ColumnConfig, type DisplayMode, THRESHOLDS, type Threshold } from '../constants'
 import { RefineButton } from '../RefineButton'
 import { StickyTable } from '../StickyTable'
 import type { LeaderboardRow } from '../types'
 import { buildRankColumns } from './columns'
-import { ThresholdSelect } from './ThresholdSelect'
 
 // How every metric cell reads: the raw value, its percentile, or its rank. Short labels keep it one row on phones.
 const SHOW_AS_OPTIONS: ReadonlyArray<{ value: DisplayMode; label: string }> = [
@@ -18,6 +18,8 @@ const SHOW_AS_OPTIONS: ReadonlyArray<{ value: DisplayMode; label: string }> = [
 	{ value: 'percentile', label: 'Percentile' },
 	{ value: 'rank', label: 'Rank' }
 ]
+
+const THRESHOLD_OPTIONS = THRESHOLDS.map((threshold) => ({ key: threshold, name: `${threshold}% Threshold` }))
 
 interface IRankTableProps {
 	rows: Array<LeaderboardRow>
@@ -62,7 +64,25 @@ export function RankTable({
 		<Panel>
 			<PanelHeader>
 				<PanelTitle>Rank</PanelTitle>
-				{threshold && setThreshold ? <ThresholdSelect value={threshold} setValue={setThreshold} /> : null}
+				{threshold && setThreshold ? (
+					<Select
+						// Narrow headers hide "Threshold", so the name spells it out.
+						label={
+							<>
+								<span>{threshold}%</span>
+								<span className="hidden min-[713px]:inline">Threshold</span>
+							</>
+						}
+						labelType="none"
+						heading="Threshold"
+						allValues={THRESHOLD_OPTIONS}
+						selectedValues={threshold}
+						setSelectedValues={(value) => setThreshold(value as Threshold)}
+						variant="filter"
+						size="md"
+						triggerProps={{ 'aria-label': `${threshold}% Threshold` }}
+					/>
+				) : null}
 				<div className="flex flex-wrap items-center gap-1.5">
 					{/* One control: Value, Percentile and Rank are three readings of the same cells, so they stay one switch. */}
 					<SegmentedControl

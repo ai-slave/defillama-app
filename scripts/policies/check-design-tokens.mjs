@@ -910,6 +910,20 @@ const RULES = [
 		}
 	},
 	{
+		id: 'hand-built-picker',
+		description:
+			'a picker assembled from Ariakit combobox or select parts, or ComboboxSelectTrigger, outside src/ui — a short list is Select, a mid-sized one SelectWithCombobox, a long one VirtualizedSelect (design.md "Which component for which job"); ComboboxSelectTrigger draws the arrow, so a caller never adds one',
+		pattern: /<(?:Ariakit\.(?:ComboboxSelect|Select|ComboboxSelectArrow|SelectArrow)|ComboboxSelectTrigger)\b/g,
+		uiOwned: true,
+		skipTests: true,
+		exceptions: {
+			'src/components/Nav/Mobile/Settings.tsx':
+				'an icon-only button whose list mixes the TVL toggles with Dark Mode; no picker renders an icon trigger',
+			'src/containers/Articles/editor/ArticleClientField.tsx':
+				'loads the Trusted by list only when it opens and shows that load inside the list; no picker takes a lazy option list'
+		}
+	},
+	{
 		id: 'arbitrary-dialog-width',
 		description:
 			'hand-set --dialog-width — pick a Dialog size (sm 448, md 600, lg 880, xl workspace) or a SideSheet size instead',

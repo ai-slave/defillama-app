@@ -12,7 +12,7 @@ import { Logo } from './Logo'
 import { PopoverHeader } from './PopoverHeader'
 import { ComboboxSurface } from './PopoverSurface'
 import { SearchField } from './SearchField'
-import { BusyGlyph, InlineLoading } from './Status'
+import { InlineLoading } from './Status'
 
 /* ----------------------------------------------------------------------------
    Pickers for long option lists (protocols, chains, tokens, Downloads
@@ -284,16 +284,6 @@ function OptionContent({ option, reserveLogo }: { option: VirtualizedSelectOptio
 	)
 }
 
-function TriggerArrow({ isLoading }: { isLoading: boolean }) {
-	return isLoading ? (
-		<span className="ml-auto text-tertiary">
-			<BusyGlyph decorative size={14} />
-		</span>
-	) : (
-		<Ariakit.ComboboxSelectArrow className="ml-auto text-tertiary" />
-	)
-}
-
 type PickerVariant = 'field' | 'chip'
 
 /** The trigger, and for a field its label row. `chip` reads "Label: value" in a toolbar; `field` sets its
@@ -330,7 +320,6 @@ function PickerTrigger({
 			<span className={`truncate ${!picked ? 'text-tertiary' : variant === 'chip' ? 'text-link' : ''}`}>
 				{isLoading ? 'Loading…' : text}
 			</span>
-			<TriggerArrow isLoading={isLoading} />
 		</>
 	)
 	if (variant === 'chip') {

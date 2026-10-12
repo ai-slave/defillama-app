@@ -76,7 +76,6 @@ export function ArticleClientField({
 					className={`${selectTriggerStyles('input', 'md')} w-full`}
 				>
 					<span className="truncate">{client?.displayName ?? 'Not set'}</span>
-					<Ariakit.ComboboxSelectArrow className="ml-auto shrink-0 text-tertiary" />
 				</ComboboxSelectTrigger>
 				<ComboboxSurface variant="panel" heading="Trusted by" sameWidth>
 					<PopoverList divided>

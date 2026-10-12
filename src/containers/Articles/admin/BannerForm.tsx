@@ -39,16 +39,17 @@ import {
 import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButton'
 import type { UploadScope } from '~/containers/Articles/upload/useImageUpload'
 import { Button } from '~/ui/Button'
-import { ComboboxSelectTrigger, selectTriggerStyles } from '~/ui/ComboboxSelectTrigger'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { Field, FieldGroup } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Input, Textarea } from '~/ui/Input'
 import { MultiSelectCombobox } from '~/ui/MultiSelectCombobox'
 import { OptionTile } from '~/ui/OptionTile'
-import { ComboboxSurface, PopoverList, PopoverRow } from '~/ui/PopoverSurface'
+import { Select } from '~/ui/Select'
 import { StatusDot } from '~/ui/StatusBadge'
 import { httpErrorMessage } from '~/utils/async'
+
+const SECTION_OPTIONS = ARTICLE_SECTIONS.map((section) => ({ key: section, name: ARTICLE_SECTION_LABELS[section] }))
 
 function imageUploadConfig(state: BannerFormState): { scope: UploadScope; helperText: string } {
 	if (state.kind === 'image-square') {
@@ -254,36 +255,18 @@ export function BannerForm({ banner }: Props) {
 					{state.scope === 'section' ? (
 						<Field label="Section" error={shown.section}>
 							{(control) => (
-								<Ariakit.ComboboxProvider
-									selectedValue={state.section}
-									setSelectedValue={(v) => {
-										const next = typeof v === 'string' ? v : Array.isArray(v) ? v[0] : ''
-										update({ section: next as ArticleSection })
-									}}
-								>
-									<ComboboxSelectTrigger {...control} className={selectTriggerStyles('input', 'md')}>
-										{state.section ? (
-											<span className="truncate">{ARTICLE_SECTION_LABELS[state.section as ArticleSection]}</span>
-										) : (
-											<span className="truncate text-tertiary">Select a section…</span>
-										)}
-										<Ariakit.ComboboxSelectArrow className="ml-auto shrink-0 text-tertiary" />
-									</ComboboxSelectTrigger>
-									<ComboboxSurface variant="panel" heading="Section" sameWidth>
-										<PopoverList divided>
-											{ARTICLE_SECTIONS.map((section) => (
-												<PopoverRow
-													key={section}
-													render={<Ariakit.ComboboxItem value={section} />}
-													check="tick"
-													checked={state.section === section}
-												>
-													<span className="truncate">{ARTICLE_SECTION_LABELS[section]}</span>
-												</PopoverRow>
-											))}
-										</PopoverList>
-									</ComboboxSurface>
-								</Ariakit.ComboboxProvider>
+								<Select
+									label={state.section ? ARTICLE_SECTION_LABELS[state.section] : 'Select a section…'}
+									labelType="none"
+									heading="Section"
+									allValues={SECTION_OPTIONS}
+									selectedValues={state.section}
+									setSelectedValues={(section) => update({ section: section as ArticleSection })}
+									variant="input"
+									size="md"
+									triggerProps={control}
+									popoverWidth="trigger"
+								/>
 							)}
 						</Field>
 					) : null}

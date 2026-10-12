@@ -1,4 +1,5 @@
 import * as Ariakit from '@ariakit/react'
+import { BusyGlyph } from './Status'
 
 /* ----------------------------------------------------------------------------
    ComboboxSelectTrigger — the trigger every picker renders, and its look,
@@ -7,10 +8,15 @@ import * as Ariakit from '@ariakit/react'
    - Callers choose the trigger `variant` and `size`; product surfaces pin
      their own values instead of inheriting a default.
    - A picker's `className` is placement only (`ml-auto`, `w-full`,
-     `flex-1`; policy: check-part-classes). The arrow carries `ml-auto`, so in
-     a trigger wider than its content the arrow sits at the end and everything
-     before it (a logo, a label, a value) stays together at the start; never
+     `flex-1`; policy: check-part-classes).
+   - The trigger draws its own arrow after its children, so a caller never
+     adds or restyles one. The arrow carries `ml-auto`, so in a trigger wider
+     than its content the arrow sits at the end and everything before it (a
+     logo, a label, a value) stays together at the start; never
      `justify-between`, which would also pull a logo away from its name.
+     While the trigger is `aria-busy` a spinner takes the arrow's place. An
+     icon-only trigger (the mobile Settings button) passes `arrow={false}`:
+     it shows no value for an arrow to sit beside.
      `triggerProps` cannot carry a `className`, because replacing the
      trigger's classes would override its `variant` and `size`.
    - A picker's trigger is named `{label} dropdown` unless `triggerProps`
@@ -18,9 +24,12 @@ import * as Ariakit from '@ariakit/react'
      also pass an `aria-label` there. With `labelType="none"`, an empty
      single pick shows its `label` as a tertiary placeholder.
 
-   Both are exported for a product list built on Ariakit's combobox (a
-   settings row, an article field): it renders this trigger, so Escape
-   behaves as in the pickers. `selectTriggerStyles` also dresses a popover
+   Both are exported for a list no picker can serve, built on Ariakit's
+   combobox: one that loads its options when opened (an article's Trusted
+   by field) or an icon-only trigger (the mobile Settings button). It
+   renders this trigger, so Escape behaves as in the pickers. A short static
+   list is a `Select`, even inside a `Field` (policy: hand-built-picker
+   lists the allowed sites). `selectTriggerStyles` also dresses a popover
    disclosure that opens a picker-like panel (a date range, a row limit),
    which no picker can be.
 ---------------------------------------------------------------------------- */
@@ -60,7 +69,11 @@ export function selectTriggerStyles(variant: SelectTriggerVariant, size: SelectT
 /** Ariakit's ComboboxSelect, for every picker trigger. A list without a search field keeps focus on its trigger, inside
     any dialog around it. Ariakit closes the list on Escape and lets the key go on to that dialog, which closes too and
     drops its draft. While the list is open, the trigger takes Escape for the list alone, before Ariakit's own handler. */
-export function ComboboxSelectTrigger(props: Ariakit.ComboboxSelectProps) {
+export function ComboboxSelectTrigger({
+	arrow = true,
+	children,
+	...props
+}: Ariakit.ComboboxSelectProps & { arrow?: boolean }) {
 	const store = Ariakit.useComboboxContext()!
 	return (
 		<Ariakit.ComboboxSelect
@@ -71,6 +84,15 @@ export function ComboboxSelectTrigger(props: Ariakit.ComboboxSelectProps) {
 				event.stopPropagation()
 				store.hide()
 			}}
-		/>
+		>
+			{children}
+			{!arrow ? null : props['aria-busy'] ? (
+				<span className="ml-auto text-tertiary">
+					<BusyGlyph decorative size={14} />
+				</span>
+			) : (
+				<Ariakit.ComboboxSelectArrow className="ml-auto shrink-0 text-tertiary" />
+			)}
+		</Ariakit.ComboboxSelect>
 	)
 }
