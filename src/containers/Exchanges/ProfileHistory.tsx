@@ -4,6 +4,7 @@ import { RaisesTotal } from '~/containers/Raises/RaisesTotal'
 import { summarizeRaises } from '~/containers/Raises/summary'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { DividedGrid } from '~/ui/DividedGrid'
 import { Icon, type IIcon } from '~/ui/Icon'
 import { IconTile } from '~/ui/IconTile'
@@ -35,13 +36,10 @@ function HistorySection({
 	children: ReactNode
 }) {
 	return (
-		<Card as="details" open padding="none" className="group/history overflow-hidden">
+		<Card as="details" open padding="none" className="overflow-hidden">
 			<summary className="flex cursor-pointer items-center border-b border-subtle px-3 py-2.5">
 				<HistoryHeader icon={icon} title={title} count={count} />
-				<Icon
-					name="chevron-down"
-					className="ml-auto size-4 text-tertiary transition-transform group-open/history:rotate-180"
-				/>
+				<DisclosureChevron kind="section" size="sm" className="ml-auto" />
 			</summary>
 			<div className="divide-y divide-(--border-subtle)">{children}</div>
 		</Card>

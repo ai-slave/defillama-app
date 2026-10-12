@@ -1,6 +1,7 @@
 import { matchSorter } from 'match-sorter'
 import { useMemo, useState } from 'react'
 import { Button } from '~/ui/Button'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { Icon } from '~/ui/Icon'
 import { datasets } from '../datasets'
 import { identifierize, type RegisteredTable } from './useTableRegistry'
@@ -129,10 +130,7 @@ export function ErrorBanner({
 						aria-expanded={expanded}
 						className="inline-flex items-center gap-1.5 self-start label-sm text-error"
 					>
-						<Icon
-							name="chevron-right"
-							className={`size-3 transition-transform duration-150 ${expanded ? 'rotate-90' : ''}`}
-						/>
+						<DisclosureChevron kind="section" size="sm" open={expanded} />
 						Common causes
 					</button>
 					{expanded ? (

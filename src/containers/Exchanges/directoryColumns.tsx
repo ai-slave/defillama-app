@@ -5,6 +5,7 @@ import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TokenLogo } from '~/components/TokenLogo'
 import { divergingColor } from '~/constants/colors'
 import { Button } from '~/ui/Button'
+import { RowExpandButton } from '~/ui/DisclosureChevron'
 import { Icon } from '~/ui/Icon'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { TextLink } from '~/ui/TextLink'
@@ -462,27 +463,12 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 				return (
 					<div className={`relative flex min-w-0 items-center gap-2 ${row.depth > 0 ? 'pl-12' : 'pl-6'}`}>
 						{row.subRows.length > 0 ? (
-							<Button
-								size="sm"
-								variant="ghost"
-								square
-								aria-expanded={row.getIsExpanded()}
-								type="button"
-								className="absolute -left-1.5"
+							<RowExpandButton
+								expanded={row.getIsExpanded()}
 								onClick={row.getToggleExpandedHandler()}
-							>
-								{row.getIsExpanded() ? (
-									<>
-										<Icon name="chevron-down" className="size-4 text-tertiary" />
-										<span className="sr-only">Hide child venues</span>
-									</>
-								) : (
-									<>
-										<Icon name="chevron-right" className="size-4 text-tertiary" />
-										<span className="sr-only">Show child venues</span>
-									</>
-								)}
-							</Button>
+								label={row.getIsExpanded() ? 'Hide child venues' : 'Show child venues'}
+								className="absolute -left-1.5"
+							/>
 						) : null}
 						{/* min-w-2ch holds 1-99, so the 9 -> 10 jump stops shifting the badge, logo and
 						    name right. Scoped here rather than on the shared vf-row-index utility, which

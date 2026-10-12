@@ -1,4 +1,5 @@
 import { Card } from '~/ui/Card'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { Icon } from '~/ui/Icon'
 import { formatDateTime } from '~/utils/dateFormat'
 import type { AIGeneratedData } from '../dashboardTypes'
@@ -18,11 +19,11 @@ export function AIGenerationHistory({ aiGenerated }: AIGenerationHistoryProps) {
 	if (sessions.length === 0) return null
 
 	return (
-		<details className="group flex flex-col">
+		<details className="flex flex-col">
 			<summary className="flex items-center gap-2 text-secondary hover:text-link">
 				<Icon name="sparkles" className="size-4" />
 				<span>View AI Generation History</span>
-				<Icon name="chevron-down" className="size-3.5 transition-transform group-open:rotate-180" />
+				<DisclosureChevron kind="section" size="sm" />
 			</summary>
 			{sessions.map((session, index) => (
 				<Card key={session.sessionId} padding="sm" className="mt-2 flex flex-nowrap gap-2">

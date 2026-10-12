@@ -14,9 +14,8 @@ import { VirtualTable } from '~/components/Table/VirtualTable'
 import { TokenLogo } from '~/components/TokenLogo'
 import type { useGroupChainsPegged } from '~/containers/Stablecoins/hooks'
 import { CHAINS_CATEGORY_GROUP_SETTINGS, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
-import { Button } from '~/ui/Button'
 import { Change } from '~/ui/Change'
-import { Icon } from '~/ui/Icon'
+import { RowExpandButton } from '~/ui/DisclosureChevron'
 import { Panel } from '~/ui/Panel'
 import { SearchField } from '~/ui/SearchField'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
@@ -45,29 +44,12 @@ const stablecoinsByChainColumns = columnHelper.columns([
 					style={{ paddingLeft: row.depth ? row.depth * 48 : row.depth === 0 ? 24 : 0 }}
 				>
 					{row.subRows?.length > 0 ? (
-						<Button
-							size="sm"
-							variant="ghost"
-							square
-							aria-expanded={row.getIsExpanded()}
-							type="button"
+						<RowExpandButton
+							expanded={row.getIsExpanded()}
+							onClick={row.getToggleExpandedHandler()}
+							label={row.getIsExpanded() ? 'Hide child protocols' : 'View child protocols'}
 							className="absolute -left-1.5"
-							{...{
-								onClick: row.getToggleExpandedHandler()
-							}}
-						>
-							{row.getIsExpanded() ? (
-								<>
-									<Icon name="chevron-down" className="size-4 text-tertiary" />
-									<span className="sr-only">Hide child protocols</span>
-								</>
-							) : (
-								<>
-									<Icon name="chevron-right" className="size-4 text-tertiary" />
-									<span className="sr-only">View child protocols</span>
-								</>
-							)}
-						</Button>
+						/>
 					) : null}
 
 					{isSubRow ? (

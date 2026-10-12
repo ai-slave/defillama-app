@@ -9,6 +9,7 @@ import type { ChatSession } from '~/containers/LlamaAI/types'
 import { removeStorageItem, setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { Icon } from '~/ui/Icon'
 import { Skeleton } from '~/ui/Skeleton'
 import { InlineStatus } from '~/ui/Status'
@@ -102,12 +103,8 @@ export function ProjectsSidebarSection({
 				{!isLocked && projects.length > 0 ? (
 					<span className="shrink-0 body-sm text-tertiary tabular-nums">{projects.length}</span>
 				) : null}
-				<Icon
-					name={isOpen ? 'chevron-down' : 'chevron-right'}
-					aria-hidden="true"
-					// The chevron glyph sits inset in its box; pull it out so its tip lines up with the counts above it.
-					className="-mr-1 size-3.5 shrink-0 text-tertiary"
-				/>
+				{/* The chevron glyph sits inset in its box; pull it out so its tip lines up with the counts above it. */}
+				<DisclosureChevron kind="tree" size="sm" open={isOpen} className="-mr-1" />
 			</button>
 
 			{!isOpen ? null : isLocked ? (

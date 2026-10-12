@@ -2,8 +2,8 @@ import { matchSorter } from 'match-sorter'
 import { useCallback, useDeferredValue, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react'
 import { getStorageJSON, setStorageJSON } from '~/contexts/localStorageStore'
 import { Button } from '~/ui/Button'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { keepFocus } from '~/ui/focus'
-import { Icon } from '~/ui/Icon'
 import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus } from '~/ui/Status'
@@ -301,11 +301,7 @@ function CategorySection({
 					aria-expanded={!collapsed}
 					className="flex w-full items-center gap-2 border-b border-subtle pb-2 text-left label-md text-primary"
 				>
-					<Icon
-						name="chevron-right"
-						className={`size-4 shrink-0 text-tertiary transition-transform duration-150 ${collapsed ? '' : 'rotate-90'}`}
-						aria-hidden="true"
-					/>
+					<DisclosureChevron kind="tree" size="md" open={!collapsed} />
 					{category}
 					<span className="body-sm text-tertiary">{items.length}</span>
 				</button>

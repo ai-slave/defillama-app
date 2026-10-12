@@ -9,6 +9,7 @@ import {
 	useTableImageWatermark
 } from '~/components/TableImage/TableImageButtons'
 import { Button } from '~/ui/Button'
+import { DisclosureArrow } from '~/ui/ComboboxSelectTrigger'
 import { Icon, type IIcon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { useArticleEditable } from './useArticleEditable'
@@ -160,7 +161,12 @@ function TableToolbar({ editor, target }: { editor: Editor; target: HTMLElement 
 					getSource={getTableImageSource}
 					className="contents"
 					trigger={<Button variant="ghost" size="sm" />}
-					triggerContent={<span className="label-xs tracking-wider">PNG ▾</span>}
+					triggerContent={
+						<>
+							<span className="label-xs tracking-wider">PNG</span>
+							<DisclosureArrow />
+						</>
+					}
 					watermarkMode="preference"
 					hideWatermarkItem
 				/>

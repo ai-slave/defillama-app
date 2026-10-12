@@ -1,4 +1,4 @@
-import { Icon } from '~/ui/Icon'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import type { RWAPlatformMeta } from '../api.types'
 import {
 	getRwaConfidenceTone,
@@ -30,10 +30,10 @@ export function FeesRevenuePanel({ meta }: { meta: RWAPlatformMeta }) {
 			</div>
 			{meta.revenueNotes ? <Prose>{meta.revenueNotes}</Prose> : null}
 			{details.length > 0 ? (
-				<details className="group/disclosure flex flex-col">
+				<details className="flex flex-col">
 					<summary className="flex cursor-pointer items-center gap-1 label-sm text-link">
 						How the estimate is built
-						<Icon name="chevron-down" className="size-4 text-tertiary group-open/disclosure:rotate-180" />
+						<DisclosureChevron kind="section" size="sm" />
 					</summary>
 					<div className="flex flex-col gap-2 pt-2">
 						{details.map((detail) => (

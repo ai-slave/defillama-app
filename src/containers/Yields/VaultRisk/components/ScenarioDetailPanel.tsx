@@ -1,5 +1,6 @@
 import { TokenPageTableShell } from '~/components/Table/helpers'
 import { Card } from '~/ui/Card'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { Icon } from '~/ui/Icon'
 import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import { ORACLE_FULL_DRAIN_SCENARIO_ID, scenarioTone } from '../derive'
@@ -508,7 +509,7 @@ function NarrativeBody({
 				<Card as="details" padding="sm">
 					<summary className="flex cursor-pointer list-none items-center justify-between gap-2 body-md text-secondary">
 						<span>The math{scenario.formula ? ` · ${scenario.formula}` : ''}</span>
-						<Icon name="chevron-down" className="size-3.5 transition-transform in-[[open]]:rotate-180" />
+						<DisclosureChevron kind="section" size="sm" />
 					</summary>
 					{scenario.status === 'computed' && scenario.notes ? (
 						<p className="mt-2 body-sm text-secondary italic">{scenario.notes}</p>

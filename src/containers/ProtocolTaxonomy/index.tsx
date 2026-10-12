@@ -20,10 +20,9 @@ import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { usePageClockSec } from '~/hooks/usePageClock'
 import { definitions } from '~/public/definitions'
-import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanelToolbar } from '~/ui/ChartPanel'
-import { Icon } from '~/ui/Icon'
+import { RowExpandButton } from '~/ui/DisclosureChevron'
 import { Logo } from '~/ui/Logo'
 import { MetricRow } from '~/ui/MetricPrimitives'
 import { Panel } from '~/ui/Panel'
@@ -349,27 +348,12 @@ const COLUMN_REGISTRY = {
 			return (
 				<span className={`relative flex items-center gap-2 ${row.depth > 0 ? 'pl-8' : 'pl-4'}`}>
 					{row.subRows?.length > 0 ? (
-						<Button
-							size="sm"
-							variant="ghost"
-							square
-							aria-expanded={row.getIsExpanded()}
-							type="button"
-							className="absolute -left-1.5"
+						<RowExpandButton
+							expanded={row.getIsExpanded()}
 							onClick={row.getToggleExpandedHandler()}
-						>
-							{row.getIsExpanded() ? (
-								<>
-									<Icon name="chevron-down" className="size-4 text-tertiary" />
-									<span className="sr-only">Hide child protocols</span>
-								</>
-							) : (
-								<>
-									<Icon name="chevron-right" className="size-4 text-tertiary" />
-									<span className="sr-only">View child protocols</span>
-								</>
-							)}
-						</Button>
+							label={row.getIsExpanded() ? 'Hide child protocols' : 'View child protocols'}
+							className="absolute -left-1.5"
+						/>
 					) : null}
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 					<Logo size={24} src={row.original.logo} data-lgonly alt={`Logo of ${row.original.name}`} />

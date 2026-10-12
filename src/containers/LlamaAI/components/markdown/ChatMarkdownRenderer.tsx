@@ -36,6 +36,7 @@ import { ExternalLinkInterstitial } from '~/containers/ProDashboard/components/E
 import { subscribeToLocalStorage } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogHeader } from '~/ui/Dialog'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -386,7 +387,7 @@ export function SourcesList({ citations, isStreaming = false }: { citations: Arr
 			<summary className="mr-auto flex items-center gap-1 rounded-sm bg-surface-elevated-2 px-2 py-1 text-link">
 				<Icon name="link" className="size-3.5" />
 				<span>Sources</span>
-				<Icon name="chevron-down" className="size-3.5" />
+				<DisclosureChevron kind="section" size="sm" />
 			</summary>
 			<div className="flex flex-col gap-2.5 pt-2.5">
 				{sourceEntries.map(({ normalizedUrl, citationNumber }) => (

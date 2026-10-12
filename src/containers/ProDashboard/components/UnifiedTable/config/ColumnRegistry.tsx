@@ -6,7 +6,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
 import { Button } from '~/ui/Button'
 import { Change } from '~/ui/Change'
-import { Icon } from '~/ui/Icon'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { Logo } from '~/ui/Logo'
 import { TextLink } from '~/ui/TextLink'
 import { Tooltip } from '~/ui/Tooltip'
@@ -169,7 +169,7 @@ export const getUnifiedTableColumns = ({
 									/>
 								}
 							>
-								<Icon name={isExpanded ? 'chevron-down' : 'chevron-right'} className="size-4" />
+								<DisclosureChevron kind="tree" size="md" open={isExpanded} />
 							</Tooltip>
 						) : (
 							<span className="w-6" />

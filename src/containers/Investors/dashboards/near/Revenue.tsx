@@ -10,7 +10,7 @@ import { displayTableFeatures } from '~/components/Table/features/display'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { ChartPanelExportShellLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { Icon } from '~/ui/Icon'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelLoadingStatus, PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
@@ -145,13 +145,10 @@ export default function Revenue() {
 
 	return (
 		<div className="flex flex-col gap-6">
-			<Card as="details" padding="none" className="group">
+			<Card as="details" padding="none">
 				<summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5 label-lg text-primary">
 					<span>Quick Investment Thesis</span>
-					<Icon
-						name="chevron-down"
-						className="size-5 shrink-0 text-secondary transition-transform duration-200 group-open:rotate-180"
-					/>
+					<DisclosureChevron kind="section" size="sm" />
 				</summary>
 				<div className="flex flex-col gap-4 border-t border-subtle px-5 pt-4 pb-5 body-md text-secondary">
 					<p>
@@ -420,7 +417,7 @@ export default function Revenue() {
 					<h2 className="heading-xs">Frequently asked questions</h2>
 					<div className="flex flex-col gap-3">
 						{keyedOccurrences(data.metadata.faq, (item) => item.question).map(({ item, key }, idx) => (
-							<Card as="details" key={key} padding="none" className="group overflow-hidden">
+							<Card as="details" key={key} padding="none" className="overflow-hidden">
 								<summary className="flex cursor-pointer list-none items-start justify-between gap-4 p-5 label-md text-primary transition-colors hover:bg-hover-row">
 									<span className="flex items-start gap-3">
 										<span className="flex h-lh shrink-0 items-center">
@@ -431,11 +428,7 @@ export default function Revenue() {
 										<span>{item.question}</span>
 									</span>
 									<span className="flex h-lh shrink-0 items-center">
-										<Icon
-											name="chevron-down"
-											className="size-5 text-secondary transition-transform duration-200 group-open:rotate-180"
-											aria-hidden="true"
-										/>
+										<DisclosureChevron kind="section" size="sm" />
 									</span>
 								</summary>
 								<div className="border-t border-subtle bg-hover-row px-5 pt-4 pb-5">

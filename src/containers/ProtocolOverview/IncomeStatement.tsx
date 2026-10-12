@@ -11,11 +11,10 @@ import {
 } from '~/components/Table/helpers'
 import { CHART_DOWN, CHART_UP, OTHERS_COLOR } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
 import { ChartPanelBody, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { Icon } from '~/ui/Icon'
+import { RowExpandButton } from '~/ui/DisclosureChevron'
 import { PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Select } from '~/ui/Select'
@@ -878,20 +877,12 @@ function IncomeStatementByLabel({
 					    disclosure button, so the chevron is the only control. */}
 					<div className="flex items-center gap-1">
 						{hasBreakdownRows ? (
-							<Button
-								variant="ghost"
-								size="sm"
-								square
+							<RowExpandButton
+								expanded={isExpanded}
+								onClick={() => setIsExpanded((expanded) => !expanded)}
+								label={`${isExpanded ? 'Hide' : 'Show'} ${label} breakdown`}
 								className="-ml-1"
-								aria-expanded={isExpanded}
-								aria-label={`${isExpanded ? 'Hide' : 'Show'} ${label} breakdown`}
-								onClick={(e) => {
-									e.stopPropagation()
-									setIsExpanded((expanded) => !expanded)
-								}}
-							>
-								<Icon name={isExpanded ? 'chevron-down' : 'chevron-right'} className="size-4 text-tertiary" />
-							</Button>
+							/>
 						) : alignWithBreakdownRows ? (
 							<span aria-hidden="true" className="-ml-1 block size-6 shrink-0" />
 						) : null}

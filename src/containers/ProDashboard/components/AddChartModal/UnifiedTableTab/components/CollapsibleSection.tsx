@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Card } from '~/ui/Card'
-import { Icon } from '~/ui/Icon'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { Tag } from '~/ui/Tag'
 
 interface CollapsibleSectionProps {
@@ -22,11 +22,7 @@ export function CollapsibleSection({ title, badge, children, className = '' }: C
 				className="flex w-full items-center justify-between rounded-t-lg px-3 py-2.5 transition-colors"
 			>
 				<div className="flex items-center gap-2">
-					{isExpanded ? (
-						<Icon name="chevron-down" className="size-4 text-tertiary" />
-					) : (
-						<Icon name="chevron-right" className="size-4 text-tertiary" />
-					)}
+					<DisclosureChevron kind="section" size="sm" open={isExpanded} />
 					<h3 className="title-md text-primary">{title}</h3>
 					{badge !== undefined ? <Tag>{badge}</Tag> : null}
 				</div>

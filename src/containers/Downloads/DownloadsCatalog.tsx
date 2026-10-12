@@ -10,6 +10,7 @@ import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
 import { useIsClient } from '~/hooks/useIsClient'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { passFocusOnLeave } from '~/ui/focus'
 import { Icon, type IIcon } from '~/ui/Icon'
 import { IconTile } from '~/ui/IconTile'
@@ -477,13 +478,10 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 
 function FaqItem({ question, children }: { question: string; children: React.ReactNode }) {
 	return (
-		<details className="group">
+		<details>
 			<summary className="flex cursor-pointer items-center gap-4 py-4">
 				<span className="flex-1 label-md text-primary">{question}</span>
-				<Icon
-					name="chevron-down"
-					className="size-4 shrink-0 text-secondary transition-transform duration-200 group-open:rotate-180"
-				/>
+				<DisclosureChevron kind="section" size="sm" />
 			</summary>
 			<div className="pb-4 body-md text-secondary">{children}</div>
 		</details>

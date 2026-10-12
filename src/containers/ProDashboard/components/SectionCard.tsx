@@ -1,6 +1,7 @@
 import { useId } from 'react'
 import toast from 'react-hot-toast'
 import { Button } from '~/ui/Button'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { Icon } from '~/ui/Icon'
 import { InlineTextField } from '~/ui/InlineTextField'
 import { MetaLine } from '~/ui/MetaLine'
@@ -86,10 +87,7 @@ export function SectionCard({
 						/>
 					}
 				>
-					<Icon
-						name="chevron-down"
-						className={`size-4 transition-[rotate] duration-180 ease-out-quart ${collapsed ? '-rotate-90' : ''}`}
-					/>
+					<DisclosureChevron kind="section" size="md" open={!collapsed} />
 				</Tooltip>
 			) : null}
 			<div className="flex min-w-48 flex-col">

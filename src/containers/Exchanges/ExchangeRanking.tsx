@@ -3,7 +3,7 @@ import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { Icon } from '~/ui/Icon'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { MetaLine } from '~/ui/MetaLine'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { TextLink } from '~/ui/TextLink'
@@ -151,15 +151,16 @@ function RankingRow({
 				<td className="py-2 text-right">
 					{hasDetail ? (
 						<Button
-							variant="ghost"
 							size="sm"
+							variant="ghost"
 							square
-							className="ml-auto"
-							onClick={onToggle}
-							aria-expanded={expanded}
+							type="button"
 							aria-label={`${expanded ? 'Hide' : 'Show'} sub-scores for ${row.name}`}
+							aria-expanded={expanded}
+							onClick={onToggle}
+							className="ml-auto"
 						>
-							<Icon name={expanded ? 'chevron-up' : 'chevron-down'} className="size-4" />
+							<DisclosureChevron kind="section" size="md" open={expanded} />
 						</Button>
 					) : null}
 				</td>

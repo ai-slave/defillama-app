@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useState, type ReactNode } from 'react'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { Icon } from '~/ui/Icon'
 import { RailItem } from '~/ui/RailItem'
 import { docsAsset, FigureDualTable, FigureRadar, FigureTable } from './DocsFigures'
@@ -434,10 +435,7 @@ function TocAccordion({ active }: { active: string }) {
 					<span className="text-secondary">Contents: </span>
 					{activeLabel}
 				</span>
-				<Icon
-					name="chevron-down"
-					className={`size-4 shrink-0 text-tertiary transition-transform duration-300 ${open ? 'rotate-180' : ''}`}
-				/>
+				<DisclosureChevron kind="section" size="sm" open={open} />
 			</button>
 			<div
 				className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}

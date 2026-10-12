@@ -34,6 +34,7 @@ import { definitions } from '~/public/definitions'
 import { Button } from '~/ui/Button'
 import { Change } from '~/ui/Change'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
+import { RowExpandButton } from '~/ui/DisclosureChevron'
 import { Icon } from '~/ui/Icon'
 import { Logo } from '~/ui/Logo'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
@@ -1279,29 +1280,12 @@ const columns = columnHelper.columns([
 			return (
 				<span className={`relative flex items-center gap-2 ${row.depth > 0 ? 'pl-12' : 'pl-6'}`}>
 					{row.subRows?.length > 0 ? (
-						<Button
-							size="sm"
-							variant="ghost"
-							square
-							type="button"
+						<RowExpandButton
+							expanded={row.getIsExpanded()}
+							onClick={row.getToggleExpandedHandler()}
+							label={row.getIsExpanded() ? 'Hide child protocols' : 'View child protocols'}
 							className="absolute -left-1.5"
-							aria-expanded={row.getIsExpanded()}
-							{...{
-								onClick: row.getToggleExpandedHandler()
-							}}
-						>
-							{row.getIsExpanded() ? (
-								<>
-									<Icon name="chevron-down" className="size-4 text-tertiary" />
-									<span className="sr-only">Hide child protocols</span>
-								</>
-							) : (
-								<>
-									<Icon name="chevron-right" className="size-4 text-tertiary" />
-									<span className="sr-only">View child protocols</span>
-								</>
-							)}
-						</Button>
+						/>
 					) : (
 						<Bookmark size="sm" readableName={value} className="absolute -left-1.5 hidden lg:flex" />
 					)}

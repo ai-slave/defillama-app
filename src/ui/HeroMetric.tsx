@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react'
-import { Icon } from '~/ui/Icon'
 import { StaleText } from '~/ui/StaleText'
 import { StatItem } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'
+import { DisclosureChevron } from './DisclosureChevron'
 
 interface HeroMetricProps {
 	label: string
@@ -31,17 +31,14 @@ export function HeroMetric({
 	}
 
 	return (
-		<details className="group">
+		<details>
 			{/* A <summary> must not contain interactive descendants, so the summary itself anchors the tooltip (as
 			    MetricSection does): hover or focus shows the definition, and a click or tap still toggles the rows. */}
 			<Tooltip content={tooltip} render={<summary className="flex cursor-pointer flex-col" />}>
 				<span className={`text-secondary ${tooltip ? 'underline decoration-dotted' : ''}`.trim()}>{label}</span>
 				<span className="flex flex-nowrap items-center gap-2">
 					<StaleText className="min-h-8 mono-xl">{value}</StaleText>
-					<Icon
-						name="chevron-down"
-						className="relative top-0.5 size-4 text-tertiary transition-transform duration-100 group-open:rotate-180"
-					/>
+					<DisclosureChevron kind="section" size="md" className="relative top-0.5" />
 				</span>
 			</Tooltip>
 			<div className="my-3 flex max-h-[50dvh] flex-col overflow-auto">

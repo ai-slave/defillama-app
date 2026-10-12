@@ -13,7 +13,7 @@ import { tokenTableFeatures, type TokenTableFeatures } from '~/containers/Tokens
 import { Button } from '~/ui/Button'
 import { Change } from '~/ui/Change'
 import { Checkbox } from '~/ui/Checkbox'
-import { Icon } from '~/ui/Icon'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { Logo } from '~/ui/Logo'
 import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
@@ -360,10 +360,7 @@ const expanderColumn = columnHelper.display({
 		return (
 			<Button type="button" size="sm" onClick={row.getToggleExpandedHandler()} aria-expanded={isExpanded}>
 				Markets
-				<Icon
-					name="chevron-down"
-					className={`size-3 text-tertiary transition-transform duration-100 ${isExpanded ? 'rotate-180' : ''}`}
-				/>
+				<DisclosureChevron kind="section" size="sm" open={isExpanded} />
 			</Button>
 		)
 	},

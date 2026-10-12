@@ -7,6 +7,7 @@ import { SIDEBAR_ROW_SURFACE } from '~/containers/LlamaAI/components/sidebar/Age
 import type { ChatSession } from '~/containers/LlamaAI/types'
 import { removeStorageItem, setStorageItem } from '~/contexts/localStorageStore'
 import { Button } from '~/ui/Button'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { Icon } from '~/ui/Icon'
 import { MenuItem, MenuSeparator, MenuSurface } from '~/ui/PopoverSurface'
 import { Skeleton } from '~/ui/Skeleton'
@@ -95,10 +96,11 @@ export function ProjectSidebarRow({
 					// The row surface around it washes on hover and focus, so the button draws no wash of its own.
 					className="flex min-w-0 flex-1 items-center gap-1.5 rounded-md py-1.5 pr-2 text-left"
 				>
-					<Icon
-						name={isExpanded ? 'chevron-down' : 'chevron-right'}
-						aria-hidden="true"
-						className={`-mr-1 size-3.5 shrink-0 text-secondary ${isExpanded ? '' : 'lg:opacity-0 lg:group-focus-within/project:opacity-100 lg:group-hover/project:opacity-100'}`}
+					<DisclosureChevron
+						kind="tree"
+						size="sm"
+						open={isExpanded}
+						className={`-mr-1 ${isExpanded ? '' : 'lg:opacity-0 lg:group-focus-within/project:opacity-100 lg:group-hover/project:opacity-100'}`}
 					/>
 					<Icon
 						name="folder"

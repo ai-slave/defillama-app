@@ -461,6 +461,12 @@
       ]
     },
     {
+      "name": "Exchanges: Overview",
+      "route": "/exchanges",
+      "category": "Exchanges",
+      "description": "Compare centralized and decentralized exchanges by volume, liquidity, fees, and reserves."
+    },
+    {
       "name": "Exchanges: Reserves",
       "route": "/cexs",
       "category": "Exchanges",
@@ -472,12 +478,6 @@
         "exchange reserves",
         "proof of reserves"
       ]
-    },
-    {
-      "name": "Exchanges: Overview",
-      "route": "/exchanges",
-      "category": "Exchanges",
-      "description": "Compare centralized and decentralized exchanges by volume, liquidity, fees, and reserves."
     },
     {
       "name": "Exchanges: Ranking",
@@ -814,17 +814,17 @@
       ]
     },
     {
-      "name": "Transactions by Bridge",
-      "route": "/bridge-transactions",
-      "category": "Tools",
-      "description": "Download transaction data across different time periods by bridge"
-    },
-    {
       "name": "Rewards",
       "route": "/rewards",
       "category": "Tools",
       "description": "Explore protocol rewards, points, referral programs, and trading contests",
       "tab": "Protocols"
+    },
+    {
+      "name": "Transactions by Bridge",
+      "route": "/bridge-transactions",
+      "category": "Tools",
+      "description": "Download transaction data across different time periods by bridge"
     },
     {
       "name": "Token Holder Profit and Loss",

@@ -21,7 +21,7 @@ import { getEquitiesTableQueryKey } from '~/containers/ProDashboard/equitiesTabl
 import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashboard/queries'
 import { fetchProDashboardProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
 import { getProEquitiesStatementsCacheKey } from '~/containers/ProDashboard/tableQueryKeys'
-import { Icon } from '~/ui/Icon'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import type { CsvCell } from '~/utils/csvCell'
 import { formatDate } from '~/utils/dateFormat'
@@ -63,7 +63,7 @@ function FinancialRow({
 							}}
 							className="-ml-1 flex w-full items-center gap-1 rounded-sm text-left text-secondary hover:bg-hover-row focus-visible:bg-hover-row"
 						>
-							<Icon name={isExpanded ? 'chevron-down' : 'chevron-right'} className="size-3.5 shrink-0" />
+							<DisclosureChevron kind="tree" size="sm" open={isExpanded} />
 							<span className="truncate">{row.label}</span>
 						</button>
 					) : (

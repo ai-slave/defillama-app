@@ -1,6 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
+import { DisclosureArrow } from '~/ui/ComboboxSelectTrigger'
 import { Icon } from '~/ui/Icon'
 import { IconTile } from '~/ui/IconTile'
 import { MenuSurface } from '~/ui/PopoverSurface'
@@ -30,7 +31,7 @@ export function IrTabMenu({
 	return (
 		<Ariakit.MenuProvider>
 			<Ariakit.MenuButton
-				render={<TabLink as="button" type="button" className="group" />}
+				render={<TabLink as="button" type="button" />}
 				aria-current={active ? 'page' : undefined}
 				{...umamiProps}
 			>
@@ -38,12 +39,7 @@ export function IrTabMenu({
 					label={dashboard.tabLabel}
 					gradient={dashboard.brandGradient}
 					active={active}
-					trailing={
-						<Icon
-							name="chevron-down"
-							className="size-3.5 shrink-0 text-tertiary transition-transform group-aria-expanded:rotate-180"
-						/>
-					}
+					trailing={<DisclosureArrow />}
 				/>
 			</Ariakit.MenuButton>
 			<MenuSurface variant="actions" width="lg">

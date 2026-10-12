@@ -1,11 +1,14 @@
+import * as Ariakit from '@ariakit/react'
 import * as React from 'react'
 import { BasicLink } from '~/components/Link'
-import { Icon } from '~/ui/Icon'
+import { DisclosureArrow } from '~/ui/ComboboxSelectTrigger'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
+import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
 import { Account } from '../Account'
 import { observeMenu, trackMenuClick } from '../menuAnalytics'
 import { PremiumHeader } from '../PremiumHeader'
 import { NavItems, PrimaryNavLinks } from '../PrimaryNavLinks'
-import { LinkToPage, navSummaryStyles, SidebarDivider, useDashboardsDisclosure } from '../shared'
+import { isNavRouteActive, LinkToPage, navSummaryStyles, SidebarDivider, useDashboardsDisclosure } from '../shared'
 import { ThemeSwitch } from '../ThemeSwitch'
 import type { TNavLink, TNavLinks } from '../types'
 import { PinnedPages } from './PinnedPages'
@@ -79,10 +82,10 @@ export function DesktopNav({
 					{pinnedPages.length > 0 ? <PinnedPages pinnedPages={pinnedPages} asPath={asPath} /> : null}
 
 					{userDashboards.length > 0 || dashboardsStatus ? (
-						<details className="group" data-nav-dashboards {...dashboardsDisclosure}>
+						<details data-nav-dashboards {...dashboardsDisclosure}>
 							<summary className={`${navSummaryStyles} label-sm`}>
 								<span>Your Dashboards</span>
-								<Icon name="chevron-down" className="size-4 shrink-0 text-tertiary group-open:rotate-180" />
+								<DisclosureChevron kind="tree" size="md" />
 							</summary>
 							<div>
 								{userDashboards.map(({ name, route }) => (
@@ -94,7 +97,7 @@ export function DesktopNav({
 					) : null}
 
 					{footerLinks.map(({ category, pages }) => (
-						<NavDetailsSection key={`desktop-nav-${category}`} category={category} pages={pages} asPath={asPath} />
+						<NavFooterMenu key={`desktop-nav-${category}`} category={category} pages={pages} asPath={asPath} />
 					))}
 				</div>
 
@@ -108,31 +111,40 @@ export function DesktopNav({
 	)
 }
 
-function NavDetailsSection({ category, pages, asPath }: { category: string; pages: Array<TNavLink>; asPath: string }) {
-	const lastItemRef = React.useRef<HTMLDivElement>(null)
-
+/** "More" and "About Us" hold occasional utility links, so each opens as a menu beside the sidebar. Their rows stay put
+    at the bottom of the nav, where an inline section pushed its own row up as it opened. A page inside them is not
+    highlighted in the sidebar (aria-current still names it): these pages are rarely open, and one click away. */
+function NavFooterMenu({ category, pages, asPath }: { category: string; pages: Array<TNavLink>; asPath: string }) {
 	return (
-		<details
-			className={`group ${category === 'More' ? 'mt-auto' : ''}`}
-			onToggle={(e) => {
-				if (e.currentTarget.open) {
-					setTimeout(() => {
-						lastItemRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-					}, 0)
-				}
-			}}
-		>
-			<summary className={navSummaryStyles}>
+		<Ariakit.MenuProvider placement="right-end">
+			<Ariakit.MenuButton
+				data-menu-name={category}
+				data-nav-group-menu-button
+				className={`${navSummaryStyles} ${category === 'More' ? 'mt-auto' : ''}`}
+			>
 				<span>{category}</span>
-				<Icon name="chevron-up" className="size-4 shrink-0 text-tertiary group-open:rotate-180" />
-			</summary>
-			<div className="border-l border-subtle pl-2">
-				{pages.map(({ name, route, icon, attention }, index) => (
-					<div key={`desktop-nav-${name}-${route}`} ref={index === pages.length - 1 ? lastItemRef : null}>
-						<LinkToPage route={route} name={name} icon={icon} attention={attention} asPath={asPath} />
-					</div>
-				))}
-			</div>
-		</details>
+				<DisclosureArrow />
+			</Ariakit.MenuButton>
+			<MenuSurface variant="actions" data-nav-group-menu>
+				{pages.map(({ name, route }) => {
+					const isExternal = route.startsWith('http')
+					return (
+						<MenuItem
+							key={route}
+							render={
+								<BasicLink
+									href={route}
+									aria-current={isNavRouteActive(route, asPath) ? 'page' : undefined}
+									target={isExternal ? '_blank' : undefined}
+									rel={isExternal ? 'noopener noreferrer' : undefined}
+								/>
+							}
+						>
+							{name}
+						</MenuItem>
+					)
+				})}
+			</MenuSurface>
+		</Ariakit.MenuProvider>
 	)
 }

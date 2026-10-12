@@ -3,6 +3,7 @@ import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { BasicLink } from '~/components/Link'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { Icon } from '~/ui/Icon'
 import { IconTile } from '~/ui/IconTile'
 import { QuestionHelper } from '~/ui/QuestionHelper'
@@ -266,7 +267,7 @@ function MetadataTableField({
 					className="flex w-full items-center justify-center gap-1 px-3 py-2 label-sm text-link hover:bg-hover-row"
 				>
 					{expanded ? 'Show fewer tiers' : `Show all ${field.value.length} tiers`}
-					<Icon name="chevron-down" className={`size-3.5 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+					<DisclosureChevron kind="section" size="sm" open={expanded} />
 				</button>
 			) : null}
 		</div>

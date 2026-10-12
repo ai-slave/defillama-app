@@ -5,7 +5,7 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { ChartPanelExportShellLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { Icon } from '~/ui/Icon'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelLoadingStatus, PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
@@ -42,13 +42,10 @@ const FAQ_ITEMS: Array<{ q: string; a: React.ReactNode }> = [
 
 function FaqItem({ q, a }: { q: string; a: React.ReactNode }) {
 	return (
-		<Card as="details" padding="none" className="group">
+		<Card as="details" padding="none">
 			<summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 label-md text-primary">
 				{q}
-				<Icon
-					name="chevron-down"
-					className="size-4 shrink-0 text-secondary transition-transform group-open:rotate-180"
-				/>
+				<DisclosureChevron kind="section" size="sm" />
 			</summary>
 			<p className="px-4 pb-4 body-md text-secondary">{a}</p>
 		</Card>

@@ -28,6 +28,7 @@ import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { useIsClient } from '~/hooks/useIsClient'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -966,10 +967,7 @@ function FAQ({ question, children }: { question: string; children: React.ReactNo
 				<span className="flex-1 label-md text-primary transition-colors group-hover:text-ai-gold-deep md:label-lg">
 					{question}
 				</span>
-				<Icon
-					name="chevron-down"
-					className="size-4 shrink-0 text-tertiary transition-transform duration-200 group-open:rotate-180"
-				/>
+				<DisclosureChevron kind="section" size="sm" />
 			</summary>
 			<div className="pb-4 body-md text-secondary md:pb-5">{children}</div>
 		</details>

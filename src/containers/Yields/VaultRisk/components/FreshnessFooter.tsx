@@ -1,3 +1,4 @@
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { Icon } from '~/ui/Icon'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { StatusDot } from '~/ui/StatusBadge'
@@ -21,13 +22,13 @@ function olderRun(a?: string, b?: string): string | undefined {
 function DriftBanner({ entries, protocolId }: { entries: Array<DriftEntry>; protocolId: string }) {
 	if (entries.length === 0) return null
 	return (
-		<RiskCallout as="details" className="group">
+		<RiskCallout as="details">
 			<summary className="flex cursor-pointer list-none items-center justify-between gap-2 label-md text-(--yield-warning-text)">
 				<span className="flex items-center gap-1.5">
 					<Icon name="alert-triangle" className="size-4" />
 					{`${entries.length} onchain ${entries.length === 1 ? 'change' : 'changes'} detected — affects all ${protocolId} vaults`}
 				</span>
-				<Icon name="chevron-down" className="size-4 shrink-0 transition-transform group-open:rotate-180" />
+				<DisclosureChevron kind="section" size="sm" />
 			</summary>
 			<ul className="mt-2 space-y-2">
 				{entries.map((d) => (

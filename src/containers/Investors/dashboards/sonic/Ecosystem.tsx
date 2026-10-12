@@ -18,7 +18,7 @@ import { TablePager } from '~/components/Table/TablePager'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { ChartPanelExportShellLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { Icon } from '~/ui/Icon'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus, PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
@@ -237,12 +237,7 @@ function AssetBreakdownSection({
 							const row = (
 								<>
 									<span className="flex w-4 shrink-0 justify-center">
-										{hasChildren ? (
-											<Icon
-												name="chevron-right"
-												className={`size-3.5 text-tertiary transition-transform ${isOpen ? 'rotate-90' : ''}`}
-											/>
-										) : null}
+										{hasChildren ? <DisclosureChevron kind="tree" size="sm" open={isOpen} /> : null}
 									</span>
 									<span className="inline-block size-2 shrink-0 rounded-full" style={{ background: color }} />
 									<span className="min-w-0 flex-1 truncate body-md text-primary capitalize">{cat.name}</span>

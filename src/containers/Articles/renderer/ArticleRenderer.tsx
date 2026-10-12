@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createElement, useEffect, useId, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { Button } from '~/ui/Button'
 import { useCopy } from '~/ui/Copy'
+import { RowExpandButton } from '~/ui/DisclosureChevron'
 import { Icon } from '~/ui/Icon'
 import { MetaLine } from '~/ui/MetaLine'
 import { TextLink } from '~/ui/TextLink'
@@ -739,16 +740,11 @@ function TocList({
 									>
 										{group.text}
 									</a>
-									<Button
-										variant="ghost"
-										size="sm"
-										square
+									<RowExpandButton
+										expanded={!isCollapsed}
 										onClick={() => toggle(group.id)}
-										aria-expanded={!isCollapsed}
-										aria-label={`${group.text} subsections`}
-									>
-										<Icon name={isCollapsed ? 'chevron-right' : 'chevron-down'} className="size-4" />
-									</Button>
+										label={`${group.text} subsections`}
+									/>
 								</div>
 							) : (
 								<a

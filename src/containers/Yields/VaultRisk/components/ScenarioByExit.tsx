@@ -1,6 +1,7 @@
 import { Fragment, useMemo, useState } from 'react'
 import { TokenPageTableShell } from '~/components/Table/helpers'
 import { SortIcon } from '~/components/Table/SortIcon'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { Icon } from '~/ui/Icon'
 import { Tag } from '~/ui/Tag'
 import { formatUsd } from '~/utils/numberFormat'
@@ -137,9 +138,7 @@ function ScenarioRow({
 					</Tag>
 				</td>
 				<td className="px-2 py-3 align-middle">
-					{clickable ? (
-						<Icon name="chevron-down" className={`size-3.5 text-secondary ${selected ? 'rotate-180' : ''}`} />
-					) : null}
+					{clickable ? <DisclosureChevron kind="section" size="sm" open={selected} /> : null}
 				</td>
 			</tr>
 			{selected && clickable ? (

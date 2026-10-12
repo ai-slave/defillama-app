@@ -7,6 +7,7 @@ import { useQuestionSignIn } from '~/containers/LlamaAI/useQuestionSignIn'
 import { useHorizontalOverflow } from '~/hooks/useHorizontalOverflow'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { Icon } from '~/ui/Icon'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -104,13 +105,13 @@ export function HomeDailyBrief({ brief }: { brief: DailyBrief }) {
 	const openLabel = (
 		<>
 			Hide full brief
-			<Icon name="chevron-up" className="size-3.5" />
+			<DisclosureChevron kind="section" size="sm" open />
 		</>
 	)
 	const closedLabel = (
 		<>
 			{`Read full brief · ${bulletCount}`}
-			<Icon name="chevron-right" className="size-3.5" />
+			<DisclosureChevron kind="section" size="sm" open={false} />
 		</>
 	)
 
@@ -156,9 +157,11 @@ export function HomeDailyBrief({ brief }: { brief: DailyBrief }) {
 					className="group hover-wash -mx-2 -my-1 flex min-w-0 items-center gap-1 rounded-md px-2 py-1 text-left heading-xs text-primary"
 				>
 					<span className="line-clamp-2 sm:truncate">{brief.headline}</span>
+					{/* Not DisclosureChevron: before hydration the brief's A/B variant opens it by CSS, so its chevron turns by the
+					    same CSS. It follows the section convention the "Read full brief" button below uses. */}
 					<Icon
-						name="chevron-right"
-						className={`size-4 shrink-0 text-tertiary transition-transform group-hover:text-primary group-focus-visible:text-primary motion-reduce:transition-none ${isExpanded ? 'rotate-90' : isExpanded === null ? 'lg:[html[data-ab-home-brief-default-v1=b]_&]:rotate-90' : ''}`}
+						name="chevron-down"
+						className={`size-4 shrink-0 text-tertiary transition-transform group-hover:text-primary group-focus-visible:text-primary motion-reduce:transition-none ${isExpanded ? 'rotate-180' : isExpanded === null ? 'lg:[html[data-ab-home-brief-default-v1=b]_&]:rotate-180' : ''}`}
 					/>
 				</button>
 				{isExpanded !== false ? (

@@ -1,5 +1,5 @@
 import { TokenLogo } from '~/components/TokenLogo'
-import { Icon } from '~/ui/Icon'
+import { RowExpandButton } from '~/ui/DisclosureChevron'
 import { Logo } from '~/ui/Logo'
 import { Tag } from '~/ui/Tag'
 import { TextLink } from '~/ui/TextLink'
@@ -45,12 +45,12 @@ export const nameColumn = createNameColumn()
 function GroupNameCell({ group, expanded, onToggle }: { group: RWAGroupRow; expanded: boolean; onToggle: () => void }) {
 	return (
 		<span className="relative flex items-center gap-2 pl-6">
-			<button type="button" className="absolute -left-0.5" aria-expanded={expanded} onClick={onToggle}>
-				<Icon name={expanded ? 'chevron-down' : 'chevron-right'} className="size-4 text-tertiary" />
-				<span className="sr-only">
-					{expanded ? 'Hide' : 'Show'} {group.children[0]?.asset.kind === 'perps' ? 'markets' : 'assets'}
-				</span>
-			</button>
+			<RowExpandButton
+				expanded={expanded}
+				onClick={onToggle}
+				label={`${expanded ? 'Hide' : 'Show'} ${group.children[0]?.asset.kind === 'perps' ? 'markets' : 'assets'}`}
+				className="absolute -left-1.5"
+			/>
 			<span className="vf-row-index shrink-0" aria-hidden="true" />
 			{group.icon?.kind === 'chain' ? (
 				<TokenLogo name={group.icon.name} kind="chain" size={24} alt={`Logo of ${group.label}`} />

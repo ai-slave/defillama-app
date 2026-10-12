@@ -1,7 +1,7 @@
 import { createColumnHelper, type Row } from '@tanstack/react-table'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { Button } from '~/ui/Button'
-import { Icon } from '~/ui/Icon'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { Logo } from '~/ui/Logo'
 import { Tag } from '~/ui/Tag'
 import { TextLink } from '~/ui/TextLink'
@@ -35,7 +35,7 @@ export const columns = helper.columns([
 					aria-controls={row.getIsExpanded() ? `reward-details-${row.id}` : undefined}
 					onClick={row.getToggleExpandedHandler()}
 				>
-					<Icon name={row.getIsExpanded() ? 'chevron-down' : 'chevron-right'} className="size-4" aria-hidden="true" />
+					<DisclosureChevron kind="tree" size="md" open={row.getIsExpanded()} />
 				</Button>
 				<Logo src={row.original.logo} size={28} />
 				<div className="flex min-w-0 flex-col gap-0.5">

@@ -6,6 +6,7 @@ import { ClientOnly } from '~/layout/ClientOnly'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Dialog, DialogBody, DialogHeader } from '~/ui/Dialog'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { TabPanel, Tabs } from '~/ui/Tabs'
@@ -339,7 +340,7 @@ function ToolCategoryGroup({
 				aria-controls={panelId}
 				className="mb-2 flex w-full items-center gap-2 text-left label-sm tracking-widest text-secondary uppercase transition-colors hover:text-primary"
 			>
-				<Icon name="chevron-right" className={`size-3.5 transition-transform ${open ? 'rotate-90' : ''}`} />
+				<DisclosureChevron kind="section" size="sm" open={open} />
 				{label}
 				<span className="font-normal tracking-normal text-tertiary normal-case">({tools.length})</span>
 			</button>

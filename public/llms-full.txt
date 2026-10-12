@@ -167,8 +167,8 @@ Common usage examples:
 - [Protocols by FDV](https://defillama.com/fdv): Token price multiplied by fully diluted supply of each protocol Category: Token.
 - [Protocols by Outstanding FDV](https://defillama.com/outstanding-fdv): Token price multiplied by outstanding supply of each protocol. Outstanding supply is the total supply minus the supply that is not yet allocated to anything (e.g., coins in treasury or reserve) Category: Token.
 - [Exchanges: MiCA](https://defillama.com/mica): MiCA-regulated crypto exchanges in the EU: liquidity, trading fees, perps availability, and KYC requirements Category: Exchanges.
-- [Exchanges: Reserves](https://defillama.com/cexs): Assets held in tracked centralized exchange wallets, clean reserves, and net inflows Category: Exchanges.
 - [Exchanges: Overview](https://defillama.com/exchanges): Compare centralized and decentralized exchanges by volume, liquidity, fees, and reserves. Category: Exchanges.
+- [Exchanges: Reserves](https://defillama.com/cexs): Assets held in tracked centralized exchange wallets, clean reserves, and net inflows Category: Exchanges.
 - [Exchanges: Ranking](https://defillama.com/exchanges/rank): REAL exchange scores for reserves, execution, activity, and liquidity. Category: Exchanges.
 - [Exchanges: Charts](https://defillama.com/exchanges/charts): Historical exchange volume, open interest, depth, and normalized volume. Category: Exchanges.
 - [Exchanges: Token Finder](https://defillama.com/exchanges/tokens): Find exchanges listing selected tokens across spot and perpetual markets. Category: Exchanges.
@@ -211,8 +211,8 @@ Common usage examples:
 - [Protocols Website Directory](https://defillama.com/directory): Directory of all protocols websites on DefiLlama
 - [Yields: Watchlist](https://defillama.com/yields/watchlist): Watchlist of all pools that we track in our yields section
 - [Liquidations](https://defillama.com/liquidations): Collateral at risk of liquidation if asset prices reach certain levels Category: Liquidations.
-- [Transactions by Bridge](https://defillama.com/bridge-transactions): Download transaction data across different time periods by bridge
 - [Rewards](https://defillama.com/rewards): Explore protocol rewards, points, referral programs, and trading contests
+- [Transactions by Bridge](https://defillama.com/bridge-transactions): Download transaction data across different time periods by bridge
 - [Token Holder Profit and Loss](https://defillama.com/token-pnl): Calculate the percentage change in token price between two dates
 - [Report Error](https://defillama.com/report-error): Report errors in methodology, protocol metrics, or suggest site improvements
 - [Compare Chains](https://defillama.com/compare-chains?chains=OP+Mainnet&chains=Arbitrum): Compare metrics across different chains

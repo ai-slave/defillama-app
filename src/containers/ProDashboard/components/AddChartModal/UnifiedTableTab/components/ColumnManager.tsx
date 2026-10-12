@@ -44,6 +44,7 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
 import { CountBadge } from '~/ui/CountBadge'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
@@ -708,10 +709,7 @@ export function ColumnManager({
 						</span>
 						{customColumns.length > 0 ? <CountBadge count={customColumns.length} /> : null}
 					</div>
-					<Icon
-						name="chevron-down"
-						className={`size-3.5 text-tertiary transition-transform ${customColumnExpanded ? 'rotate-180' : ''}`}
-					/>
+					<DisclosureChevron kind="section" size="sm" open={customColumnExpanded} />
 				</button>
 
 				<div className="mt-2 flex flex-wrap gap-1.5">

@@ -3,6 +3,7 @@ import { useRef, useState } from 'react'
 import { LinksWithDropdown } from '~/components/RowLinksWithDropdown/LinksWithDropdown'
 import { Button } from '~/ui/Button'
 import { CountBadge } from '~/ui/CountBadge'
+import { DisclosureChevron, RowExpandButton } from '~/ui/DisclosureChevron'
 import { Icon } from '~/ui/Icon'
 import { ListRow } from '~/ui/ListRow'
 import { RailItem } from '~/ui/RailItem'
@@ -293,6 +294,43 @@ function LinksWithDropdownDemo({ values }: { values: KnobValues }) {
 	)
 }
 
+/** A <details> section that turns its chevron on its own, and a button that passes `open`, both of the knob's kind. */
+function DisclosureChevronDemo({ values }: { values: KnobValues }) {
+	const kind = values.kind as 'section' | 'tree'
+	const size = values.size as 'sm' | 'md'
+	const [open, setOpen] = useState(false)
+	return (
+		<div className="flex flex-col gap-3">
+			<details className="w-72">
+				<summary className="flex cursor-pointer items-center gap-2 label-md text-primary">
+					{kind === 'tree' ? <DisclosureChevron kind={kind} size={size} /> : null}
+					Fees by chain
+					{kind === 'section' ? <DisclosureChevron kind={kind} size={size} className="ml-auto" /> : null}
+				</summary>
+				<p className="pt-2 body-sm text-secondary">Ethereum, Arbitrum and Base.</p>
+			</details>
+			<Button size="sm" variant="ghost" aria-expanded={open} onClick={() => setOpen(!open)} className="w-fit">
+				{open ? 'Show less' : 'Show more'}
+				<DisclosureChevron kind={kind} size={size} open={open} />
+			</Button>
+		</div>
+	)
+}
+
+function RowExpandButtonDemo() {
+	const [expanded, setExpanded] = useState(false)
+	return (
+		<div className="flex items-center gap-2 label-md text-primary">
+			<RowExpandButton
+				expanded={expanded}
+				onClick={() => setExpanded(!expanded)}
+				label={expanded ? 'Hide child protocols' : 'View child protocols'}
+			/>
+			Aave
+		</div>
+	)
+}
+
 export const navigation: Family = {
 	id: 'navigation',
 	title: 'Navigation',
@@ -465,6 +503,22 @@ export const navigation: Family = {
 					</Example>
 				</>
 			)
+		},
+		{
+			name: 'DisclosureChevron',
+			source: 'src/ui/DisclosureChevron.tsx',
+			knobs: [
+				{ name: 'kind', values: ['section', 'tree'] },
+				{ name: 'size', values: ['sm', 'md'] }
+			],
+			note: 'Open the section or press the button: section points down and turns up, tree points right and turns down. Inside a summary it follows its details; on a button it follows open.',
+			render: (values) => <DisclosureChevronDemo values={values} />
+		},
+		{
+			name: 'RowExpandButton',
+			source: 'src/ui/DisclosureChevron.tsx',
+			note: 'Press it: the tree chevron turns down, aria-expanded flips, and its screen-reader name follows the label the caller passes.',
+			render: () => <RowExpandButtonDemo />
 		},
 		{
 			name: 'LinksWithDropdown',

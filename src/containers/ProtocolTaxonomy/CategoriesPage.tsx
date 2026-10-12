@@ -11,11 +11,10 @@ import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
 import { ChartPanelToolbar } from '~/ui/ChartPanel'
-import { Icon } from '~/ui/Icon'
+import { RowExpandButton } from '~/ui/DisclosureChevron'
 import { Panel } from '~/ui/Panel'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
@@ -50,29 +49,12 @@ const categoriesColumns = columnHelper.columns([
 			return (
 				<span className={`relative flex items-center gap-2 ${row.depth > 0 ? 'pl-8' : 'pl-4'}`}>
 					{row.subRows?.length != null && row.subRows.length > 0 ? (
-						<Button
-							size="sm"
-							variant="ghost"
-							square
-							aria-expanded={row.getIsExpanded()}
-							type="button"
+						<RowExpandButton
+							expanded={row.getIsExpanded()}
+							onClick={row.getToggleExpandedHandler()}
+							label={row.getIsExpanded() ? 'Hide tags' : 'View tags'}
 							className="absolute -left-2"
-							{...{
-								onClick: row.getToggleExpandedHandler()
-							}}
-						>
-							{row.getIsExpanded() ? (
-								<>
-									<Icon name="chevron-down" className="size-4 text-tertiary" />
-									<span className="sr-only">Hide tags</span>
-								</>
-							) : (
-								<>
-									<Icon name="chevron-right" className="size-4 text-tertiary" />
-									<span className="sr-only">View tags</span>
-								</>
-							)}
-						</Button>
+						/>
 					) : null}
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 					<TextLink href={getCategoryRoute(slug(categoryName))} truncate>

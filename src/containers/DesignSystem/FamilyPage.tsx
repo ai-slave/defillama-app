@@ -1,6 +1,6 @@
 import { Fragment, type ReactNode, useId, useState } from 'react'
 import { Button } from '~/ui/Button'
-import { Icon } from '~/ui/Icon'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Select } from '~/ui/Select'
 import { Switch } from '~/ui/Switch'
@@ -194,15 +194,11 @@ function Playground({ part }: { part: PartSpec }) {
 function AllStates({ states: States }: { states: () => ReactNode }) {
 	const [open, setOpen] = useState(false)
 	return (
-		// design.md names no disclosure part, so this is the native element in the app's chevron pattern (MetricSection,
-		// HeroMetric). The matrices mount only while it is open, so a family page does not render them all up front.
-		<details className="group/states" onToggle={(event) => setOpen(event.currentTarget.open)}>
+		// A native <details> with DisclosureChevron, which turns from it. The matrices mount only while it is open, so a
+		// family page does not render them all up front.
+		<details onToggle={(event) => setOpen(event.currentTarget.open)}>
 			<summary className="flex w-fit items-center gap-1 rounded-md label-md text-secondary hover:text-primary">
-				<Icon
-					name="chevron-down"
-					className="size-4 transition-transform duration-100 group-open/states:rotate-180"
-					aria-hidden
-				/>
+				<DisclosureChevron kind="section" size="sm" />
 				All states
 			</summary>
 			{open ? (

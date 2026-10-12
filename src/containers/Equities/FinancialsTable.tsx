@@ -2,7 +2,7 @@ import { useRouter } from 'next/router'
 import { startTransition, useMemo, useState } from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { Button } from '~/ui/Button'
-import { Icon } from '~/ui/Icon'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
@@ -79,7 +79,7 @@ function FinancialRow({
 							}}
 							className="-m-1 w-full"
 						>
-							<Icon name={isExpanded ? 'chevron-down' : 'chevron-right'} className="size-3.5" />
+							<DisclosureChevron kind="tree" size="sm" open={isExpanded} />
 							<span className="truncate font-semibold">{row.label}</span>
 						</Button>
 					) : (

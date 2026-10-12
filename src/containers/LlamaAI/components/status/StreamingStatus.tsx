@@ -11,6 +11,7 @@ import type { RecoveryState } from '~/containers/LlamaAI/streamState'
 import { getToolLabel } from '~/containers/LlamaAI/toolMetadata'
 import type { SpawnAgentStatus } from '~/containers/LlamaAI/types'
 import { Button } from '~/ui/Button'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { Icon } from '~/ui/Icon'
 import { BusyGlyph } from '~/ui/Status'
 
@@ -68,10 +69,7 @@ export function SpawnProgressCard({
 					{formatTime(elapsed)}
 				</time>
 
-				<Icon
-					name="chevron-right"
-					className={`hidden size-3.5 shrink-0 text-tertiary duration-150 motion-safe:transition-transform sm:block ${isExpanded ? 'rotate-90' : ''}`}
-				/>
+				<DisclosureChevron kind="section" size="sm" open={isExpanded} className="hidden sm:block" />
 			</button>
 
 			{isExpanded ? (

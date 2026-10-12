@@ -10,10 +10,9 @@ import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { CHART_COLORS } from '~/constants/colors'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
-import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
-import { Icon } from '~/ui/Icon'
+import { RowExpandButton } from '~/ui/DisclosureChevron'
 import { Logo } from '~/ui/Logo'
 import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
@@ -82,20 +81,12 @@ export function OracleOverview({
 						return (
 							<span className={`relative flex items-center gap-2 ${row.depth > 0 ? 'pl-8' : 'pl-4'}`}>
 								{row.subRows.length > 0 ? (
-									<Button
-										size="sm"
-										variant="ghost"
-										square
-										aria-expanded={row.getIsExpanded()}
-										type="button"
-										className="absolute -left-1.5"
+									<RowExpandButton
+										expanded={row.getIsExpanded()}
 										onClick={row.getToggleExpandedHandler()}
-									>
-										<Icon name={row.getIsExpanded() ? 'chevron-down' : 'chevron-right'} className="size-4" />
-										<span className="sr-only">
-											{row.getIsExpanded() ? 'Hide child protocols' : 'View child protocols'}
-										</span>
-									</Button>
+										label={row.getIsExpanded() ? 'Hide child protocols' : 'View child protocols'}
+										className="absolute -left-1.5"
+									/>
 								) : null}
 								<span className="vf-row-index shrink-0" aria-hidden="true" />
 

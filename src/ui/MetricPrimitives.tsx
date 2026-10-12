@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
-import { Icon } from '~/ui/Icon'
 import { Definition, Tooltip } from '~/ui/Tooltip'
+import { DisclosureChevron } from './DisclosureChevron'
 
 /* ----------------------------------------------------------------------------
    Metric rows for summary cards (./SummaryStats.tsx variants 1 and 2) and
@@ -99,10 +99,7 @@ export function MetricSection({ label, tooltip, value, extra, children, defaultO
 				>
 					{label}
 				</span>
-				<Icon
-					name="chevron-down"
-					className="relative top-1 size-4 text-tertiary transition-transform duration-100 group-open/metric:rotate-180"
-				/>
+				<DisclosureChevron kind="section" size="md" className="relative top-1" />
 				{extra}
 				{value != null ? (
 					<span className="ml-auto mono-md-bold" data-metric-value>
@@ -130,10 +127,7 @@ export function SubMetricSection({
 				<span className="body-md text-secondary" data-metric-label>
 					{label}
 				</span>
-				<Icon
-					name="chevron-down"
-					className="relative top-1 size-4 text-tertiary transition-transform duration-100 group-open/sub:rotate-180"
-				/>
+				<DisclosureChevron kind="section" size="md" className="relative top-1" />
 				{value != null ? (
 					<span className="ml-auto mono-md" data-metric-value>
 						{value}

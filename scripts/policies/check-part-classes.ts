@@ -110,6 +110,7 @@ const PARTS: Record<string, Part> = {
 	DataFreshness: { kind: 'placement' },
 	Dialog: { kind: 'placement' },
 	DialogCloseButton: { kind: 'placement' },
+	DisclosureChevron: { kind: 'placement' },
 	DividedGrid: { kind: 'placement' },
 	EntityTitleStrip: { kind: 'placement' },
 	Field: { kind: 'placement' },
@@ -135,6 +136,7 @@ const PARTS: Record<string, Part> = {
 	PopoverSelectTrigger: { kind: 'placement' },
 	PromoBadge: { kind: 'placement' },
 	RailItem: { kind: 'placement' },
+	RowExpandButton: { kind: 'placement' },
 	SearchField: { kind: 'placement' },
 	SegmentedControl: {
 		kind: 'placement',

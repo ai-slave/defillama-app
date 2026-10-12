@@ -2,6 +2,7 @@ import { useRouter } from 'next/router'
 import { useState } from 'react'
 import { BasicLink } from '~/components/Link'
 import { Card } from '~/ui/Card'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { Icon, type IIcon } from '~/ui/Icon'
 import { RailItem } from '~/ui/RailItem'
 import { TabLink, TabNav } from '~/ui/Tabs'
@@ -37,11 +38,7 @@ export function MarketMakersTabs({ active }: { active: string }) {
 						{activeTab ? <Icon name={activeTab.icon} className="size-4 shrink-0" aria-hidden /> : null}
 						{active}
 					</span>
-					<span
-						className={`label-xs text-tertiary transition-transform duration-300 ease-in-out ${open ? 'rotate-180' : ''}`}
-					>
-						▼
-					</span>
+					<DisclosureChevron kind="section" size="sm" open={open} />
 				</button>
 				<div
 					className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}

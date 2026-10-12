@@ -13,7 +13,7 @@ import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
 import { Card } from '~/ui/Card'
-import { Icon } from '~/ui/Icon'
+import { RowExpandButton } from '~/ui/DisclosureChevron'
 import { Logo } from '~/ui/Logo'
 import { TextLink } from '~/ui/TextLink'
 import { TableToolbar } from '~/ui/Toolbar'
@@ -132,25 +132,12 @@ function defaultColumns(type: TokenMetricType) {
 				return (
 					<span className={`relative flex items-center gap-2 ${row.depth > 0 ? 'pl-6' : 'pl-0'}`}>
 						{row.subRows?.length > 0 ? (
-							<button
-								type="button"
-								className="absolute -left-4.5"
-								{...{
-									onClick: row.getToggleExpandedHandler()
-								}}
-							>
-								{row.getIsExpanded() ? (
-									<>
-										<Icon name="chevron-down" className="size-4 text-tertiary" />
-										<span className="sr-only">Hide child protocols</span>
-									</>
-								) : (
-									<>
-										<Icon name="chevron-right" className="size-4 text-tertiary" />
-										<span className="sr-only">View child protocols</span>
-									</>
-								)}
-							</button>
+							<RowExpandButton
+								expanded={row.getIsExpanded()}
+								onClick={row.getToggleExpandedHandler()}
+								label={row.getIsExpanded() ? 'Hide child protocols' : 'View child protocols'}
+								className="absolute -left-5.5"
+							/>
 						) : null}
 						<span className="vf-row-index shrink-0" aria-hidden="true" />
 

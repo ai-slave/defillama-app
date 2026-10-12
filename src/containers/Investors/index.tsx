@@ -4,6 +4,7 @@ import { Fragment, Suspense, useCallback, useMemo, useState } from 'react'
 import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContext'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { Icon } from '~/ui/Icon'
 import { RailItem } from '~/ui/RailItem'
 import { PanelStatus } from '~/ui/Status'
@@ -141,11 +142,7 @@ function InvestorsShell({
 													}
 												}}
 											>
-												<Icon
-													name="chevron-right"
-													aria-hidden="true"
-													className={`size-3.5 shrink-0 text-tertiary transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
-												/>
+												<DisclosureChevron kind="tree" size="sm" open={isExpanded} />
 												{project.name}
 											</RailItem>
 										)}

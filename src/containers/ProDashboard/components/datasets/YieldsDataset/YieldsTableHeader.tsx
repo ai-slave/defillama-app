@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Button } from '~/ui/Button'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { Icon } from '~/ui/Icon'
 import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -89,7 +90,7 @@ export function YieldsTableHeader({
 								{activeFilterCount}
 							</span>
 						) : null}
-						<Icon name={showFiltersPanel ? 'chevron-up' : 'chevron-down'} className="size-3.5 text-tertiary" />
+						<DisclosureChevron kind="section" size="sm" open={showFiltersPanel} />
 					</Button>
 					<Button
 						ref={columnsToggleRef}
@@ -100,7 +101,7 @@ export function YieldsTableHeader({
 					>
 						<Icon name="settings" className="size-3.5" />
 						Customize table
-						<Icon name={showColumnPanel ? 'chevron-up' : 'chevron-down'} className="size-3.5 text-tertiary" />
+						<DisclosureChevron kind="section" size="sm" open={showColumnPanel} />
 					</Button>
 				</div>
 			</div>

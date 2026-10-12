@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import type { ProtocolRankingInitialPage, ProtocolRankingPage } from '../tableQuery'
@@ -94,7 +95,7 @@ afterEach(async () => {
 
 const expandToggle = () =>
 	[...container.querySelectorAll<HTMLButtonElement>('button[aria-expanded]')].find((button) =>
-		button.textContent?.endsWith('child protocols')
+		accessibleName(button).endsWith('child protocols')
 	)!
 
 const renderTable = async (page: ProtocolRankingInitialPage = initialPage) => {
@@ -127,11 +128,11 @@ test('a parent that a search opened collapses when the user clicks its chevron',
 	await renderTable()
 	await typeSearch('stab')
 	await waitForUi(() => expect(container.textContent).toContain('Stability Module'))
-	expect(expandToggle().textContent).toBe('Hide child protocols')
+	expect(accessibleName(expandToggle())).toBe('Hide child protocols')
 
 	await act(async () => expandToggle().click())
 
-	await waitForUi(() => expect(expandToggle().textContent).toBe('View child protocols'))
+	await waitForUi(() => expect(accessibleName(expandToggle())).toBe('View child protocols'))
 	expect(container.textContent).not.toContain('Stability Module')
 })
 
@@ -144,19 +145,19 @@ test('a parent the user opened stays open when the next page loads', async () =>
 	await act(async () => loadNextPage!())
 
 	await waitForUi(() => expect(container.textContent).toContain('Aave'))
-	expect(expandToggle().textContent).toBe('Hide child protocols')
+	expect(accessibleName(expandToggle())).toBe('Hide child protocols')
 	expect(container.textContent).toContain('Stability Module')
 })
 
 test('searching the same text again opens the parents the earlier search had collapsed', async () => {
 	await renderTable()
 	await typeSearch('stab')
-	await waitForUi(() => expect(expandToggle().textContent).toBe('Hide child protocols'))
+	await waitForUi(() => expect(accessibleName(expandToggle())).toBe('Hide child protocols'))
 	await act(async () => expandToggle().click())
 	await typeSearch('')
 
 	await typeSearch('stab')
 
-	await waitForUi(() => expect(expandToggle().textContent).toBe('Hide child protocols'))
+	await waitForUi(() => expect(accessibleName(expandToggle())).toBe('Hide child protocols'))
 	expect(container.textContent).toContain('Stability Module')
 })

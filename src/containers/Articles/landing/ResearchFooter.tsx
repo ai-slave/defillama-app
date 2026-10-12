@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { type ChangeEvent, type FormEvent, useId, useState } from 'react'
 import { ResearchPill } from '~/containers/Articles/landing/ResearchPill'
 import { useMediaKitEmail } from '~/hooks/useNewsletterSubscription'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -172,10 +173,7 @@ function FooterAccordion({ title, links }: FooterColumnDef) {
 					className="flex w-full items-center justify-between gap-2 py-4 text-left"
 				>
 					<span className={headingClassName}>{title}</span>
-					<Icon
-						name="chevron-down"
-						className={`size-4.5 shrink-0 text-tertiary transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
-					/>
+					<DisclosureChevron kind="section" size="sm" open={open} />
 				</button>
 			</h2>
 			<div

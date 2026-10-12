@@ -5,6 +5,7 @@ import { TablePager } from '~/components/Table/TablePager'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { Icon } from '~/ui/Icon'
 import { Logo } from '~/ui/Logo'
 import { Panel } from '~/ui/Panel'
@@ -436,12 +437,14 @@ export function Leaderboard({
 										{/* A row's expand chevron needs no Tooltip: aria-expanded says what it does. */}
 										<Button
 											size="sm"
+											variant="ghost"
 											square
+											type="button"
 											aria-label="Row details"
 											aria-expanded={expanded}
 											onClick={() => toggleExpanded(row.asset)}
 										>
-											<Icon name={expanded ? 'chevron-up' : 'chevron-down'} className="size-4" />
+											<DisclosureChevron kind="section" size="md" open={expanded} />
 										</Button>
 									</td>
 								</tr>

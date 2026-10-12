@@ -1,4 +1,5 @@
 import type { BlockExplorersResponse } from '~/api/types'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { Icon } from '~/ui/Icon'
 import { MetaLine } from '~/ui/MetaLine'
 import { Tag } from '~/ui/Tag'
@@ -149,7 +150,7 @@ function RoleListDisclosure({
 	const marker = operatorMarker(capability, false)
 	const summary = capability?.summary ?? ROLE_FALLBACK[roleKey]
 	return (
-		<details className="group py-1">
+		<details className="py-1">
 			<summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1 py-1">
 				<span className="w-20 shrink-0 label-md text-primary">{roleName}</span>
 				<MetaLine>
@@ -164,7 +165,7 @@ function RoleListDisclosure({
 							{marker.label}
 						</span>
 					) : null}
-					<Icon name="chevron-down" className="size-3.5 text-secondary transition-transform group-open:rotate-180" />
+					<DisclosureChevron kind="section" size="sm" />
 				</span>
 			</summary>
 			<div className="mt-1 border-t border-subtle pt-1.5">

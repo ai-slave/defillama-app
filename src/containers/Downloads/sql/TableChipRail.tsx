@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { toast } from 'react-hot-toast'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { focusNeighborOnLeave, keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { MetaLine } from '~/ui/MetaLine'
@@ -107,10 +108,7 @@ function TableChip({
 	return (
 		<div data-row className="group flex items-center">
 			<Button variant="toggle" size="sm" data-active={open} aria-expanded={open} onClick={onToggle}>
-				<Icon
-					name="chevron-right"
-					className={`size-3.5 shrink-0 text-tertiary transition-transform ${open ? 'rotate-90' : ''}`}
-				/>
+				<DisclosureChevron kind="tree" size="sm" open={open} />
 				<span className="max-w-[180px] truncate mono-sm">{table.name}</span>
 				<span className="text-tertiary tabular-nums">· {formatDownloadRowCount(table.rowCount)}</span>
 			</Button>

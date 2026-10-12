@@ -22,6 +22,7 @@ import { useIsClient } from '~/hooks/useIsClient'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { EntityTitleRow } from '~/ui/EntityTitleRow'
 import { Icon } from '~/ui/Icon'
 import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
@@ -215,16 +216,13 @@ export function TokenPageHero({
 				{overview.symbol ? <span className="font-normal">({overview.symbol})</span> : null}
 			</EntityTitleRow>
 			{hasPriceBreakdown ? (
-				<details className="group/price">
+				<details>
 					{/* The change sits in the summary so it shows without opening the price range. */}
 					<summary className="flex flex-nowrap items-end justify-between gap-8">
 						<span className="flex flex-wrap items-center gap-x-3 gap-y-1">
 							<span className="basis-full text-secondary">Token Price</span>
 							<StaleText className="mono-xl">{price}</StaleText>
-							<Icon
-								name="chevron-down"
-								className="size-4.5 text-tertiary transition-transform duration-100 group-open/price:rotate-180"
-							/>
+							<DisclosureChevron kind="section" size="md" />
 						</span>
 						{summaryChange}
 					</summary>

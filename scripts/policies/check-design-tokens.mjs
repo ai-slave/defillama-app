@@ -524,6 +524,21 @@ function matchRawTabList(content) {
 	return found.length > 0 ? found : null
 }
 
+// A chevron that shows open or closed by hand: an up or down chevron Icon (also one swapped in by state), or one that
+// rotates. A left or right chevron that only points somewhere (a pager, a carousel, a "go to" row, a side panel's
+// direction) passes.
+function matchHandBuiltChevron(content) {
+	const found = []
+	for (const tag of openingTags(content, ['Icon'])) {
+		const name = tag.match(/\bname=(\{[^]*?\}(?=\s+[\w-]+=|\s*\/?>)|"[^"]*")/)?.[1] ?? ''
+		if (!name.includes('chevron-')) continue
+		if (/chevron-(?:up|down)\b/.test(name) || /\brotate-|group-open|in-\[/.test(tag)) found.push(tag.slice(0, 60))
+	}
+	// A typed triangle in JSX text, drawn as a disclosure or menu arrow; ▲ and ▼ in data strings pass.
+	for (const match of content.matchAll(/>[^<>{}]*[▼▾▲▴][^<>{}]*</g)) found.push(match[0].trim())
+	return found.length > 0 ? found : null
+}
+
 function matchHandBuiltField(content) {
 	const found = []
 	for (const tag of openingTags(content, ['input', 'textarea', 'select'])) {
@@ -990,6 +1005,36 @@ const RULES = [
 		exceptions: {
 			'src/containers/Articles/renderer/ArticleRenderer.tsx':
 				"a read-only task-list box inside an article's prose, named by its line"
+		}
+	},
+	{
+		id: 'hand-built-chevron',
+		description:
+			'a show-or-hide chevron drawn by hand outside src/ui — a section, FAQ, show more or tree row is DisclosureChevron (`kind` section or tree), a table row expander is RowExpandButton (src/ui/DisclosureChevron.tsx); a trigger that opens a list or panel ends with DisclosureArrow',
+		match: matchHandBuiltChevron,
+		uiOwned: true,
+		skipTests: true,
+		exceptions: {
+			'src/containers/ProDashboard/components/SectionCard.tsx':
+				'Move up and Move down: the chevrons point where the section moves',
+			'src/containers/ProDashboard/components/datasets/ChainsDataset/ColumnManagementPanel.tsx':
+				'Move up and Move down on a column: the chevrons point where it moves',
+			'src/containers/ProDashboard/components/datasets/YieldsDataset/YieldsColumnManagementPanel.tsx':
+				'Move up and Move down on a column: the chevrons point where it moves',
+			'src/containers/LlamaAI/components/charts/ChartStyleEditor.tsx':
+				'Move up and Move down on a series: the chevrons point where it moves',
+			'src/containers/Downloads/sql/notebook/NotebookCell.tsx':
+				'Run cells above and Run cells below: menu row icons for a direction',
+			'src/containers/Downloads/FormatSplitButton.tsx':
+				"an icon-only split button's menu half: the chevron is its whole label, too small as a 1em DisclosureArrow",
+			'src/containers/DesignSystem/components/buttons.tsx': "the design system demo of FormatSplitButton's menu half",
+			'src/containers/Downloads/sql/UpsellGate.tsx': "a static picture of the SQL editor's picker",
+			'src/containers/LlamaAI/dailyBrief/HomeDailyBrief.tsx':
+				"the brief headline's chevron: before hydration the brief's A/B variant opens it by CSS, so its chevron turns by the same CSS",
+			'src/containers/Yields/poolDetail/PoolGrowthChart.tsx':
+				"a drawdown's down marker beside its value: data, not a control",
+			'src/containers/ProDashboard/components/AddChartModal/MetricSentenceBuilder.tsx':
+				'token buttons that anchor one shared popover by hand, with no popover context for DisclosureArrow to read'
 		}
 	},
 	{

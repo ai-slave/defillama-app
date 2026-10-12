@@ -33,8 +33,8 @@ import { TokenRightsPieHovercard } from '~/containers/TokenRights/TokenRightsPop
 import { UtrGradeHovercard } from '~/containers/TokenRights/UtrPopover'
 import { setStorageItem } from '~/contexts/localStorageStore'
 import { definitions } from '~/public/definitions'
-import { Button } from '~/ui/Button'
 import { Change } from '~/ui/Change'
+import { RowExpandButton } from '~/ui/DisclosureChevron'
 import { Icon } from '~/ui/Icon'
 import { Logo } from '~/ui/Logo'
 import { MetricRow } from '~/ui/MetricPrimitives'
@@ -536,29 +536,12 @@ const NameColumn = (type: IProps['type']) =>
 			return (
 				<span className={`relative flex items-center gap-2 ${row.depth > 0 ? 'pl-6' : 'pl-0'}`}>
 					{row.subRows?.length > 0 ? (
-						<Button
-							size="sm"
-							variant="ghost"
-							square
-							type="button"
-							aria-expanded={row.getIsExpanded()}
+						<RowExpandButton
+							expanded={row.getIsExpanded()}
+							onClick={row.getToggleExpandedHandler()}
+							label={row.getIsExpanded() ? 'Hide child protocols' : 'View child protocols'}
 							className="absolute -left-5.5"
-							{...{
-								onClick: row.getToggleExpandedHandler()
-							}}
-						>
-							{row.getIsExpanded() ? (
-								<>
-									<Icon name="chevron-down" className="size-4 text-tertiary" />
-									<span className="sr-only">View child protocols</span>
-								</>
-							) : (
-								<>
-									<Icon name="chevron-right" className="size-4 text-tertiary" />
-									<span className="sr-only">Hide child protocols</span>
-								</>
-							)}
-						</Button>
+						/>
 					) : null}
 
 					<span className="vf-row-index shrink-0" aria-hidden="true" />

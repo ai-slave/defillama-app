@@ -2,6 +2,7 @@ import type * as React from 'react'
 import { BasicLink } from '~/components/Link'
 import { freeBadgeBOnly, useLlamaAIFreeLabel } from '~/components/LlamaAIFreeLabel'
 import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { Icon } from '~/ui/Icon'
 import type { IIcon } from '~/ui/Icon'
 import { PromoBadge } from '~/ui/PromoBadge'
@@ -28,7 +29,7 @@ function NavGroupSummary({ name, icon, onToggle }: { name: string; icon?: IIcon[
 			}}
 		>
 			<NavItemContent name={name} icon={icon} wrapLabel />
-			<Icon name="chevron-down" className="size-4 shrink-0 text-tertiary group-open:rotate-180" />
+			<DisclosureChevron kind="tree" size="md" />
 		</summary>
 	)
 }

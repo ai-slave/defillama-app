@@ -1,7 +1,7 @@
 import type { BlockExplorersResponse } from '~/api/types'
 import { BasicLink } from '~/components/Link'
 import { Button } from '~/ui/Button'
-import { Icon } from '~/ui/Icon'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { Logo } from '~/ui/Logo'
 import { MetaLine } from '~/ui/MetaLine'
 import { StatusBadge } from '~/ui/StatusBadge'
@@ -377,7 +377,7 @@ export function CollateralRow({
 								<span className="body-sm text-tertiary">{`Oracle exposure ${oracleExposure}`}</span>
 							) : null}
 						</span>
-						<Icon name="chevron-down" className="size-3.5 text-secondary transition-transform group-open:rotate-180" />
+						<DisclosureChevron kind="section" size="sm" />
 					</span>
 				</div>
 
@@ -420,10 +420,7 @@ export function CollateralRow({
 					{showBreakShare && oracleExposure ? <span className="body-sm text-tertiary">separate path</span> : null}
 				</span>
 
-				<Icon
-					name="chevron-down"
-					className="hidden size-3.5 text-secondary transition-transform group-open:rotate-180 sm:block"
-				/>
+				<DisclosureChevron kind="section" size="sm" className="hidden sm:block" />
 			</summary>
 
 			<div className="grid gap-x-8 gap-y-6 border-t border-subtle p-3 body-md sm:grid-cols-2 sm:p-4">

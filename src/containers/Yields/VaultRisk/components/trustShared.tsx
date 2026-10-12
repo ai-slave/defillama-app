@@ -1,7 +1,7 @@
 import { type ReactNode, useState } from 'react'
 import type { BlockExplorersResponse } from '~/api/types'
 import { Button } from '~/ui/Button'
-import { Icon } from '~/ui/Icon'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { type Tone, toneClasses } from '../kindMeta'
 import type { RoleCapability } from '../types'
@@ -124,7 +124,7 @@ export function ExpandableLine({
 							aria-expanded={open}
 							className="-mr-1"
 						>
-							<Icon name="chevron-down" className={`size-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
+							<DisclosureChevron kind="section" size="md" open={open} />
 							<span className="sr-only">{open ? 'Hide detail' : 'Show what this can do'}</span>
 						</Button>
 					) : null}

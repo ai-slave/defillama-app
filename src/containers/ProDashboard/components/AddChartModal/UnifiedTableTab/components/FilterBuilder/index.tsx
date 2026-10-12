@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import type { UnifiedTableFilters } from '~/containers/ProDashboard/unifiedTable/config/current'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { keepFocus, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
@@ -616,10 +617,7 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 										<Tag>{label}</Tag>
 										<span className="body-sm text-tertiary">{availableFilters.length}</span>
 									</div>
-									<Icon
-										name="chevron-down"
-										className={`size-3.5 text-tertiary transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
-									/>
+									<DisclosureChevron kind="section" size="sm" open={isExpanded} />
 								</button>
 								{isExpanded && availableFilters.length > 0 ? (
 									<div className="border-t border-subtle bg-surface p-1">

@@ -9,7 +9,8 @@
  *   sends it once per tab session; rerenders, route changes, drawer reopening and layout switches add none. The
  *   exposure's `layout` is the first visible menu; each action carries its current layout.
  * - Metrics: `navigate:<path>` for site destinations (same metric in A and B whatever the label or group),
- *   `navigate:<host><path>` for external ones, `group-open:<slug>` / `group-close:<slug>` for disclosures, and
+ *   `navigate:<host><path>` for external ones, `group-open:<slug>` / `group-close:<slug>` for disclosures (the desktop
+ *   More and About Us menus included, whose links count as the nav's own), and
  *   `action:<slug>` for named buttons such as `action:toggle-theme`.
  * - Queries and fragments are dropped, and personal dashboards normalize to `/pro/:dashboard`. Repeat actions count.
  * - Primary and keyboard clicks count, and middle clicks on links; right clicks and disabled controls do not.
@@ -54,7 +55,11 @@ export function observeMenu(node: HTMLElement) {
 export function trackMenuClick(event: ReactMouseEvent<HTMLElement>) {
 	if (document.visibilityState !== 'visible' || !(event.target instanceof Element)) return
 	const item = event.target.closest('a, button, summary')
-	if (!item || !event.currentTarget.contains(item) || item.closest('nav') !== event.currentTarget) return
+	if (!item) return
+	// The desktop More and About Us menus portal outside the nav: their links count for the button that owns them.
+	const groupMenu = item.closest('[data-nav-group-menu]')
+	const owner = groupMenu ? document.querySelector(`[aria-controls="${groupMenu.id}"]`) : item
+	if (!owner || !event.currentTarget.contains(owner) || owner.closest('nav') !== event.currentTarget) return
 	if (item.matches(':disabled, [aria-disabled="true"]')) return
 	if (event.button !== 0 && !(event.button === 1 && item.tagName === 'A')) return
 	let metric: string
@@ -78,7 +83,9 @@ export function trackMenuClick(event: ReactMouseEvent<HTMLElement>) {
 		metric =
 			item.tagName === 'SUMMARY'
 				? `group-${item.parentElement?.hasAttribute('open') ? 'close' : 'open'}:${slug}`
-				: `action:${slug}`
+				: item.hasAttribute('data-nav-group-menu-button')
+					? `group-${item.getAttribute('aria-expanded') === 'true' ? 'close' : 'open'}:${slug}`
+					: `action:${slug}`
 	}
 	const layout = event.currentTarget.dataset.menuLayout as Layout
 	const variant = recordExposure(layout)

@@ -1,5 +1,6 @@
 import type { RefObject } from 'react'
 import { Button } from '~/ui/Button'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { CSVExportButton } from '../../CSVExportButton'
@@ -55,7 +56,7 @@ export function ChainsTableHeader({
 						>
 							<Icon name="settings" className="size-3.5" />
 							Customize table
-							<Icon name={showColumnSelector ? 'chevron-up' : 'chevron-down'} className="size-3.5 text-tertiary" />
+							<DisclosureChevron kind="section" size="sm" open={showColumnSelector} />
 						</Button>
 					</div>
 				</div>

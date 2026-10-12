@@ -17,6 +17,7 @@ import { useHackerMode } from '~/containers/LlamaAI/components/status/useHackerM
 import { getToolLabel, TOOL_ICONS, TOOL_TONE_CLASS } from '~/containers/LlamaAI/toolMetadata'
 import type { AgentStep, SpawnAgentStatus, ToolExecution } from '~/containers/LlamaAI/types'
 import { getOwnRegistryValue } from '~/containers/LlamaAI/utils/getOwnRegistryValue'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { Icon } from '~/ui/Icon'
 import { ErrorLine } from '~/ui/Status'
 import { StatusBadge } from '~/ui/StatusBadge'
@@ -61,15 +62,6 @@ function Caret() {
 		<span
 			aria-hidden
 			className="ml-0.5 inline-block h-[1em] w-0.5 bg-brand align-[-0.15em] motion-safe:animate-pulse"
-		/>
-	)
-}
-
-function Chevron({ open }: { open: boolean }) {
-	return (
-		<Icon
-			name="chevron-right"
-			className={`size-3.5 shrink-0 text-tertiary duration-150 motion-safe:transition-transform ${open ? 'rotate-90' : ''}`}
 		/>
 	)
 }
@@ -165,7 +157,7 @@ export function AgentTimeline({
 					>
 						<span className="min-w-0 flex-1 truncate">{phrase}&hellip;</span>
 						<ElapsedTimeLabel startedAt={executionStartedAt} />
-						<Chevron open={expanded} />
+						<DisclosureChevron kind="section" size="sm" open={expanded} />
 					</button>
 					{rows}
 				</div>
@@ -191,7 +183,7 @@ export function AgentTimeline({
 				<span className="min-w-0 flex-1 truncate">{summarizeSteps(steps)}</span>
 				{failed > 0 ? <span className="shrink-0 body-sm text-warning">{failed} failed</span> : null}
 
-				<Chevron open={expanded} />
+				<DisclosureChevron kind="section" size="sm" open={expanded} />
 			</button>
 			{rows}
 		</section>
@@ -351,7 +343,7 @@ function ReasoningRow({
 							</span>
 						)}
 					</span>
-					<Chevron open={open} />
+					<DisclosureChevron kind="section" size="sm" open={open} />
 				</button>
 				{open ? (
 					<div
@@ -386,7 +378,7 @@ function ToolRow({
 	// Reasoning and tool rows share one uncarded row; only an opened row's details get a block.
 	const row = (
 		<>
-			{hasDetails ? <Chevron open={open} /> : <span className="w-3 shrink-0" />}
+			{hasDetails ? <DisclosureChevron kind="section" size="sm" open={open} /> : <span className="w-3.5 shrink-0" />}
 			{step.status === 'running' ? (
 				<span className="size-1.5 shrink-0 rounded-full bg-brand motion-safe:animate-pulse" />
 			) : step.status === 'done' ? (

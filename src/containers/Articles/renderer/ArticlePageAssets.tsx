@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { Change } from '~/ui/Change'
 import { CountBadge } from '~/ui/CountBadge'
-import { Icon } from '~/ui/Icon'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { Logo } from '~/ui/Logo'
 import { Skeleton } from '~/ui/Skeleton'
 import { geckoTokenIconUrl } from '~/utils/icons'
@@ -114,7 +114,7 @@ export function ArticlePageAssets({ pageAssets }: { pageAssets?: Array<ArticlePa
 				type="button"
 				onClick={() => setOpen((value) => !value)}
 				aria-expanded={open}
-				className={`group flex items-center justify-between gap-2 transition-[min-height] duration-300 ease-out ${
+				className={`flex items-center justify-between gap-2 transition-[min-height] duration-300 ease-out ${
 					open ? 'min-h-0' : 'min-h-[66px]'
 				}`}
 			>
@@ -122,12 +122,7 @@ export function ArticlePageAssets({ pageAssets }: { pageAssets?: Array<ArticlePa
 					Assets on this page
 					<CountBadge count={assets.length} />
 				</span>
-				<Icon
-					name="chevron-down"
-					className={`size-3.5 shrink-0 text-tertiary transition-transform duration-200 group-hover:text-secondary ${
-						open ? '' : '-rotate-90'
-					}`}
-				/>
+				<DisclosureChevron kind="section" size="sm" open={open} />
 			</button>
 			<div
 				className={`grid transition-[grid-template-rows] duration-300 ease-out ${

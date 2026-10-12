@@ -1,6 +1,6 @@
 import type { BlockExplorersResponse } from '~/api/types'
 import { Card } from '~/ui/Card'
-import { Icon } from '~/ui/Icon'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { formatPercent } from '~/utils/numberFormat'
 import { AddressActions } from '../primitives/AddressActions'
@@ -32,12 +32,12 @@ export function MarketOracleTable({
 		return (b.lltv ?? 0) - (a.lltv ?? 0)
 	})
 	return (
-		<Card as="details" padding="none" className="group smooth-disclosure overflow-hidden">
+		<Card as="details" padding="none" className="smooth-disclosure overflow-hidden">
 			<summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2 label-md hover:bg-hover-row">
 				<span className="label-md text-primary">
 					Markets not mapped above <span className="font-normal text-secondary">· {markets.length}</span>
 				</span>
-				<Icon name="chevron-down" className="size-3.5 text-secondary transition-transform group-open:rotate-180" />
+				<DisclosureChevron kind="section" size="sm" />
 			</summary>
 			<div className="overflow-x-auto border-t border-subtle">
 				<table className="w-full">

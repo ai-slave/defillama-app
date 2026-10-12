@@ -5,8 +5,8 @@ import type { paginatedTableFeatures } from '~/components/Table/features/paginat
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Card } from '~/ui/Card'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { Hovercard } from '~/ui/Hovercard'
-import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
@@ -233,13 +233,10 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 					</div>
 				</Card>
 
-				<Card as="details" padding="sm" className="group">
+				<Card as="details" padding="sm">
 					<summary className="-m-2 flex cursor-pointer list-none items-center justify-between gap-3 p-2 label-md">
 						<span>Methodology and limitations</span>
-						<Icon
-							name="chevron-down"
-							className="size-4 shrink-0 text-tertiary transition-transform duration-200 group-open:rotate-180"
-						/>
+						<DisclosureChevron kind="section" size="sm" />
 					</summary>
 					<p className="mt-2 body-md">
 						Showing collateral exposure for {tokenSymbol} on{' '}
@@ -257,13 +254,10 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 					</ul>
 				</Card>
 
-				<Card as="details" padding="sm" className="group">
+				<Card as="details" padding="sm">
 					<summary className="-m-2 flex cursor-pointer list-none items-center justify-between gap-3 p-2 label-md">
 						<span>Show exposure details</span>
-						<Icon
-							name="chevron-down"
-							className="size-4 shrink-0 text-tertiary transition-transform duration-200 group-open:rotate-180"
-						/>
+						<DisclosureChevron kind="section" size="sm" />
 					</summary>
 					<p className="mt-2 body-md">
 						Each row is one protocol-chain exposure for {tokenSymbol} as collateral. Bad debt at $0 totals remain lower

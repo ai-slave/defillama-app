@@ -5,6 +5,7 @@ import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
 import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { Button } from '~/ui/Button'
+import { RowExpandButton } from '~/ui/DisclosureChevron'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { Logo } from '~/ui/Logo'
@@ -254,26 +255,12 @@ export function buildCardsColumns(
 				return (
 					<div className={`relative flex w-full min-w-0 items-center gap-2 ${nestedCard ? 'pl-12' : 'pl-6'}`}>
 						{row.getCanExpand() ? (
-							<Button
-								variant="ghost"
-								size="sm"
-								square
-								className={`absolute ${nestedCard ? 'left-5' : '-left-1'}`}
+							<RowExpandButton
+								expanded={row.getIsExpanded()}
 								onClick={row.getToggleExpandedHandler()}
-								aria-expanded={row.getIsExpanded()}
-							>
-								{row.getIsExpanded() ? (
-									<>
-										<Icon name="chevron-down" className="size-4 text-tertiary" />
-										<span className="sr-only">{`Hide ${expansionLabel}`}</span>
-									</>
-								) : (
-									<>
-										<Icon name="chevron-right" className="size-4 text-tertiary" />
-										<span className="sr-only">{`View ${expansionLabel}`}</span>
-									</>
-								)}
-							</Button>
+								label={row.getIsExpanded() ? `Hide ${expansionLabel}` : `View ${expansionLabel}`}
+								className={`absolute ${nestedCard ? 'left-5' : '-left-1'}`}
+							/>
 						) : null}
 						<Logo
 							size={24}

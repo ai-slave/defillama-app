@@ -3,6 +3,7 @@ import * as React from 'react'
 import { lazy, Suspense, useDeferredValue, useState } from 'react'
 import { Button, StableLabel } from '~/ui/Button'
 import { DialogCloseButton } from '~/ui/Dialog'
+import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import { catchLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
@@ -98,10 +99,10 @@ export function Menu({
 								{pinnedPages.length > 0 ? <PinnedPagesSection pinnedPages={pinnedPages} asPath={asPath} /> : null}
 
 								{userDashboards.length > 0 || dashboardsStatus ? (
-									<details className="group mb-3" data-nav-dashboards {...dashboardsDisclosure}>
+									<details className="mb-3" data-nav-dashboards {...dashboardsDisclosure}>
 										<summary className={`${navSummaryStyles} label-sm`}>
 											<span>Your Dashboards</span>
-											<Icon name="chevron-down" className="size-4 shrink-0 text-tertiary group-open:rotate-180" />
+											<DisclosureChevron kind="tree" size="md" />
 										</summary>
 										<div className="flex flex-col">
 											{userDashboards.map(({ name, route, icon }) => (

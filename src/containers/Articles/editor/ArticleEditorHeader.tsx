@@ -2,6 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import Link from 'next/link'
 import type { Dispatch, SetStateAction } from 'react'
 import { Button } from '~/ui/Button'
+import { DisclosureArrow } from '~/ui/ComboboxSelectTrigger'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { Keycap } from '~/ui/Keycap'
@@ -289,9 +290,7 @@ export function ArticleEditorHeader({
 							<Ariakit.MenuButton render={<Button variant="secondary" size="md" />}>
 								<StatusDot status={hasPendingEdits ? 'caution' : 'good'} pulse={hasPendingEdits} />
 								<span>{hasPendingEdits ? 'Live · Pending' : 'Live'}</span>
-								<span aria-hidden className="text-tertiary">
-									▾
-								</span>
+								<DisclosureArrow />
 							</Ariakit.MenuButton>
 							<MenuSurface variant="actions" gutter={6}>
 								<MenuItem render={<Link href={articleViewHref} target="_blank" rel="noreferrer" />}>

@@ -460,3 +460,29 @@ test('selects the Equities sector link without also selecting Rankings', async (
 	expect(b.querySelector<HTMLDetailsElement>('details[open]')?.querySelector('summary')?.textContent).toBe('Equities')
 	expect([...b.querySelectorAll('a[aria-current="page"]')].map((link) => link.textContent)).toEqual(['Sectors'])
 })
+
+test('desktop More menu records its toggle as a group and its portaled links as navigation', async () => {
+	await act(async () =>
+		root.render(
+			<DesktopNav
+				{...props}
+				footerLinks={[{ category: 'More', pages: [{ name: 'Support', route: '/support' }] }] as TNavLinks}
+			/>
+		)
+	)
+	const more = container.querySelector<HTMLButtonElement>('button[data-menu-name="More"]')!
+	await act(async () => more.click())
+	const support = await waitForUi(() => {
+		const link = document.querySelector<HTMLAnchorElement>('[data-nav-group-menu] a[href="/support"]')
+		expect(link).not.toBeNull()
+		return link!
+	})
+	await act(async () => support.click())
+	expect(track.mock.calls).toEqual([
+		['experiment-exposure', { experiment: 'menu-layout-v1', variant: 'a', layout: 'desktop' }],
+		...['group-open:more', 'navigate:/support'].map((metric) => [
+			'experiment-action',
+			{ experiment: 'menu-layout-v1', variant: 'a', layout: 'desktop', metric }
+		])
+	])
+})
