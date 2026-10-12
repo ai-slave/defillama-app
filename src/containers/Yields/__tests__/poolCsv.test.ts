@@ -60,7 +60,7 @@ describe('prepareYieldPoolsCsv', () => {
 		expect(csv.rows[0]).not.toContain('APY Base')
 	})
 
-	test('non-Now window suffixes APY headers', () => {
+	test('non-Latest window suffixes APY headers', () => {
 		const csv = prepareYieldPoolsCsv([], { apyWindow: 'avg_30d', apyComponents: 'base' })
 		expect(csv.rows[0]).toContain('APY (30d)')
 	})

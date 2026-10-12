@@ -99,7 +99,7 @@ describe('useLegacyYieldsUrlNormalizer sticky view preferences', () => {
 		expect(routerMock.replace).toHaveBeenCalledTimes(2)
 		expect(settled).toBe(false)
 
-		// Clicking "Now" clears storage before its push lands; the bare URL is then final.
+		// Clicking "Latest" clears storage before its push lands; the bare URL is then final.
 		window.localStorage.clear()
 		await render({})
 		expect(routerMock.replace).toHaveBeenCalledTimes(2)

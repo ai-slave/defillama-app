@@ -234,7 +234,7 @@ describe('dynamic csv shape', () => {
 		])
 	})
 
-	test('non-Now windows suffix every APY header', () => {
+	test('non-Latest windows suffix every APY header', () => {
 		const csv = prepareBorrowMarketsCsv([], { apyWindow: 'avg_7d', apyComponents: 'base' })
 		expect(csv.rows[0]).toContain('Supply APY (7d)')
 		expect(csv.rows[0]).toContain('Borrow APY (7d)')

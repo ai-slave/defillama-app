@@ -14,8 +14,8 @@ import type { DetailHolders } from './types'
 import { HOW_WE_VERIFY_ID } from './VerifiedApyPanel'
 import type { MeasuredComposition, VerifiedSnapshotModel } from './VerifiedSnapshotCard'
 
-// Latest reading, the table's Now: named so the chart's averages below are never read as its window.
-const NOW_SUFFIX = ' · now'
+// Latest reading, the table's Latest: named so the chart's averages below are never read as its window.
+const NOW_SUFFIX = ' · latest'
 
 type ApyKind = 'supply' | 'borrow'
 

@@ -2,7 +2,7 @@ import { resolveVerifiedApy } from '../data/apy'
 import type { ApyWindow, VerifiedBlock } from '../data/types'
 import { isVerifiedCurrent } from '../domain/verifiedFreshness'
 
-const WINDOW_LABEL: Record<ApyWindow, string> = { current: 'Now', avg_7d: '7d', avg_30d: '30d' }
+const WINDOW_LABEL: Record<ApyWindow, string> = { current: 'latest', avg_7d: '7d', avg_30d: '30d' }
 
 export interface MeasuredCardHeader {
 	title: 'Verified APY · not included in total' | 'Verified APY' | 'Verified exit'

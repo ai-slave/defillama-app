@@ -201,7 +201,7 @@ function createEarnColumns(
 				// The lock sits on the column, not beside a figure, where it read as a fixed rate.
 				headerTrail: () => <MeasuredColumnHint />,
 				headerHelperText:
-					'Follows the APY controls above: the composition you toggled (+Reward / +Intrinsic) over the selected window (Now / 7d / 30d).'
+					'Follows the APY controls above: the composition you toggled (+Reward / +Intrinsic) over the selected window (Latest / 7d / 30d).'
 			}
 		}),
 		// Measured exit outcome. Sorts on the numeric `exitStatus` (higher is better: withdrawable

@@ -21,12 +21,12 @@ import { HelpDefs, HelpIcon } from './ui'
 // Inline dials from `sm` up; below that one trigger opening a sheet with the same controls.
 
 const WINDOW_OPTIONS: Array<{ value: ApyWindow; label: string; tooltip: string }> = [
-	{ value: 'current', label: 'Now', tooltip: 'Latest snapshot' },
+	{ value: 'current', label: 'Latest', tooltip: 'Latest snapshot' },
 	{ value: 'avg_7d', label: '7d', tooltip: '7-day average' },
 	{ value: 'avg_30d', label: '30d', tooltip: '30-day average' }
 ]
 
-const WINDOW_LABELS: Record<ApyWindow, string> = { current: 'Now', avg_7d: '7d', avg_30d: '30d' }
+const WINDOW_LABELS: Record<ApyWindow, string> = { current: 'Latest', avg_7d: '7d', avg_30d: '30d' }
 
 // The sheet prints the definition under the control, so a tooltip there is just noise.
 const WINDOW_OPTIONS_PLAIN = WINDOW_OPTIONS.map(({ value, label }) => ({ value, label }))
@@ -44,7 +44,7 @@ const APY_HELP = (
 			{ id: 'base', term: 'Base', def: APY_DEFS.base },
 			{ id: 'reward', term: '+ Reward', def: APY_DEFS.reward },
 			{ id: 'intrinsic', term: '+ Intrinsic', def: APY_DEFS.intrinsic },
-			{ id: 'window', term: 'Now / 7d / 30d', def: APY_DEFS.window }
+			{ id: 'window', term: 'Latest / 7d / 30d', def: APY_DEFS.window }
 		]}
 	/>
 )
