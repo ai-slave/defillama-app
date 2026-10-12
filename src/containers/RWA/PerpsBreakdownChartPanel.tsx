@@ -141,7 +141,7 @@ export function RWAPerpsBreakdownChartPanel({
 	})()
 	const deferredChart = useDeferredValue(chart)
 
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 	const metricLabel = getRwaPerpsMetricLabel(metric)
 	const filename = getRwaCsvFileName(pageKind, slug, 'chart').replace(/\.csv$/, '')
 	const snapshotLabel = getRwaPerpsSnapshotLabel(metric, period)
@@ -220,11 +220,11 @@ export function RWAPerpsBreakdownChartPanel({
 				{plotsSeries ? (
 					<>
 						<ChartCsvExportButton
-							chartInstance={chartInstance}
+							chart={chartExport}
 							filename={filename}
 							source={{ type: 'dataset', prepare: deferredChart.csv }}
 						/>
-						<ChartPngExportButton chartInstance={chartInstance} filename={filename} title={`${title} ${metricLabel}`} />
+						<ChartPngExportButton chart={chartExport} filename={filename} title={`${title} ${metricLabel}`} />
 					</>
 				) : null}
 			</ChartPanelToolbar>
@@ -239,6 +239,7 @@ export function RWAPerpsBreakdownChartPanel({
 			) : (
 				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 					<MultiSeriesChart
+						exportButtons={chartExport}
 						dataset={deferredChart.dataset}
 						charts={deferredChart.charts}
 						showLegend
@@ -246,7 +247,6 @@ export function RWAPerpsBreakdownChartPanel({
 						expandTo100Percent={deferredChart.isShare}
 						valueSymbol={valueSymbol}
 						{...(deferredChart.isVolume ? { groupBy: deferredChart.period } : {})}
-						onReady={handleChartReady}
 					/>
 				</Suspense>
 			)}

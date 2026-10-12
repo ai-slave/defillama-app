@@ -147,8 +147,8 @@ export function ChainsByCategory({
 			}),
 		[colorsByChain, pieSeries, selectedPieSeries]
 	)
-	const { chartInstance, handleChartReady } = useGetChartInstance()
-	const { chartInstance: pieChartInstance, handleChartReady: handlePieChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
+	const pieChartExport = useGetChartInstance()
 	const { showByGroup, chainsTableData, chartIgnoredFilters, tvlQuickPicks } = useGroupAndFormatChains({
 		chains,
 		category: categoryName
@@ -193,7 +193,7 @@ export function ChainsByCategory({
 								/>
 							) : null}
 							<ChartExportButtons
-								chartInstance={pieChartInstance}
+								chart={pieChartExport}
 								filename="chains-tvl-pie"
 								title="Chains TVL"
 								csvSource={{
@@ -209,9 +209,9 @@ export function ChainsByCategory({
 						{chartScopeNote}
 						<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<PieChart
+								exportButtons={pieChartExport}
 								chartData={piePresentation.chartData}
 								stackColors={piePresentation.stackColors}
-								onReady={handlePieChartReady}
 							/>
 						</React.Suspense>
 					</Panel>
@@ -229,7 +229,7 @@ export function ChainsByCategory({
 								/>
 							) : null}
 							<ChartExportButtons
-								chartInstance={chartInstance}
+								chart={chartExport}
 								filename="chains-dominance"
 								title="Chains Dominance"
 								csvSource={selectedDominance.csvSource}
@@ -238,13 +238,13 @@ export function ChainsByCategory({
 						{chartScopeNote}
 						<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<MultiSeriesChart
+								exportButtons={chartExport}
 								dataset={selectedDominance.dataset}
 								charts={selectedDominance.charts}
 								csvSource={selectedDominance.csvSource}
 								valueSymbol="%"
 								expandTo100Percent
 								solidChartAreaStyle
-								onReady={handleChartReady}
 							/>
 						</React.Suspense>
 					</Panel>

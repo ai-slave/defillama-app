@@ -24,6 +24,7 @@ import {
 	EXPORT_FONT_SIZE,
 	IMAGE_EXPORT_WIDTH,
 	LEGEND_ITEM_GAP,
+	EXPORT_VERTICAL_GAP,
 	type ExportLayout
 } from './chartPngExportLayout'
 
@@ -282,6 +283,42 @@ function detectSeriesFlags(options: EChartsOption): SeriesFlags {
 		isHorizontalBarChart: hasSeriesType(options, 'bar') && yAxisConfig?.type === 'category',
 		yAxisConfig
 	}
+}
+
+/** The rectangle ECharts drew for each grid of the live chart, in grid order. */
+function readGridRects(chart: echarts.ECharts): Array<{ y: number; height: number }> {
+	const model = (chart as any).getModel?.()
+	const rects: Array<{ y: number; height: number }> = []
+	model?.eachComponent?.('grid', (grid: any) => {
+		const rect = grid.coordinateSystem.getRect()
+		rects.push({ y: rect.y, height: rect.height })
+	})
+	return rects
+}
+
+/**
+ * Lays a chart's stacked grids (a candlestick's price, volume and indicator panels) into the export's plot area,
+ * top to bottom as the chart drew them, each keeping its drawn share of the height. Each grid's own offsets were
+ * set for the live chart's height, and its live gaps hold axis labels the export keeps inside each grid, so the
+ * export places panels from the drawn rectangles with the export's own vertical gap, however the chart positioned
+ * its grids.
+ */
+export function stackGridRectsForExport(
+	rects: ReadonlyArray<{ y: number; height: number }>,
+	plotTop: number,
+	plotBottom: number
+): Array<{ top: number; height: number }> {
+	let totalHeight = 0
+	for (const rect of rects) totalHeight += rect.height
+	const scale = (plotBottom - plotTop - EXPORT_VERTICAL_GAP * (rects.length - 1)) / totalHeight
+	const placed = new Array<{ top: number; height: number }>(rects.length)
+	let top = plotTop
+	for (const index of rects.map((_, i) => i).sort((a, b) => rects[a]!.y - rects[b]!.y)) {
+		const height = rects[index]!.height * scale
+		placed[index] = { top, height }
+		top += height + EXPORT_VERTICAL_GAP
+	}
+	return placed
 }
 
 function getTreemapSeriesModel(chart: echarts.ECharts): any {
@@ -1324,14 +1361,27 @@ export async function renderClonedChartExport(
 				gridLeft = computeHBarLeftGridForExport(stashedLogos.categories)
 				outerBoundsContain = undefined
 			}
-			currentOptions.grid = {
-				left: gridLeft,
-				bottom: gridBottom,
-				top: layout.gridTop,
-				right: 16,
-				outerBoundsMode: 'same',
-				outerBoundsContain
-			}
+			const liveGridRects = readGridRects(originalChart)
+			currentOptions.grid =
+				liveGridRects.length > 1
+					? stackGridRectsForExport(liveGridRects, layout.gridTop, exportHeight - gridBottom).map(
+							({ top, height }) => ({
+								left: gridLeft,
+								right: 16,
+								top,
+								height,
+								outerBoundsMode: 'same',
+								outerBoundsContain
+							})
+						)
+					: {
+							left: gridLeft,
+							bottom: gridBottom,
+							top: layout.gridTop,
+							right: 16,
+							outerBoundsMode: 'same',
+							outerBoundsContain
+						}
 		}
 
 		if (layout.hasLegend) {

@@ -165,14 +165,22 @@ function LiquiditySection({
 			<TimeAreaCard chart={tvlChart} subtitle="Total value locked, as measured by DefiLlama." value={tvl?.formatted} />
 
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-				<DonutCard dist={liquidity.chainDistribution} subtitle="Liquidity by connected blockchain." />
-				<DonutCard dist={liquidity.distribution} subtitle="Liquidity by asset class." />
+				<DonutCard
+					dist={liquidity.chainDistribution}
+					csvColumns={['Chain', 'Liquidity (USD)']}
+					subtitle="Liquidity by connected blockchain."
+				/>
+				<DonutCard
+					dist={liquidity.distribution}
+					csvColumns={['Asset Class', 'Liquidity (USD)']}
+					subtitle="Liquidity by asset class."
+				/>
 			</div>
 
 			{/* One pool/token view: every THORChain pool IS a single token, so the old
 			    "Token Breakdown" donut and "Token Values" table duplicated these two. */}
 			<div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
-				<CategoryBarCard chart={liquidity.poolDepthChart} />
+				<CategoryBarCard chart={liquidity.poolDepthChart} csvColumns={['Pool', 'Depth (USD)']} />
 				<Card padding="md">
 					<h3 className="mb-3 title-md text-primary">{liquidity.pools.title ?? 'Pools by Depth'}</h3>
 					<ApiTable table={liquidity.pools} maxHeight="420px" />

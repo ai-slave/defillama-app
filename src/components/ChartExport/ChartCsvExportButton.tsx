@@ -5,6 +5,7 @@ import { CSVDownloadButton, type CsvPayload, type PrepareCsv } from '~/component
 import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/MultiSeriesChart/types'
 import { getPeriodCsvCells, getPeriodCsvHeaders } from '~/components/ECharts/shared/csv'
 import type { CsvCell } from '~/utils/csvCell'
+import type { ChartExportHandle } from './types'
 
 function isRecord(x: unknown): x is Record<string, unknown> {
 	return !!x && typeof x === 'object' && !Array.isArray(x)
@@ -264,7 +265,9 @@ function buildCsvRowsFromSeriesFallback(option: any, groupBy: ChartTimeGroupingW
 	const sorted = allNumeric && !isCategory ? Array.from(xKeys).sort((a, b) => Number(a) - Number(b)) : xKeys
 
 	const includeDate = isTimeAxis
-	const headerLabel = xAxis?.type === 'category' || yAxis?.type === 'category' ? 'category' : 'x'
+	// A time axis names its column as the dataset path does, so both CSVs of a time chart read the same.
+	const headerLabel =
+		xAxis?.type === 'category' || yAxis?.type === 'category' ? 'category' : isTimeAxis ? 'Timestamp' : 'x'
 	const periodHeaders = getPeriodCsvHeaders(groupBy)
 	const header: Array<CsvCell> = includeDate
 		? [headerLabel, ...periodHeaders, ...seriesNames]
@@ -329,7 +332,7 @@ export type ChartCsvSource =
 	| { type: 'prepare-csv'; prepare: PrepareCsv }
 
 interface ChartCsvExportButtonProps {
-	chartInstance: () => echarts.ECharts | null
+	chart: Pick<ChartExportHandle, 'chartInstance'>
 	smol?: boolean | undefined
 	disabled?: boolean | undefined
 	filename?: string | undefined
@@ -338,7 +341,7 @@ interface ChartCsvExportButtonProps {
 }
 
 export function ChartCsvExportButton({
-	chartInstance,
+	chart,
 	smol = true,
 	disabled,
 	filename,
@@ -348,7 +351,7 @@ export function ChartCsvExportButton({
 	const prepareCsv = useCallback(async (): Promise<CsvPayload> => {
 		let result: CsvPayload
 		if (source === 'rendered-chart') {
-			const instance = chartInstance()
+			const instance = chart.chartInstance()
 			if (!instance) throw new Error("Couldn't find the chart.")
 			result = buildCsvFromChart({ instance, filenameBase: filename })
 		} else if (source.type === 'dataset') {
@@ -364,7 +367,7 @@ export function ChartCsvExportButton({
 		}
 		onExport?.({ filename: result.filename })
 		return result
-	}, [chartInstance, filename, source, onExport])
+	}, [chart, filename, source, onExport])
 
 	return (
 		<CSVDownloadButton prepareCsv={prepareCsv} size="md" smol={smol} disabled={disabled}>

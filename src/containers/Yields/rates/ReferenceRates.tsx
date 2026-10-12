@@ -1,6 +1,6 @@
-import type * as echarts from 'echarts/core'
-import { lazy, Suspense, useRef, useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import type { ChartExportHandle } from '~/components/ChartExport/types'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { ChartGroupingSelector, type ChartGroupingOption } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
@@ -18,6 +18,7 @@ import {
 import { SortIcon } from '~/components/Table/SortIcon'
 import { OTHERS_COLOR } from '~/constants/colors'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Change } from '~/ui/Change'
 import { ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
@@ -118,13 +119,7 @@ function ratesTooltipFormatter(params: unknown): string {
 
 const RATES_CHART_OPTIONS = { tooltip: { formatter: ratesTooltipFormatter } }
 
-function RatesChart({
-	points,
-	onReady
-}: {
-	points: Array<RefRatePoint>
-	onReady?: (inst: echarts.ECharts | null) => void
-}) {
+function RatesChart({ points, exportButtons }: { points: Array<RefRatePoint>; exportButtons: ChartExportHandle }) {
 	const [isDark] = useDarkModeManager()
 	const spec = buildRatesChart(points, isDark)
 	if (!spec) {
@@ -138,8 +133,7 @@ function RatesChart({
 				chartOptions={RATES_CHART_OPTIONS}
 				valueSymbol="%"
 				showLegend
-				exportButtons="hidden"
-				{...(onReady ? { onReady } : {})}
+				exportButtons={exportButtons}
 			/>
 		</Suspense>
 	)
@@ -219,7 +213,7 @@ function ReferenceRatesSummary({
 	failedRead: QueryRetry | null
 	points: Array<RefRatePoint>
 }) {
-	const chartRef = useRef<echarts.ECharts | null>(null)
+	const chartExport = useGetChartInstance()
 	return (
 		<Panel role="region" aria-labelledby="reference-rates-title">
 			<PanelHeader>
@@ -259,11 +253,7 @@ function ReferenceRatesSummary({
 				leading={<ChartGroupingSelector value={asset} options={assetOptions} onValueChange={onAssetChange} />}
 			>
 				<ChartGroupingSelector value={range} options={RANGE_OPTIONS} onValueChange={onRangeChange} />
-				<ChartExportButtons
-					chartInstance={() => chartRef.current}
-					filename={`stablecoin-rates-${asset}`}
-					csvSource="rendered-chart"
-				/>
+				<ChartExportButtons chart={chartExport} filename={`stablecoin-rates-${asset}`} csvSource="rendered-chart" />
 			</ChartPanelToolbar>
 			<ChartPanelBody>
 				{failedRead ? (
@@ -273,12 +263,7 @@ function ReferenceRatesSummary({
 				) : loading ? (
 					<SurfaceBodyLoadingStatus label={`Loading ${range} history`} />
 				) : (
-					<RatesChart
-						points={points}
-						onReady={(instance) => {
-							chartRef.current = instance
-						}}
-					/>
+					<RatesChart points={points} exportButtons={chartExport} />
 				)}
 			</ChartPanelBody>
 		</Panel>

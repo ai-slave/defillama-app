@@ -1,13 +1,15 @@
 import { useRouter } from 'next/router'
-import { lazy, Suspense, useState, type FormEvent } from 'react'
+import { lazy, Suspense, useState, type FormEvent, type ReactNode } from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChart/categoryOptions'
 import { readSelectionFromQuery } from '~/components/Select/query'
 import { UrlSelectWithCombobox } from '~/components/Select/UrlSelect'
 import { TokenLogo } from '~/components/TokenLogo'
 import { CHART_COLORS } from '~/constants/colors'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { ChartPanelBody } from '~/ui/ChartPanel'
+import { ChartPanelBody, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { MetaLine } from '~/ui/MetaLine'
@@ -161,7 +163,14 @@ function EarningsCard({ row, todayET }: { row: IEquitiesCalendarRow; todayET: st
 	)
 }
 
-function SeasonsChart({ summary }: { summary: Pick<IEarningsCalendarBootstrap, 'monthBuckets' | 'pastCount'> }) {
+function SeasonsChart({
+	summary,
+	monthPicker
+}: {
+	summary: Pick<IEarningsCalendarBootstrap, 'monthBuckets' | 'pastCount'>
+	monthPicker: ReactNode
+}) {
+	const chartExport = useGetChartInstance()
 	const months = summary.monthBuckets
 	const labels = ['Last 31 days', ...months.map((month) => formatMonthYear(`${month.month}-01`) ?? month.month)]
 	const dataset = {
@@ -170,24 +179,41 @@ function SeasonsChart({ summary }: { summary: Pick<IEarningsCalendarBootstrap, '
 	}
 
 	return (
-		// Compact beside the "At stake this week" panel, which holds about 180px of content.
-		<ChartPanelBody className="min-h-[220px]">
-			<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="min-h-[220px]" />}>
-				<MultiSeriesChart
-					dataset={dataset}
-					charts={[{ type: 'bar', name: 'Reports', encode: { x: 'Period', y: 'Reports' }, barMaxWidth: 48 }]}
-					chartOptions={{
-						...createCategoryChartOptions(''),
-						yAxis: { min: 0, minInterval: 1, name: 'Companies' },
-						xAxis: { type: 'category', boundaryGap: true, axisLabel: { interval: 0, rotate: 30 } }
-					}}
-					valueSymbol=""
-					exportButtons="hidden"
-					hideDataZoom
-					containerClassName="min-h-[220px]"
+		<Panel>
+			<ChartPanelToolbar
+				leading={
+					<ChartPanelTitle headingAs="h2" subtitle="Reports per month">
+						Earnings seasons
+					</ChartPanelTitle>
+				}
+			>
+				{monthPicker}
+				<ChartExportButtons
+					chart={chartExport}
+					filename="earnings-seasons"
+					title="Earnings seasons"
+					csvSource={{ type: 'dataset', prepare: () => dataset }}
 				/>
-			</Suspense>
-		</ChartPanelBody>
+			</ChartPanelToolbar>
+			{/* Compact beside the "At stake this week" panel, which holds about 180px of content. */}
+			<ChartPanelBody className="min-h-[220px]">
+				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="min-h-[220px]" />}>
+					<MultiSeriesChart
+						dataset={dataset}
+						charts={[{ type: 'bar', name: 'Reports', encode: { x: 'Period', y: 'Reports' }, barMaxWidth: 48 }]}
+						chartOptions={{
+							...createCategoryChartOptions(''),
+							yAxis: { min: 0, minInterval: 1, name: 'Companies' },
+							xAxis: { type: 'category', boundaryGap: true, axisLabel: { interval: 0, rotate: 30 } }
+						}}
+						valueSymbol=""
+						exportButtons={chartExport}
+						hideDataZoom
+						containerClassName="min-h-[220px]"
+					/>
+				</Suspense>
+			</ChartPanelBody>
+		</Panel>
 	)
 }
 
@@ -425,13 +451,10 @@ export function EarningsCalendarPage({ bootstrap }: { bootstrap?: EarningsCalend
 			) : null}
 
 			<div className="grid grid-cols-1 items-start gap-2 xl:grid-cols-[2fr_1fr]">
-				<Panel>
-					<PanelHeader>
-						<div className="mr-auto">
-							<PanelTitle>Earnings seasons</PanelTitle>
-							<p className="body-sm text-tertiary">Reports per month</p>
-						</div>
-						{companies ? (
+				<SeasonsChart
+					summary={summary}
+					monthPicker={
+						companies ? (
 							<SelectWithCombobox
 								allValues={monthOptions}
 								selectedValues={[week.monday.slice(0, 7)]}
@@ -442,10 +465,9 @@ export function EarningsCalendarPage({ bootstrap }: { bootstrap?: EarningsCalend
 								variant="filter"
 								size="md"
 							/>
-						) : null}
-					</PanelHeader>
-					<SeasonsChart summary={summary} />
-				</Panel>
+						) : null
+					}
+				/>
 				<Panel>
 					<PanelHeader>
 						<PanelTitle>At stake this week</PanelTitle>

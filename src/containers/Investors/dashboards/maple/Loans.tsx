@@ -17,7 +17,7 @@ import {
 } from '~/utils/numberFormat'
 import { useMaplePoolsWithLoans } from './api'
 import { buildMapleLoansData, type LoanRow } from './chartData'
-import { CardSkeleton, MAPLE_CSV_ONLY_EXPORT, MAPLE_USD_CATEGORY_CHART_OPTIONS, Pagination } from './shared'
+import { CardSkeleton, MAPLE_USD_CATEGORY_CHART_OPTIONS, Pagination } from './shared'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -195,7 +195,7 @@ export default function Loans() {
 							charts={PRINCIPAL_BY_POOL_CHART}
 							valueSymbol="$"
 							chartOptions={MAPLE_USD_CATEGORY_CHART_OPTIONS}
-							exportButtons={MAPLE_CSV_ONLY_EXPORT}
+							exportButtons="auto"
 						/>
 					</Suspense>
 				</Panel>
@@ -214,7 +214,7 @@ export default function Loans() {
 								charts={RATE_DISTRIBUTION_CHART}
 								valueSymbol="$"
 								chartOptions={MAPLE_USD_CATEGORY_CHART_OPTIONS}
-								exportButtons={MAPLE_CSV_ONLY_EXPORT}
+								exportButtons="auto"
 							/>
 						</Suspense>
 					</Panel>
@@ -232,7 +232,7 @@ export default function Loans() {
 								charts={AGE_DISTRIBUTION_CHART}
 								valueSymbol="$"
 								chartOptions={MAPLE_USD_CATEGORY_CHART_OPTIONS}
-								exportButtons={MAPLE_CSV_ONLY_EXPORT}
+								exportButtons="auto"
 							/>
 						</Suspense>
 					</Panel>

@@ -49,6 +49,7 @@ const render = (treeData: Array<EquitiesTreemapNode>, leaves: Array<IEquitiesTre
 	act(async () =>
 		root.render(
 			<MarketTreemapChart
+				exportButtons={{ omit: 'renderer test' }}
 				treeData={treeData}
 				leaves={leaves}
 				sizeLabel="Market Cap"

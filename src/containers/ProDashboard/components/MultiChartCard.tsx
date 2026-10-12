@@ -39,6 +39,7 @@ import {
 	buildMultiChartSeriesView,
 	getMultiChartGrouping
 } from './multiChartSeries'
+import { PRO_CARD_MENU_EXPORTS } from './ProCardActions'
 import { ProCardHeader } from './ProCardHeader'
 import { ProCardEmpty, ProCardError, ProCardLoading, ProCardNotice } from './ProCardStatus'
 import { useChartSyncGroup } from './useChartSyncGroup'
@@ -85,7 +86,7 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 		handleTreemapChange,
 		handleDuplicateMultiChart
 	} = useProDashboardEditorActions()
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 	const entityColors = useDashboardEntityColors()
 	const authToken = useContext(ProxyAuthTokenContext)
 	const streamDone = useContext(StreamDoneContext)
@@ -382,7 +383,7 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 					chartView.charts.length > 0
 						? {
 								image: {
-									chartInstance,
+									chartInstance: chartExport.chartInstance,
 									filename: multi.name || 'multi_chart',
 									title: showTreemap ? undefined : capitalizeFirstLetter(multi.name) || 'Multi Chart'
 								},
@@ -444,7 +445,13 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 					<Suspense
 						fallback={<ProCardLoading label="Loading chart" className="min-h-[calc(360px*var(--card-scale,1))]" />}
 					>
-						<BuilderTreemapChart key={multi.id} data={treemapData} height={chartHeight} onReady={handleChartReady} />
+						<BuilderTreemapChart
+							key={multi.id}
+							data={treemapData}
+							height={chartHeight}
+							exportButtons={PRO_CARD_MENU_EXPORTS}
+							onReady={chartExport.handleChartReady}
+						/>
 					</Suspense>
 				) : (
 					<Suspense
@@ -463,8 +470,8 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 							hideDataZoom
 							showLegend
 							solidChartAreaStyle={chartView.solidChartAreaStyle}
-							exportButtons="hidden"
-							onReady={handleChartReady}
+							exportButtons={PRO_CARD_MENU_EXPORTS}
+							onReady={chartExport.handleChartReady}
 							chartOptions={chartOptions}
 						/>
 					</Suspense>

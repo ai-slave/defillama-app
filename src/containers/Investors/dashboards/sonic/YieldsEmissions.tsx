@@ -92,6 +92,7 @@ export default function YieldsEmissions() {
 				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
+							exportButtons="auto"
 							title={data.emissions.title}
 							headingAs="h3"
 							dataset={data.emissions.dataset}

@@ -1,5 +1,6 @@
 import type * as echarts from 'echarts/core'
 import { lazy, Suspense, useMemo } from 'react'
+import type { HeadlessChartExportButtons } from '~/components/ChartExport/types'
 import type { ScatterTooltipParams } from '~/components/ECharts/ScatterChart/types'
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { EmptyState, SurfaceBodyLoadingStatus } from '~/ui/Status'
@@ -17,10 +18,18 @@ interface ScatterChartAdapterProps {
 	result: QueryResult
 	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
+	exportButtons: HeadlessChartExportButtons
 	height: string
 }
 
-export function ScatterChartAdapter({ config, result, classified, onReady, height }: ScatterChartAdapterProps) {
+export function ScatterChartAdapter({
+	config,
+	result,
+	classified,
+	onReady,
+	exportButtons,
+	height
+}: ScatterChartAdapterProps) {
 	const formatter = useMemo(() => makeValueFormatter(config.numberFormat), [config.numberFormat])
 
 	const numericCols = classified.filter((c) => c.coarse === 'number')
@@ -89,6 +98,7 @@ export function ScatterChartAdapter({ config, result, classified, onReady, heigh
 				showLabels
 				tooltipFormatter={tooltipFormatter}
 				onReady={onReady}
+				exportButtons={exportButtons}
 			/>
 		</Suspense>
 	)

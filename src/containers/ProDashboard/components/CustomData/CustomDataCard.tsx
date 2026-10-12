@@ -16,6 +16,7 @@ import { toastRefusal } from '../../useDashboardActions'
 import { generateItemId } from '../../utils/dashboardUtils'
 import { scaledPx, useCardHeightScale } from '../cardHeightContext'
 import { useDashboardCardContext } from '../DashboardCardContext'
+import { PRO_CARD_MENU_EXPORTS } from '../ProCardActions'
 import { ProCardHeader } from '../ProCardHeader'
 import { ProCardEmpty, ProCardError, ProCardLoading } from '../ProCardStatus'
 import { useDecodedRows } from './rowsEncoding'
@@ -105,6 +106,7 @@ export function CustomDataCard({ config }: CustomDataCardProps) {
 						result={result}
 						classified={classified}
 						height={scaledPx(SQL_CHART_BASE_HEIGHT, cardHeightScale)}
+						exportButtons={PRO_CARD_MENU_EXPORTS}
 						onReady={(instance) => {
 							chartInstanceRef.current = instance
 						}}

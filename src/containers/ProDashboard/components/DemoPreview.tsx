@@ -95,7 +95,7 @@ function DemoChartCard({ chart }: { chart: ChartConfig }) {
 						valueSymbol="$"
 						height="300px"
 						hideDataZoom
-						exportButtons="hidden"
+						exportButtons={{ omit: 'signed-out demo card drawing random sample data, which is nothing to download' }}
 						chartOptions={chartOptions}
 					/>
 				</React.Suspense>
@@ -172,7 +172,7 @@ function DemoMultiChartCard({ multi }: { multi: MultiChartConfig }) {
 						valueSymbol="$"
 						hideDataZoom
 						showLegend
-						exportButtons="hidden"
+						exportButtons={{ omit: 'signed-out demo card drawing random sample data, which is nothing to download' }}
 						chartOptions={chartOptions}
 					/>
 				</React.Suspense>

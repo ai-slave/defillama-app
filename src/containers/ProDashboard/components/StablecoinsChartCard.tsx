@@ -22,6 +22,7 @@ import type { StablecoinsChartConfig } from '../types'
 import { BoundParameterBadge } from './BoundParameterBadge'
 import { scaledPx, useCardHeightScale } from './cardHeightContext'
 import { prepareProChartCsv } from './chartCsv'
+import { PRO_CARD_MENU_EXPORTS } from './ProCardActions'
 import { ProCardHeader } from './ProCardHeader'
 import { ProCardError, ProCardLoading, ProCardRefreshFailed } from './ProCardStatus'
 import { useChartSyncGroup } from './useChartSyncGroup'
@@ -51,7 +52,7 @@ const SERIES_SELECTION_CHARTS = new Set<StablecoinsChartConfig['chartType']>([
 export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 	const { chain, chartType } = config
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 	const [isDark] = useDarkModeManager()
 	const brandColors = stablecoinBrandColors(isDark)
 	const { intent: selectionIntent, setIntent: setSelectionIntent } = useSelectionIntent(`${chain}:${chartType}`)
@@ -197,7 +198,7 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 				menu={
 					hasChartData
 						? {
-								image: { chartInstance, filename: imageFilename, title: imageTitle },
+								image: { chartInstance: chartExport.chartInstance, filename: imageFilename, title: imageTitle },
 								csv: { prepareCsv: prepareCsvExport }
 							}
 						: {}
@@ -227,9 +228,9 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 							<PieChart
 								chartData={piePresentation.chartData}
 								stackColors={{ ...piePresentation.stackColors, ...brandColors }}
-								exportButtons="hidden"
+								exportButtons={PRO_CARD_MENU_EXPORTS}
+								onReady={chartExport.handleChartReady}
 								height={chartHeight}
-								onReady={handleChartReady}
 							/>
 						) : (
 							<MultiSeriesChart
@@ -248,8 +249,8 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 									? {}
 									: { showTotalInTooltip: chartPayload.showTotalInTooltip })}
 								{...(chartOptions ? { chartOptions } : {})}
-								exportButtons="hidden"
-								onReady={handleChartReady}
+								exportButtons={PRO_CARD_MENU_EXPORTS}
+								onReady={chartExport.handleChartReady}
 							/>
 						)}
 					</Suspense>

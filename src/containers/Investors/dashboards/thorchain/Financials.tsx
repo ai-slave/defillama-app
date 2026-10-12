@@ -187,6 +187,7 @@ export default function Financials() {
 
 				<DonutCard
 					dist={distribution}
+					csvColumns={['Recipient', 'Income (USD)']}
 					subtitle="Protocol-defined split of system income: 75% nodes & LPs, 10% TCY stakers, 5% dev fund, 5% marketing fund, 5% burn."
 				/>
 			</section>
@@ -231,7 +232,11 @@ export default function Financials() {
 							<h3 className="mb-3 title-md text-primary">{affiliate.leaderboard.title ?? 'Affiliate Leaderboard'}</h3>
 							<ApiTable table={affiliate.leaderboard} maxHeight="360px" />
 						</Card>
-						<DonutCard dist={affiliate.topShareDonut} subtitle="Share of lifetime affiliate fees." />
+						<DonutCard
+							dist={affiliate.topShareDonut}
+							csvColumns={['Affiliate', 'Affiliate Fees (USD)']}
+							subtitle="Share of lifetime affiliate fees."
+						/>
 					</div>
 				</section>
 			)}

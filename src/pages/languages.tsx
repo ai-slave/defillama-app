@@ -180,7 +180,7 @@ function LanguageSeriesChart({
 					},
 		[charts, dataset, expandTo100Percent, selectedCharts]
 	)
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 	const filename = title
 		.toLowerCase()
 		.replaceAll(/[^a-z0-9]+/g, '-')
@@ -202,7 +202,7 @@ function LanguageSeriesChart({
 					/>
 				) : null}
 				<ChartExportButtons
-					chartInstance={chartInstance}
+					chart={chartExport}
 					filename={filename}
 					title={title}
 					csvSource={selectedPercentage.csvSource}
@@ -210,6 +210,7 @@ function LanguageSeriesChart({
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<MultiSeriesChart
+					exportButtons={chartExport}
 					dataset={selectedPercentage.dataset}
 					charts={selectedPercentage.charts}
 					csvSource={selectedPercentage.csvSource}
@@ -218,7 +219,6 @@ function LanguageSeriesChart({
 					stacked={stacked}
 					expandTo100Percent={expandTo100Percent}
 					showLegend
-					onReady={handleChartReady}
 				/>
 			</React.Suspense>
 		</Panel>

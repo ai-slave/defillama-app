@@ -53,7 +53,9 @@ export function SeparateChartsPreview({ composerItems }: SeparateChartsPreviewPr
 											charts={chartView.charts}
 											groupBy={DASHBOARD_CHART_GROUPING[grouping]}
 											hideDataZoom
-											exportButtons="hidden"
+											exportButtons={{
+												omit: 'live preview inside the Add Chart modal; the saved card exports through its menu'
+											}}
 											height="120px"
 											chartOptions={CHART_OPTIONS}
 										/>

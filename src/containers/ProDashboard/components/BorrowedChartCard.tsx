@@ -19,6 +19,7 @@ import { BoundParameterBadge } from './BoundParameterBadge'
 import { scaledPx, useCardHeightScale } from './cardHeightContext'
 import { prepareProChartCsv } from './chartCsv'
 import { filterChartDatasetByTimePeriod } from './datasets/filterChartDataset'
+import { PRO_CARD_MENU_EXPORTS } from './ProCardActions'
 import { ProCardHeader } from './ProCardHeader'
 import { ProCardError, ProCardLoading, ProCardRefreshFailed } from './ProCardStatus'
 import { useBorrowedChartData } from './useBorrowedChartData'
@@ -33,7 +34,6 @@ const EMPTY_DATASET: TimestampDataset = {
 	dimensions: ['timestamp']
 }
 const EMPTY_CHARTS: Array<MultiSeriesChartSeriesConfig> = []
-const HIDDEN_EXPORTS = 'hidden' as const
 const DOLLAR_CHART_OPTIONS = {
 	...BORROWED_CHART_OPTIONS,
 	...createTimeSeriesChartOptions('$')
@@ -50,7 +50,7 @@ interface BorrowedChartCardProps {
 export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 	const { protocol, protocolName, chartType } = config
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 	const streamDone = useContext(StreamDoneContext)
 	const { getProtocolInfo } = useProDashboardCatalog()
 	const suppressTokenBreakdown = shouldSuppressBorrowedTokenBreakdown(
@@ -186,8 +186,8 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 						selectedCharts={runtimePresentation.selectedCharts}
 						valueSymbol="$"
 						chartOptions={DOLLAR_CHART_OPTIONS}
-						exportButtons={HIDDEN_EXPORTS}
-						onReady={handleChartReady}
+						exportButtons={PRO_CARD_MENU_EXPORTS}
+						onReady={chartExport.handleChartReady}
 					/>
 				)
 			case 'tokenBorrowedUsd':
@@ -201,8 +201,8 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 						selectedCharts={runtimePresentation.selectedCharts}
 						valueSymbol="$"
 						chartOptions={DOLLAR_CHART_OPTIONS}
-						exportButtons={HIDDEN_EXPORTS}
-						onReady={handleChartReady}
+						exportButtons={PRO_CARD_MENU_EXPORTS}
+						onReady={chartExport.handleChartReady}
 					/>
 				)
 			case 'tokensBorrowedPie':
@@ -210,9 +210,9 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 					<PieChart
 						chartData={piePresentation.chartData}
 						stackColors={piePresentation.stackColors}
-						exportButtons="hidden"
+						exportButtons={PRO_CARD_MENU_EXPORTS}
+						onReady={chartExport.handleChartReady}
 						height={chartHeight}
-						onReady={handleChartReady}
 					/>
 				)
 			case 'tokenBorrowedRaw':
@@ -226,8 +226,8 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 						selectedCharts={runtimePresentation.selectedCharts}
 						valueSymbol=""
 						chartOptions={UNITLESS_CHART_OPTIONS}
-						exportButtons={HIDDEN_EXPORTS}
-						onReady={handleChartReady}
+						exportButtons={PRO_CARD_MENU_EXPORTS}
+						onReady={chartExport.handleChartReady}
 					/>
 				)
 			default:
@@ -276,7 +276,7 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 				menu={
 					hasChartData
 						? {
-								image: { chartInstance, filename: imageFilename, title: imageTitle },
+								image: { chartInstance: chartExport.chartInstance, filename: imageFilename, title: imageTitle },
 								csv: { prepareCsv: prepareCsvExport }
 							}
 						: {}

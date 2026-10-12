@@ -147,16 +147,10 @@ export function CompareProtocols({ protocols, protocolsList }: CompareProtocolsP
 									dataset={dataset}
 									charts={charts}
 									valueSymbol="$"
-									exportButtons={
-										dataset.source.length > 0
-											? {
-													png: true,
-													csv: true,
-													filename: 'compare-protocols',
-													pngTitle: 'Protocol TVL Comparison'
-												}
-											: 'hidden'
-									}
+									exportButtons={{
+										filename: 'compare-protocols',
+										pngTitle: 'Protocol TVL Comparison'
+									}}
 								/>
 							</React.Suspense>
 						)}

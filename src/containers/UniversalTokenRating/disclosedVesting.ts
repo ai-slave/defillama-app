@@ -1,3 +1,4 @@
+import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import type { UtrDisclosedTokenomicsGroup } from './types'
 
 function clampPct(value: number): number {
@@ -40,5 +41,14 @@ export function disclosedVestingSchedule(groups: Array<UtrDisclosedTokenomicsGro
 			name: labels[index],
 			data: months.map((month) => (group.allocationPct * unlockedShareOfGroup(group, month)) / 100)
 		}))
+	}
+}
+
+/** The vesting chart's rows, one per month since TGE, which its CSV also writes. */
+export function disclosedVestingDataset(groups: Array<UtrDisclosedTokenomicsGroup>): MultiSeriesChartDataset {
+	const { months, series } = disclosedVestingSchedule(groups)
+	return {
+		dimensions: ['Months Since TGE', ...series.map((entry) => entry.name)],
+		source: months.map((month, row) => [String(month), ...series.map((entry) => entry.data[row])])
 	}
 }

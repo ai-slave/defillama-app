@@ -2,10 +2,6 @@ import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesCh
 import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_INSET } from '~/components/ECharts/shared/chartSpacing'
 
-export const AREA_EXPORT = { csv: true, png: true, filename: 'chart', pngTitle: '' } as const
-export const BAR_EXPORT = { csv: true, png: false, filename: 'bar-chart-data' } as const
-export const HIDDEN_EXPORT = 'hidden' as const
-
 function chartOptions(valueSymbol: string, scrollLegend: boolean) {
 	return {
 		...createTimeSeriesChartOptions(valueSymbol),
@@ -14,7 +10,6 @@ function chartOptions(valueSymbol: string, scrollLegend: boolean) {
 }
 
 export const DOLLAR_CHART_OPTIONS = chartOptions('$', false)
-export const DOLLAR_STACKED_CHART_OPTIONS = chartOptions('$', false)
 export const DOLLAR_SCROLL_CHART_OPTIONS = chartOptions('$', true)
 export const DOLLAR_STACKED_SCROLL_CHART_OPTIONS = chartOptions('$', true)
 export const UNITLESS_CHART_OPTIONS = chartOptions('', false)

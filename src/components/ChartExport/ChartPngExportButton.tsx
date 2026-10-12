@@ -1,5 +1,4 @@
 import * as Ariakit from '@ariakit/react'
-import type * as echarts from 'echarts/core'
 import { useRouter } from 'next/router'
 import toast from 'react-hot-toast'
 import { Button } from '~/ui/Button'
@@ -10,12 +9,13 @@ import { Tooltip } from '~/ui/Tooltip'
 import type { CsvCell } from '~/utils/csvCell'
 import { downloadCSV } from '~/utils/download'
 import type { PngExportProfile } from './chartPngExport'
+import type { ChartExportHandle } from './types'
 import { useChartPngExport } from './useChartPngExport'
 export * from './chartPngExport'
 // --- Component ---
 
 interface ChartPngExportButtonProps {
-	chartInstance: () => echarts.ECharts | null
+	chart: Pick<ChartExportHandle, 'chartInstance'>
 	smol?: boolean | undefined
 	disabled?: boolean | undefined
 	title?: string | undefined
@@ -37,7 +37,7 @@ function withCsvExtension(filename: string) {
 }
 
 export function ChartPngExportButton({
-	chartInstance,
+	chart,
 	smol = true,
 	disabled = false,
 	title,
@@ -55,7 +55,15 @@ export function ChartPngExportButton({
 		isExporting: isLoading,
 		downloadImage,
 		copyImage
-	} = useChartPngExport({ chartInstance, title, filename, iconUrl, expandLegend, pngProfile, onExport })
+	} = useChartPngExport({
+		chartInstance: chart.chartInstance,
+		title,
+		filename,
+		iconUrl,
+		expandLegend,
+		pngProfile,
+		onExport
+	})
 	const handleDownload = () => {
 		if (disabled || isLoading) return
 		downloadImage()

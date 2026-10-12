@@ -5,6 +5,7 @@ import * as echarts from 'echarts/core'
 import { LabelLayout } from 'echarts/features'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useEffectEvent, useMemo, useRef } from 'react'
+import { chartExportHandle, type HeadlessChartExportButtons } from '~/components/ChartExport/types'
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { TreemapLabelContrast } from '~/components/ECharts/TreemapChart/labelContrast'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
@@ -51,6 +52,8 @@ export interface MarketTreemapChartProps {
 	height?: string
 	showMarketCapRow?: boolean
 	groupItemsLabel?: string
+	/** Where this chart's .csv/.png live: the handle its page's export buttons also take, or why it has none. */
+	exportButtons: HeadlessChartExportButtons
 	onReady?: (instance: echarts.ECharts | null) => void
 }
 
@@ -291,7 +294,8 @@ export default function MarketTreemapChart({
 	height,
 	showMarketCapRow = true,
 	groupItemsLabel = 'Companies',
-	onReady
+	onReady,
+	exportButtons
 }: MarketTreemapChartProps) {
 	const [isDark] = useDarkModeManager()
 	const canvasWatermarkEnabled = useCanvasWatermarkEnabled()
@@ -299,6 +303,7 @@ export default function MarketTreemapChart({
 	const chartRef = useRef<echarts.ECharts | null>(null)
 	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
 		onReady?.(instance)
+		chartExportHandle(exportButtons)?.handleChartReady(instance)
 	})
 
 	useChartResize(chartRef, containerRef)

@@ -1,10 +1,12 @@
 import { useRouter } from 'next/router'
 import { useMemo, useState } from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import MultiSeriesChart from '~/components/ECharts/MultiSeriesChart'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { THRESHOLD_TO_BUCKET } from '~/containers/MarketMakers/constants'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { ChartPanelBody, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
@@ -236,6 +238,7 @@ function PerformanceBreakdown({ breakdown }: { breakdown: UtrMarketMakerPerforma
 	const [display, setDisplay] = useState<'chart' | 'table'>('chart')
 	const series = useMemo(() => (metric ? breakdownSeries(metric, unit) : []), [metric, unit])
 	const providerShare = metric?.avgBreakdown.marketMakersPercentage ?? null
+	const chartExport = useGetChartInstance()
 
 	return (
 		<Panel>
@@ -334,6 +337,27 @@ function PerformanceBreakdown({ breakdown }: { breakdown: UtrMarketMakerPerforma
 									{ value: 'table', label: 'Table' }
 								]}
 							/>
+							<ChartExportButtons
+								chart={chartExport}
+								filename={`market-maker-daily-${mode}-${mode === 'depth' ? `${depthSide}-${threshold}` : volumeSide}-${unit}`}
+								title="Market maker daily breakdown"
+								csvSource={
+									display === 'chart'
+										? 'rendered-chart'
+										: {
+												type: 'dataset',
+												prepare: () => ({
+													dimensions: ['timestamp', 'Market Makers', 'All Others'],
+													source: metric.dailyBreakdown.map((point) => [
+														Date.parse(point.date),
+														unit === 'percent' ? point.marketMakersPercentage : point.marketMakers,
+														unit === 'percent' ? point.allOthersPercentage : point.allOthers
+													])
+												})
+											}
+								}
+								showPng={display === 'chart'}
+							/>
 						</ChartPanelToolbar>
 						{display === 'chart' ? (
 							<ChartPanelBody>
@@ -344,7 +368,7 @@ function PerformanceBreakdown({ breakdown }: { breakdown: UtrMarketMakerPerforma
 									chartOptions={unit === 'percent' ? PERCENT_TIME_OPTIONS : undefined}
 									showLegend
 									hideDataZoom
-									exportButtons="hidden"
+									exportButtons={chartExport}
 								/>
 							</ChartPanelBody>
 						) : (

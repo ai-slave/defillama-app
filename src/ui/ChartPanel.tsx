@@ -14,9 +14,10 @@ import { SurfaceBodyLoadingStatus } from './Status'
    ChartPanelTitle, never a hand-styled heading. Every other child
    hugs the right in one order: filters and grouping, then Embed, Add to
    dashboard, reset, .csv, .png. Embed, .csv and .png render only while the
-   chart plots a series. A chart under this toolbar sets
-   `exportButtons="hidden"` and its ChartExportButtons go here, so the
-   chart never adds a second header row. Controls keep their natural width and wrap right
+   chart plots a series. A chart under this toolbar takes the handle its
+   ChartExportButtons here also take (`exportButtons={chartExport}`,
+   `chart={chartExport}`), so the chart never adds a second header row
+   (check-chart-exports.ts). Controls keep their natural width and wrap right
    below sm: `filter` select triggers and `default` segmented controls,
    never `responsive`. The toolbar takes no className: callers never
    hand-roll the toolbar div or push groups with `ml-auto` (the

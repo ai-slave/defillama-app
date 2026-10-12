@@ -68,8 +68,12 @@ function shownLinks() {
 
 test('waits for a hidden tab to become visible, then draws the latest flow once', async () => {
 	const onReady = vi.fn()
-	await act(async () => root.render(<SankeyChart {...flow('Protocol', 10)} onReady={onReady} />))
-	await act(async () => root.render(<SankeyChart {...flow('Treasury', 20)} onReady={onReady} />))
+	await act(async () =>
+		root.render(<SankeyChart exportButtons={{ omit: 'renderer test' }} {...flow('Protocol', 10)} onReady={onReady} />)
+	)
+	await act(async () =>
+		root.render(<SankeyChart exportButtons={{ omit: 'renderer test' }} {...flow('Treasury', 20)} onReady={onReady} />)
+	)
 
 	expect(shownLinks()).toBeNull()
 	expect(onReady).not.toHaveBeenCalled()
@@ -83,12 +87,16 @@ test('waits for a hidden tab to become visible, then draws the latest flow once'
 
 test('holds updates while an initialized chart is hidden and applies the latest one when shown again', async () => {
 	size = { width: 640, height: 360 }
-	await act(async () => root.render(<SankeyChart {...flow('Protocol', 10)} />))
+	await act(async () =>
+		root.render(<SankeyChart exportButtons={{ omit: 'renderer test' }} {...flow('Protocol', 10)} />)
+	)
 	expect(shownLinks()).toEqual([{ source: 'Revenue', target: 'Protocol', value: 10 }])
 
 	size = { width: 640, height: 0 }
 	await act(async () => notifyResize())
-	await act(async () => root.render(<SankeyChart {...flow('Treasury', 20)} />))
+	await act(async () =>
+		root.render(<SankeyChart exportButtons={{ omit: 'renderer test' }} {...flow('Treasury', 20)} />)
+	)
 
 	expect(shownLinks()).toEqual([{ source: 'Revenue', target: 'Protocol', value: 10 }])
 

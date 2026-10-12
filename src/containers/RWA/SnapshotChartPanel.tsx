@@ -96,7 +96,7 @@ export function RWASnapshotChartPanel({
 			})
 		}
 	}, [deferredSlices, groupLabel, nestedTreemap, treemapLimit])
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 	const viewFilename = `${filename}-${view}`
 	const plotsSlices = !failedRead && !isLoading && deferredSlices.length > 0
 	/* The treemap keeps 600px so its tiles stay readable; pie and bars sit on the 360px floor. */
@@ -108,9 +108,9 @@ export function RWASnapshotChartPanel({
 				{controls}
 				{plotsSlices ? (
 					<>
-						{view === 'treemap' ? <ChartRestoreButton chartInstance={chartInstance} /> : null}
+						{view === 'treemap' ? <ChartRestoreButton chartInstance={chartExport.chartInstance} /> : null}
 						<ChartCsvExportButton
-							chartInstance={chartInstance}
+							chart={chartExport}
 							filename={viewFilename}
 							source={{
 								type: 'dataset',
@@ -129,7 +129,7 @@ export function RWASnapshotChartPanel({
 											}
 							}}
 						/>
-						<ChartPngExportButton chartInstance={chartInstance} filename={viewFilename} title={exportTitle} />
+						<ChartPngExportButton chart={chartExport} filename={viewFilename} title={exportTitle} />
 					</>
 				) : null}
 			</ChartPanelToolbar>
@@ -146,13 +146,13 @@ export function RWASnapshotChartPanel({
 					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" className={bodyClassName} />}>
 						{view === 'pie' ? (
 							<PieChart
+								exportButtons={chartExport}
 								chartData={presentation.pie}
 								stackColors={presentation.colors}
 								radius={pieChartRadius}
 								legendPosition={pieChartLegendPosition}
 								legendTextStyle={pieChartLegendTextStyle}
 								valueSymbol={valueSymbol}
-								onReady={handleChartReady}
 							/>
 						) : view === 'hbar' ? (
 							<HBarChart
@@ -160,7 +160,7 @@ export function RWASnapshotChartPanel({
 								values={presentation.bars.values}
 								colors={presentation.bars.colors}
 								valueSymbol={valueSymbol}
-								onReady={handleChartReady}
+								exportButtons={chartExport}
 							/>
 						) : (
 							<TreemapChart
@@ -169,7 +169,7 @@ export function RWASnapshotChartPanel({
 								containerClassName="min-h-[600px]"
 								valueLabel={valueLabel}
 								valueSymbol={valueSymbol}
-								onReady={handleChartReady}
+								exportButtons={chartExport}
 							/>
 						)}
 					</Suspense>

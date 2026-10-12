@@ -1,5 +1,7 @@
 import { useState, type ReactNode } from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import CandlestickChart from '~/components/ECharts/CandlestickChart'
+import { buildCandlestickCsvDataset } from '~/components/ECharts/CandlestickChart/csv'
 import type { CandlestickPoint } from '~/components/ECharts/CandlestickChart/types'
 import MultiSeriesChart from '~/components/ECharts/MultiSeriesChart'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
@@ -8,6 +10,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { chartColor, UTR_METRIC_COLORS } from '~/constants/colors'
 import { AccentBadge, SecondaryBadge } from '~/containers/MarketMakers/badges'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanelBody } from '~/ui/ChartPanel'
@@ -24,7 +27,7 @@ import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { formatCompactNumber, formatNumber, formatPercent } from '~/utils/numberFormat'
 import { UTR_PERCENT_OPTIONS, UTR_TIME_DATASET } from './constants'
 import { CriteriaDrawer, type CriteriaDrawerState } from './CriteriaDrawer'
-import { disclosedVestingDurationMonths } from './disclosedVesting'
+import { disclosedVestingDataset, disclosedVestingDurationMonths } from './disclosedVesting'
 import { DisclosedVestingChart, formatDisclosedMonths } from './DisclosureDetails'
 import { GradeBadge, GradeChip, ScoreBar } from './grades'
 import { MarketMakerPerformance } from './MarketMakerPerformance'
@@ -49,7 +52,9 @@ import type {
 	UtrDisclosures,
 	UtrExchangesResponse,
 	UtrLeaderboardRow,
-	UtrScoringConfig
+	UtrScoringConfig,
+	UtrCexDexChart,
+	UtrSpotPerpChart
 } from './types'
 
 const NUMBER_OPTIONS = {
@@ -148,6 +153,55 @@ function usd(value: number | null | undefined): string {
 
 function toTime(date: string): number {
 	return Date.parse(date)
+}
+
+/** One footprint card's stacked bars; it owns its export handle, so each card exports its own chart. */
+function FootprintChart({
+	entry,
+	points,
+	colors,
+	filename,
+	pngTitle
+}: {
+	entry: { title: string; names: readonly [string, string]; kind: 'cexdex' | 'spotperp' }
+	points: UtrCexDexChart['points'] | UtrSpotPerpChart['points']
+	colors: Array<string>
+	filename: string
+	pngTitle: string
+}) {
+	const chartExport = useGetChartInstance()
+	const seriesKeys = entry.kind === 'cexdex' ? (['cexUsd', 'dexUsd'] as const) : (['spotUsd', 'perpsUsd'] as const)
+	return (
+		<>
+			<ChartCaption
+				actions={
+					<ChartExportButtons chart={chartExport} filename={filename} title={pngTitle} csvSource="rendered-chart" />
+				}
+			>
+				{entry.title.includes('Depth') ? '+/- 2% Depth (USD)' : 'Volume (USD)'}
+			</ChartCaption>
+			<ChartPanelBody>
+				<MultiSeriesChart
+					dataset={UTR_TIME_DATASET}
+					charts={seriesKeys.map((key, index) => ({
+						type: 'bar' as const,
+						name: entry.names[index]!,
+						encode: { x: 0, y: 1 },
+						stack: 'total',
+						color: colors[index],
+						data: points.map((point): [number, number] => [
+							toTime(point.date),
+							(point as Record<string, any>)[key] ?? 0
+						])
+					}))}
+					valueSymbol="$"
+					showLegend
+					hideDataZoom
+					exportButtons={chartExport}
+				/>
+			</ChartPanelBody>
+		</>
+	)
 }
 
 function summaryFooter(summary: UtrChartSummary | null | undefined) {
@@ -308,7 +362,12 @@ function AboutDrawer({
 					<AccentBadge className="min-h-6">Last 30 days</AccentBadge>
 				</div>
 				<Panel>
-					<PerformanceMatrix rows={[matrixRow]} grading={scoringConfig?.grading} className="h-[320px] w-full" />
+					<PerformanceMatrix
+						rows={[matrixRow]}
+						grading={scoringConfig?.grading}
+						className="h-[320px] w-full"
+						exportButtons={{ omit: 'one-token matrix plotting the two scores the strips below it print' }}
+					/>
 				</Panel>
 				<Card
 					padding="none"
@@ -357,6 +416,14 @@ export function TokenPageLive({
 	// The page's metric colors keep one meaning across its charts; each is a [light, dark] pair.
 	const metricColor = (pair: readonly [light: string, dark: string]) => pair[isDark ? 1 : 0]
 	const [aboutOpen, setAboutOpen] = useState(false)
+	const marketCapExport = useGetChartInstance()
+	const tradeVolumeExport = useGetChartInstance()
+	const depthExport = useGetChartInstance()
+	const spreadExport = useGetChartInstance()
+	const priceExport = useGetChartInstance()
+	const fundingExport = useGetChartInstance()
+	const vestingExport = useGetChartInstance()
+	const exportPrefix = asset.symbol.toLowerCase()
 
 	const docsFor = (axis: 'disclosure' | 'performance', categoryKey: string) =>
 		scoringConfig?.[axis].categories.find((entry) => entry.key === categoryKey)?.criteria ?? []
@@ -449,6 +516,7 @@ export function TokenPageLive({
 	]
 	const visibleTokenomicsCards = tokenomicsCards.filter((card) => card.hasData)
 	const disclosedGroups = disclosures?.tokenomicsGroups ?? []
+	const vestingDataset = disclosedVestingDataset(disclosedGroups)
 	const vestingCommentary = disclosures?.vestingActualCommentary ?? null
 	const hasVestingData = hasAnyValue(
 		vestingCommentary,
@@ -465,6 +533,7 @@ export function TokenPageLive({
 	const footprintCharts = [
 		{
 			title: 'Total Volume (CEX vs DEX)',
+			filename: 'cex-vs-dex-volume',
 			chart: charts.cexVsDexVolume,
 			names: ['CEX Volume', 'DEX Volume'] as const,
 			colors: UTR_METRIC_COLORS.volumeStack,
@@ -472,6 +541,7 @@ export function TokenPageLive({
 		},
 		{
 			title: 'Total +/- 2% Depth (CEX vs DEX)',
+			filename: 'cex-vs-dex-depth',
 			chart: charts.cexVsDexDepth,
 			names: ['CEX Depth', 'DEX Depth'] as const,
 			colors: UTR_METRIC_COLORS.depthStack,
@@ -479,6 +549,7 @@ export function TokenPageLive({
 		},
 		{
 			title: 'Total Volume (Spot vs Perps)',
+			filename: 'spot-vs-perps-volume',
 			chart: charts.spotVsPerpsVolume,
 			names: ['Spot Volume', 'Perps Volume'] as const,
 			colors: UTR_METRIC_COLORS.volumeStack,
@@ -486,6 +557,7 @@ export function TokenPageLive({
 		},
 		{
 			title: 'Total +/- 2% Depth (Spot vs Perps)',
+			filename: 'spot-vs-perps-depth',
 			chart: charts.spotVsPerpsDepth,
 			names: ['Spot Depth', 'Perps Depth'] as const,
 			colors: UTR_METRIC_COLORS.depthStack,
@@ -521,6 +593,13 @@ export function TokenPageLive({
 	const hasSpreadData = Boolean(
 		spread && (spread.exchanges.length > 0 || hasAnyValue(spread.tightestExchange, spread.vwasPct))
 	)
+	const priceCandles = (priceChart?.candles ?? []).map((candle): CandlestickPoint => [
+		toTime(candle.date),
+		candle.openUsd,
+		candle.closeUsd,
+		candle.lowUsd,
+		candle.highUsd
+	])
 	const hasPriceData = Boolean(
 		priceChart &&
 		(priceChart.candles.length > 0 ||
@@ -701,7 +780,18 @@ export function TokenPageLive({
 										chart={
 											marketQuality?.series.length ? (
 												<>
-													<ChartCaption>Market Cap (USD)</ChartCaption>
+													<ChartCaption
+														actions={
+															<ChartExportButtons
+																chart={marketCapExport}
+																filename={`${exportPrefix}-market-cap`}
+																title={`${asset.projectName} Market Cap (USD)`}
+																csvSource="rendered-chart"
+															/>
+														}
+													>
+														Market Cap (USD)
+													</ChartCaption>
 													{/* Both charts share one floor, so this card's chart area matches the Depth card beside it. */}
 													<ChartPanelBody>
 														<MultiSeriesChart
@@ -721,9 +811,20 @@ export function TokenPageLive({
 															valueSymbol="$"
 															containerClassName="min-h-0"
 															hideDataZoom
-															exportButtons="hidden"
+															exportButtons={marketCapExport}
 														/>
-														<ChartCaption>Trade Volume (USD)</ChartCaption>
+														<ChartCaption
+															actions={
+																<ChartExportButtons
+																	chart={tradeVolumeExport}
+																	filename={`${exportPrefix}-trade-volume`}
+																	title={`${asset.projectName} Trade Volume (USD)`}
+																	csvSource="rendered-chart"
+																/>
+															}
+														>
+															Trade Volume (USD)
+														</ChartCaption>
 														<MultiSeriesChart
 															dataset={UTR_TIME_DATASET}
 															charts={[
@@ -742,7 +843,7 @@ export function TokenPageLive({
 															chartOptions={VOLUME_TIME_OPTIONS}
 															containerClassName="min-h-0"
 															hideDataZoom
-															exportButtons="hidden"
+															exportButtons={tradeVolumeExport}
 														/>
 													</ChartPanelBody>
 												</>
@@ -773,7 +874,18 @@ export function TokenPageLive({
 										chart={
 											marketQuality?.series.length ? (
 												<>
-													<ChartCaption>Depth +/- 2% (USD) | Market Cap (USD)</ChartCaption>
+													<ChartCaption
+														actions={
+															<ChartExportButtons
+																chart={depthExport}
+																filename={`${exportPrefix}-depth-vs-market-cap`}
+																title={`${asset.projectName} Depth +/- 2% vs Market Cap (USD)`}
+																csvSource="rendered-chart"
+															/>
+														}
+													>
+														Depth +/- 2% (USD) | Market Cap (USD)
+													</ChartCaption>
 													<ChartPanelBody>
 														<MultiSeriesChart
 															dataset={UTR_TIME_DATASET}
@@ -806,7 +918,7 @@ export function TokenPageLive({
 															valueSymbol="$"
 															showLegend
 															hideDataZoom
-															exportButtons="hidden"
+															exportButtons={depthExport}
 														/>
 													</ChartPanelBody>
 												</>
@@ -837,7 +949,18 @@ export function TokenPageLive({
 										chart={
 											spread?.exchanges.length ? (
 												<>
-													<ChartCaption>Bid / Ask Spread (%)</ChartCaption>
+													<ChartCaption
+														actions={
+															<ChartExportButtons
+																chart={spreadExport}
+																filename={`${exportPrefix}-bid-ask-spread`}
+																title={`${asset.projectName} Bid / Ask Spread (%)`}
+																csvSource="rendered-chart"
+															/>
+														}
+													>
+														Bid / Ask Spread (%)
+													</ChartCaption>
 													<ChartPanelBody>
 														<MultiSeriesChart
 															dataset={UTR_TIME_DATASET}
@@ -856,7 +979,7 @@ export function TokenPageLive({
 															chartOptions={PERCENT_TIME_OPTIONS}
 															showLegend
 															hideDataZoom
-															exportButtons="hidden"
+															exportButtons={spreadExport}
 														/>
 													</ChartPanelBody>
 												</>
@@ -898,17 +1021,20 @@ export function TokenPageLive({
 										chart={
 											priceChart?.candles.length ? (
 												<>
-													<ChartCaption>Price (USD)</ChartCaption>
+													<ChartCaption
+														actions={
+															<ChartExportButtons
+																chart={priceExport}
+																filename={`${exportPrefix}-price`}
+																title={`${asset.projectName} Price (USD)`}
+																csvSource={{ type: 'dataset', prepare: () => buildCandlestickCsvDataset(priceCandles) }}
+															/>
+														}
+													>
+														Price (USD)
+													</ChartCaption>
 													<ChartPanelBody>
-														<CandlestickChart
-															data={priceChart.candles.map((candle): CandlestickPoint => [
-																toTime(candle.date),
-																candle.openUsd,
-																candle.closeUsd,
-																candle.lowUsd,
-																candle.highUsd
-															])}
-														/>
+														<CandlestickChart data={priceCandles} exportButtons={priceExport} />
 													</ChartPanelBody>
 												</>
 											) : null
@@ -965,7 +1091,18 @@ export function TokenPageLive({
 										chart={
 											funding?.exchanges.length ? (
 												<>
-													<ChartCaption>Funding Rate (%)</ChartCaption>
+													<ChartCaption
+														actions={
+															<ChartExportButtons
+																chart={fundingExport}
+																filename={`${exportPrefix}-funding-rate`}
+																title={`${asset.projectName} Funding Rate (%)`}
+																csvSource="rendered-chart"
+															/>
+														}
+													>
+														Funding Rate (%)
+													</ChartCaption>
 													<ChartPanelBody>
 														<MultiSeriesChart
 															dataset={UTR_TIME_DATASET}
@@ -984,7 +1121,7 @@ export function TokenPageLive({
 															chartOptions={PERCENT_TIME_OPTIONS}
 															showLegend
 															hideDataZoom
-															exportButtons="hidden"
+															exportButtons={fundingExport}
 														/>
 													</ChartPanelBody>
 												</>
@@ -1086,40 +1223,13 @@ export function TokenPageLive({
 										{...summaryFooter(entry.chart)}
 										chart={
 											entry.chart?.points.length ? (
-												<>
-													<ChartCaption>
-														{entry.title.includes('Depth') ? '+/- 2% Depth (USD)' : 'Volume (USD)'}
-													</ChartCaption>
-													<ChartPanelBody>
-														<MultiSeriesChart
-															dataset={UTR_TIME_DATASET}
-															charts={(entry.kind === 'cexdex'
-																? [
-																		{ name: entry.names[0], key: 'cexUsd' as const },
-																		{ name: entry.names[1], key: 'dexUsd' as const }
-																	]
-																: [
-																		{ name: entry.names[0], key: 'spotUsd' as const },
-																		{ name: entry.names[1], key: 'perpsUsd' as const }
-																	]
-															).map((series, index) => ({
-																type: 'bar' as const,
-																name: series.name,
-																encode: { x: 0, y: 1 },
-																stack: 'total',
-																color: metricColor(entry.colors[index]),
-																data: entry.chart!.points.map((point): [number, number] => [
-																	toTime(point.date),
-																	(point as Record<string, any>)[series.key] ?? 0
-																])
-															}))}
-															valueSymbol="$"
-															showLegend
-															hideDataZoom
-															exportButtons="hidden"
-														/>
-													</ChartPanelBody>
-												</>
+												<FootprintChart
+													entry={entry}
+													points={entry.chart.points}
+													colors={entry.colors.map(metricColor)}
+													filename={`${exportPrefix}-${entry.filename}`}
+													pngTitle={`${asset.projectName} ${entry.title}`}
+												/>
 											) : null
 										}
 									>
@@ -1217,7 +1327,20 @@ export function TokenPageLive({
 													</div>
 												))}
 											</div>
-											{disclosedGroups.length > 0 ? <DisclosedVestingChart groups={disclosedGroups} /> : null}
+											{disclosedGroups.length > 0 ? (
+												<DisclosedVestingChart
+													dataset={vestingDataset}
+													exportButtons={vestingExport}
+													actions={
+														<ChartExportButtons
+															chart={vestingExport}
+															filename={`${exportPrefix}-disclosed-vesting`}
+															title={`${asset.projectName} Disclosed Token Vesting`}
+															csvSource={{ type: 'dataset', prepare: () => vestingDataset }}
+														/>
+													}
+												/>
+											) : null}
 										</div>
 										<div className="flex flex-col border-t border-subtle lg:w-[460px] lg:shrink-0 lg:border-t-0 lg:border-l">
 											<div className="flex flex-1 flex-col gap-2 p-4">

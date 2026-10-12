@@ -317,7 +317,11 @@ function DrawerBody({
 					<h3 className="heading-xs">Leaderboards performance</h3>
 					<AccentBadge className="h-6">{badge}</AccentBadge>
 				</div>
-				<RadarChart indicators={RADAR_INDICATORS} values={radarValues(scores)} />
+				<RadarChart
+					indicators={RADAR_INDICATORS}
+					values={radarValues(scores)}
+					exportButtons={{ omit: 'radar inside the detail drawer; the card below it prints every score' }}
+				/>
 				<Card padding="base" className="flex flex-col">
 					{SCORE_ROWS.map((row) => (
 						<div key={row.key} className="flex h-8 items-center justify-between">

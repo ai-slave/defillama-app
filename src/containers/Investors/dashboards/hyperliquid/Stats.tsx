@@ -10,6 +10,7 @@ import {
 	useTable
 } from '@tanstack/react-table'
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import type { IScatterChartProps, ScatterChartPoint } from '~/components/ECharts/ScatterChart/types'
@@ -17,6 +18,7 @@ import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { Table } from '~/components/Table/Table'
 import { TablePager } from '~/components/Table/TablePager'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { ChartPanelBody, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
@@ -208,6 +210,7 @@ function PriceTickerTape({ coins }: { coins: Array<string> }) {
 }
 
 function FundingChart({ data }: { data: Array<{ name: string; value: number }> }) {
+	const chartExport = useGetChartInstance()
 	if (data.length === 0) return null
 
 	const sorted = data.toSorted((a, b) => b.value - a.value)
@@ -215,9 +218,24 @@ function FundingChart({ data }: { data: Array<{ name: string; value: number }> }
 
 	return (
 		<Panel>
-			<ChartPanelToolbar leading={<ChartPanelTitle>Funding Rates (annualized) — top 20 by OI</ChartPanelTitle>} />
+			<ChartPanelToolbar leading={<ChartPanelTitle>Funding Rates (annualized) — top 20 by OI</ChartPanelTitle>}>
+				<ChartExportButtons
+					chart={chartExport}
+					filename="hyperliquid-funding-rates"
+					title="Funding Rates (annualized) — top 20 by OI"
+					pngProfile="hbar"
+					csvSource={{
+						type: 'dataset',
+						prepare: () => ({
+							dimensions: ['Market', 'Funding Rate (%)'],
+							source: sorted.map((d) => [d.name, d.value])
+						})
+					}}
+				/>
+			</ChartPanelToolbar>
 			<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" style={{ minHeight: height }} />}>
 				<HBarChart
+					exportButtons={chartExport}
 					categories={sorted.map((d) => d.name)}
 					values={sorted.map((d) => d.value)}
 					colors={sorted.map((d) => (d.value >= 0 ? FUNDING_UP_COLOR : FUNDING_DOWN_COLOR))}
@@ -445,6 +463,7 @@ const predictedFundingColumns: Array<ColumnDef<typeof tableFeaturesConfig, Predi
 ]
 
 function OIDistributionChart({ data }: { data: Array<{ name: string; value: number }> }) {
+	const chartExport = useGetChartInstance()
 	if (data.length === 0) return null
 
 	const stackColors: Record<string, string> = {}
@@ -452,10 +471,29 @@ function OIDistributionChart({ data }: { data: Array<{ name: string; value: numb
 
 	return (
 		<Panel>
-			<ChartPanelToolbar leading={<ChartPanelTitle>Open Interest distribution</ChartPanelTitle>} />
+			<ChartPanelToolbar leading={<ChartPanelTitle>Open Interest distribution</ChartPanelTitle>}>
+				<ChartExportButtons
+					chart={chartExport}
+					filename="hyperliquid-open-interest-distribution"
+					title="Open Interest distribution"
+					csvSource={{
+						type: 'dataset',
+						prepare: () => ({
+							dimensions: ['Market', 'Open Interest (USD)'],
+							source: data.map((d) => [d.name, d.value])
+						})
+					}}
+				/>
+			</ChartPanelToolbar>
 			{/* A side tile beside the scatter, so the donut keeps its own height rather than the 360 body floor. */}
 			<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="min-h-[400px]" />}>
-				<PieChart chartData={data} stackColors={stackColors} radius={['45%', '70%']} height="400px" />
+				<PieChart
+					exportButtons={chartExport}
+					chartData={data}
+					stackColors={stackColors}
+					radius={['45%', '70%']}
+					height="400px"
+				/>
 			</Suspense>
 		</Panel>
 	)
@@ -464,6 +502,7 @@ function OIDistributionChart({ data }: { data: Array<{ name: string; value: numb
 // Bubble size and color both encode the market's annualized funding, so the funding rides
 // along as the fourth value for the tooltip.
 function VolumeOIScatter({ data }: { data: Array<PerpMarket> }) {
+	const chartExport = useGetChartInstance()
 	const points: Array<ScatterChartPoint> = []
 	for (const market of data) {
 		if (!(market.dayNtlVlm > 0 && market.openInterest > 0)) continue
@@ -481,10 +520,29 @@ function VolumeOIScatter({ data }: { data: Array<PerpMarket> }) {
 		<Panel>
 			<ChartPanelToolbar
 				leading={<ChartPanelTitle>Volume vs Open Interest (bubble size = funding magnitude)</ChartPanelTitle>}
-			/>
+			>
+				<ChartExportButtons
+					chart={chartExport}
+					filename="hyperliquid-volume-vs-open-interest"
+					title="Volume vs Open Interest"
+					csvSource={{
+						type: 'dataset',
+						prepare: () => ({
+							dimensions: ['Market', '24h Volume (USD)', 'Open Interest (USD)', 'Funding Rate (%)'],
+							source: points.map(({ value: [volume, openInterest, name, funding] }) => [
+								name,
+								volume,
+								openInterest,
+								funding
+							])
+						})
+					}}
+				/>
+			</ChartPanelToolbar>
 			<ChartPanelBody>
 				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 					<ScatterChart
+						exportButtons={chartExport}
 						chartData={points}
 						xAxisLabel="24h Volume ($)"
 						yAxisLabel="Open Interest ($)"

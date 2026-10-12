@@ -128,7 +128,7 @@ function UpcomingUnlockVolumeChart({
 	const { groupBy: timePeriod, unlockType, viewMode } = parseUpcomingUnlockChartState(router.query)
 	const unlockTypeLabel = getUpcomingUnlockTypeLabel(unlockType)
 
-	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
+	const exportChartExport = useGetChartInstance()
 
 	const unlockChartData = useMemo(() => {
 		if (series.length === 0) return EMPTY_CHART_RESULT
@@ -239,7 +239,7 @@ function UpcomingUnlockVolumeChart({
 				) : null}
 				{deferredChartData.dataset.source.length > 0 ? (
 					<ChartExportButtons
-						chartInstance={exportChartInstance}
+						chart={exportChartExport}
 						filename={`${unlockType}-upcoming-unlocks`}
 						title={unlockType === 'all' ? 'Upcoming Unlocks' : `Upcoming ${unlockTypeLabel}`}
 						csvSource={{
@@ -263,12 +263,12 @@ function UpcomingUnlockVolumeChart({
 			{deferredChartData.dataset.source.length > 0 ? (
 				<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 					<MultiSeriesChart
+						exportButtons={exportChartExport}
 						dataset={selectedBreakdown?.dataset ?? deferredChartData.dataset}
 						charts={selectedBreakdown?.charts ?? deferredChartData.charts}
 						showLegend={deferredViewMode !== 'Total View'}
 						groupBy={deferredTimePeriod}
 						valueSymbol="$"
-						onReady={handleChartReady}
 					/>
 				</React.Suspense>
 			) : (

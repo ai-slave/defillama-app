@@ -90,7 +90,7 @@ export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProp
 					groupBy={DASHBOARD_CHART_GROUPING[previewGrouping]}
 					hideDataZoom
 					showLegend
-					exportButtons="hidden"
+					exportButtons={{ omit: 'live preview inside the Add Chart modal; the saved card exports through its menu' }}
 					height="450px"
 					chartOptions={CHART_OPTIONS}
 				/>

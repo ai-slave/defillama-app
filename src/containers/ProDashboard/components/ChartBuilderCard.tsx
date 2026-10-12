@@ -44,6 +44,7 @@ import {
 } from './chartBuilderSeries'
 import { createChartBuilderTooltipFormatter } from './chartBuilderTooltip'
 import { DASHBOARD_GROUPING_SEGMENTS } from './dashboardGroupingSegments'
+import { PRO_CARD_MENU_EXPORTS } from './ProCardActions'
 import { ProCardHeader } from './ProCardHeader'
 import { ProCardEmpty, ProCardError, ProCardLoading, ProCardRefreshFailed } from './ProCardStatus'
 import { useChartSyncGroup } from './useChartSyncGroup'
@@ -143,7 +144,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
 	const { authorizedFetch } = useAuthContext()
 	const { getProtocolInfo } = useProDashboardCatalog()
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 	const config = builder.config
 	const [showColors, setShowColors] = useState(false)
 	const [showDuplicateConfirm, setShowDuplicateConfirm] = useState(false)
@@ -492,7 +493,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 					hasRenderableData
 						? {
 								image: {
-									chartInstance,
+									chartInstance: chartExport.chartInstance,
 									filename: builder.name || config.metric,
 									title: config.chartType === 'treemap' ? undefined : builder.name || `${config.metric} by Protocol`,
 									expandLegend: true
@@ -563,7 +564,12 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 						fallback={<ProCardLoading label="Loading chart" className="min-h-[calc(300px*var(--card-scale,1))]" />}
 					>
 						{config.chartType === 'treemap' ? (
-							<BuilderTreemapChart data={treemapData} height={treemapHeight} onReady={handleChartReady} />
+							<BuilderTreemapChart
+								data={treemapData}
+								height={treemapHeight}
+								exportButtons={PRO_CARD_MENU_EXPORTS}
+								onReady={chartExport.handleChartReady}
+							/>
 						) : (
 							<MultiSeriesChart
 								height={chartHeight}
@@ -576,8 +582,8 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 								hideDataZoom
 								showLegend
 								solidChartAreaStyle={config.chartType === 'stackedArea'}
-								exportButtons="hidden"
-								onReady={handleChartReady}
+								exportButtons={PRO_CARD_MENU_EXPORTS}
+								onReady={chartExport.handleChartReady}
 								chartOptions={chartOptions}
 							/>
 						)}

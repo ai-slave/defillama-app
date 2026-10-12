@@ -1,5 +1,6 @@
 import type * as echarts from 'echarts/core'
 import { lazy, Suspense, useMemo } from 'react'
+import type { HeadlessChartExportButtons } from '~/components/ChartExport/types'
 import type { ScatterTooltipParams } from '~/components/ECharts/ScatterChart/types'
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { EmptyState, SurfaceBodyLoadingStatus } from '~/ui/Status'
@@ -20,10 +21,18 @@ interface BubbleChartAdapterProps {
 	result: QueryResult
 	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
+	exportButtons: HeadlessChartExportButtons
 	height: string
 }
 
-export function BubbleChartAdapter({ config, result, classified, onReady, height }: BubbleChartAdapterProps) {
+export function BubbleChartAdapter({
+	config,
+	result,
+	classified,
+	onReady,
+	exportButtons,
+	height
+}: BubbleChartAdapterProps) {
 	const formatter = useMemo(() => makeValueFormatter(config.numberFormat), [config.numberFormat])
 	const numericCols = classified.filter((c) => c.coarse === 'number')
 	const xCol = numericCols.find((column) => column.name === config.xCol) ?? numericCols[0] ?? null
@@ -120,6 +129,7 @@ export function BubbleChartAdapter({ config, result, classified, onReady, height
 				showLabels
 				tooltipFormatter={tooltipFormatter}
 				onReady={onReady}
+				exportButtons={exportButtons}
 			/>
 		</Suspense>
 	)

@@ -158,7 +158,7 @@ export interface IMultiSeriesChartProps {
 	showTotalInTooltip?: boolean
 	/** Hide the total when any displayed same-unit series is unavailable. */
 	requireCompleteTooltipTotal?: boolean
-	exportButtons?: ChartExportButtonsMode
+	exportButtons: ChartExportButtonsMode
 	logScale?: boolean
 	logEligibleYAxes?: Array<number>
 	/** Use an explicit theme for standalone/embed callers; normal pages use the shared theme manager. */

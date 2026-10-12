@@ -24,8 +24,6 @@ const EMPTY_DATASET: TimestampDataset = {
 	dimensions: ['timestamp']
 }
 const PREVIEW_EXPORTS = {
-	csv: true,
-	png: true,
 	filename: 'chart',
 	pngTitle: ''
 } as const
@@ -187,7 +185,13 @@ export function BorrowedChartTab({
 			case 'tokensBorrowedPie':
 				chartContent = (
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
-						<PieChart chartData={piePresentation.chartData} stackColors={piePresentation.stackColors} />
+						<PieChart
+							exportButtons={{
+								omit: 'live preview inside the Add Chart modal; the saved card exports through its menu'
+							}}
+							chartData={piePresentation.chartData}
+							stackColors={piePresentation.stackColors}
+						/>
 					</Suspense>
 				)
 				break

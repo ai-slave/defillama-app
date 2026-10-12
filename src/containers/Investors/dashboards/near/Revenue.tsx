@@ -1,11 +1,13 @@
 import { createColumnHelper, useTable } from '@tanstack/react-table'
 import { lazy, Suspense, useMemo, useState } from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import {
 	createSingleSeriesChartOptions,
 	createTimeSeriesChartOptions
 } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { displayTableFeatures } from '~/components/Table/features/display'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { ChartPanelExportShellLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
@@ -85,6 +87,8 @@ export default function Revenue() {
 	const [globalTimeframe, setGlobalTimeframe] = useState<Timeframe>('all')
 	const [aggregation, setAggregation] = useState<Aggregation>('daily')
 	const [emissionsView, setEmissionsView] = useState<'percentage' | 'absolute'>('percentage')
+	const feesChart = useGetChartInstance()
+	const revenueChart = useGetChartInstance()
 
 	const walletTable = useTable({
 		features: displayTableFeatures,
@@ -256,7 +260,17 @@ export default function Revenue() {
 								All fees earned by NEAR Protocol and products
 							</ChartPanelTitle>
 						}
-					/>
+					>
+						<ChartExportButtons
+							chart={feesChart}
+							filename="near-total-fees-generated"
+							title="All fees earned by NEAR Protocol and products"
+							csvSource={{
+								type: 'dataset',
+								prepare: () => ({ ...chartView.feesModel.dataset, groupBy: aggregation })
+							}}
+						/>
+					</ChartPanelToolbar>
 					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={chartView.feesModel.dataset}
@@ -265,7 +279,7 @@ export default function Revenue() {
 							valueSymbol=" NEAR"
 							showTotalInTooltip
 							showLegend
-							exportButtons="hidden"
+							exportButtons={feesChart}
 						/>
 					</Suspense>
 				</Panel>
@@ -282,7 +296,17 @@ export default function Revenue() {
 								NEAR received by protocol
 							</ChartPanelTitle>
 						}
-					/>
+					>
+						<ChartExportButtons
+							chart={revenueChart}
+							filename="near-revenue-over-time"
+							title="NEAR received by protocol"
+							csvSource={{
+								type: 'dataset',
+								prepare: () => ({ ...chartView.revenueModel.dataset, groupBy: aggregation })
+							}}
+						/>
+					</ChartPanelToolbar>
 					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={chartView.revenueModel.dataset}
@@ -291,7 +315,7 @@ export default function Revenue() {
 							valueSymbol=" NEAR"
 							showTotalInTooltip
 							showLegend
-							exportButtons="hidden"
+							exportButtons={revenueChart}
 						/>
 					</Suspense>
 				</Panel>
@@ -313,10 +337,11 @@ export default function Revenue() {
 					/>
 				</div>
 				<Panel>
-					{/* Both views draw the title in their own header; only the percentage view adds the export buttons. */}
+					{/* Both views draw the title and the export buttons in their own header. */}
 					{emissionsView === 'percentage' ? (
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
+								exportButtons="auto"
 								title={EMISSIONS_TITLE}
 								subtitle="Cumulative revenue as percentage of cumulative emissions"
 								headingAs="h3"
@@ -337,7 +362,7 @@ export default function Revenue() {
 								valueSymbol=" NEAR"
 								chartOptions={EMISSIONS_ABSOLUTE_CHART_OPTIONS}
 								showLegend
-								exportButtons="hidden"
+								exportButtons="auto"
 							/>
 						</Suspense>
 					)}

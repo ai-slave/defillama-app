@@ -206,9 +206,12 @@ export function CardDivider() {
 	return <div className="-mx-4 border-t border-subtle" />
 }
 
-/** A score card chart's caption, as the title of its chart toolbar. */
-export function ChartCaption({ children }: { children: ReactNode }) {
-	return <ChartPanelToolbar leading={<p className="label-sm text-secondary">{children}</p>} />
+/** A score card chart's caption, as the title of its chart toolbar, with that chart's export buttons. A card with two
+    charts gives each its own caption, so each chart's buttons sit with it. */
+export function ChartCaption({ children, actions }: { children: ReactNode; actions?: ReactNode }) {
+	return (
+		<ChartPanelToolbar leading={<p className="label-sm text-secondary">{children}</p>}>{actions}</ChartPanelToolbar>
+	)
 }
 
 export function KvTable({ rows }: { rows: Array<[ReactNode, ReactNode]> }) {

@@ -70,7 +70,7 @@ export function RWAEntityChartPanel<K extends string>({
 		})
 	const toggle = (key: K) =>
 		setSelected(selected.includes(key) ? selected.filter((entry) => entry !== key) : [...selected, key])
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 	const colorByName = new Map(deferredChart.series.map((entry) => [entry.name, entry.color]))
 
 	return (
@@ -119,14 +119,14 @@ export function RWAEntityChartPanel<K extends string>({
 					}
 				/>
 				<ChartCsvExportButton
-					chartInstance={chartInstance}
+					chart={chartExport}
 					filename={filename}
 					source={{
 						type: 'dataset',
 						prepare: () => buildRwaPlatformEntityCsvDataset(deferredChart.series, deferredChart.period)
 					}}
 				/>
-				<ChartPngExportButton chartInstance={chartInstance} filename={filename} title={title} />
+				<ChartPngExportButton chart={chartExport} filename={filename} title={title} />
 			</ChartPanelToolbar>
 			{failedRead ? (
 				<SurfaceBodyStatus variant="error" retry={failedRead}>
@@ -137,13 +137,13 @@ export function RWAEntityChartPanel<K extends string>({
 			) : (
 				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 					<MultiSeriesChart
+						exportButtons={chartExport}
 						dataset={EMPTY_DATASET}
 						charts={deferredChart.series}
 						hallmarks={deferredChart.hallmarks}
 						showLegend={deferredChart.series.length > 1}
 						valueSymbol="$"
 						groupBy={deferredChart.period}
-						onReady={handleChartReady}
 					/>
 				</Suspense>
 			)}

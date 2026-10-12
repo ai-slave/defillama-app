@@ -1,5 +1,6 @@
 import type * as echarts from 'echarts/core'
 import { lazy, Suspense, useMemo } from 'react'
+import type { HeadlessChartExportButtons } from '~/components/ChartExport/types'
 import { CHART_COLORS } from '~/constants/colors'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import type { ChartConfig } from '../../chartConfig'
@@ -15,10 +16,18 @@ interface HBarChartAdapterProps {
 	result: QueryResult
 	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
+	exportButtons: HeadlessChartExportButtons
 	height: string
 }
 
-export function HBarChartAdapter({ config, result, classified, onReady, height }: HBarChartAdapterProps) {
+export function HBarChartAdapter({
+	config,
+	result,
+	classified,
+	onReady,
+	exportButtons,
+	height
+}: HBarChartAdapterProps) {
 	const formatter = useMemo(() => makeValueFormatter(config.numberFormat), [config.numberFormat])
 
 	const { categories, values } = useMemo(() => {
@@ -44,6 +53,7 @@ export function HBarChartAdapter({ config, result, classified, onReady, height }
 				valueSymbol={formatter.valueSymbol}
 				colors={colors}
 				onReady={onReady}
+				exportButtons={exportButtons}
 			/>
 		</Suspense>
 	)

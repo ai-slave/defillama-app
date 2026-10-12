@@ -11,7 +11,6 @@ import { useEtherfiCashTransactions } from './cashApi'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
-const BAR_EXPORT = { csv: true, png: false, filename: 'bar-chart-data' } as const
 const UNITLESS_TIME_CHART_OPTIONS = createTimeSeriesChartOptions('')
 
 const SCROLL_LEGEND = {
@@ -142,7 +141,7 @@ export default function CashTransactions() {
 							valueSymbol=""
 							showLegend={classCharts.length > 1}
 							chartOptions={SCROLL_LEGEND}
-							exportButtons={BAR_EXPORT}
+							exportButtons="auto"
 						/>
 					</Suspense>
 				</Panel>
@@ -161,7 +160,7 @@ export default function CashTransactions() {
 							valueSymbol=""
 							showLegend={classCharts.length > 1}
 							chartOptions={SCROLL_LEGEND}
-							exportButtons={BAR_EXPORT}
+							exportButtons="auto"
 						/>
 					</Suspense>
 				</Panel>
@@ -179,7 +178,7 @@ export default function CashTransactions() {
 							charts={WEEKLY_TXNS_CHART}
 							valueSymbol=""
 							chartOptions={UNITLESS_TIME_CHART_OPTIONS}
-							exportButtons={BAR_EXPORT}
+							exportButtons="auto"
 						/>
 					</Suspense>
 				</Panel>
@@ -197,7 +196,7 @@ export default function CashTransactions() {
 							charts={WEEKLY_USERS_CHART}
 							valueSymbol=""
 							chartOptions={UNITLESS_TIME_CHART_OPTIONS}
-							exportButtons={BAR_EXPORT}
+							exportButtons="auto"
 						/>
 					</Suspense>
 				</Panel>
@@ -215,7 +214,7 @@ export default function CashTransactions() {
 							charts={WEEKLY_AVG_CHART}
 							valueSymbol=""
 							chartOptions={UNITLESS_TIME_CHART_OPTIONS}
-							exportButtons={BAR_EXPORT}
+							exportButtons="auto"
 						/>
 					</Suspense>
 				</Panel>

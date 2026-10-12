@@ -33,11 +33,21 @@ const shownNames = () =>
 
 test('switches between the empty notice and the treemap on one chart, dropping a stale drill-down', async () => {
 	const onReady = vi.fn()
-	await act(async () => root.render(<BuilderTreemapChart data={[]} onReady={onReady} />))
+	await act(async () =>
+		root.render(<BuilderTreemapChart exportButtons={{ omit: 'renderer test' }} data={[]} onReady={onReady} />)
+	)
 	const instance = chart()
 	expect(container.textContent).toContain('No data available for treemap')
 
-	await act(async () => root.render(<BuilderTreemapChart data={[{ name: 'Initial', value: 10 }]} onReady={onReady} />))
+	await act(async () =>
+		root.render(
+			<BuilderTreemapChart
+				exportButtons={{ omit: 'renderer test' }}
+				data={[{ name: 'Initial', value: 10 }]}
+				onReady={onReady}
+			/>
+		)
+	)
 	expect(container.textContent).not.toContain('No data available for treemap')
 	expect(shownNames()).toEqual(['Initial'])
 
@@ -49,11 +59,21 @@ test('switches between the empty notice and the treemap on one chart, dropping a
 	})
 	expect(readTreemapViewportExportState(instance)).toMatchObject({ actionType: 'treemapZoomToNode' })
 
-	await act(async () => root.render(<BuilderTreemapChart data={[]} onReady={onReady} />))
+	await act(async () =>
+		root.render(<BuilderTreemapChart exportButtons={{ omit: 'renderer test' }} data={[]} onReady={onReady} />)
+	)
 	expect(container.textContent).toContain('No data available for treemap')
 	expect(readTreemapViewportExportState(instance)).toBeNull()
 
-	await act(async () => root.render(<BuilderTreemapChart data={[{ name: 'Current', value: 20 }]} onReady={onReady} />))
+	await act(async () =>
+		root.render(
+			<BuilderTreemapChart
+				exportButtons={{ omit: 'renderer test' }}
+				data={[{ name: 'Current', value: 20 }]}
+				onReady={onReady}
+			/>
+		)
+	)
 	expect(chart()).toBe(instance)
 	expect(shownNames()).toEqual(['Current'])
 

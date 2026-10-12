@@ -11,7 +11,7 @@ import { PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatUsd } from '~/utils/numberFormat'
 import { type BerachainIncomeServerData, useBerachainIncomeData, useHoneyRevenueData } from './api'
-import { AREA_CHART_EXPORTS, BAR_CHART_EXPORTS, createChartOptions } from './chartDefaults'
+import { createChartOptions } from './chartDefaults'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -211,7 +211,7 @@ export default function IncomeBreakdown() {
 							dataset={totalRevenue.cumulative}
 							charts={TOTAL_REVENUE_CHARTS}
 							chartOptions={STACKED_DOLLAR_CHART_OPTIONS}
-							exportButtons={AREA_CHART_EXPORTS}
+							exportButtons="auto"
 							valueSymbol="$"
 							solidChartAreaStyle
 						/>
@@ -230,7 +230,7 @@ export default function IncomeBreakdown() {
 							{...berachain.monthly}
 							charts={BERACHAIN_MONTHLY_CHARTS}
 							chartOptions={DOLLAR_CHART_OPTIONS}
-							exportButtons={BAR_CHART_EXPORTS}
+							exportButtons="auto"
 							showLegend
 							valueSymbol="$"
 						/>
@@ -249,7 +249,7 @@ export default function IncomeBreakdown() {
 							dataset={berachain.chainFeesCumulative}
 							charts={CHAIN_FEES_CHART}
 							chartOptions={DOLLAR_CHART_OPTIONS}
-							exportButtons={AREA_CHART_EXPORTS}
+							exportButtons="auto"
 							valueSymbol="$"
 						/>
 					</Suspense>
@@ -283,7 +283,7 @@ export default function IncomeBreakdown() {
 							{...bex.monthly}
 							charts={BEX_MONTHLY_CHART}
 							chartOptions={DOLLAR_CHART_OPTIONS}
-							exportButtons={BAR_CHART_EXPORTS}
+							exportButtons="auto"
 							valueSymbol="$"
 						/>
 					</Suspense>
@@ -301,7 +301,7 @@ export default function IncomeBreakdown() {
 							dataset={bex.cumulative}
 							charts={BEX_CUMULATIVE_CHART}
 							chartOptions={DOLLAR_CHART_OPTIONS}
-							exportButtons={AREA_CHART_EXPORTS}
+							exportButtons="auto"
 							valueSymbol="$"
 						/>
 					</Suspense>
@@ -335,7 +335,7 @@ export default function IncomeBreakdown() {
 							{...bend.monthly}
 							charts={BEND_MONTHLY_CHARTS}
 							chartOptions={DOLLAR_CHART_OPTIONS}
-							exportButtons={BAR_CHART_EXPORTS}
+							exportButtons="auto"
 							showLegend
 							valueSymbol="$"
 						/>
@@ -354,7 +354,7 @@ export default function IncomeBreakdown() {
 							dataset={bend.feesCumulative}
 							charts={BEND_FEES_CHART}
 							chartOptions={DOLLAR_CHART_OPTIONS}
-							exportButtons={AREA_CHART_EXPORTS}
+							exportButtons="auto"
 							valueSymbol="$"
 						/>
 					</Suspense>
@@ -372,7 +372,7 @@ export default function IncomeBreakdown() {
 							dataset={bend.revenueCumulative}
 							charts={BEND_REVENUE_CHART}
 							chartOptions={DOLLAR_CHART_OPTIONS}
-							exportButtons={AREA_CHART_EXPORTS}
+							exportButtons="auto"
 							valueSymbol="$"
 						/>
 					</Suspense>

@@ -35,8 +35,8 @@ function Harness({ visible }: { visible: boolean }) {
 				<button type="button" onClick={() => setView('table')}>
 					{view}
 				</button>
-				<ScatterChart chartData={scatterData} />
-				<CandlestickChart data={candles} />
+				<ScatterChart exportButtons={{ omit: 'renderer test' }} chartData={scatterData} />
+				<CandlestickChart exportButtons={{ omit: 'renderer test' }} data={candles} />
 			</EChartsRenderVisibilityProvider>
 		</QueryClientProvider>
 	)

@@ -1,5 +1,5 @@
-import type * as echarts from 'echarts/core'
-import { useCallback, useMemo, useRef } from 'react'
+import { useMemo } from 'react'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { EmptyState } from '~/ui/Status'
 import { ChartRouter } from './chart'
@@ -16,11 +16,7 @@ interface ResultsChartProps {
 }
 
 export function ResultsChart({ result, chartConfig, onChartConfigChange }: ResultsChartProps) {
-	const chartInstanceRef = useRef<echarts.ECharts | null>(null)
-	const handleChartReady = useCallback((instance: echarts.ECharts | null) => {
-		chartInstanceRef.current = instance
-	}, [])
-	const getChartInstance = useCallback(() => chartInstanceRef.current, [])
+	const chartExport = useGetChartInstance()
 	const classified = useMemo(() => classifyColumns(result), [result])
 
 	// The stored config is the reader's last edit; the chart shows it fitted to this result's columns. Nothing writes
@@ -49,13 +45,9 @@ export function ResultsChart({ result, chartConfig, onChartConfigChange }: Resul
 
 			<Card padding="sm" className="flex flex-col gap-2">
 				<div className="flex items-center justify-end gap-1.5">
-					<ChartExportButton
-						chartInstance={getChartInstance}
-						chartType={resolvedConfig.chartType}
-						filename="sql-chart"
-					/>
+					<ChartExportButton chart={chartExport} chartType={resolvedConfig.chartType} filename="sql-chart" />
 				</div>
-				<ChartRouter config={resolvedConfig} result={result} classified={classified} onReady={handleChartReady} />
+				<ChartRouter config={resolvedConfig} result={result} classified={classified} exportButtons={chartExport} />
 			</Card>
 		</div>
 	)

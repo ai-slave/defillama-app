@@ -155,6 +155,7 @@ export default function ChainChartPage(props: Omit<IChainOverviewData, 'extraTvl
 						valueSymbol={valueSymbol}
 						isThemeDark={isThemeDark}
 						groupBy={groupBy}
+						exportButtons={{ omit: 'embed iframe; the page it is embedded in has no toolbar' }}
 					/>
 				</Suspense>
 			)}

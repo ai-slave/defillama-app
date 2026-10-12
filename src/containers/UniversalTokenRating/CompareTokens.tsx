@@ -128,7 +128,12 @@ function CompareColumn({
 				<>
 					<SummaryCard row={row} grading={grading} />
 					<Panel>
-						<PerformanceMatrix rows={[row]} grading={grading} className="h-[300px] w-full" />
+						<PerformanceMatrix
+							rows={[row]}
+							grading={grading}
+							className="h-[300px] w-full"
+							exportButtons={{ omit: 'one-token matrix plotting the two scores the summary card above prints' }}
+						/>
 					</Panel>
 					<CategoryBreakdownTable
 						title="Disclosures: breakdown by category"

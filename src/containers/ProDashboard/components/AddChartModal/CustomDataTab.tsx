@@ -283,7 +283,12 @@ function CustomDataForm({
 							No numeric columns in this dataset to chart.
 						</div>
 					) : (
-						<ChartRouter config={customData.chart} result={result} classified={classified} />
+						<ChartRouter
+							config={customData.chart}
+							result={result}
+							classified={classified}
+							exportButtons={{ omit: 'preview of the pasted CSV inside the Add Chart modal' }}
+						/>
 					)}
 				</Card>
 			</div>

@@ -85,7 +85,7 @@ export function BridgedTVLByChain({
 	)
 	const chartTypeQuery = readSingleQueryValue(router.query.chartType)
 	const chartType = chartTypeOptions.find(({ key }) => key === chartTypeQuery)?.key ?? 'total'
-	const { chartInstance: exportChartInstance, handleChartReady: onChartReady } = useGetChartInstance()
+	const exportChartExport = useGetChartInstance()
 
 	const { pieSeries, tableData } = React.useMemo(() => {
 		const category = chainData?.[chartType]
@@ -250,7 +250,7 @@ export function BridgedTVLByChain({
 							/>
 						) : null}
 						<ChartExportButtons
-							chartInstance={exportChartInstance}
+							chart={exportChartExport}
 							filename={`${slug(chainName)}-bridged-tvl-${chartType}`}
 							title={exportTitle}
 							iconUrl={chainIconUrl(chain)}
@@ -266,11 +266,11 @@ export function BridgedTVLByChain({
 					</ChartPanelToolbar>
 					<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<PieChart
+							exportButtons={exportChartExport}
 							chartData={deferredPiePresentation.chartData}
 							stackColors={deferredPiePresentation.stackColors}
 							valueSymbol=""
 							centerY="44%"
-							onReady={onChartReady}
 						/>
 					</React.Suspense>
 				</Panel>

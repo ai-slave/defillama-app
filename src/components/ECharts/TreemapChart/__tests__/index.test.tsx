@@ -27,6 +27,7 @@ test('hovering a narrative token shows its name, return and market cap in the to
 	await act(async () =>
 		root.render(
 			<TreemapChart
+				exportButtons={{ omit: 'renderer test' }}
 				variant="narrative"
 				treeData={[
 					{
@@ -50,6 +51,7 @@ test('hovering a flat tile shows its name and value with the value label and sym
 	await act(async () =>
 		root.render(
 			<TreemapChart
+				exportButtons={{ omit: 'renderer test' }}
 				variant="flat"
 				colorMode="categorical"
 				valueLabel="Collected"

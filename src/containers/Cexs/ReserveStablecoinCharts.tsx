@@ -79,7 +79,7 @@ function MultiSeriesChartCard({
 		[allValues, charts, dataset, isDefaultSelection, selectedCharts]
 	)
 
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 
 	return (
 		<CexChartPanel
@@ -98,7 +98,7 @@ function MultiSeriesChartCard({
 						/>
 					) : null}
 					<ChartExportButtons
-						chartInstance={chartInstance}
+						chart={chartExport}
 						filename={exportFilenameBase}
 						title={exportTitle}
 						iconUrl={exportIconUrl}
@@ -109,12 +109,12 @@ function MultiSeriesChartCard({
 		>
 			<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<MultiSeriesChart
+					exportButtons={chartExport}
 					dataset={presentation.dataset}
 					charts={presentation.charts}
 					csvSource={presentation.csvSource}
 					{...(valueSymbol ? { valueSymbol } : {})}
 					showLegend
-					onReady={handleChartReady}
 				/>
 			</React.Suspense>
 		</CexChartPanel>
@@ -145,7 +145,7 @@ function PieChartCard({
 		[selectedCharts, series]
 	)
 
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 
 	return (
 		<CexChartPanel
@@ -164,7 +164,7 @@ function PieChartCard({
 						/>
 					) : null}
 					<ChartExportButtons
-						chartInstance={chartInstance}
+						chart={chartExport}
 						filename={exportFilenameBase}
 						title={exportTitle}
 						iconUrl={exportIconUrl}
@@ -178,9 +178,9 @@ function PieChartCard({
 		>
 			<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<PieChart
+					exportButtons={chartExport}
 					chartData={presentation.chartData}
 					stackColors={presentation.stackColors}
-					onReady={handleChartReady}
 				/>
 			</React.Suspense>
 		</CexChartPanel>

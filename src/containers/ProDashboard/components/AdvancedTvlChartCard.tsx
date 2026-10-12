@@ -30,6 +30,7 @@ import { BoundParameterBadge } from './BoundParameterBadge'
 import { scaledPx, useCardHeightScale } from './cardHeightContext'
 import { prepareProChartCsv } from './chartCsv'
 import { filterChartDatasetByTimePeriod } from './datasets/filterChartDataset'
+import { PRO_CARD_MENU_EXPORTS } from './ProCardActions'
 import { ProCardHeader } from './ProCardHeader'
 import { ProCardError, ProCardLoading, ProCardRefreshFailed } from './ProCardStatus'
 import { useAdvancedTvlChartData } from './useAdvancedTvlChartData'
@@ -45,7 +46,6 @@ const EMPTY_DATASET: TimestampDataset = {
 }
 const EMPTY_STACKS: Array<string> = []
 const EMPTY_BREAKDOWN: ProtocolBreakdownChart = []
-const HIDDEN_EXPORTS = 'hidden' as const
 const selectBasicTvlDataset = (data: IProtocolValueChart | null) => buildTimeSeriesDataset(data ?? [], 'TVL', 1)
 
 interface AdvancedTvlChartCardProps {
@@ -65,7 +65,7 @@ const CHART_TYPE_LABELS: Record<string, string> = {
 export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 	const { protocol, protocolName, chartType } = config
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl')
 	const streamDone = useContext(StreamDoneContext)
 	const { getProtocolInfo } = useProDashboardCatalog()
@@ -261,9 +261,9 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 			<PieChart
 				chartData={piePresentation.chartData}
 				stackColors={piePresentation.stackColors}
-				exportButtons="hidden"
+				exportButtons={PRO_CARD_MENU_EXPORTS}
+				onReady={chartExport.handleChartReady}
 				height={chartHeight}
-				onReady={handleChartReady}
 			/>
 		) : (
 			<MultiSeriesChart
@@ -276,9 +276,9 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 				hideDataZoom={presentation.hideDataZoom}
 				solidChartAreaStyle={presentation.solidChartAreaStyle}
 				{...(presentation.chartOptions ? { chartOptions: presentation.chartOptions } : {})}
-				exportButtons={HIDDEN_EXPORTS}
+				exportButtons={PRO_CARD_MENU_EXPORTS}
 				height={chartHeight}
-				onReady={handleChartReady}
+				onReady={chartExport.handleChartReady}
 			/>
 		)
 
@@ -323,7 +323,7 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 				menu={
 					hasChartData
 						? {
-								image: { chartInstance, filename: imageFilename, title: imageTitle },
+								image: { chartInstance: chartExport.chartInstance, filename: imageFilename, title: imageTitle },
 								csv: { prepareCsv: prepareCsvExport }
 							}
 						: {}

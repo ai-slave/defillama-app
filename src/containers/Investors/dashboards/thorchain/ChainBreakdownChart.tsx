@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useMemo, useState } from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { buildSparseCartesianChartModel, type SparseCartesianSeries } from '~/components/ECharts/MultiSeriesChart/model'
 import { createCappedRemainderTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
@@ -8,10 +9,12 @@ import { CHART_SERIES_LIMIT, chartColor, OTHERS_COLOR } from '~/constants/colors
 import { ADAPTER_DATA_TYPES } from '~/containers/AdapterMetrics/constants'
 import { fetchProtocolChainBreakdownData } from '~/containers/ProDashboard/services/ProtocolChartBuilderData'
 import { getGroupedTimestampSec } from '~/containers/ProDashboard/utils'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { slug } from '~/utils'
 import { mergeFailedReads, queryReadFailed, type QueryRetry } from '~/utils/query'
 import { carryForwardCumulative, parseDateToUnix, sumDailySeries, type Chart } from './transform'
 import { DEX, NETWORK_FEE_DATA_TYPES, networkFeeQuery, PALETTE, THOR_TEAL, withNetworkFee } from './ui'
@@ -129,6 +132,7 @@ function TrendCard({
 }) {
 	const groupBy = view === 'month' ? 'monthly' : view === 'quarter' ? 'quarterly' : 'daily'
 	const model = useMemo(() => buildSparseCartesianChartModel(chartSeries), [chartSeries])
+	const chartExport = useGetChartInstance()
 	const chartOptions = useMemo(
 		() => ({
 			...CHART_OPTIONS,
@@ -146,6 +150,13 @@ function TrendCard({
 					options={VIEWS}
 					value={view}
 					onValueChange={setView}
+				/>
+				<ChartExportButtons
+					chart={chartExport}
+					filename={slug(title)}
+					title={title}
+					csvSource={{ type: 'dataset', prepare: () => ({ ...model.dataset, groupBy }) }}
+					disabled={!!failedRead || isLoading || chartSeries.length === 0}
 				/>
 			</ChartPanelToolbar>
 			{failedRead ? (
@@ -165,7 +176,7 @@ function TrendCard({
 						groupBy={groupBy}
 						chartOptions={chartOptions}
 						showLegend
-						exportButtons="hidden"
+						exportButtons={chartExport}
 					/>
 				</Suspense>
 			)}
@@ -300,10 +311,18 @@ export function DualAxisChart({ chart, subtitle }: { chart?: Chart | null; subti
 			subtitle: subtitle ?? chart.subtitle
 		}
 	}, [chart, subtitle])
+	const chartExport = useGetChartInstance()
 	if (!model) return null
 	return (
 		<Panel>
-			<ChartPanelToolbar leading={<ChartPanelTitle subtitle={model.subtitle}>{model.title}</ChartPanelTitle>} />
+			<ChartPanelToolbar leading={<ChartPanelTitle subtitle={model.subtitle}>{model.title}</ChartPanelTitle>}>
+				<ChartExportButtons
+					chart={chartExport}
+					filename={slug(model.title || 'thorchain')}
+					title={model.title}
+					csvSource={{ type: 'dataset', prepare: () => ({ ...model.dataset, groupBy: 'daily' }) }}
+				/>
+			</ChartPanelToolbar>
 			<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<MultiSeriesChart
 					dataset={model.dataset}
@@ -312,7 +331,7 @@ export function DualAxisChart({ chart, subtitle }: { chart?: Chart | null; subti
 					groupBy="daily"
 					chartOptions={CHART_OPTIONS}
 					showLegend
-					exportButtons="hidden"
+					exportButtons={chartExport}
 				/>
 			</Suspense>
 		</Panel>

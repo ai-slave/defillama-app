@@ -156,7 +156,7 @@ export function BridgesOverviewByChain({
 	const [includeMessaging, setIncludeMessaging] = React.useState(false)
 	const [searchValue, setSearchValue] = React.useState('')
 	const deferredSearchValue = React.useDeferredValue(searchValue)
-	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
+	const exportChartExport = useGetChartInstance()
 	const bridgesTableRef = React.useRef<BridgesTableHandle | null>(null)
 	const largeTxsTableRef = React.useRef<BridgesLargeTxsTableHandle | null>(null)
 
@@ -381,7 +381,7 @@ export function BridgesOverviewByChain({
 								/>
 
 								<ChartExportButtons
-									chartInstance={exportChartInstance}
+									chart={exportChartExport}
 									filename={chartView === 'volume' ? 'bridge-volume' : 'bridge-netflow-by-chain'}
 									title={chartView === 'volume' ? 'Bridge Volume' : 'Bridge Net Flows'}
 									csvSource="rendered-chart"
@@ -394,11 +394,11 @@ export function BridgesOverviewByChain({
 									<React.Suspense
 										fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="min-h-[600px]" />}
 									>
-										<NetflowChart height={600} onReady={handleChartReady} data={netflowsData} />
+										<NetflowChart height={600} exportButtons={exportChartExport} data={netflowsData} />
 									</React.Suspense>
 								</ChartPanelBody>
 							) : chartView === 'volume' ? (
-								<BridgeVolumeChart data={rawBridgeVolumeData} height="360px" onReady={handleChartReady} />
+								<BridgeVolumeChart data={rawBridgeVolumeData} height="360px" exportButtons={exportChartExport} />
 							) : null}
 						</>
 					) : (
@@ -430,7 +430,7 @@ export function BridgesOverviewByChain({
 										/>
 									) : null}
 									<ChartExportButtons
-										chartInstance={exportChartInstance}
+										chart={exportChartExport}
 										filename={chartFilename}
 										title={`${selectedChain} ${chartType}`}
 										iconUrl={selectedChainIconUrl}
@@ -443,7 +443,7 @@ export function BridgesOverviewByChain({
 								<BridgeVolumeChart
 									data={rawBridgeVolumeData}
 									height="360px"
-									onReady={handleChartReady}
+									exportButtons={exportChartExport}
 									scopeNote={chartScopeNote}
 									headerStart={
 										<SelectWithCombobox
@@ -462,7 +462,7 @@ export function BridgesOverviewByChain({
 									}
 									headerEnd={
 										<ChartExportButtons
-											chartInstance={exportChartInstance}
+											chart={exportChartExport}
 											filename={chartFilename}
 											title={`${selectedChain} ${chartType}`}
 											iconUrl={selectedChainIconUrl}
@@ -474,10 +474,10 @@ export function BridgesOverviewByChain({
 								activeChart.dataset.source.length > 0 ? (
 									<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 										<MultiSeriesChart
+											exportButtons={exportChartExport}
 											dataset={activeChart.dataset}
 											charts={NET_FLOW_CHARTS}
 											valueSymbol="$"
-											onReady={handleChartReady}
 										/>
 									</React.Suspense>
 								) : null
@@ -485,10 +485,10 @@ export function BridgesOverviewByChain({
 								activeChart.dataset.source.length > 0 ? (
 									<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 										<MultiSeriesChart
+											exportButtons={exportChartExport}
 											dataset={activeChart.dataset}
 											charts={NET_FLOW_PCT_CHARTS}
 											valueSymbol="%"
-											onReady={handleChartReady}
 										/>
 									</React.Suspense>
 								) : null
@@ -496,27 +496,27 @@ export function BridgesOverviewByChain({
 								activeChart.dataset.source.length > 0 ? (
 									<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 										<MultiSeriesChart
+											exportButtons={exportChartExport}
 											dataset={activeChart.dataset}
 											charts={CHAIN_INFLOW_CHARTS}
 											valueSymbol="$"
-											onReady={handleChartReady}
 										/>
 									</React.Suspense>
 								) : null
 							) : activeChart?.kind === '24h Tokens Deposited' ? (
 								<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 									<PieChart
+										exportButtons={exportChartExport}
 										chartData={visibleTokenPiePresentation.chartData}
 										stackColors={visibleTokenPiePresentation.stackColors}
-										onReady={handleChartReady}
 									/>
 								</React.Suspense>
 							) : activeChart?.kind === '24h Tokens Withdrawn' ? (
 								<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 									<PieChart
+										exportButtons={exportChartExport}
 										chartData={visibleTokenPiePresentation.chartData}
 										stackColors={visibleTokenPiePresentation.stackColors}
-										onReady={handleChartReady}
 									/>
 								</React.Suspense>
 							) : null}

@@ -24,6 +24,7 @@ import { BoundParameterBadge } from './BoundParameterBadge'
 import { useCardHeightScale, scaledPx } from './cardHeightContext'
 import { DASHBOARD_GROUPING_LABELS, DASHBOARD_GROUPING_SEGMENTS } from './dashboardGroupingSegments'
 import { EntityIcon } from './EntityIcon'
+import { PRO_CARD_MENU_EXPORTS } from './ProCardActions'
 import { ProCardHeader } from './ProCardHeader'
 import { ProCardEmpty, ProCardError, ProCardLoading } from './ProCardStatus'
 import { buildSingleMetricChartDataset, getSingleMetricPresentation } from './singleMetricChart'
@@ -127,7 +128,7 @@ function ChartRenderer({
 				{...(todayLine ? { referenceLines: todayLine } : {})}
 				{...(syncGroup ? { syncGroup } : {})}
 				{...(chartOptions ? { chartOptions } : {})}
-				exportButtons="hidden"
+				exportButtons={PRO_CARD_MENU_EXPORTS}
 				onReady={onChartReady}
 			/>
 		</Suspense>
@@ -138,7 +139,7 @@ export function ChartCard({ chart }: ChartCardProps) {
 	const { getChainInfo, getProtocolInfo, protocolRelations, protocolBySlug, protocolCatalog } = useProDashboardCatalog()
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
 	const { handleGroupingChange, handleCumulativeChange } = useProDashboardEditorActions()
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 	const entityColors = useDashboardEntityColors()
 	const authToken = useContext(ProxyAuthTokenContext)
 	const streamDone = useContext(StreamDoneContext)
@@ -240,7 +241,7 @@ export function ChartCard({ chart }: ChartCardProps) {
 				menu={
 					chartDataset.source.length > 0
 						? {
-								image: { chartInstance, filename: imageFilename, title: imageTitle },
+								image: { chartInstance: chartExport.chartInstance, filename: imageFilename, title: imageTitle },
 								csv: { onClick: handleCsvExport }
 							}
 						: {}
@@ -256,7 +257,7 @@ export function ChartCard({ chart }: ChartCardProps) {
 					hasError={chartState.hasError}
 					retry={chartState}
 					color={chartColor}
-					onChartReady={handleChartReady}
+					onChartReady={chartExport.handleChartReady}
 				/>
 			</div>
 		</div>

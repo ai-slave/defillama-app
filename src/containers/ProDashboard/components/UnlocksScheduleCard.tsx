@@ -17,6 +17,7 @@ import { BoundParameterBadge } from './BoundParameterBadge'
 import { scaledPx, useCardHeightScale } from './cardHeightContext'
 import { prepareProChartCsv } from './chartCsv'
 import { filterChartDatasetByTimePeriod } from './datasets/filterChartDataset'
+import { PRO_CARD_MENU_EXPORTS } from './ProCardActions'
 import { ProCardHeader } from './ProCardHeader'
 import { ProCardEmpty, ProCardError, ProCardLoading, ProCardRefreshFailed } from './ProCardStatus'
 import { useChartSyncGroup } from './useChartSyncGroup'
@@ -35,7 +36,7 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 	const { protocol, protocolName, dataType } = config
 	const resolvedDataType = dataType === 'realtime' ? 'documented' : dataType
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 	const [todayTimestamp] = useState(() => Math.floor(Date.now() / 1000))
 	const todayLine = useMemo<Array<[number, string]>>(
 		() => [[todayTimestamp, formatUnlockDate(todayTimestamp)]],
@@ -138,7 +139,7 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 				menu={
 					hasChartData
 						? {
-								image: { chartInstance, filename: imageFilename, title: imageTitle },
+								image: { chartInstance: chartExport.chartInstance, filename: imageFilename, title: imageTitle },
 								csv: { prepareCsv: prepareCsvExport }
 							}
 						: {}
@@ -150,6 +151,8 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 						fallback={<ProCardLoading label="Loading chart" className="min-h-[calc(360px*var(--card-scale,1))]" />}
 					>
 						<MultiSeriesChart
+							exportButtons={PRO_CARD_MENU_EXPORTS}
+							onReady={chartExport.handleChartReady}
 							dataset={dataset}
 							height={chartHeight}
 							{...(apiCharts === undefined ? {} : { charts: apiCharts })}
@@ -159,7 +162,6 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 							{...(syncGroup ? { syncGroup } : {})}
 							hideDataZoom
 							valueSymbol=""
-							onReady={handleChartReady}
 						/>
 					</Suspense>
 				) : (

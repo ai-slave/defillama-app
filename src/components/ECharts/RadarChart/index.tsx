@@ -4,6 +4,7 @@ import { GraphicComponent, RadarComponent, TooltipComponent } from 'echarts/comp
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useEffectEvent, useRef } from 'react'
+import { chartExportHandle, type HeadlessChartExportButtons } from '~/components/ChartExport/types'
 import { chartColor } from '~/constants/colors'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
@@ -26,6 +27,8 @@ export interface IRadarChartProps {
 	/** One value per indicator, in indicator order. */
 	values: Array<number>
 	height?: string
+	/** Where this chart's .csv/.png live: the handle its page's export buttons also take, or why it has none. */
+	exportButtons: HeadlessChartExportButtons
 	onReady?: (instance: echarts.ECharts | null) => void
 }
 
@@ -62,7 +65,7 @@ export function buildRadarOption(
 	}
 }
 
-function RadarChart({ indicators, values, height = '280px', onReady }: IRadarChartProps) {
+function RadarChart({ indicators, values, height = '280px', onReady, exportButtons }: IRadarChartProps) {
 	const [isDark] = useDarkModeManager()
 	const canvasWatermarkEnabled = useCanvasWatermarkEnabled()
 	const chartTheme = useChartTheme(isDark)
@@ -71,6 +74,7 @@ function RadarChart({ indicators, values, height = '280px', onReady }: IRadarCha
 	const persistentLifecycle = usePersistentEChartsLifecycle()
 	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
 		onReady?.(instance)
+		chartExportHandle(exportButtons)?.handleChartReady(instance)
 	})
 
 	useChartResize(chartRef, containerRef)

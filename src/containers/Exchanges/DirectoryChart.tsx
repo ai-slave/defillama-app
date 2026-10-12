@@ -1,12 +1,15 @@
 import { useRouter } from 'next/router'
 import * as React from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { buildAlignedCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import { chartColor } from '~/constants/colors'
-import { ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { ChartPanelBody, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { ScopeNote, ignoredFiltersPhrase } from '~/ui/ScopeNote'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
 import type { QueryRetry } from '~/utils/query'
 import { pushShallowQuery } from '~/utils/routerQuery'
@@ -136,6 +139,9 @@ type DirectoryChartProps = { range: ExchangeResearchRange; country: string | nul
 export function DirectoryChart({ chart, range, failedRead, country }: DirectoryChartProps) {
 	const router = useRouter()
 	const tab = getDirectoryOverviewTab(router.query)
+	// Names the export, so a Spot file and a USD Perps file differ.
+	const tabOption = TAB_OPTIONS.find((option) => option.value === tab)!
+	const tabName = 'ariaLabel' in tabOption ? tabOption.ariaLabel : tabOption.label
 	const ignoredFilters = getDirectoryChartIgnoredFilters(router.query, country)
 	const resolved = React.useMemo(
 		() =>
@@ -168,11 +174,11 @@ export function DirectoryChart({ chart, range, failedRead, country }: DirectoryC
 				: buildAlignedCartesianChartModel([], []),
 		[resolved, chart]
 	)
+	const chartExport = useGetChartInstance()
 
 	return (
 		<Panel>
-			<ChartPanelToolbar>
-				<h2 className="mr-auto heading-xs">Trading activity</h2>
+			<ChartPanelToolbar leading={<ChartPanelTitle headingAs="h2">Trading activity</ChartPanelTitle>}>
 				<ChartRangeControl range={range} />
 				<SegmentedControl<DirectoryOverviewTab>
 					value={tab}
@@ -186,6 +192,13 @@ export function DirectoryChart({ chart, range, failedRead, country }: DirectoryC
 					label="Chart view"
 					variant="default"
 					size="md"
+				/>
+				<ChartExportButtons
+					chart={chartExport}
+					filename={`exchange-trading-activity-${slug(tabName)}`}
+					title={`Exchange Trading Activity · ${tabName}`}
+					csvSource={{ type: 'dataset', prepare: () => chartModel.dataset }}
+					disabled={!chart}
 				/>
 			</ChartPanelToolbar>
 			{ignoredFilters.length > 0 ? (
@@ -205,7 +218,7 @@ export function DirectoryChart({ chart, range, failedRead, country }: DirectoryC
 							valueSymbol="$"
 							containerClassName="min-h-[320px]"
 							showLegend
-							exportButtons="hidden"
+							exportButtons={chartExport}
 							hallmarks={hallmarks}
 						/>
 					</ChartPanelBody>

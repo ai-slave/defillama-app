@@ -1,5 +1,6 @@
 import type { UseQueryResult } from '@tanstack/react-query'
 import { lazy, Suspense, useMemo } from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type { IMultiSeriesChartProps, MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
@@ -12,6 +13,7 @@ import {
 } from '~/components/ECharts/shared/tooltip'
 import { useLocalSelection } from '~/components/Select/localSelection'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { formatCompactNumber } from '~/utils/numberFormat'
@@ -87,6 +89,7 @@ export function ApiUsageBreakdown({ usageStatsQuery }: { usageStatsQuery: UseQue
 		usageStats?.fetchedAt ?? null
 	)
 	const renderedCharts = useMemo(() => new Set(charts.map((chart) => chart.name)), [charts])
+	const chartExport = useGetChartInstance()
 
 	const hasData = sortedStats.length > 0
 	const totalLabel = hasData
@@ -188,6 +191,15 @@ export function ApiUsageBreakdown({ usageStatsQuery }: { usageStatsQuery: UseQue
 						<span className="title-md text-primary">{avgLabel}</span>
 						<span className="body-xs text-tertiary">Avg/day</span>
 					</div>
+					{hasData ? (
+						<ChartExportButtons
+							chart={chartExport}
+							filename="api-usage-breakdown"
+							title="API usage breakdown"
+							smol
+							csvSource={{ type: 'dataset', prepare: () => dataset }}
+						/>
+					) : null}
 				</div>
 			</div>
 
@@ -225,7 +237,7 @@ export function ApiUsageBreakdown({ usageStatsQuery }: { usageStatsQuery: UseQue
 						height="200px"
 						valueSymbol=""
 						hideDataZoom
-						exportButtons="hidden"
+						exportButtons={chartExport}
 						chartOptions={chartOptions}
 					/>
 				</Suspense>

@@ -1,7 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense } from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanelExportShellLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus, PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
@@ -15,6 +17,8 @@ const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChar
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 
 export default function FAssets() {
+	const distChart = useGetChartInstance()
+	const allNetworksChart = useGetChartInstance()
 	const query = useQuery({
 		queryKey: ['flare-fassets'],
 		queryFn: async () => {
@@ -69,6 +73,7 @@ export default function FAssets() {
 				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
+							exportButtons="auto"
 							dataset={charts.locked.dataset}
 							charts={charts.locked.charts}
 							valueSymbol=""
@@ -91,10 +96,24 @@ export default function FAssets() {
 									{charts.dist.title}
 								</ChartPanelTitle>
 							}
-						/>
+						>
+							<ChartExportButtons
+								chart={distChart}
+								filename="flare-fxrp-distribution"
+								title={charts.dist.title}
+								csvSource={{
+									type: 'dataset',
+									prepare: () => ({
+										dimensions: ['Protocol', 'FXRP'],
+										source: charts.dist.data.map((item) => [item.name, item.value])
+									})
+								}}
+							/>
+						</ChartPanelToolbar>
 						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<PieChart
 								chartData={charts.dist.data}
+								exportButtons={distChart}
 								stackColors={charts.dist.colors}
 								radius={['45%', '72%']}
 								showLegend
@@ -120,10 +139,24 @@ export default function FAssets() {
 									{charts.allNetworksDist.title}
 								</ChartPanelTitle>
 							}
-						/>
+						>
+							<ChartExportButtons
+								chart={allNetworksChart}
+								filename="flare-fxrp-all-networks-distribution"
+								title={charts.allNetworksDist.title}
+								csvSource={{
+									type: 'dataset',
+									prepare: () => ({
+										dimensions: ['Protocol', 'FXRP'],
+										source: charts.allNetworksDist.data.map((item) => [item.name, item.value])
+									})
+								}}
+							/>
+						</ChartPanelToolbar>
 						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<PieChart
 								chartData={charts.allNetworksDist.data}
+								exportButtons={allNetworksChart}
 								stackColors={charts.allNetworksDist.colors}
 								radius={['45%', '72%']}
 								showLegend

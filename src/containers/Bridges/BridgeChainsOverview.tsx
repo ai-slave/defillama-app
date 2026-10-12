@@ -47,7 +47,7 @@ export function BridgeChainsOverview({ allChains, tableData, chart }: BridgeChai
 		[chart.charts, chart.dataset, rankedChains, selectedCharts]
 	)
 
-	const { chartInstance: exportChartInstance, handleChartReady: onChartReady } = useGetChartInstance()
+	const exportChartExport = useGetChartInstance()
 
 	return (
 		<>
@@ -65,7 +65,7 @@ export function BridgeChainsOverview({ allChains, tableData, chart }: BridgeChai
 						/>
 					) : null}
 					<ChartExportButtons
-						chartInstance={exportChartInstance}
+						chart={exportChartExport}
 						filename="bridge-inflows-by-chain"
 						title="Bridge Inflows"
 						csvSource={presentation.csvSource}
@@ -81,8 +81,7 @@ export function BridgeChainsOverview({ allChains, tableData, chart }: BridgeChai
 							valueSymbol="$"
 							showTotalInTooltip
 							tooltipMaxItems={30}
-							exportButtons="hidden"
-							onReady={onChartReady}
+							exportButtons={exportChartExport}
 						/>
 					</Suspense>
 				) : null}

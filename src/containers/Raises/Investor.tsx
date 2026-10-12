@@ -165,8 +165,6 @@ export function InvestorContainer({
 							groupBy="monthly"
 							valueSymbol=""
 							exportButtons={{
-								png: true,
-								csv: true,
 								filename: `${investorName}-funding-rounds`,
 								pngTitle: `${investorName} Funding Rounds`
 							}}
@@ -187,8 +185,6 @@ export function InvestorContainer({
 							title="Investment by rounds"
 							valueSymbol=""
 							exportButtons={{
-								png: true,
-								csv: true,
 								filename: `${investorName}-investment-by-rounds`,
 								pngTitle: `${investorName} Investment by Rounds`
 							}}
@@ -206,8 +202,6 @@ export function InvestorContainer({
 							title="Investments by category"
 							valueSymbol=""
 							exportButtons={{
-								png: true,
-								csv: true,
 								filename: `${investorName}-investments-by-category`,
 								pngTitle: `${investorName} Investments by Category`
 							}}

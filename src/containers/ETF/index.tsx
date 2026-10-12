@@ -44,7 +44,7 @@ export function ETFOverview({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 		selectedCharts,
 		setSelectedSeries: setTickers
 	} = useLocalSelection({ scope: 'etf-assets', availableSeries: ETF_ASSET_NAMES })
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 	const [isDark] = useDarkModeManager()
 
 	const finalCharts = React.useMemo(() => {
@@ -101,7 +101,7 @@ export function ETFOverview({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 							size="md"
 						/>
 						<ChartExportButtons
-							chartInstance={chartInstance}
+							chart={chartExport}
 							filename="etf-flows"
 							title="ETF flows"
 							csvSource={{
@@ -118,11 +118,11 @@ export function ETFOverview({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 					</ChartPanelToolbar>
 					<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
+							exportButtons={chartExport}
 							dataset={finalCharts.dataset}
 							charts={finalCharts.charts}
 							selectedCharts={selectedCharts}
 							groupBy={groupBy}
-							onReady={handleChartReady}
 						/>
 					</React.Suspense>
 				</Panel>

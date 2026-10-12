@@ -43,7 +43,9 @@ test('hands out a drawn chart, switches period on selection, and takes the chart
 	const readyWith: Array<Array<string> | null> = []
 	const onReady = (instance: echarts.ECharts | null) =>
 		readyWith.push(instance ? (instance.getOption() as Record<string, any>).yAxis[0].data : null)
-	await act(async () => root.render(<NetflowChart data={DATA} height={500} onReady={onReady} />))
+	await act(async () =>
+		root.render(<NetflowChart exportButtons={{ omit: 'renderer test' }} data={DATA} height={500} onReady={onReady} />)
+	)
 
 	expect(readyWith).toEqual([['Arbitrum']])
 	expect(shownBars()).toEqual({ chains: ['Arbitrum'], outflow: [-30], inflow: [0] })

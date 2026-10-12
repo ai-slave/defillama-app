@@ -1,4 +1,5 @@
 import type * as echarts from 'echarts/core'
+import type { HeadlessChartExportButtons } from '~/components/ChartExport/types'
 
 export type ScatterChartValue = [x: number, y: number, ...metadata: Array<string | number | null | undefined>]
 
@@ -54,5 +55,7 @@ export interface IScatterChartProps {
 	domain?: [min: number, max: number]
 	/** A click pins the point's tooltip so a reader can enter it and follow its links; Escape or a click outside unpins. */
 	pinnableTooltip?: boolean
+	/** Where this chart's .csv/.png live: the handle its page's export buttons also take, or why it has none. */
+	exportButtons: HeadlessChartExportButtons
 	onReady?: (instance: echarts.ECharts | null) => void
 }

@@ -273,7 +273,7 @@ export function UnlocksChartTab({
 						hideDataZoom
 						referenceLines={todayLine}
 						chartOptions={TOTAL_UNLOCKS_CHART_OPTIONS}
-						exportButtons="hidden"
+						exportButtons={{ omit: 'live preview inside the Add Chart modal; the saved card exports through its menu' }}
 					/>
 				</Suspense>
 			)
@@ -285,6 +285,7 @@ export function UnlocksChartTab({
 			chartContent = (
 				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 					<MultiSeriesChart
+						exportButtons="auto"
 						dataset={scheduleDataset}
 						charts={scheduleCharts}
 						selectedCharts={scheduleSelection.selectedCharts}
@@ -301,7 +302,11 @@ export function UnlocksChartTab({
 		} else {
 			chartContent = (
 				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
-					<PieChart chartData={allocationPieChart.chartData} stackColors={allocationPieChartColors} />
+					<PieChart
+						exportButtons={{ omit: 'live preview inside the Add Chart modal; the saved card exports through its menu' }}
+						chartData={allocationPieChart.chartData}
+						stackColors={allocationPieChartColors}
+					/>
 				</Suspense>
 			)
 		}
@@ -311,7 +316,12 @@ export function UnlocksChartTab({
 		} else {
 			chartContent = (
 				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
-					<PieChart chartData={lockedUnlockedPieChartData} stackColors={LOCKED_UNLOCKED_COLORS} valueSymbol="%" />
+					<PieChart
+						exportButtons={{ omit: 'live preview inside the Add Chart modal; the saved card exports through its menu' }}
+						chartData={lockedUnlockedPieChartData}
+						stackColors={LOCKED_UNLOCKED_COLORS}
+						valueSymbol="%"
+					/>
 				</Suspense>
 			)
 		}

@@ -1,6 +1,5 @@
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
@@ -19,7 +18,6 @@ import {
 	DOLLAR_CHART_OPTIONS,
 	DOLLAR_SCROLL_CHART_OPTIONS,
 	DOLLAR_STACKED_SCROLL_CHART_OPTIONS,
-	HIDDEN_EXPORT,
 	UNITLESS_CHART_OPTIONS,
 	UNITLESS_STACKED_SCROLL_CHART_OPTIONS
 } from './chartDefaults'
@@ -61,7 +59,8 @@ function AllocatedAssetsSection({
 	>
 }) {
 	const [view, setView] = useState<'breakdown' | 'historical'>('breakdown')
-	const historical = useGetChartInstance()
+	// One instance serves whichever chart the view mounts; each chart reports its own on mount.
+	const chart = useGetChartInstance()
 	const [dimension, setDimension] = useState<AADimension>('byProtocol')
 	const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set())
 
@@ -105,14 +104,26 @@ function AllocatedAssetsSection({
 						value={dimension}
 						onValueChange={onDimensionChange}
 					/>
-					{view === 'historical' ? (
-						<ChartExportButtons
-							chartInstance={historical.chartInstance}
-							filename={`spark-allocated-assets-${dimension}`}
-							title={sparkExportTitle(allocatedAssets.title)}
-							csvSource={{ type: 'dataset', prepare: () => hist.dataset }}
-						/>
-					) : null}
+					<ChartExportButtons
+						chart={chart}
+						filename={`spark-allocated-assets-${dimension}`}
+						title={sparkExportTitle(allocatedAssets.title)}
+						csvSource={
+							view === 'historical'
+								? { type: 'dataset', prepare: () => hist.dataset }
+								: {
+										type: 'dataset',
+										prepare: () => ({
+											// The pie's rows follow the By Protocol / Network / Asset toggle.
+											dimensions: [
+												{ byProtocol: 'Protocol', byNetwork: 'Network', byAsset: 'Asset' }[dimension],
+												'Allocated (USD)'
+											],
+											source: currentEntries.map((entry) => [entry.name, entry.value])
+										})
+									}
+						}
+					/>
 				</ChartPanelToolbar>
 
 				{view === 'breakdown' ? (
@@ -122,6 +133,7 @@ function AllocatedAssetsSection({
 							<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="min-h-[320px]" />}>
 								<PieChart
 									chartData={currentEntries}
+									exportButtons={chart}
 									stackColors={pieColors}
 									radius={['40%', '70%']}
 									height="320px"
@@ -196,8 +208,7 @@ function AllocatedAssetsSection({
 							stacked
 							solidChartAreaStyle
 							chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
-							exportButtons="hidden"
-							onReady={historical.handleChartReady}
+							exportButtons={chart}
 						/>
 					</Suspense>
 				)}
@@ -216,11 +227,11 @@ function MonthlyReturnsSection({ data }: { data: NonNullable<ReturnType<typeof u
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 				<Panel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>{data.monthlyGross.title}</ChartPanelTitle>}>
-						<ChartPngExportButton
-							chartInstance={gross.chartInstance}
+						<ChartExportButtons
+							chart={gross}
 							filename="gross-returns"
 							title={sparkExportTitle(data.monthlyGross.title)}
-							smol
+							csvSource={{ type: 'dataset', prepare: () => data.monthlyGross.dataset }}
 						/>
 					</ChartPanelToolbar>
 					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
@@ -230,18 +241,17 @@ function MonthlyReturnsSection({ data }: { data: NonNullable<ReturnType<typeof u
 							valueSymbol="$"
 							showLegend={data.monthlyGross.charts.length > 1}
 							chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
-							exportButtons={HIDDEN_EXPORT}
-							onReady={gross.handleChartReady}
+							exportButtons={gross}
 						/>
 					</Suspense>
 				</Panel>
 				<Panel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>{data.monthlyNet.title}</ChartPanelTitle>}>
-						<ChartPngExportButton
-							chartInstance={net.chartInstance}
+						<ChartExportButtons
+							chart={net}
 							filename="net-returns"
 							title={sparkExportTitle(data.monthlyNet.title)}
-							smol
+							csvSource={{ type: 'dataset', prepare: () => data.monthlyNet.dataset }}
 						/>
 					</ChartPanelToolbar>
 					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
@@ -251,8 +261,7 @@ function MonthlyReturnsSection({ data }: { data: NonNullable<ReturnType<typeof u
 							valueSymbol="$"
 							showLegend={data.monthlyNet.charts.length > 1}
 							chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
-							exportButtons={HIDDEN_EXPORT}
-							onReady={net.handleChartReady}
+							exportButtons={net}
 						/>
 					</Suspense>
 				</Panel>
@@ -271,11 +280,11 @@ function SusdsDistributionSection({ data }: { data: NonNullable<ReturnType<typeo
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 				<Panel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>Spark-distributed USDS</ChartPanelTitle>}>
-						<ChartPngExportButton
-							chartInstance={total.chartInstance}
+						<ChartExportButtons
+							chart={total}
 							filename="spark-distributed-usds"
 							title={sparkExportTitle('Spark-distributed USDS')}
-							smol
+							csvSource={{ type: 'dataset', prepare: () => data.supplyTotal.dataset }}
 						/>
 					</ChartPanelToolbar>
 					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
@@ -284,18 +293,17 @@ function SusdsDistributionSection({ data }: { data: NonNullable<ReturnType<typeo
 							charts={data.supplyTotal.charts}
 							valueSymbol=""
 							chartOptions={UNITLESS_CHART_OPTIONS}
-							exportButtons={HIDDEN_EXPORT}
-							onReady={total.handleChartReady}
+							exportButtons={total}
 						/>
 					</Suspense>
 				</Panel>
 				<Panel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>{data.supplyByChain.title}</ChartPanelTitle>}>
-						<ChartPngExportButton
-							chartInstance={byChain.chartInstance}
+						<ChartExportButtons
+							chart={byChain}
 							filename="susds-by-chain"
 							title={sparkExportTitle(data.supplyByChain.title)}
-							smol
+							csvSource={{ type: 'dataset', prepare: () => data.supplyByChain.dataset }}
 						/>
 					</ChartPanelToolbar>
 					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
@@ -306,8 +314,7 @@ function SusdsDistributionSection({ data }: { data: NonNullable<ReturnType<typeo
 							stacked
 							solidChartAreaStyle
 							chartOptions={UNITLESS_STACKED_SCROLL_CHART_OPTIONS}
-							exportButtons={HIDDEN_EXPORT}
-							onReady={byChain.handleChartReady}
+							exportButtons={byChain}
 						/>
 					</Suspense>
 				</Panel>
@@ -326,11 +333,11 @@ function TvlSection({ data }: { data: FinData }) {
 			<StatTile label="Current TVL" value={data.tvl.currentFormatted} />
 			<Panel>
 				<ChartPanelToolbar leading={<ChartPanelTitle>{data.tvl.title}</ChartPanelTitle>}>
-					<ChartPngExportButton
-						chartInstance={tvl.chartInstance}
+					<ChartExportButtons
+						chart={tvl}
 						filename="tvl"
 						title={sparkExportTitle(data.tvl.title)}
-						smol
+						csvSource={{ type: 'dataset', prepare: () => data.tvl.dataset }}
 					/>
 				</ChartPanelToolbar>
 				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
@@ -341,8 +348,7 @@ function TvlSection({ data }: { data: FinData }) {
 						stacked
 						solidChartAreaStyle
 						chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
-						exportButtons={HIDDEN_EXPORT}
-						onReady={tvl.handleChartReady}
+						exportButtons={tvl}
 					/>
 				</Suspense>
 			</Panel>
@@ -359,11 +365,11 @@ function DepositsAndBorrowsSection({ data }: { data: FinData }) {
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 				<Panel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>{data.deposits.title}</ChartPanelTitle>}>
-						<ChartPngExportButton
-							chartInstance={deposits.chartInstance}
+						<ChartExportButtons
+							chart={deposits}
 							filename="sparklend-deposits"
 							title={sparkExportTitle(data.deposits.title)}
-							smol
+							csvSource={{ type: 'dataset', prepare: () => data.deposits.dataset }}
 						/>
 					</ChartPanelToolbar>
 					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
@@ -372,18 +378,17 @@ function DepositsAndBorrowsSection({ data }: { data: FinData }) {
 							charts={data.deposits.charts}
 							valueSymbol="$"
 							chartOptions={DOLLAR_CHART_OPTIONS}
-							exportButtons={HIDDEN_EXPORT}
-							onReady={deposits.handleChartReady}
+							exportButtons={deposits}
 						/>
 					</Suspense>
 				</Panel>
 				<Panel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>{data.borrows.title}</ChartPanelTitle>}>
-						<ChartPngExportButton
-							chartInstance={borrows.chartInstance}
+						<ChartExportButtons
+							chart={borrows}
 							filename="sparklend-borrows"
 							title={sparkExportTitle(data.borrows.title)}
-							smol
+							csvSource={{ type: 'dataset', prepare: () => data.borrows.dataset }}
 						/>
 					</ChartPanelToolbar>
 					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
@@ -392,8 +397,7 @@ function DepositsAndBorrowsSection({ data }: { data: FinData }) {
 							charts={data.borrows.charts}
 							valueSymbol="$"
 							chartOptions={DOLLAR_CHART_OPTIONS}
-							exportButtons={HIDDEN_EXPORT}
-							onReady={borrows.handleChartReady}
+							exportButtons={borrows}
 						/>
 					</Suspense>
 				</Panel>
@@ -409,11 +413,11 @@ function SllTvlSection({ data }: { data: FinData }) {
 			<h2 className="heading-xs">SLL TVL by chain</h2>
 			<Panel>
 				<ChartPanelToolbar leading={<ChartPanelTitle>{data.sllTvl.title}</ChartPanelTitle>}>
-					<ChartPngExportButton
-						chartInstance={sllTvl.chartInstance}
+					<ChartExportButtons
+						chart={sllTvl}
 						filename="sll-tvl-by-chain"
 						title={sparkExportTitle(data.sllTvl.title)}
-						smol
+						csvSource={{ type: 'dataset', prepare: () => data.sllTvl.dataset }}
 					/>
 				</ChartPanelToolbar>
 				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
@@ -424,8 +428,7 @@ function SllTvlSection({ data }: { data: FinData }) {
 						stacked
 						solidChartAreaStyle
 						chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
-						exportButtons={HIDDEN_EXPORT}
-						onReady={sllTvl.handleChartReady}
+						exportButtons={sllTvl}
 					/>
 				</Suspense>
 			</Panel>
@@ -440,11 +443,11 @@ function SavingsTvlSection({ data }: { data: FinData }) {
 			<h2 className="heading-xs">Spark Savings TVL by chain</h2>
 			<Panel>
 				<ChartPanelToolbar leading={<ChartPanelTitle>{data.savingsTvl.title}</ChartPanelTitle>}>
-					<ChartPngExportButton
-						chartInstance={savingsTvl.chartInstance}
+					<ChartExportButtons
+						chart={savingsTvl}
 						filename="spark-savings-tvl-by-chain"
 						title={sparkExportTitle(data.savingsTvl.title)}
-						smol
+						csvSource={{ type: 'dataset', prepare: () => data.savingsTvl.dataset }}
 					/>
 				</ChartPanelToolbar>
 				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
@@ -455,8 +458,7 @@ function SavingsTvlSection({ data }: { data: FinData }) {
 						stacked
 						solidChartAreaStyle
 						chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
-						exportButtons={HIDDEN_EXPORT}
-						onReady={savingsTvl.handleChartReady}
+						exportButtons={savingsTvl}
 					/>
 				</Suspense>
 			</Panel>
@@ -511,11 +513,11 @@ function TreasurySection({ data }: { data: FinData }) {
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 				<Panel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>Total Treasury</ChartPanelTitle>}>
-						<ChartPngExportButton
-							chartInstance={treasury.chartInstance}
+						<ChartExportButtons
+							chart={treasury}
 							filename="total-treasury"
 							title={sparkExportTitle('Total Treasury')}
-							smol
+							csvSource={{ type: 'dataset', prepare: () => data.treasuryModel.dataset }}
 						/>
 					</ChartPanelToolbar>
 					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
@@ -523,19 +525,18 @@ function TreasurySection({ data }: { data: FinData }) {
 							dataset={data.treasuryModel.dataset}
 							charts={data.treasuryModel.charts}
 							valueSymbol="$"
-							onReady={treasury.handleChartReady}
 							showLegend
-							exportButtons="hidden"
+							exportButtons={treasury}
 						/>
 					</Suspense>
 				</Panel>
 				<Panel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>SPK Buybacks</ChartPanelTitle>}>
-						<ChartPngExportButton
-							chartInstance={buybacks.chartInstance}
+						<ChartExportButtons
+							chart={buybacks}
 							filename="spk-buybacks"
 							title={sparkExportTitle('SPK Buybacks')}
-							smol
+							csvSource={{ type: 'dataset', prepare: () => data.buybacksModel.dataset }}
 						/>
 					</ChartPanelToolbar>
 					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
@@ -543,9 +544,8 @@ function TreasurySection({ data }: { data: FinData }) {
 							dataset={data.buybacksModel.dataset}
 							charts={data.buybacksModel.charts}
 							valueSymbol=""
-							onReady={buybacks.handleChartReady}
 							showLegend
-							exportButtons="hidden"
+							exportButtons={buybacks}
 						/>
 					</Suspense>
 				</Panel>
@@ -557,6 +557,7 @@ function TreasurySection({ data }: { data: FinData }) {
 export default function Financials() {
 	const query = useFinancialsData()
 	const data = query.data
+	const projected = useGetChartInstance()
 
 	// A failed refresh of data already shown keeps it; the error and its Try again replace the tab only before data loads.
 	if (queryReadFailed(query))
@@ -580,13 +581,27 @@ export default function Financials() {
 			<div className="flex flex-col gap-4">
 				<h2 className="heading-xs">Projected Returns breakdown</h2>
 				<Panel>
-					<ChartPanelToolbar leading={<ChartPanelTitle>{data.projectedBreakdown.title}</ChartPanelTitle>} />
+					<ChartPanelToolbar leading={<ChartPanelTitle>{data.projectedBreakdown.title}</ChartPanelTitle>}>
+						<ChartExportButtons
+							chart={projected}
+							filename="spark-projected-returns-breakdown"
+							title={sparkExportTitle(data.projectedBreakdown.title)}
+							csvSource={{
+								type: 'dataset',
+								prepare: () => ({
+									dimensions: ['Source', 'Projected Returns (USD)'],
+									source: data.projectedBreakdown.series.map((item) => [item.name, item.value])
+								})
+							}}
+						/>
+					</ChartPanelToolbar>
 					{/* The donut is a side tile beside its table, so it keeps its own height rather than the 360 body floor. */}
 					<div className="grid grid-cols-1 gap-4 px-2 pb-2 md:grid-cols-2">
 						<div className="min-h-[300px]">
 							<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="min-h-[300px]" />}>
 								<PieChart
 									chartData={data.projectedBreakdown.series}
+									exportButtons={projected}
 									stackColors={data.breakdownColors}
 									radius={['40%', '70%']}
 									height="300px"

@@ -34,7 +34,7 @@ export default function ProtocolChart({
 	isThemeDark,
 	groupBy,
 	hideDataZoom = false,
-	onReady
+	exportButtons
 }: IProtocolCoreChartProps) {
 	const tooltipGroupBy: ChartTimeGrouping = groupBy && groupBy !== 'cumulative' ? groupBy : 'daily'
 	const effectiveHideDataZoom = shouldHideProtocolDataZoom(chartData, hideDataZoom)
@@ -93,9 +93,8 @@ export default function ProtocolChart({
 			{...(hallmarks !== null ? { hallmarks } : {})}
 			rangeHallmarks={rangeHallmarks}
 			hideDataZoom={effectiveHideDataZoom}
-			exportButtons="hidden"
+			exportButtons={exportButtons}
 			isThemeDark={isThemeDark}
-			{...(onReady !== undefined ? { onReady } : {})}
 		/>
 	)
 }

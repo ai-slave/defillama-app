@@ -10,8 +10,6 @@ import { useEtherfiCashFeesCharts, useEtherfiCashMetrics, useEtherfiCashTvlChart
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
-const AREA_EXPORT = { csv: true, png: true, filename: 'chart' } as const
-const BAR_EXPORT = { csv: true, png: false, filename: 'bar-chart-data' } as const
 const DOLLAR_TIME_CHART_OPTIONS = createTimeSeriesChartOptions('$')
 
 const TVL_CHART: IMultiSeriesChartProps['charts'] = [
@@ -112,7 +110,7 @@ export default function CreditCard() {
 							charts={TVL_CHART}
 							valueSymbol="$"
 							chartOptions={DOLLAR_TIME_CHART_OPTIONS}
-							exportButtons={AREA_EXPORT}
+							exportButtons="auto"
 						/>
 					</Suspense>
 				</Panel>
@@ -130,7 +128,7 @@ export default function CreditCard() {
 							charts={FEES_CHART}
 							valueSymbol="$"
 							chartOptions={DOLLAR_TIME_CHART_OPTIONS}
-							exportButtons={BAR_EXPORT}
+							exportButtons="auto"
 						/>
 					</Suspense>
 				</Panel>
@@ -148,7 +146,7 @@ export default function CreditCard() {
 							charts={REVENUE_CHART}
 							valueSymbol="$"
 							chartOptions={DOLLAR_TIME_CHART_OPTIONS}
-							exportButtons={BAR_EXPORT}
+							exportButtons="auto"
 						/>
 					</Suspense>
 				</Panel>
@@ -164,7 +162,7 @@ export default function CreditCard() {
 							charts={HOLDERS_REVENUE_CHART}
 							valueSymbol="$"
 							chartOptions={DOLLAR_TIME_CHART_OPTIONS}
-							exportButtons={BAR_EXPORT}
+							exportButtons="auto"
 						/>
 					</Suspense>
 				</Panel>
@@ -182,7 +180,7 @@ export default function CreditCard() {
 							charts={INFLOWS_CHART}
 							valueSymbol="$"
 							chartOptions={DOLLAR_TIME_CHART_OPTIONS}
-							exportButtons={BAR_EXPORT}
+							exportButtons="auto"
 						/>
 					</Suspense>
 				</Panel>

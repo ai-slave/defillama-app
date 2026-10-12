@@ -4,6 +4,7 @@ import { DatasetComponent, GraphicComponent, GridComponent, TooltipComponent } f
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
+import { chartExportHandle, type HeadlessChartExportButtons } from '~/components/ChartExport/types'
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import type { BridgeNetflowPeriod } from '~/containers/Bridges/api.types'
 import type { BridgeNetflowChartData } from '~/containers/Bridges/types'
@@ -21,11 +22,13 @@ echarts.use([BarChart, TooltipComponent, GridComponent, DatasetComponent, Graphi
 
 export interface NetflowChartProps {
 	height?: number | string
+	/** Where this chart's .csv/.png live: the handle its page's export buttons also take, or why it has none. */
+	exportButtons: HeadlessChartExportButtons
 	onReady?: (instance: echarts.ECharts | null) => void
 	data: BridgeNetflowChartData
 }
 
-export default function NetflowChart({ height, onReady, data: allData }: NetflowChartProps) {
+export default function NetflowChart({ height, onReady, exportButtons, data: allData }: NetflowChartProps) {
 	const [isThemeDark] = useDarkModeManager()
 	const canvasWatermarkEnabled = useCanvasWatermarkEnabled()
 	const chartTheme = useChartTheme(isThemeDark)
@@ -34,6 +37,7 @@ export default function NetflowChart({ height, onReady, data: allData }: Netflow
 	const chartRef = useRef<echarts.ECharts | null>(null)
 	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
 		onReady?.(instance)
+		chartExportHandle(exportButtons)?.handleChartReady(instance)
 	})
 
 	// Observes the container, so a new height resizes the chart too

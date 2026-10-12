@@ -38,7 +38,7 @@ describe('buildNarrativeTreemapTreeData', () => {
 				path: 'Lending',
 				children: [
 					{ value: [100, 12.35, 12.35], name: 'Aave', path: 'Lending/Aave', itemStyle: { color: HEAT_UP } },
-					{ value: [25, 0, 0], name: 'Compound', path: 'Lending/Compound', itemStyle: { color: OTHERS_COLOR } }
+					{ value: [25, null, null], name: 'Compound', path: 'Lending/Compound', itemStyle: { color: OTHERS_COLOR } }
 				]
 			},
 			{

@@ -81,7 +81,7 @@ function TokensBreakdownPieChartCard({
 		[selectedCharts, series]
 	)
 
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 
 	const exportFilenameBase = `${slug(protocolName)}-treasury-tokens-breakdown`
 	const exportTitle = `${protocolName} Treasury by Token`
@@ -102,7 +102,7 @@ function TokensBreakdownPieChartCard({
 					/>
 				) : null}
 				<ChartExportButtons
-					chartInstance={chartInstance}
+					chart={chartExport}
 					filename={exportFilenameBase}
 					title={exportTitle}
 					iconUrl={exportIconUrl}
@@ -114,9 +114,9 @@ function TokensBreakdownPieChartCard({
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<PieChart
+					exportButtons={chartExport}
 					chartData={presentation.chartData}
 					stackColors={presentation.stackColors}
-					onReady={handleChartReady}
 				/>
 			</React.Suspense>
 		</Panel>
@@ -134,7 +134,7 @@ function HistoricalTreasuryChartCard({
 	charts: MultiSeriesCharts
 	exportIconUrl?: string
 }) {
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 
 	const exportFilenameBase = `${slug(protocolName)}-historical-treasury`
 	const exportTitle = `${protocolName} Historical Treasury`
@@ -144,7 +144,7 @@ function HistoricalTreasuryChartCard({
 			<ChartPanelToolbar>
 				<h2 className="mr-auto heading-xs">Historical treasury</h2>
 				<ChartExportButtons
-					chartInstance={chartInstance}
+					chart={chartExport}
 					filename={exportFilenameBase}
 					title={exportTitle}
 					iconUrl={exportIconUrl}
@@ -153,12 +153,12 @@ function HistoricalTreasuryChartCard({
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<MultiSeriesChart
+					exportButtons={chartExport}
 					dataset={dataset}
 					charts={charts}
 					showLegend
 					valueSymbol="$"
 					selectedCharts={TREASURY_SERIES}
-					onReady={handleChartReady}
 				/>
 			</React.Suspense>
 		</Panel>
@@ -202,7 +202,7 @@ function TokensMultiSeriesChartCard({
 		type: 'line'
 	})
 
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 
 	const exportFilenameBase = `${slug(protocolName)}-${slug(exportSuffix)}`
 	const exportTitle = `${protocolName} Treasury ${title}`
@@ -223,7 +223,7 @@ function TokensMultiSeriesChartCard({
 					/>
 				) : null}
 				<ChartExportButtons
-					chartInstance={chartInstance}
+					chart={chartExport}
 					filename={exportFilenameBase}
 					title={exportTitle}
 					iconUrl={exportIconUrl}
@@ -232,13 +232,13 @@ function TokensMultiSeriesChartCard({
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<MultiSeriesChart
+					exportButtons={chartExport}
 					dataset={dataset}
 					charts={charts}
 					csvSource={csvSource}
 					showLegend
 					{...(valueSymbol !== undefined ? { valueSymbol } : {})}
 					selectedCharts={selectedCharts}
-					onReady={handleChartReady}
 				/>
 			</React.Suspense>
 		</Panel>

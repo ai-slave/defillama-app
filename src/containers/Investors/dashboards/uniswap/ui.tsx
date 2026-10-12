@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Fragment, lazy, Suspense, useMemo } from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
@@ -16,12 +17,14 @@ import {
 } from '~/components/ECharts/shared/tooltip'
 import { fetchAdapterProtocolMetrics } from '~/containers/AdapterMetrics/api'
 import type { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useMedia } from '~/hooks/useMedia'
 import { Card } from '~/ui/Card'
 import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
+import { slug } from '~/utils'
 import { keyedOccurrences, type RowIdentity } from '~/utils/keyedOccurrences'
 import { formatUsd } from '~/utils/numberFormat'
 import { readInvestorApiJson } from '../../api.types'
@@ -413,23 +416,42 @@ export function MiniTable({
 // palette color per bar; catch-all "Other" bars go gray.
 export function BarListCard({
 	title,
+	csvColumns,
 	subtitle,
 	items,
 	valueSymbol = '',
 	showValues = false
 }: {
 	title: string
+	/** The CSV's name and value headers: the bars carry neither. */
+	csvColumns: [name: string, value: string]
 	subtitle?: string
 	items: Array<{ name: string; value: number }>
 	valueSymbol?: string
 	/** Print each value at its bar's end, for lists whose small bars vanish next to the largest. */
 	showValues?: boolean
 }) {
+	const chartExport = useGetChartInstance()
 	return (
 		<Panel>
-			<ChartPanelToolbar leading={<CardTitle title={title} subtitle={subtitle} />} />
+			<ChartPanelToolbar leading={<CardTitle title={title} subtitle={subtitle} />}>
+				<ChartExportButtons
+					chart={chartExport}
+					filename={slug(title)}
+					title={title}
+					pngProfile="hbar"
+					csvSource={{
+						type: 'dataset',
+						prepare: () => ({
+							dimensions: csvColumns,
+							source: items.map((item) => [item.name, item.value])
+						})
+					}}
+				/>
+			</ChartPanelToolbar>
 			<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<HBarChart
+					exportButtons={chartExport}
 					categories={items.map((item) => item.name)}
 					values={items.map((item) => item.value)}
 					colors={items.map((item, index) => seriesColor(item.name, index))}
@@ -519,6 +541,7 @@ export function TimeAreaCard({
 			}
 		}
 	}, [chart, stacked, level, multipleSeries, resolvedValueSymbol, zoomLastPoints, tooltipMaxItems])
+	const chartExport = useGetChartInstance()
 	if (chart.series.length === 0)
 		return <PlaceholderCard title={chart.title ?? ''} subtitle={subtitle} note="empty series" />
 	return (
@@ -530,6 +553,12 @@ export function TimeAreaCard({
 			>
 				{value && <p className="mono-lg tracking-tight text-primary tabular-nums">{value}</p>}
 				{control}
+				<ChartExportButtons
+					chart={chartExport}
+					filename={slug(title ?? chart.title ?? 'uniswap')}
+					title={title ?? chart.title}
+					csvSource={{ type: 'dataset', prepare: () => ({ ...dataset, groupBy }) }}
+				/>
 			</ChartPanelToolbar>
 			<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<MultiSeriesChart
@@ -538,7 +567,7 @@ export function TimeAreaCard({
 					valueSymbol={resolvedValueSymbol}
 					showLegend={multipleSeries}
 					groupBy={groupBy}
-					exportButtons="hidden"
+					exportButtons={chartExport}
 					chartOptions={chartOptions}
 				/>
 			</Suspense>

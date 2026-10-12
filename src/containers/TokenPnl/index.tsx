@@ -1,6 +1,5 @@
 import * as Ariakit from '@ariakit/react'
 import { useQueries, useQuery } from '@tanstack/react-query'
-import type * as echarts from 'echarts/core'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
@@ -82,8 +81,6 @@ type TokenPnlContentProps = {
 	start: number
 	end: number
 	chartOptions: MultiSeriesChartOptions | undefined
-	exportChartInstance: () => echarts.ECharts | null
-	handleChartReady: (instance: echarts.ECharts | null) => void
 	comparisonData: Array<ComparisonEntry>
 	selectedCoinId: string
 	selectedCoinInfo: TokenSearchResult | null
@@ -100,12 +97,11 @@ function TokenPnlContent({
 	start,
 	end,
 	chartOptions,
-	exportChartInstance,
-	handleChartReady,
 	comparisonData,
 	selectedCoinId,
 	selectedCoinInfo
 }: TokenPnlContentProps) {
+	const chartExport = useGetChartInstance()
 	// Checked before loading, so a retry keeps the error and its button on screen until it succeeds.
 	if (routerReady && isError) {
 		return (
@@ -178,7 +174,7 @@ function TokenPnlContent({
 						<span>{formatDateLabel(end)}</span>
 					</p>
 					<ChartExportButtons
-						chartInstance={exportChartInstance}
+						chart={chartExport}
 						filename="token-pnl-price"
 						title={`${tokenExportName} Price Over Time`}
 						csvSource={{ type: 'dataset', prepare: () => chartData.dataset }}
@@ -186,11 +182,11 @@ function TokenPnlContent({
 				</PanelHeader>
 				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 					<MultiSeriesChart
+						exportButtons={chartExport}
 						dataset={chartData.dataset}
 						charts={chartData.charts}
 						hideDataZoom
 						chartOptions={chartOptions}
-						onReady={handleChartReady}
 					/>
 				</Suspense>
 			</Panel>
@@ -240,8 +236,6 @@ export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: Array<T
 	const [tokenOptionsById, setTokenOptionsById] = useState<Record<string, TokenSearchResult>>(() =>
 		buildTokenOptionMap(initialTokenOptions)
 	)
-	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
-
 	// The URL holds the picked dates; the defaults fill whatever it lacks and follow the clock. A static page's query
 	// is empty until hydration, so the server and hydration renders show the defaults.
 	const startParam = router.query.start
@@ -499,8 +493,6 @@ export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: Array<T
 					start={start ?? 0}
 					end={end ?? 0}
 					chartOptions={chartOptions}
-					exportChartInstance={exportChartInstance}
-					handleChartReady={handleChartReady}
 					comparisonData={comparisonData}
 					selectedCoinId={selectedCoinId}
 					selectedCoinInfo={selectedCoinInfo}

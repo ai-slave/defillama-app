@@ -23,22 +23,23 @@ interface BaseChartRenderPlan {
 	filename: string
 }
 
+// ChartRenderer owns the export handle and passes it as `exportButtons`, so the plan carries no export mode.
 export type ChartRenderPlan =
 	| (BaseChartRenderPlan & {
 			rendererKind: 'cartesian'
-			rendererProps: IMultiSeriesChartProps
+			rendererProps: Omit<IMultiSeriesChartProps, 'exportButtons'>
 	  })
 	| (BaseChartRenderPlan & {
 			rendererKind: 'pie'
-			rendererProps: IPieChartProps
+			rendererProps: Omit<IPieChartProps, 'exportButtons'>
 	  })
 	| (BaseChartRenderPlan & {
 			rendererKind: 'scatter'
-			rendererProps: IScatterChartProps
+			rendererProps: Omit<IScatterChartProps, 'exportButtons'>
 	  })
 	| (BaseChartRenderPlan & {
 			rendererKind: 'hbar'
-			rendererProps: IHBarChartProps
+			rendererProps: Omit<IHBarChartProps, 'exportButtons'>
 	  })
 
 function getChartFilename(title: string) {
@@ -69,7 +70,7 @@ export function buildRenderPlan(
 					adaptedChart.seriesMeta.length === 1 &&
 					adaptedChart.seriesMeta[0]?.baseType === 'bar')
 
-			const rendererProps: IMultiSeriesChartProps = {
+			const rendererProps: Omit<IMultiSeriesChartProps, 'exportButtons'> = {
 				...adaptedChart.props,
 				// Server axis labels remain editable config metadata. Do not map them to visible
 				// Cartesian axis names: legends and colored/unit ticks already identify the series,
@@ -98,7 +99,7 @@ export function buildRenderPlan(
 			}
 		}
 		case 'pie': {
-			const rendererProps: IPieChartProps = {
+			const rendererProps: Omit<IPieChartProps, 'exportButtons'> = {
 				...adaptedChart.props,
 				// The pie folds past the series cap; the CSV export keeps every slice.
 				chartData: preparePieChartData({ data: adaptedChart.props.chartData ?? [], limit: CHART_SERIES_LIMIT })
@@ -114,7 +115,7 @@ export function buildRenderPlan(
 			}
 		}
 		case 'scatter': {
-			const rendererProps: IScatterChartProps = {
+			const rendererProps: Omit<IScatterChartProps, 'exportButtons'> = {
 				...adaptedChart.props,
 				chartData: adaptedChart.props.chartData ?? [],
 				height: '360px',
@@ -132,7 +133,7 @@ export function buildRenderPlan(
 			}
 		}
 		case 'hbar': {
-			const rendererProps: IHBarChartProps = {
+			const rendererProps: Omit<IHBarChartProps, 'exportButtons'> = {
 				categories: adaptedChart.data.map(([category]) => String(category)),
 				values: adaptedChart.data.map(([, value]) => value),
 				valueSymbol: adaptedChart.props.valueSymbol,

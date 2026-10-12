@@ -15,6 +15,7 @@ import { formatNumber } from '~/utils/numberFormat'
 import { snapshotToResult } from '../../sqlSnapshot'
 import type { SqlChartConfig } from '../../types'
 import { scaledPx, useCardHeightScale } from '../cardHeightContext'
+import { PRO_CARD_MENU_EXPORTS } from '../ProCardActions'
 import { ProCardHeader } from '../ProCardHeader'
 import { ProCardEmpty, ProCardLoading, ProCardNotice } from '../ProCardStatus'
 import { SqlFreshness } from './SqlFreshness'
@@ -161,6 +162,7 @@ export function SqlChartCard({ config }: SqlChartCardProps) {
 								result={result}
 								classified={classified}
 								height={scaledPx(SQL_CHART_BASE_HEIGHT, cardHeightScale)}
+								exportButtons={PRO_CARD_MENU_EXPORTS}
 								onReady={(inst) => {
 									chartInstanceRef.current = inst
 								}}

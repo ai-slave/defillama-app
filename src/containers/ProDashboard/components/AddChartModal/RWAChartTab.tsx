@@ -344,21 +344,31 @@ function OverviewPreview({
 		>
 			{chartView === 'timeSeries' && timeSeriesDataset ? (
 				<MultiSeriesChart
+					exportButtons="auto"
 					dataset={timeSeriesDataset}
 					showLegend
 					stacked
 					showTotalInTooltip={!chartDataset.dimensions.some(isRwaTotalSeriesLabel)}
 				/>
 			) : chartView === 'pie' && pieData.length > 0 ? (
-				<PieChart chartData={pieChartData} />
+				<PieChart
+					exportButtons={{ omit: 'live preview inside the Add Chart modal; the saved card exports through its menu' }}
+					chartData={pieChartData}
+				/>
 			) : chartView === 'hbar' && barData.categories.length > 0 ? (
-				<HBarChart categories={barData.categories} values={barData.values} valueSymbol="$" />
+				<HBarChart
+					categories={barData.categories}
+					values={barData.values}
+					valueSymbol="$"
+					exportButtons={{ omit: 'live preview inside the Add Chart modal; the saved card exports through its menu' }}
+				/>
 			) : chartView === 'treemap' && treemapData.length > 0 ? (
 				<TreemapChart
 					treeData={treemapData}
 					variant="rwa"
 					height={TREEMAP_PREVIEW_HEIGHT}
 					valueLabel={getChartMetricLabel(metric)}
+					exportButtons={{ omit: 'live preview inside the Add Chart modal; the saved card exports through its menu' }}
 				/>
 			) : (
 				<SurfaceBodyStatus variant="empty">No data available</SurfaceBodyStatus>
@@ -381,7 +391,7 @@ function AssetPreview({ assetId, metrics }: { assetId: string | null; metrics: A
 
 	return (
 		<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
-			<MultiSeriesChart dataset={chartDataset} charts={charts} showLegend />
+			<MultiSeriesChart exportButtons="auto" dataset={chartDataset} charts={charts} showLegend />
 		</Suspense>
 	)
 }

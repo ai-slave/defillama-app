@@ -80,7 +80,7 @@ export function DATOverview({ allAssets, institutions, dailyFlowsByAsset }: IDAT
 		availableSeries: assetSeries
 	})
 
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 
 	const onChangeGroupBy = (nextGroupBy: LowercaseDwmcGrouping) => {
 		void pushShallowQuery(router, { groupBy: nextGroupBy === 'weekly' ? undefined : nextGroupBy })
@@ -109,7 +109,7 @@ export function DATOverview({ allAssets, institutions, dailyFlowsByAsset }: IDAT
 						/>
 					) : null}
 					<ChartExportButtons
-						chartInstance={chartInstance}
+						chart={chartExport}
 						filename="digital-asset-treasuries-inflows-by-asset"
 						title="DAT inflows by asset"
 						csvSource={{
@@ -126,13 +126,13 @@ export function DATOverview({ allAssets, institutions, dailyFlowsByAsset }: IDAT
 				</ChartPanelToolbar>
 				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 					<MultiSeriesChart
+						exportButtons={chartExport}
 						dataset={deferredChartData.dataset}
 						charts={deferredChartData.charts}
 						selectedCharts={selectedCharts}
 						groupBy={deferredChartData.groupBy}
 						valueSymbol="$"
 						showTotalInTooltip
-						onReady={handleChartReady}
 					/>
 				</Suspense>
 			</Panel>

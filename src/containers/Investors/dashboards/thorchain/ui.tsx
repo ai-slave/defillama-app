@@ -296,7 +296,7 @@ export function TimeAreaCard({
 			}
 		}
 	}, [chart, fullRange, resolvedValueSymbol])
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 	if (chart.series.length === 0)
 		return <PlaceholderCard title={chart.title ?? ''} subtitle={subtitle} note="empty series" />
 	return (
@@ -307,7 +307,7 @@ export function TimeAreaCard({
 				{value ? <p className="mono-lg tracking-tight text-primary tabular-nums">{value}</p> : null}
 				{control}
 				<ChartExportButtons
-					chartInstance={chartInstance}
+					chart={chartExport}
 					filename={slug(chart.title ?? 'thorchain')}
 					title={chart.title}
 					csvSource={{ type: 'dataset', prepare: () => dataset }}
@@ -319,8 +319,7 @@ export function TimeAreaCard({
 					charts={charts}
 					valueSymbol={resolvedValueSymbol}
 					chartOptions={chartOptions}
-					exportButtons="hidden"
-					onReady={handleChartReady}
+					exportButtons={chartExport}
 				/>
 			</Suspense>
 		</Panel>
@@ -363,7 +362,7 @@ export function TimeBarCard({
 			}
 		}
 	}, [chart, resolvedValueSymbol])
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 	if (chart.series.length === 0)
 		return <PlaceholderCard title={chart.title ?? ''} subtitle={subtitle} note="empty series" />
 	return (
@@ -374,9 +373,9 @@ export function TimeBarCard({
 				{value ? <p className="mono-lg tracking-tight text-primary tabular-nums">{value}</p> : null}
 				{control}
 				<ChartExportButtons
-					chartInstance={chartInstance}
+					chart={chartExport}
 					filename={slug(chart.title ?? 'thorchain')}
-					showPng={false}
+					title={chart.title}
 					csvSource={{ type: 'dataset', prepare: () => ({ ...dataset, groupBy }) }}
 				/>
 			</ChartPanelToolbar>
@@ -386,8 +385,7 @@ export function TimeBarCard({
 					charts={charts}
 					valueSymbol={resolvedValueSymbol}
 					showLegend={charts.length > 1}
-					exportButtons="hidden"
-					onReady={handleChartReady}
+					exportButtons={chartExport}
 					chartOptions={chartOptions}
 					{...(groupBy ? { groupBy } : {})}
 				/>
@@ -399,22 +397,42 @@ export function TimeBarCard({
 // Single-series ranked horizontal bars over category labels (by-chain, pool depth).
 export function CategoryBarCard({
 	chart,
+	csvColumns,
 	subtitle,
 	valueSymbol
 }: {
 	chart: Chart
+	/** The CSV's category and value headers: the payload names neither. */
+	csvColumns: [category: string, value: string]
 	subtitle?: string
 	valueSymbol?: string
 }) {
+	const chartExport = useGetChartInstance()
+	const values = chart.series[0]?.data ?? []
 	return (
 		<Panel>
 			<ChartPanelToolbar
 				leading={<ChartPanelTitle subtitle={subtitle ?? chart.subtitle}>{chart.title ?? ''}</ChartPanelTitle>}
-			/>
+			>
+				<ChartExportButtons
+					chart={chartExport}
+					filename={slug(chart.title ?? 'thorchain')}
+					title={chart.title}
+					pngProfile="hbar"
+					csvSource={{
+						type: 'dataset',
+						prepare: () => ({
+							dimensions: csvColumns,
+							source: chart.dates.map((name, i) => [name, values[i]])
+						})
+					}}
+				/>
+			</ChartPanelToolbar>
 			<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<HBarChart
+					exportButtons={chartExport}
 					categories={chart.dates}
-					values={chart.series[0]?.data ?? []}
+					values={values}
 					color={THOR_TEAL}
 					valueSymbol={valueSymbol ?? (unitSymbol(chart.unit) || '$')}
 				/>
@@ -425,21 +443,39 @@ export function CategoryBarCard({
 
 export function DonutCard({
 	dist,
+	csvColumns,
 	subtitle,
 	valueSymbol = '$'
 }: {
 	dist: Distribution
+	/** The CSV's slice and value headers: the payload names neither. */
+	csvColumns: [slice: string, value: string]
 	subtitle?: string
 	valueSymbol?: string
 }) {
 	// On narrow screens a right-hand vertical legend squeezes the pie into a sliver;
 	// drop the legend below the chart instead.
 	const isSmall = useMedia('(max-width: 640px)')
+	const chartExport = useGetChartInstance()
 	return (
 		<Panel>
-			<ChartPanelToolbar leading={<ChartPanelTitle subtitle={subtitle}>{dist.title ?? ''}</ChartPanelTitle>} />
+			<ChartPanelToolbar leading={<ChartPanelTitle subtitle={subtitle}>{dist.title ?? ''}</ChartPanelTitle>}>
+				<ChartExportButtons
+					chart={chartExport}
+					filename={slug(dist.title ?? 'thorchain')}
+					title={dist.title}
+					csvSource={{
+						type: 'dataset',
+						prepare: () => ({
+							dimensions: [...csvColumns, 'Share (%)'],
+							source: dist.data.map((d) => [d.name, d.value, d.pct])
+						})
+					}}
+				/>
+			</ChartPanelToolbar>
 			<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<PieChart
+					exportButtons={chartExport}
 					chartData={dist.data}
 					stackColors={colorMap(dist.data.map((d) => d.name))}
 					valueSymbol={valueSymbol}

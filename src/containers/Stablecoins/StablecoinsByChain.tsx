@@ -1,10 +1,10 @@
-import type * as echarts from 'echarts/core'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { AddToDashboardButton } from '~/components/AddToDashboard/AddToDashboardButton'
 import type { ChartCsvSource } from '~/components/ChartExport/ChartCsvExportButton'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
+import type { ChartExportHandle } from '~/components/ChartExport/types'
 import { DeprecatedEntityText } from '~/components/DeprecatedEntityMarker'
 import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
 import { createInflowsTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
@@ -142,18 +142,23 @@ export function StablecoinsByChain({
 	const volumeGroupBy = parseStablecoinVolumeGroupBy(router.query.groupBy)
 	const chartTypeOptions = React.useMemo(() => getStablecoinChartTypeOptions(chartMode), [chartMode])
 	const chartViewOptions = useStablecoinChartViewOptions(chartState)
-	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
+	const exportChartExport = useGetChartInstance()
 	const onChartTypeChange = React.useCallback(
 		(nextChartType: StablecoinChartCategory) => {
-			handleChartReady(null)
+			exportChartExport.handleChartReady(null)
 			void pushShallowQuery(router, {
 				chartType: getStablecoinChartTypeQueryValue(chartMode, nextChartType),
 				chartView: undefined
 			})
 		},
-		[chartMode, handleChartReady, router]
+		[chartMode, exportChartExport, router]
 	)
-	const onChartViewChange = useStablecoinChartViewChange(chartMode, chartType, handleChartReady, router)
+	const onChartViewChange = useStablecoinChartViewChange(
+		chartMode,
+		chartType,
+		exportChartExport.handleChartReady,
+		router
+	)
 	const onVolumeGroupByChange = React.useCallback(
 		(nextGroupBy: LowercaseDwmcGrouping) => {
 			void pushShallowQuery(router, { groupBy: nextGroupBy === 'daily' ? undefined : nextGroupBy })
@@ -207,9 +212,6 @@ export function StablecoinsByChain({
 		[stablecoinFilterQuery]
 	)
 	const hasActiveStablecoinUrlFilters = stablecoinFilterState.hasActiveFilters
-
-	// `handleChartReady` is passed to charts' `onReady` prop to share
-	// a single ECharts instance across CSV + PNG exports.
 
 	const peggedAssets = React.useMemo(
 		() => filterStablecoinAssets(filteredPeggedAssets, stablecoinFilterState),
@@ -567,10 +569,10 @@ export function StablecoinsByChain({
 							/>
 						) : null}
 						{chartType === 'marketCap' && chartView === 'treemap' ? (
-							<ChartRestoreButton chartInstance={exportChartInstance} />
+							<ChartRestoreButton chartInstance={exportChartExport.chartInstance} />
 						) : null}
 						<ChartExportButtons
-							chartInstance={exportChartInstance}
+							chart={exportChartExport}
 							filename={getImageExportFilename()}
 							title={getImageExportTitle()}
 							{...(selectedChain !== 'All' ? { iconUrl: chainIconUrl(selectedChain) } : {})}
@@ -584,9 +586,9 @@ export function StablecoinsByChain({
 					{chartType === 'marketCap' && chartView === 'pie' ? (
 						<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<PieChart
+								exportButtons={exportChartExport}
 								chartData={marketCapPresentation?.kind === 'pie' ? marketCapPresentation.chartData : EMPTY_PIE_DATA}
 								{...(marketCapPresentation?.kind === 'pie' ? { stackColors: marketCapPresentation.stackColors } : {})}
-								onReady={handleChartReady}
 							/>
 						</React.Suspense>
 					) : chartType === 'marketCap' && chartView === 'hbar' ? (
@@ -598,7 +600,7 @@ export function StablecoinsByChain({
 								values={marketCapPresentation?.kind === 'hbar' ? marketCapPresentation.values : EMPTY_HBAR_VALUES}
 								colors={marketCapPresentation?.kind === 'hbar' ? marketCapPresentation.colors : EMPTY_HBAR_CATEGORIES}
 								valueSymbol="$"
-								onReady={handleChartReady}
+								exportButtons={exportChartExport}
 							/>
 						</React.Suspense>
 					) : chartType === 'marketCap' && chartView === 'treemap' ? (
@@ -610,7 +612,7 @@ export function StablecoinsByChain({
 									}
 									variant="rwa"
 									containerClassName="min-h-[600px]"
-									onReady={handleChartReady}
+									exportButtons={exportChartExport}
 									valueLabel="Market Cap"
 								/>
 							</React.Suspense>
@@ -622,7 +624,7 @@ export function StablecoinsByChain({
 							{...(chartOptions === undefined ? {} : { chartOptions })}
 							showLegend={showDefaultLegend}
 							{...(renderedGroupBy ? { groupBy: renderedGroupBy } : {})}
-							onReady={handleChartReady}
+							exportButtons={exportChartExport}
 						/>
 					)}
 				</Panel>
@@ -641,14 +643,14 @@ function MultiSeriesChartPanel({
 	chartOptions,
 	showLegend,
 	groupBy,
-	onReady
+	exportButtons
 }: {
 	state: MultiSeriesChartState
 	selectedCharts?: Set<string>
 	chartOptions?: IMultiSeriesChartProps['chartOptions']
 	showLegend?: boolean
 	groupBy?: IMultiSeriesChartProps['groupBy']
-	onReady: (instance: echarts.ECharts | null) => void
+	exportButtons: ChartExportHandle
 }) {
 	if (state.status === 'error') {
 		return (
@@ -666,6 +668,7 @@ function MultiSeriesChartPanel({
 	return (
 		<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 			<MultiSeriesChart
+				exportButtons={exportButtons}
 				dataset={state.data.dataset}
 				charts={state.data.charts}
 				{...(selectedCharts === undefined ? {} : { selectedCharts })}
@@ -676,7 +679,6 @@ function MultiSeriesChartPanel({
 				{...(chartOptions === undefined ? {} : { chartOptions })}
 				showLegend={showLegend}
 				{...(groupBy === undefined ? {} : { groupBy })}
-				onReady={onReady}
 			/>
 		</React.Suspense>
 	)

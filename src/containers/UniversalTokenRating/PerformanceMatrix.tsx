@@ -1,5 +1,6 @@
 import { useQueries, type QueryObserverResult } from '@tanstack/react-query'
 import { useCallback, useMemo } from 'react'
+import type { HeadlessChartExportButtons } from '~/components/ChartExport/types'
 import ScatterChart from '~/components/ECharts/ScatterChart'
 import type { ScatterChartPoint, ScatterTooltipParams } from '~/components/ECharts/ScatterChart/types'
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
@@ -137,11 +138,13 @@ function AxisArrow({ direction }: { direction: 'right' | 'up' }) {
 export function PerformanceMatrix({
 	rows,
 	grading,
-	className = 'h-[494px] w-full'
+	className = 'h-[494px] w-full',
+	exportButtons
 }: {
 	rows: Array<UtrLeaderboardRow>
 	grading?: UtrGradingConfig | null
 	className?: string
+	exportButtons: HeadlessChartExportButtons
 }) {
 	const iconRows = useMemo(() => rows.filter((row) => row.iconDataUrl), [rows])
 	const iconData = useQueries({
@@ -191,6 +194,7 @@ export function PerformanceMatrix({
 									pinnableTooltip
 									tooltipFormatter={tooltipFormatter}
 									height="100%"
+									exportButtons={exportButtons}
 								/>
 							</div>
 						) : (

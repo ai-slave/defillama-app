@@ -196,7 +196,9 @@ function MultiPreview({
 				valueSymbol="$"
 				groupBy="daily"
 				showLegend
-				exportButtons="hidden"
+				exportButtons={{
+					omit: 'preview inside the insert-chart dialog; the published block exports (ArticleChartBlock)'
+				}}
 				hideDataZoom
 				height="300px"
 				chartOptions={chartOptions}

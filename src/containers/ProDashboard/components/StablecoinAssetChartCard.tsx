@@ -20,6 +20,7 @@ import { getTimePeriodBounds } from '../queries'
 import type { StablecoinAssetChartConfig } from '../types'
 import { scaledPx, useCardHeightScale } from './cardHeightContext'
 import { prepareProChartCsv } from './chartCsv'
+import { PRO_CARD_MENU_EXPORTS } from './ProCardActions'
 import { ProCardHeader } from './ProCardHeader'
 import { ProCardError, ProCardLoading, ProCardRefreshFailed } from './ProCardStatus'
 import { useChartSyncGroup } from './useChartSyncGroup'
@@ -47,7 +48,7 @@ const EMPTY_SERIES: Array<string> = []
 export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardProps) {
 	const { stablecoin, stablecoinId, chartType } = config
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 	const { intent: selectionIntent, setIntent: setSelectionIntent } = useSelectionIntent(`${stablecoinId}:${chartType}`)
 	const selectionOptions = useMemo(
 		() => ({
@@ -221,8 +222,8 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 						charts={TOTAL_CIRCULATING_CHARTS}
 						valueSymbol={stablecoinSymbol}
 						chartOptions={STABLECOIN_DOLLAR_CHART_OPTIONS}
-						exportButtons="hidden"
-						onReady={handleChartReady}
+						exportButtons={PRO_CARD_MENU_EXPORTS}
+						onReady={chartExport.handleChartReady}
 					/>
 				</Suspense>
 			)
@@ -245,8 +246,8 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 						selectedCharts={selectedCharts}
 						valueSymbol={stablecoinSymbol}
 						chartOptions={STABLECOIN_DOLLAR_CHART_OPTIONS}
-						exportButtons="hidden"
-						onReady={handleChartReady}
+						exportButtons={PRO_CARD_MENU_EXPORTS}
+						onReady={chartExport.handleChartReady}
 					/>
 				</Suspense>
 			)
@@ -264,9 +265,9 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 						chartData={chainsCirculatingValues}
 						stackColors={piePresentation.stackColors}
 						valueSymbol={stablecoinSymbol}
-						exportButtons="hidden"
+						exportButtons={PRO_CARD_MENU_EXPORTS}
+						onReady={chartExport.handleChartReady}
 						height={chartHeight}
-						onReady={handleChartReady}
 					/>
 				</Suspense>
 			)
@@ -290,8 +291,8 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 						selectedCharts={selectedCharts}
 						expandTo100Percent
 						chartOptions={STABLECOIN_PERCENT_CHART_OPTIONS}
-						exportButtons="hidden"
-						onReady={handleChartReady}
+						exportButtons={PRO_CARD_MENU_EXPORTS}
+						onReady={chartExport.handleChartReady}
 					/>
 				</Suspense>
 			)
@@ -338,7 +339,7 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 				menu={
 					hasChartData
 						? {
-								image: { chartInstance, filename: imageFilename, title: imageTitle },
+								image: { chartInstance: chartExport.chartInstance, filename: imageFilename, title: imageTitle },
 								csv: { prepareCsv: prepareCsvExport }
 							}
 						: {}

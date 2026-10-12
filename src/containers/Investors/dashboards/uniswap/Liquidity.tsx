@@ -1,5 +1,7 @@
 import { lazy, Suspense, useState } from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type { ISankeyChartProps } from '~/components/ECharts/SankeyChart/types'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -96,6 +98,8 @@ const SANKEY_COLORS: Record<string, string> = {
 // Latest snapshot as a sankey (version → custody → activity), each owner counted once, in the
 // version and custody of their most recently active open position.
 function CustodySankeyCard({ sankey }: { sankey: NonNullable<LiquidityData['lpCustodySankey']> }) {
+	const chartExport = useGetChartInstance()
+	const title = sankey.title ?? 'LP Owners - Custody & Activity'
 	// A node's size is its incoming flow (outgoing for the leftmost layer, which has none);
 	// summing both sides would double-count the middle custody layer.
 	const inflow = new Map<string, number>()
@@ -119,14 +123,34 @@ function CustodySankeyCard({ sankey }: { sankey: NonNullable<LiquidityData['lpCu
 			<ChartPanelToolbar
 				leading={
 					<CardTitle
-						title={sankey.title ?? 'LP Owners - Custody & Activity'}
+						title={title}
 						subtitle={sankey.note ?? 'Each owner counted once; Active = a liquidity action in the last 7 days.'}
 					/>
 				}
-			/>
+			>
+				<ChartExportButtons
+					chart={chartExport}
+					filename="uniswap-lp-custody"
+					title={title}
+					// One row per flow the sankey draws; each flow counts LP owners.
+					csvSource={{
+						type: 'dataset',
+						prepare: () => ({
+							dimensions: ['Source', 'Target', 'Owners'],
+							source: sankey.links.map((link) => [link.source, link.target, link.value])
+						})
+					}}
+				/>
+			</ChartPanelToolbar>
 			{/* Below 37.5rem SankeyChart is max(450px, 64px a node) tall, and this panel has seven nodes at most. */}
 			<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="max-[37.5rem]:min-h-[450px]" />}>
-				<SankeyChart nodes={nodes} links={sankey.links} nodeColors={SANKEY_COLORS} height="360px" />
+				<SankeyChart
+					nodes={nodes}
+					links={sankey.links}
+					nodeColors={SANKEY_COLORS}
+					height="360px"
+					exportButtons={chartExport}
+				/>
 			</Suspense>
 		</Panel>
 	)
@@ -286,6 +310,7 @@ export default function Liquidity() {
 				<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 					<BarListCard
 						title="TVL by token segment"
+						csvColumns={['Token Segment', 'TVL (USD)']}
 						subtitle="Latest daily snapshot of core-pool TVL by token segment (same series as the chart over time)."
 						items={segmentSnapshot}
 						valueSymbol="$"
@@ -308,6 +333,7 @@ export default function Liquidity() {
 				{/* A concentration metric, not a leaderboard: the ten largest pools as a share of TVL. */}
 				<BarListCard
 					title="Top 10 pools as % of TVL"
+					csvColumns={['Pool', 'Share of TVL (%)']}
 					subtitle="Each of the ten largest pools as a share of total protocol TVL."
 					items={data.topPools.rows.slice(0, 10).map((row) => ({
 						name: `${row.pool} (${row.version.replace(/^uniswap-/, '')}, ${row.chain})`,

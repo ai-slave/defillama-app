@@ -82,7 +82,7 @@ function ChainsChartCard({
 		type: 'line'
 	})
 
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 
 	const exportFilenameBase = `${slug(protocolName)}-chains`
 	const exportTitle = `${protocolName} Assets by Chain`
@@ -104,7 +104,7 @@ function ChainsChartCard({
 						/>
 					) : null}
 					<ChartExportButtons
-						chartInstance={chartInstance}
+						chart={chartExport}
 						filename={exportFilenameBase}
 						title={exportTitle}
 						iconUrl={reserveExchangeIconUrl(protocolName)}
@@ -115,6 +115,7 @@ function ChainsChartCard({
 		>
 			<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<MultiSeriesChart
+					exportButtons={chartExport}
 					dataset={dataset}
 					charts={charts}
 					csvSource={csvSource}
@@ -122,7 +123,6 @@ function ChainsChartCard({
 					valueSymbol="$"
 					selectedCharts={selectedCharts}
 					showTotalInTooltip
-					onReady={handleChartReady}
 				/>
 			</React.Suspense>
 		</CexChartPanel>
@@ -153,7 +153,7 @@ function TokenValuesUSDChartCard({
 		type: 'line'
 	})
 
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 
 	const exportFilenameBase = `${slug(protocolName)}-token-values-usd`
 	const exportTitle = `${protocolName} Asset Values by Token`
@@ -175,7 +175,7 @@ function TokenValuesUSDChartCard({
 						/>
 					) : null}
 					<ChartExportButtons
-						chartInstance={chartInstance}
+						chart={chartExport}
 						filename={exportFilenameBase}
 						title={exportTitle}
 						iconUrl={reserveExchangeIconUrl(protocolName)}
@@ -186,6 +186,7 @@ function TokenValuesUSDChartCard({
 		>
 			<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<MultiSeriesChart
+					exportButtons={chartExport}
 					dataset={dataset}
 					charts={charts}
 					csvSource={csvSource}
@@ -193,7 +194,6 @@ function TokenValuesUSDChartCard({
 					valueSymbol="$"
 					selectedCharts={selectedCharts}
 					showTotalInTooltip
-					onReady={handleChartReady}
 				/>
 			</React.Suspense>
 		</CexChartPanel>
@@ -229,7 +229,7 @@ function TokensBreakdownPieChartCard({
 		[selectedCharts, tokenBreakdownPieSeries]
 	)
 
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 
 	const exportFilenameBase = `${slug(protocolName)}-tokens-breakdown`
 	const exportTitle = `${protocolName} Assets by Token`
@@ -251,7 +251,7 @@ function TokensBreakdownPieChartCard({
 						/>
 					) : null}
 					<ChartExportButtons
-						chartInstance={chartInstance}
+						chart={chartExport}
 						filename={exportFilenameBase}
 						title={exportTitle}
 						iconUrl={reserveExchangeIconUrl(protocolName)}
@@ -269,9 +269,9 @@ function TokensBreakdownPieChartCard({
 		>
 			<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<PieChart
+					exportButtons={chartExport}
 					chartData={presentation.chartData}
 					stackColors={presentation.stackColors}
-					onReady={handleChartReady}
 				/>
 			</React.Suspense>
 		</CexChartPanel>
@@ -305,7 +305,7 @@ function TokenBalancesRawChartCard({
 		type: 'line'
 	})
 
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 
 	const exportFilenameBase = `${slug(protocolName)}-token-balances-raw`
 	const exportTitle = `${protocolName} Token Balances`
@@ -327,7 +327,7 @@ function TokenBalancesRawChartCard({
 						/>
 					) : null}
 					<ChartExportButtons
-						chartInstance={chartInstance}
+						chart={chartExport}
 						filename={exportFilenameBase}
 						title={exportTitle}
 						iconUrl={reserveExchangeIconUrl(protocolName)}
@@ -338,13 +338,13 @@ function TokenBalancesRawChartCard({
 		>
 			<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<MultiSeriesChart
+					exportButtons={chartExport}
 					dataset={dataset}
 					charts={charts}
 					csvSource={csvSource}
 					showLegend
 					valueSymbol=""
 					selectedCharts={selectedCharts}
-					onReady={handleChartReady}
 				/>
 			</React.Suspense>
 		</CexChartPanel>
@@ -352,7 +352,7 @@ function TokenBalancesRawChartCard({
 }
 
 function USDInflowsChartCard({ protocolName, dataset }: { protocolName: string; dataset: MultiSeriesChartDataset }) {
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 
 	const exportFilenameBase = `${slug(protocolName)}-usd-inflows`
 	const exportTitle = protocolName
@@ -362,7 +362,7 @@ function USDInflowsChartCard({ protocolName, dataset }: { protocolName: string; 
 			title="USD Inflows"
 			controls={
 				<ChartExportButtons
-					chartInstance={chartInstance}
+					chart={chartExport}
 					filename={exportFilenameBase}
 					title={exportTitle}
 					iconUrl={reserveExchangeIconUrl(protocolName)}
@@ -372,11 +372,11 @@ function USDInflowsChartCard({ protocolName, dataset }: { protocolName: string; 
 		>
 			<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<MultiSeriesChart
+					exportButtons={chartExport}
 					dataset={dataset}
 					charts={USD_INFLOWS_CHARTS}
 					valueSymbol="$"
 					selectedCharts={USD_INFLOWS_SERIES}
-					onReady={handleChartReady}
 				/>
 			</React.Suspense>
 		</CexChartPanel>
@@ -408,7 +408,7 @@ function InflowsByTokenChartCard({
 		stack: 'tokenInflows'
 	})
 
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 
 	const exportFilenameBase = `${slug(protocolName)}-inflows-by-token`
 	const exportTitle = `${protocolName} Inflows`
@@ -430,7 +430,7 @@ function InflowsByTokenChartCard({
 						/>
 					) : null}
 					<ChartExportButtons
-						chartInstance={chartInstance}
+						chart={chartExport}
 						filename={exportFilenameBase}
 						title={exportTitle}
 						iconUrl={reserveExchangeIconUrl(protocolName)}
@@ -441,6 +441,7 @@ function InflowsByTokenChartCard({
 		>
 			<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<MultiSeriesChart
+					exportButtons={chartExport}
 					dataset={dataset}
 					charts={charts}
 					csvSource={csvSource}
@@ -450,7 +451,6 @@ function InflowsByTokenChartCard({
 					{...(selectedCharts.size > 1
 						? { chartOptions: { tooltip: { formatter: INFLOWS_TOOLTIP_FORMATTER_USD } } }
 						: {})}
-					onReady={handleChartReady}
 				/>
 			</React.Suspense>
 		</CexChartPanel>

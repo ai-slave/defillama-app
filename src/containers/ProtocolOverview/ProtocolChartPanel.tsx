@@ -58,7 +58,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 	const path = readyAsPath(router)
 	const getQueryValue = useMemo(() => readAsPathQuery(path), [path])
 	const [isThemeDark] = useDarkModeManager()
-	const { chartInstance: overviewChartInstance, handleChartReady: handleOverviewChartReady } = useGetChartInstance()
+	const overviewChartExport = useGetChartInstance()
 	const overviewImageFilename = slug(props.name)
 	const overviewImageTitle = props.name
 	const { toggledMetrics, hasAtLeastOneBarChart, toggledCharts, groupBy, defaultEnabledCharts, hasEvents } = useMemo(
@@ -247,7 +247,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 				<EmbedChart />
 				<AddToDashboardButton chartConfig={multiChart} unsupportedMetrics={unsupportedMetrics} smol />
 				<ChartExportButtons
-					chartInstance={overviewChartInstance}
+					chart={overviewChartExport}
 					csvSource={{ type: 'prepare-csv', prepare: prepareCsv }}
 					filename={overviewImageFilename}
 					title={overviewImageTitle}
@@ -282,7 +282,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 							hallmarks={toggledMetrics.events === 'true' ? props.hallmarks : null}
 							rangeHallmarks={toggledMetrics.events === 'true' ? props.rangeHallmarks : null}
 							unlockTokenSymbol={props.token?.symbol}
-							onReady={handleOverviewChartReady}
+							exportButtons={overviewChartExport}
 						/>
 					</Suspense>
 				)}

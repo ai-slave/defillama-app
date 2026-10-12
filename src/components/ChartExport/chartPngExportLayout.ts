@@ -5,6 +5,8 @@ export const LEGEND_ITEM_GAP = 20
 /** Export rescales markLine labels to EXPORT_FONT_SIZE, so their row is taller than in-app. */
 export const EXPORT_HALLMARK_LABEL_RESERVE = 40
 export const BASE_TOP_PADDING = 16
+/** The space between an export's stacked parts: title, legend, plot, and a chart's stacked panels. */
+export const EXPORT_VERTICAL_GAP = 16
 
 const LEGEND_ITEM_WIDTH = 48
 
@@ -47,7 +49,6 @@ export function computeExportLayout(opts: {
 	const titleHeight = title ? 36 : 0
 	const singleRowHeight = 32
 	const legendHeight = hasLegend ? singleRowHeight * legendRows : 0
-	const verticalGap = 16
 	const titleWidth = title ? approximateTextWidth(title, 28) + (hasIcon ? 40 : 0) : 0
 	const horizontalGap = 24
 	const canShareRow =
@@ -59,13 +60,13 @@ export function computeExportLayout(opts: {
 
 	const legendTop =
 		BASE_TOP_PADDING +
-		(canShareRow ? Math.max(0, (titleHeight - singleRowHeight) / 2) : title ? titleHeight + verticalGap : 0)
+		(canShareRow ? Math.max(0, (titleHeight - singleRowHeight) / 2) : title ? titleHeight + EXPORT_VERTICAL_GAP : 0)
 	const headerGridTop =
 		BASE_TOP_PADDING +
 		(canShareRow
-			? Math.max(titleHeight, legendHeight) + verticalGap
-			: (title ? titleHeight + verticalGap : 0) +
-				(hasLegend ? legendHeight + verticalGap + (expandLegend ? 16 : 0) : 0))
+			? Math.max(titleHeight, legendHeight) + EXPORT_VERTICAL_GAP
+			: (title ? titleHeight + EXPORT_VERTICAL_GAP : 0) +
+				(hasLegend ? legendHeight + EXPORT_VERTICAL_GAP + (expandLegend ? 16 : 0) : 0))
 	const gridTop = hasMarkLineHallmarks
 		? Math.max(headerGridTop, BASE_TOP_PADDING + EXPORT_HALLMARK_LABEL_RESERVE)
 		: headerGridTop

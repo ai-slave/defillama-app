@@ -3,7 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { accessibleName } from '~/utils/testing/accessibleName'
 import { alertTexts } from '~/utils/testing/fieldErrors'
 import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
@@ -11,6 +11,9 @@ import { waitForUi } from '~/utils/testing/waitForUi'
 import { dashboardModuleQuery } from '../dashboardTabs'
 import { InvestorRelationsView } from '../InvestorRelationsView'
 import { getDashboardModule } from '../registry'
+
+// Chart toolbars render export buttons, which read the router.
+vi.mock('next/router', () => ({ useRouter: () => ({ query: {}, pathname: '/', asPath: '/', push: vi.fn() }) }))
 
 // Real dashboard modules from the registry. Their data is out of scope here: every request answers 503,
 // so a tab that fetches shows its own error state.

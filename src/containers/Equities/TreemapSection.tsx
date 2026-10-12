@@ -72,7 +72,7 @@ export function EquitiesTreemapSection({
 }) {
 	const router = useRouter()
 	const { groupBy, sizeMetric, colorMetric } = parseEquitiesTreemapState(router.query)
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 	// Static page: router.query is empty until hydration, so wait for it before asking for a filtered map.
 	const queryString = router.isReady
 		? buildEquitiesTreemapQueryString({
@@ -189,9 +189,9 @@ export function EquitiesTreemapSection({
 					/>
 					{treeData.length > 0 ? (
 						<>
-							<ChartRestoreButton chartInstance={chartInstance} />
+							<ChartRestoreButton chartInstance={chartExport.chartInstance} />
 							<ChartExportButtons
-								chartInstance={chartInstance}
+								chart={chartExport}
 								filename={EXPORT_FILENAME}
 								title="Equities market map"
 								csvSource={{
@@ -234,7 +234,7 @@ export function EquitiesTreemapSection({
 							valueSymbol={sizeMetric === 'employeeCount' ? '' : '$'}
 							height={CHART_HEIGHT}
 							showMarketCapRow={sizeMetric !== 'marketCap'}
-							onReady={handleChartReady}
+							exportButtons={chartExport}
 						/>
 					</Suspense>
 					<div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-3 pb-2 body-sm text-tertiary">

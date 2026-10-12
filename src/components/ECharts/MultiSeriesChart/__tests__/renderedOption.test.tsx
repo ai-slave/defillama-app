@@ -34,7 +34,7 @@ async function renderOption(props: Partial<IMultiSeriesChartProps> & { charts: A
 	await act(async () =>
 		root.render(
 			<QueryClientProvider client={client}>
-				<MultiSeriesChart dataset={EMPTY_DATASET} exportButtons="hidden" {...props} />
+				<MultiSeriesChart dataset={EMPTY_DATASET} exportButtons={{ omit: 'renderer test' }} {...props} />
 			</QueryClientProvider>
 		)
 	)

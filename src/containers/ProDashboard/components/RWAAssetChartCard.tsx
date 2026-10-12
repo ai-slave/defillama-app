@@ -7,6 +7,7 @@ import { scaledPx, useCardHeightScale } from './cardHeightContext'
 import { prepareProChartCsv } from './chartCsv'
 import { filterChartDatasetByTimePeriod } from './datasets/filterChartDataset'
 import { useRWAAssetChartData } from './datasets/RWADataset/useRWAChartData'
+import { PRO_CARD_MENU_EXPORTS } from './ProCardActions'
 import { ProCardHeader } from './ProCardHeader'
 import { ProCardEmpty, ProCardError, ProCardLoading, ProCardRefreshFailed } from './ProCardStatus'
 import {
@@ -23,7 +24,7 @@ interface RWAAssetChartCardProps {
 
 export function RWAAssetChartCard({ config }: RWAAssetChartCardProps) {
 	const { assetId, assetName, metrics } = config
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
 	const chartRead = useRWAAssetChartData(assetId)
 	const { chartDataset, isLoading, readFailed, refreshFailed } = chartRead
@@ -72,7 +73,7 @@ export function RWAAssetChartCard({ config }: RWAAssetChartCardProps) {
 				menu={
 					hasData
 						? {
-								image: { chartInstance, filename: imageFilename, title: imageTitle },
+								image: { chartInstance: chartExport.chartInstance, filename: imageFilename, title: imageTitle },
 								csv: filteredDataset
 									? {
 											prepareCsv: () =>
@@ -93,11 +94,12 @@ export function RWAAssetChartCard({ config }: RWAAssetChartCardProps) {
 				>
 					{filteredDataset ? (
 						<MultiSeriesChart
+							exportButtons={PRO_CARD_MENU_EXPORTS}
+							onReady={chartExport.handleChartReady}
 							height={chartHeight}
 							dataset={filteredDataset}
 							charts={charts}
 							showLegend
-							onReady={handleChartReady}
 						/>
 					) : (
 						<div className="flex h-[calc(320px*var(--card-scale,1))] flex-col justify-center">

@@ -1,5 +1,6 @@
 import { useQueries } from '@tanstack/react-query'
 import { lazy, Suspense, useContext, useMemo, type ReactNode } from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import { chartColor } from '~/constants/colors'
 import { getProDashboardChartSourceQueryKey } from '~/containers/ProDashboard/chartSource'
@@ -11,8 +12,10 @@ import {
 	ProxyAuthTokenContext,
 	useProtocolsAndChains
 } from '~/containers/ProDashboard/queries'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Tag } from '~/ui/Tag'
+import { slug } from '~/utils'
 import { formatDate } from '~/utils/dateFormat'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
 import { mergeFailedReads, queryReadFailed } from '~/utils/query'
@@ -144,6 +147,8 @@ export function ArticleChartBlock({
 		return uniqueEntities.map((s) => s.name).join(' vs ')
 	}, [uniqueEntities])
 
+	const chartExport = useGetChartInstance()
+
 	return (
 		<figure className="article-chart-figure not-prose my-10 grid gap-3">
 			<header className="flex items-end justify-between gap-4 border-t border-strong pt-3">
@@ -181,6 +186,14 @@ export function ArticleChartBlock({
 					{figureLabel ? (
 						<span className="hidden label-xs tracking-[0.18em] text-tertiary uppercase sm:inline">{figureLabel}</span>
 					) : null}
+					<ChartExportButtons
+						chart={chartExport}
+						filename={slug(titleText)}
+						title={`${titleText} · ${chartLabel}`}
+						smol
+						csvSource={{ type: 'dataset', prepare: () => chartModel.dataset }}
+						disabled={allFailed || isLoading || chartModel.charts.length === 0}
+					/>
 				</div>
 			</header>
 
@@ -215,7 +228,7 @@ export function ArticleChartBlock({
 								valueSymbol={primarySymbol}
 								groupBy="daily"
 								showLegend
-								exportButtons="hidden"
+								exportButtons={chartExport}
 								hideDataZoom
 								height="380px"
 								chartOptions={chartOptions}

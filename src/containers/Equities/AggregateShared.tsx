@@ -1,5 +1,7 @@
 import { lazy, Suspense, type ReactNode } from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
+import { buildTreemapCsvDataset } from '~/components/ECharts/TreemapChart/csv'
 import type { TreemapNode } from '~/components/ECharts/TreemapChart/types'
 import { BasicLink } from '~/components/Link'
 import { usePaginatedTableDisplayRowNumber } from '~/components/Table/PaginatedTable'
@@ -10,6 +12,7 @@ import { Change } from '~/ui/Change'
 import { ChartPanelBody, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { slug } from '~/utils'
 import { formatDate } from '~/utils/dateFormat'
 import { formatCompactNumber, formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { RETURN_PERIODS, type AggregateReturnMatrixRow } from './aggregateData'
@@ -87,7 +90,7 @@ export function AggregateTreemap({
 	valueLabel: string
 	controls?: ReactNode
 }) {
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 
 	return (
 		<Panel>
@@ -100,7 +103,25 @@ export function AggregateTreemap({
 			>
 				<div className="flex flex-wrap items-center gap-2">
 					{controls}
-					{nodes.length > 0 ? <ChartRestoreButton chartInstance={chartInstance} /> : null}
+					{nodes.length > 0 ? (
+						<>
+							<ChartRestoreButton chartInstance={chartExport.chartInstance} />
+							<ChartExportButtons
+								chart={chartExport}
+								filename={`${slug(title)}-${slug(valueLabel)}`}
+								title={`${title} · ${valueLabel}`}
+								csvSource={{
+									type: 'dataset',
+									// The tiles size by the picked metric, so the value column takes its name.
+									prepare: () => {
+										const { dimensions, source } = buildTreemapCsvDataset(nodes)
+										return { dimensions: [...dimensions!.slice(0, -1), valueLabel], source }
+									}
+								}}
+								pngProfile="treemapNormalized"
+							/>
+						</>
+					) : null}
 				</div>
 			</ChartPanelToolbar>
 			<ChartPanelBody className="min-h-[420px]">
@@ -111,7 +132,7 @@ export function AggregateTreemap({
 						colorMode="categorical"
 						valueLabel={valueLabel}
 						containerClassName="min-h-[420px]"
-						onReady={handleChartReady}
+						exportButtons={chartExport}
 						showRootLabel={false}
 					/>
 				</Suspense>

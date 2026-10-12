@@ -12,8 +12,6 @@ export const MAPLE_PERCENT_CATEGORY_CHART_OPTIONS = createCategoryChartOptions('
 export const MAPLE_DOLLAR_TIME_CHART_OPTIONS = createTimeSeriesChartOptions('$')
 export const MAPLE_UNITLESS_TIME_CHART_OPTIONS = createTimeSeriesChartOptions('')
 
-export const MAPLE_CSV_ONLY_EXPORT = { csv: true, png: false, filename: 'bar-chart-data' } as const
-
 export function CardSkeleton({ title }: { title: string }) {
 	return (
 		<Card padding="md">

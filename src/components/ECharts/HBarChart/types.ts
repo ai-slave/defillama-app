@@ -1,4 +1,5 @@
 import type * as echarts from 'echarts/core'
+import type { HeadlessChartExportButtons } from '~/components/ChartExport/types'
 
 export interface IHBarChartProps {
 	categories: Array<string>
@@ -20,5 +21,7 @@ export interface IHBarChartProps {
 	valueAxisInterval?: number
 	/** Print each bar's value at its end, so bars too small to see next to the largest still read. */
 	showValueLabels?: boolean
+	/** Where this chart's .csv/.png live: the handle its page's export buttons also take, or why it has none. */
+	exportButtons: HeadlessChartExportButtons
 	onReady?: (instance: echarts.ECharts | null) => void
 }

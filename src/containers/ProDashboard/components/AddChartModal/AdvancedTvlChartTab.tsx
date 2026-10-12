@@ -52,15 +52,8 @@ const ADVANCED_TVL_CHART_TYPES: Array<{ value: AdvancedTvlChartType; label: stri
 ]
 
 const AREA_PREVIEW_EXPORTS = {
-	csv: true,
-	png: true,
 	filename: 'chart',
 	pngTitle: ''
-} as const
-const BAR_PREVIEW_EXPORTS = {
-	csv: true,
-	png: false,
-	filename: 'bar-chart-data'
 } as const
 const EMPTY_DATASET: TimestampDataset = {
 	source: [],
@@ -233,7 +226,11 @@ export function AdvancedTvlChartTab({
 		return (
 			<Suspense fallback={<ChartPanelExportShellLoading />}>
 				{chartType === 'tokensPie' ? (
-					<PieChart chartData={piePresentation.chartData} stackColors={piePresentation.stackColors} />
+					<PieChart
+						exportButtons={{ omit: 'live preview inside the Add Chart modal; the saved card exports through its menu' }}
+						chartData={piePresentation.chartData}
+						stackColors={piePresentation.stackColors}
+					/>
 				) : (
 					<MultiSeriesChart
 						dataset={canonicalDataset}
@@ -244,9 +241,7 @@ export function AdvancedTvlChartTab({
 						{...(selectorValues.length > 0 ? { selectedCharts: runtimePresentation.selectedCharts } : {})}
 						{...(presentation.chartOptions ? { chartOptions: presentation.chartOptions } : {})}
 						csvSource={csvSource}
-						exportButtons={
-							chartType === 'usdInflows' || chartType === 'tokenInflows' ? BAR_PREVIEW_EXPORTS : AREA_PREVIEW_EXPORTS
-						}
+						exportButtons={AREA_PREVIEW_EXPORTS}
 					/>
 				)}
 			</Suspense>

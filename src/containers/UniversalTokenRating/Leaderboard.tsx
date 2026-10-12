@@ -42,7 +42,12 @@ function ExpandedRow({ row, grading }: { row: UtrLeaderboardRow; grading?: UtrGr
 				</div>
 				<div className="flex flex-col gap-3 xl:w-96 xl:shrink-0">
 					<Panel className="flex-1">
-						<PerformanceMatrix rows={[row]} grading={grading} className="min-h-[280px] w-full flex-1" />
+						<PerformanceMatrix
+							rows={[row]}
+							grading={grading}
+							className="min-h-[280px] w-full flex-1"
+							exportButtons={{ omit: 'one-token matrix plotting the two scores its leaderboard row already prints' }}
+						/>
 					</Panel>
 					<div className="flex gap-3">
 						<Button
@@ -162,7 +167,12 @@ function MobileExpandedRow({ row, grading }: { row: UtrLeaderboardRow; grading?:
 				gradingScale={grading?.performance.scale}
 			/>
 			<Panel>
-				<PerformanceMatrix rows={[row]} grading={grading} className="min-h-[260px] w-full" />
+				<PerformanceMatrix
+					rows={[row]}
+					grading={grading}
+					className="min-h-[260px] w-full"
+					exportButtons={{ omit: 'one-token matrix plotting the two scores its leaderboard row already prints' }}
+				/>
 			</Panel>
 			<div className="flex gap-3">
 				<Button as={BasicLink} href={`/universal-token-rating/compare?token=${row.asset}`} size="md" className="flex-1">

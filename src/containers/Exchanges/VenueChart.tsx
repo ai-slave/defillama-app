@@ -1,19 +1,22 @@
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import * as React from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { buildAlignedCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import { chartColor } from '~/constants/colors'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useInViewOnce } from '~/hooks/useInViewOnce'
 import { ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { ScopeNote } from '~/ui/ScopeNote'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { slug } from '~/utils'
 import { queryReadFailed } from '~/utils/query'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { collectionHallmarks, hallmarkMetricsForKeys } from './chartHallmarks'
 import { ChartRangeControl } from './ChartRangeControl'
-import type { ExchangeOverviewChartModel } from './models'
+import type { ExchangeOverviewChartModel, ExchangeProfileModel } from './models'
 import {
 	DEFAULT_RESEARCH_RANGE,
 	EXCHANGES_QUERY_KEYS,
@@ -124,7 +127,8 @@ export function VenueChart({
 	loadSeries,
 	showGlobalDataNotice
 }: {
-	exchange: string
+	/** The slug keys the series request and the export filename; the name titles the PNG. */
+	exchange: Pick<ExchangeProfileModel, 'slug' | 'name'>
 	loadSeries: (exchange: string, range: ExchangeResearchRange) => Promise<ExchangeOverviewChartModel>
 	showGlobalDataNotice: boolean
 }) {
@@ -132,8 +136,8 @@ export function VenueChart({
 	const range = getResearchRange(router.query)
 	const { ref, seen } = useInViewOnce({ rootMargin: '400px' })
 	const query = useQuery({
-		queryKey: ['exchange-venue-series', exchange, range],
-		queryFn: () => loadSeries(exchange, range),
+		queryKey: ['exchange-venue-series', exchange.slug, range],
+		queryFn: () => loadSeries(exchange.slug, range),
 		enabled: seen,
 		staleTime: STALE_TIME,
 		refetchOnWindowFocus: false
@@ -144,7 +148,12 @@ export function VenueChart({
 	return (
 		<div ref={ref}>
 			{query.data ? (
-				<VenueChartView chart={query.data} range={range} showGlobalDataNotice={showGlobalDataNotice} />
+				<VenueChartView
+					exchange={exchange}
+					chart={query.data}
+					range={range}
+					showGlobalDataNotice={showGlobalDataNotice}
+				/>
 			) : (
 				<VenueChartFrame
 					tabs={VENUE_TABS}
@@ -152,6 +161,7 @@ export function VenueChart({
 					range={range}
 					updatedAt={null}
 					showGlobalDataNotice={showGlobalDataNotice}
+					exportButtons={null}
 				>
 					{queryReadFailed(query) ? (
 						<SurfaceBodyStatus variant="error" retry={query}>
@@ -167,10 +177,12 @@ export function VenueChart({
 }
 
 function VenueChartView({
+	exchange,
 	chart,
 	range,
 	showGlobalDataNotice
 }: {
+	exchange: Pick<ExchangeProfileModel, 'slug' | 'name'>
 	chart: ExchangeOverviewChartModel
 	range: ExchangeResearchRange
 	showGlobalDataNotice: boolean
@@ -229,6 +241,7 @@ function VenueChartView({
 			),
 		[active, chart.days]
 	)
+	const chartExport = useGetChartInstance()
 
 	if (!active) {
 		return (
@@ -237,6 +250,7 @@ function VenueChartView({
 				activeId={DEFAULT_VENUE_METRIC}
 				updatedAt={chart.lastUpdated}
 				showGlobalDataNotice={showGlobalDataNotice}
+				exportButtons={null}
 			>
 				<SurfaceBodyStatus variant="empty">No time-series data is available for this venue.</SurfaceBodyStatus>
 			</VenueChartFrame>
@@ -250,6 +264,14 @@ function VenueChartView({
 			range={range}
 			updatedAt={chart.lastUpdated}
 			showGlobalDataNotice={showGlobalDataNotice}
+			exportButtons={
+				<ChartExportButtons
+					chart={chartExport}
+					filename={`${exchange.slug}-${slug(active.label)}`}
+					title={`${exchange.name} ${active.label}`}
+					csvSource={{ type: 'dataset', prepare: () => chartModel.dataset }}
+				/>
+			}
 		>
 			{/* key forces a fresh chart per metric so series and value units are replaced, not merged. */}
 			<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
@@ -260,7 +282,7 @@ function VenueChartView({
 						charts={chartModel.charts}
 						valueSymbol={active.valueSymbol}
 						showLegend
-						exportButtons="hidden"
+						exportButtons={chartExport}
 						hallmarks={hallmarks}
 					/>
 				</ChartPanelBody>
@@ -275,6 +297,7 @@ function VenueChartFrame({
 	range = DEFAULT_RESEARCH_RANGE,
 	updatedAt,
 	showGlobalDataNotice,
+	exportButtons,
 	children
 }: {
 	tabs: Array<Pick<MetricTab, 'id' | 'label'>>
@@ -282,6 +305,8 @@ function VenueChartFrame({
 	range?: ExchangeResearchRange
 	updatedAt: string | null
 	showGlobalDataNotice: boolean
+	/** The drawn chart's .csv and .png; null while loading, failed or empty, which have nothing to export. */
+	exportButtons: React.ReactNode
 	children: React.ReactNode
 }) {
 	const router = useRouter()
@@ -303,6 +328,7 @@ function VenueChartFrame({
 					/>
 				) : null}
 				<ChartRangeControl range={range} />
+				{exportButtons}
 			</ChartPanelToolbar>
 			{showGlobalDataNotice ? (
 				<ScopeNote>The totals and this chart ignore the Country filter and show global data.</ScopeNote>

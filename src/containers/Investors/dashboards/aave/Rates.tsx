@@ -21,7 +21,6 @@ import {
 import type { TimeWindow } from './api'
 import { useAaveAPYHistory, useAaveMarkets } from './api'
 import {
-	AAVE_AREA_EXPORT,
 	AAVE_CATEGORY_PERCENT_CHART_OPTIONS,
 	AAVE_PERCENT_TIME_CHART_OPTIONS,
 	CardSkeleton,
@@ -294,7 +293,7 @@ export default function Rates() {
 								title={`${activeAsset} Supply APY \u00b7 ${primaryReserve?.chain}`}
 								headingAs="h3"
 								chartOptions={AAVE_PERCENT_TIME_CHART_OPTIONS}
-								exportButtons={AAVE_AREA_EXPORT}
+								exportButtons="auto"
 							/>
 						</Suspense>
 					</Panel>
@@ -312,7 +311,7 @@ export default function Rates() {
 								title={`${activeAsset} Borrow APY \u00b7 ${primaryReserve?.chain}`}
 								headingAs="h3"
 								chartOptions={AAVE_PERCENT_TIME_CHART_OPTIONS}
-								exportButtons={AAVE_AREA_EXPORT}
+								exportButtons="auto"
 							/>
 						</Suspense>
 					</Panel>
@@ -344,9 +343,9 @@ export default function Rates() {
 							</span>
 						)}
 						<ChartExportButtons
-							chartInstance={rateCurve.chartInstance}
+							chart={rateCurve}
 							filename={`aave-${activeAsset.toLowerCase()}-interest-rate-model`}
-							showPng={false}
+							title={`${activeAsset} Interest rate model`}
 							csvSource={{ type: 'dataset', prepare: () => rateCurveDataset }}
 						/>
 					</ChartPanelToolbar>
@@ -357,8 +356,7 @@ export default function Rates() {
 							valueSymbol="%"
 							showLegend
 							chartOptions={AAVE_CATEGORY_PERCENT_CHART_OPTIONS}
-							exportButtons="hidden"
-							onReady={rateCurve.handleChartReady}
+							exportButtons={rateCurve}
 						/>
 					</Suspense>
 				</Panel>

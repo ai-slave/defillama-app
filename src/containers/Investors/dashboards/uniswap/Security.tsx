@@ -1,4 +1,6 @@
 import { Fragment, lazy, Suspense, useMemo } from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import type { ChartExportHandle } from '~/components/ChartExport/types'
 import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChart/categoryOptions'
 import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
@@ -8,6 +10,7 @@ import {
 	normalizeTooltipItems,
 	TOOLTIP_POINTED_ROW_STYLE
 } from '~/components/ECharts/shared/tooltip'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
@@ -56,19 +59,23 @@ function proposalTitle(title: string): string {
 
 // Stacked For/Against/Abstain bars per proposal. Proposals are discrete events, so they sit on a
 // category axis; the tooltip looks each one up by its axis label to show the proposal itself.
-function VoteTurnoutChart({ chart }: { chart: VoteTurnoutData }) {
+function voteTurnoutDataset(chart: VoteTurnoutData) {
+	const source: Array<Array<string | number>> = []
+	for (let index = 0; index < chart.labels.length; index++) {
+		const row: Array<string | number> = [chart.labels[index]!]
+		for (const series of chart.series) row.push(series.data[index] ?? 0)
+		source.push(row)
+	}
+	return { source, dimensions: ['Proposal', ...chart.series.map((series) => series.name)] }
+}
+
+function VoteTurnoutChart({ chart, exportButtons }: { chart: VoteTurnoutData; exportButtons: ChartExportHandle }) {
 	const { dataset, charts, chartOptions } = useMemo(() => {
-		const source: Array<Array<string | number>> = []
 		const proposalByLabel = new Map<string, VoteTurnoutData['rows'][number]>()
-		for (let index = 0; index < chart.labels.length; index++) {
-			const label = chart.labels[index]!
-			const row: Array<string | number> = [label]
-			for (const series of chart.series) row.push(series.data[index] ?? 0)
-			source.push(row)
-			proposalByLabel.set(label, chart.rows[index]!)
-		}
+		for (let index = 0; index < chart.labels.length; index++)
+			proposalByLabel.set(chart.labels[index]!, chart.rows[index]!)
 		return {
-			dataset: { source, dimensions: ['Proposal', ...chart.series.map((series) => series.name)] },
+			dataset: voteTurnoutDataset(chart),
 			charts: chart.series.map((series): MultiSeriesChartSeriesConfig => ({
 				type: 'bar',
 				name: series.name,
@@ -115,7 +122,7 @@ function VoteTurnoutChart({ chart }: { chart: VoteTurnoutData }) {
 				charts={charts}
 				valueSymbol="$"
 				showLegend
-				exportButtons="hidden"
+				exportButtons={exportButtons}
 				chartOptions={chartOptions}
 			/>
 		</Suspense>
@@ -197,6 +204,7 @@ const terse = (k: KpiT | undefined, format: (value: number) => string): KpiT | u
 // firm, scanned live from the public Uniswap GitHub repos).
 export default function Security() {
 	const { data } = useUniswapData<SecurityData>('security')
+	const chartExport = useGetChartInstance()
 	if (!data) return <PanelLoadingStatus />
 
 	const kpis: Record<string, KpiT | undefined> = {
@@ -253,11 +261,13 @@ export default function Security() {
 				<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 					<BarListCard
 						title="Audits by firm"
+						csvColumns={['Firm', 'Audits']}
 						subtitle="Public audit reports across all Uniswap repos, grouped by audit firm."
 						items={byFirm}
 					/>
 					<BarListCard
 						title="Audits by product"
+						csvColumns={['Product', 'Audits']}
 						subtitle="The same reports grouped by the audited product repo."
 						items={byRepo}
 					/>
@@ -289,8 +299,17 @@ export default function Security() {
 								subtitle={data.voteTurnout?.note ?? 'Governor Bravo proposals; USD at vote-time UNI price.'}
 							/>
 						}
-					/>
-					{data.voteTurnout ? <VoteTurnoutChart chart={data.voteTurnout} /> : null}
+					>
+						{data.voteTurnout ? (
+							<ChartExportButtons
+								chart={chartExport}
+								filename="uniswap-vote-turnout"
+								title="Vote Turnout by proposal (USD)"
+								csvSource={{ type: 'dataset', prepare: () => voteTurnoutDataset(data.voteTurnout) }}
+							/>
+						) : null}
+					</ChartPanelToolbar>
+					{data.voteTurnout ? <VoteTurnoutChart chart={data.voteTurnout} exportButtons={chartExport} /> : null}
 				</Panel>
 				<TimeAreaCard
 					chart={data.delegatedUni}

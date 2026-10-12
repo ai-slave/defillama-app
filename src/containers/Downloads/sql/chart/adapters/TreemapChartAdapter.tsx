@@ -1,5 +1,6 @@
 import type * as echarts from 'echarts/core'
 import { lazy, Suspense, useMemo } from 'react'
+import type { HeadlessChartExportButtons } from '~/components/ChartExport/types'
 import type { TreemapNode } from '~/components/ECharts/TreemapChart/types'
 import { EmptyState, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import type { ChartConfig } from '../../chartConfig'
@@ -15,10 +16,18 @@ interface TreemapChartAdapterProps {
 	result: QueryResult
 	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
+	exportButtons: HeadlessChartExportButtons
 	height: string
 }
 
-export function TreemapChartAdapter({ config, result, classified, onReady, height }: TreemapChartAdapterProps) {
+export function TreemapChartAdapter({
+	config,
+	result,
+	classified,
+	onReady,
+	exportButtons,
+	height
+}: TreemapChartAdapterProps) {
 	const formatter = useMemo(() => makeValueFormatter(config.numberFormat), [config.numberFormat])
 	const nameCol = classified.find(
 		(column) => column.name === (config.xCol ?? classified.find((c) => c.coarse === 'category')?.name)
@@ -53,6 +62,7 @@ export function TreemapChartAdapter({ config, result, classified, onReady, heigh
 				valueLabel={valueCol.name}
 				valueSymbol={formatter.valueSymbol}
 				onReady={onReady}
+				exportButtons={exportButtons}
 			/>
 		</Suspense>
 	)

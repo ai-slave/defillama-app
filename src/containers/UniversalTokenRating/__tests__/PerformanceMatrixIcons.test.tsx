@@ -95,7 +95,7 @@ test('draws cropped logos once every logo settles, and a narrower row set draws 
 		act(async () =>
 			root.render(
 				<QueryClientProvider client={client}>
-					<PerformanceMatrix rows={shown} />
+					<PerformanceMatrix rows={shown} exportButtons={{ omit: 'icon loading test; exports are not under test' }} />
 				</QueryClientProvider>
 			)
 		)

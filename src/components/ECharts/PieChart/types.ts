@@ -27,7 +27,7 @@ export interface IPieChartProps {
 	customLabel?: PieSeriesOption['label']
 	legendPosition?: Pick<LegendComponentOption, 'left' | 'right' | 'top' | 'bottom' | 'orient'>
 	legendTextStyle?: LegendComponentOption['textStyle']
-	exportButtons?: ChartExportButtonsMode
+	exportButtons: ChartExportButtonsMode
 	/** What the CSV exports, the drawn slices by default; a pie folded past the series cap exports every row. */
 	csvSource?: ChartCsvSource
 	onReady?: (instance: echarts.ECharts | null) => void

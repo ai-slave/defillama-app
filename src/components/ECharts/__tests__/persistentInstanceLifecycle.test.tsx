@@ -64,29 +64,48 @@ describe('persistent ECharts instances', () => {
 	test.each([
 		{
 			name: 'candlestick',
-			render: (value: number) => <CandlestickChart data={[candle(1, value)]} />,
+			render: (value: number) => (
+				<CandlestickChart exportButtons={{ omit: 'renderer test' }} data={[candle(1, value)]} />
+			),
 			shown: () => option().dataset[0].source[0][2]
 		},
 		{
 			name: 'treemap',
 			render: (value: number) => (
-				<TreemapChart treeData={[{ name: 'Asset', path: 'Group/Asset', value: [value, null, null] }]} variant="rwa" />
+				<TreemapChart
+					exportButtons={{ omit: 'renderer test' }}
+					treeData={[{ name: 'Asset', path: 'Group/Asset', value: [value, null, null] }]}
+					variant="rwa"
+				/>
 			),
 			shown: () => option().series[0].data[0].value[0]
 		},
 		{
 			name: 'horizontal bar',
-			render: (value: number) => <HBarChart categories={['A']} values={[value]} />,
+			render: (value: number) => (
+				<HBarChart exportButtons={{ omit: 'renderer test' }} categories={['A']} values={[value]} />
+			),
 			shown: () => option().series[0].data[0].value
 		},
 		{
 			name: 'radar',
-			render: (value: number) => <RadarChart indicators={[{ name: 'Score', max: 300 }]} values={[value]} />,
+			render: (value: number) => (
+				<RadarChart
+					exportButtons={{ omit: 'renderer test' }}
+					indicators={[{ name: 'Score', max: 300 }]}
+					values={[value]}
+				/>
+			),
 			shown: () => option().series[0].data[0].value[0]
 		},
 		{
 			name: 'scatter',
-			render: (value: number) => <ScatterChart chartData={[{ projectName: 'Project', sigma: value, mu: 20 }]} />,
+			render: (value: number) => (
+				<ScatterChart
+					exportButtons={{ omit: 'renderer test' }}
+					chartData={[{ projectName: 'Project', sigma: value, mu: 20 }]}
+				/>
+			),
 			shown: () => option().series[0].data[0][0]
 		}
 	])('keeps the $name chart across data updates and releases it on unmount', async ({ render: chartFor, shown }) => {
@@ -104,7 +123,9 @@ describe('persistent ECharts instances', () => {
 
 	test('hands the candlestick chart to its ready callback and takes it back on unmount', async () => {
 		const onReady = vi.fn()
-		await render(<CandlestickChart data={[candle(1, 11)]} onReady={onReady} />)
+		await render(
+			<CandlestickChart exportButtons={{ omit: 'renderer test' }} data={[candle(1, 11)]} onReady={onReady} />
+		)
 		const instance = chart()
 
 		await act(async () => root.unmount())
@@ -126,6 +147,7 @@ describe('persistent ECharts instances', () => {
 			name: 'treemap',
 			render: (onReady: (instance: echarts.ECharts | null) => void) => (
 				<TreemapChart
+					exportButtons={{ omit: 'renderer test' }}
 					treeData={[{ name: 'Asset', path: 'Group/Asset', value: [1, null, null] }]}
 					variant="rwa"
 					onReady={onReady}
@@ -135,13 +157,18 @@ describe('persistent ECharts instances', () => {
 		{
 			name: 'builder treemap',
 			render: (onReady: (instance: echarts.ECharts | null) => void) => (
-				<BuilderTreemapChart data={[{ name: 'A', value: 1 }]} onReady={onReady} />
+				<BuilderTreemapChart
+					exportButtons={{ omit: 'renderer test' }}
+					data={[{ name: 'A', value: 1 }]}
+					onReady={onReady}
+				/>
 			)
 		},
 		{
 			name: 'market treemap',
 			render: (onReady: (instance: echarts.ECharts | null) => void) => (
 				<MarketTreemapChart
+					exportButtons={{ omit: 'renderer test' }}
 					treeData={[treemapLeaf]}
 					leaves={[treemapLeaf]}
 					sizeLabel="Market Cap"
@@ -186,12 +213,12 @@ describe('persistent ECharts instances', () => {
 
 	test('recolors the radar axis on a theme change without rebuilding the chart', async () => {
 		const values = [9, 8, 7, 6, 5, 4]
-		await render(<RadarChart indicators={RADAR_INDICATORS} values={values} />)
+		await render(<RadarChart exportButtons={{ omit: 'renderer test' }} indicators={RADAR_INDICATORS} values={values} />)
 		const instance = chart()
 		expect(option().radar[0].axisName.color).toBe(getChartTheme(true).axisLabel)
 
 		document.cookie = 'defillama-theme=light'
-		await render(<RadarChart indicators={RADAR_INDICATORS} values={values} />)
+		await render(<RadarChart exportButtons={{ omit: 'renderer test' }} indicators={RADAR_INDICATORS} values={values} />)
 
 		expect(chart()).toBe(instance)
 		expect(option().radar[0].axisName.color).toBe(getChartTheme(false).axisLabel)
@@ -204,7 +231,9 @@ describe('persistent ECharts instances', () => {
 			process.env.TZ = timeZone
 			try {
 				const days = Array.from({ length: 7 }, (_, index) => Date.UTC(2026, 8, 20 + index))
-				await render(<CandlestickChart data={days.map((day) => candle(day, 11))} />)
+				await render(
+					<CandlestickChart exportButtons={{ omit: 'renderer test' }} data={days.map((day) => candle(day, 11))} />
+				)
 
 				// ECharts has no public tick API; the axis model is the only way to read tick instants.
 				const axis = (chart() as unknown as { getModel(): any }).getModel().getComponent('xAxis', 0).axis

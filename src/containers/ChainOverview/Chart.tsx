@@ -1,5 +1,5 @@
-import type * as echarts from 'echarts/core'
 import { useMemo } from 'react'
+import type { HeadlessChartExportButtons } from '~/components/ChartExport/types'
 import MultiSeriesChart from '~/components/ECharts/MultiSeriesChart'
 import { createOverviewTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/overviewTooltip'
 import type {
@@ -24,7 +24,7 @@ interface ChainCoreChartProps {
 	unlockTokenSymbol?: string
 	isThemeDark: boolean
 	groupBy?: ChartTimeGroupingWithCumulative
-	onReady?: (instance: echarts.ECharts | null) => void
+	exportButtons: HeadlessChartExportButtons
 }
 
 function mergeYAxisOptions(
@@ -46,7 +46,7 @@ export default function ChainCoreChart({
 	unlockTokenSymbol = '',
 	isThemeDark,
 	groupBy,
-	onReady
+	exportButtons
 }: ChainCoreChartProps) {
 	const tooltipGroupBy: ChartTimeGrouping = groupBy && groupBy !== 'cumulative' ? groupBy : 'daily'
 	const chartTheme = useChartTheme(isThemeDark)
@@ -96,9 +96,8 @@ export default function ChainCoreChart({
 			chartOptions={finalChartOptions}
 			valueSymbol={valueSymbol}
 			{...(groupBy !== undefined ? { groupBy } : {})}
-			exportButtons="hidden"
+			exportButtons={exportButtons}
 			isThemeDark={isThemeDark}
-			{...(onReady !== undefined ? { onReady } : {})}
 		/>
 	)
 }

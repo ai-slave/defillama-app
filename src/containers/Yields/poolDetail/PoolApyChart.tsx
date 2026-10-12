@@ -1,6 +1,5 @@
-import type * as echarts from 'echarts/core'
 import { useRouter } from 'next/router'
-import { lazy, Suspense, useMemo, useRef } from 'react'
+import { lazy, Suspense, useMemo } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type {
 	IMultiSeriesChartProps,
@@ -15,6 +14,7 @@ import {
 	TOOLTIP_POINTED_ROW_STYLE
 } from '~/components/ECharts/shared/tooltip'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { PanelHeader, PanelTitle, Panel } from '~/ui/Panel'
@@ -334,7 +334,7 @@ export function PoolApyChart({
 		kind === 'borrow' || !historyAccessPending
 	)
 	const today = clockMs - (clockMs % 86_400_000)
-	const chartRef = useRef<echarts.ECharts | null>(null)
+	const chartExport = useGetChartInstance()
 
 	// Old links may carry the retired additive avg toggles; map them to the nearest window.
 	const legacyWindow = getSeriesVisibility(router.query[getPoolSeriesQueryKey(kind, 'avg30d')], false)
@@ -456,7 +456,7 @@ export function PoolApyChart({
 				<div className="flex flex-wrap items-center justify-end gap-1.5">
 					<PoolRangeControl kind={kind} />
 					<ChartExportButtons
-						chartInstance={() => chartRef.current}
+						chart={chartExport}
 						filename={`yields-${poolId}-${kind}`}
 						csvSource={{ type: 'dataset', prepare: () => dataset }}
 					/>
@@ -502,10 +502,7 @@ export function PoolApyChart({
 							charts={charts}
 							chartOptions={chartOptions}
 							valueSymbol="%"
-							exportButtons="hidden"
-							onReady={(inst) => {
-								chartRef.current = inst
-							}}
+							exportButtons={chartExport}
 						/>
 					</Suspense>
 				)}

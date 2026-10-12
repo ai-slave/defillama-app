@@ -10,6 +10,7 @@ import { StreamDoneContext } from '../queries'
 import type { UnlocksPieConfig } from '../types'
 import { BoundParameterBadge } from './BoundParameterBadge'
 import { scaledPx, useCardHeightScale } from './cardHeightContext'
+import { PRO_CARD_MENU_EXPORTS } from './ProCardActions'
 import { ProCardHeader } from './ProCardHeader'
 import { ProCardEmpty, ProCardError, ProCardLoading, ProCardRefreshFailed } from './ProCardStatus'
 
@@ -27,7 +28,7 @@ interface UnlocksPieCardProps {
 }
 
 export function UnlocksPieCard({ config }: UnlocksPieCardProps) {
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 	const { protocol, protocolName, chartType } = config
 	const includeSupplyMeta = chartType === 'locked-unlocked'
 
@@ -103,7 +104,7 @@ export function UnlocksPieCard({ config }: UnlocksPieCardProps) {
 				menu={
 					hasChartData
 						? {
-								image: { chartInstance, filename: csvFileName, title: chartTitle },
+								image: { chartInstance: chartExport.chartInstance, filename: csvFileName, title: chartTitle },
 								csv: { onClick: handleCsvExport }
 							}
 						: {}
@@ -119,7 +120,8 @@ export function UnlocksPieCard({ config }: UnlocksPieCardProps) {
 						}
 					>
 						<PieChart
-							onReady={handleChartReady}
+							exportButtons={PRO_CARD_MENU_EXPORTS}
+							onReady={chartExport.handleChartReady}
 							chartData={chartData}
 							stackColors={stackColors}
 							valueSymbol={valueSymbol}

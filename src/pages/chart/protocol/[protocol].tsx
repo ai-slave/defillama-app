@@ -152,6 +152,7 @@ export default function ProtocolChartPage(props: IProtocolOverviewPageData) {
 						hallmarks={toggledMetrics.events === 'true' ? props.hallmarks : null}
 						rangeHallmarks={toggledMetrics.events === 'true' ? props.rangeHallmarks : null}
 						unlockTokenSymbol={props.token.symbol}
+						exportButtons={{ omit: 'embed iframe; the page it is embedded in has no toolbar' }}
 					/>
 				</Suspense>
 			)}

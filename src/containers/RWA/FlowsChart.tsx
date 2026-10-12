@@ -1,5 +1,6 @@
 import type * as echarts from 'echarts/core'
 import { useMemo, useRef } from 'react'
+import type { ChartExportHandle } from '~/components/ChartExport/types'
 import MultiSeriesChart from '~/components/ECharts/MultiSeriesChart'
 import { useStableCallback } from '~/hooks/useStableCallback'
 import { getRWAFlowChartOptions, getRWAFlowTimestampExtent, type RWAFlowChart, type RWAFlowVisibleRange } from './flows'
@@ -34,12 +35,12 @@ function getVisibleRangeFromZoom(
 export function RWAFlowsChart({
 	chart,
 	defaultStartTimestamp,
-	onReady,
+	exportButtons,
 	onVisibleRangeChange
 }: {
 	chart: RWAFlowChart
 	defaultStartTimestamp?: number
-	onReady?: (instance: echarts.ECharts | null) => void
+	exportButtons: ChartExportHandle
 	/** Reports the reader's zooms; the default range is the parent's to derive (`getRWAFlowVisibleRange`). */
 	onVisibleRangeChange?: (range: RWAFlowVisibleRange | null) => void
 }) {
@@ -67,11 +68,11 @@ export function RWAFlowsChart({
 		if (previousInstance && !previousInstance.isDisposed()) previousInstance.off('datazoom', handleDataZoom)
 		chartInstanceRef.current = instance
 		instance?.on('datazoom', handleDataZoom)
-		onReady?.(instance)
 	})
 
 	return (
 		<MultiSeriesChart
+			exportButtons={exportButtons}
 			dataset={chart.dataset}
 			charts={chart.charts}
 			groupBy={chart.groupBy}

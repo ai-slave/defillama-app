@@ -1,13 +1,16 @@
 import { lazy, Suspense, useMemo, useState } from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { buildSparseCartesianChartModel, type SparseCartesianSeries } from '~/components/ECharts/MultiSeriesChart/model'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_INSET, CHART_LEGEND_RESERVE } from '~/components/ECharts/shared/chartSpacing'
 import type { IAdapterBreakdownChartData } from '~/containers/AdapterMetrics/api.types'
 import { getGroupedTimestampSec } from '~/containers/ProDashboard/utils'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { slug } from '~/utils'
 import type { QueryRetry } from '~/utils/query'
 import {
 	BUCKET_DAYS,
@@ -190,6 +193,7 @@ export function SeriesTrendChart({
 	const chartSeries = useMemo(() => aggregate(series ?? [], view, stacked), [series, view, stacked])
 	const groupBy = view === 'week' ? 'weekly' : view === 'month' ? 'monthly' : view === 'quarter' ? 'quarterly' : 'daily'
 	const model = useMemo(() => buildSparseCartesianChartModel(chartSeries), [chartSeries])
+	const chartExport = useGetChartInstance()
 	const maxItems = useTooltipMaxItems()
 	const chartOptions = useMemo(
 		() => ({
@@ -218,6 +222,13 @@ export function SeriesTrendChart({
 					value={view}
 					onValueChange={setPicked}
 				/>
+				<ChartExportButtons
+					chart={chartExport}
+					filename={slug(title)}
+					title={title}
+					csvSource={{ type: 'dataset', prepare: () => ({ ...model.dataset, groupBy }) }}
+					disabled={!!failedRead || isLoading || chartSeries.length === 0}
+				/>
 			</ChartPanelToolbar>
 			{failedRead ? (
 				<SurfaceBodyStatus variant="error" retry={failedRead}>
@@ -236,7 +247,7 @@ export function SeriesTrendChart({
 						groupBy={groupBy}
 						chartOptions={chartOptions}
 						showLegend
-						exportButtons="hidden"
+						exportButtons={chartExport}
 					/>
 				</Suspense>
 			)}

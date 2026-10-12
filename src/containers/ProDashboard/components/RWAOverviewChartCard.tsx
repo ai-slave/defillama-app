@@ -11,6 +11,7 @@ import { scaledPx, useCardHeightScale } from './cardHeightContext'
 import { prepareProChartCsv } from './chartCsv'
 import { filterChartDatasetByTimePeriod } from './datasets/filterChartDataset'
 import { useRWABreakdownChartData } from './datasets/RWADataset/useRWAChartData'
+import { PRO_CARD_MENU_EXPORTS } from './ProCardActions'
 import { ProCardHeader } from './ProCardHeader'
 import { ProCardEmpty, ProCardError, ProCardLoading, ProCardRefreshFailed } from './ProCardStatus'
 import {
@@ -52,7 +53,7 @@ interface RWAOverviewChartCardProps {
 
 export function RWAOverviewChartCard({ config }: RWAOverviewChartCardProps) {
 	const { metric, chartView, breakdown, chain } = config
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
 	const chartRead = useRWABreakdownChartData(breakdown, metric, chain)
 	const { chartDataset: rawDataset, isLoading, readFailed, refreshFailed } = chartRead
@@ -130,7 +131,7 @@ export function RWAOverviewChartCard({ config }: RWAOverviewChartCardProps) {
 				menu={
 					hasExportData
 						? {
-								image: { chartInstance, filename: imageFilename, title: imageTitle },
+								image: { chartInstance: chartExport.chartInstance, filename: imageFilename, title: imageTitle },
 								csv: {
 									prepareCsv: () =>
 										timeSeriesDataset
@@ -154,29 +155,37 @@ export function RWAOverviewChartCard({ config }: RWAOverviewChartCardProps) {
 				>
 					{chartView === 'timeSeries' && timeSeriesDataset ? (
 						<MultiSeriesChart
+							exportButtons={PRO_CARD_MENU_EXPORTS}
+							onReady={chartExport.handleChartReady}
 							height={chartHeight}
 							dataset={timeSeriesDataset}
 							showLegend
 							stacked
 							showTotalInTooltip={!timeSeriesDataset.dimensions.some(isRwaTotalSeriesLabel)}
-							onReady={handleChartReady}
 						/>
 					) : chartView === 'pie' && pieData.length > 0 ? (
-						<PieChart onReady={handleChartReady} chartData={pieChartData} height={chartHeight} />
+						<PieChart
+							exportButtons={PRO_CARD_MENU_EXPORTS}
+							onReady={chartExport.handleChartReady}
+							chartData={pieChartData}
+							height={chartHeight}
+						/>
 					) : chartView === 'hbar' && barData.categories.length > 0 ? (
 						<HBarChart
 							categories={barData.categories}
 							values={barData.values}
 							valueSymbol="$"
 							height={chartHeight}
-							onReady={handleChartReady}
+							exportButtons={PRO_CARD_MENU_EXPORTS}
+							onReady={chartExport.handleChartReady}
 						/>
 					) : chartView === 'treemap' && treemapData.length > 0 ? (
 						<TreemapChart
 							treeData={treemapData}
 							variant="rwa"
 							height={chartHeight}
-							onReady={handleChartReady}
+							exportButtons={PRO_CARD_MENU_EXPORTS}
+							onReady={chartExport.handleChartReady}
 							valueLabel={metricLabel}
 						/>
 					) : (

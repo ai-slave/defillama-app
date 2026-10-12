@@ -82,10 +82,6 @@ export function calculateDenominatedChange(
 	return denominatedReturns
 }
 
-function safeTreemapReturn(value: number | null | undefined): number {
-	return value == null ? 0 : Math.round(value * 100) / 100
-}
-
 export function buildNarrativeTreemapTreeData(
 	rows: Array<IPctChangeRow>,
 	returnField: NarrativeTreemapReturnField = 'returnField'
@@ -110,9 +106,12 @@ export function buildNarrativeTreemapTreeData(
 		}
 
 		group.node.value[0] += marketCap
-		const returnValue = safeTreemapReturn(row[returnField])
-		if (returnValue < group.min) group.min = returnValue
-		if (returnValue > group.max) group.max = returnValue
+		// A coin without a return for the period (or a denomination without one) stays null: it draws gray, labels "—"
+		// and exports an empty cell, so it never reads as a flat 0%.
+		const change = row[returnField]
+		const returnValue = change == null ? null : Math.round(change * 100) / 100
+		if (returnValue !== null && returnValue < group.min) group.min = returnValue
+		if (returnValue !== null && returnValue > group.max) group.max = returnValue
 		group.node.children.push({
 			value: [marketCap, returnValue, returnValue],
 			name: row.name,

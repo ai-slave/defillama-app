@@ -5,18 +5,26 @@ import { TitleComponent, ToolboxComponent, TooltipComponent } from 'echarts/comp
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { startTransition, useEffect, useMemo, useRef, useState } from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { getChartTheme } from '~/components/ECharts/shared/chartTheme'
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { TreemapLabelContrast } from '~/components/ECharts/TreemapChart/labelContrast'
 import type { UnlocksData } from '~/containers/Unlocks/calendarTypes'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
+import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
-import { buildUnlocksTreemapTreeData, UNLOCKS_TREEMAP_TIME_VIEWS, type UnlocksTreemapTimeView } from './buildTreeData'
+import {
+	buildUnlocksTreemapTreeData,
+	UNLOCKS_TREEMAP_TIME_VIEWS,
+	type UnlocksTreemapNode,
+	type UnlocksTreemapTimeView
+} from './buildTreeData'
 
 echarts.use([TreemapLabelContrast, TitleComponent, TooltipComponent, ToolboxComponent, EChartTreemap, CanvasRenderer])
 
@@ -42,6 +50,7 @@ export default function UnlocksTreemapChart({ unlocksData, height = '600px', cal
 	const selectedDate = pickedMonth ?? calendarDate
 	const containerRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
+	const chartExport = useGetChartInstance()
 
 	// Stable resize listener - never re-attaches when dependencies change
 	useChartResize(chartRef, containerRef)
@@ -61,12 +70,14 @@ export default function UnlocksTreemapChart({ unlocksData, height = '600px', cal
 		if (!el) return
 		const instance = echarts.init(el, null, { renderer: 'canvas' })
 		chartRef.current = instance
+		chartExport.handleChartReady(instance)
 
 		return () => {
 			chartRef.current = null
+			chartExport.handleChartReady(null)
 			instance.dispose()
 		}
-	}, [])
+	}, [chartExport])
 
 	useEffect(() => {
 		const instance = chartRef.current
@@ -224,6 +235,27 @@ export default function UnlocksTreemapChart({ unlocksData, height = '600px', cal
 		instance.setOption(option, { notMerge: true })
 	}, [chartDataTree, isDark, timeView])
 
+	// One row per protocol tile, as buildTreemapCsvDataset writes a treemap; these nodes carry a plain number value.
+	const prepareCsv = () => {
+		const source: Array<[path: string, name: string, value: number]> = []
+		const visit = (node: UnlocksTreemapNode, parentPath: string) => {
+			const path = parentPath ? `${parentPath}/${node.name}` : node.name
+			if (node.children?.length) {
+				for (const child of node.children) visit(child, path)
+				return
+			}
+			source.push([path, node.name, node.value])
+		}
+		for (const node of chartDataTree) visit(node, '')
+		return { dimensions: ['Path', 'Name', 'Unlock Value'], source }
+	}
+	const exportTitle =
+		timeView === 'Month'
+			? `Token Unlocks ${selectedDate.format('MMMM YYYY')}`
+			: timeView === 'Current Year'
+				? `Token Unlocks ${currentYear}`
+				: `Token Unlocks from ${currentYear}`
+
 	const goToPrevMonth = () => setPickedMonth(selectedDate.subtract(1, 'month'))
 	const goToNextMonth = () => setPickedMonth(selectedDate.add(1, 'month'))
 
@@ -274,6 +306,17 @@ export default function UnlocksTreemapChart({ unlocksData, height = '600px', cal
 					options={UNLOCKS_TREEMAP_TIME_VIEWS.map((value) => ({ value, label: value }))}
 					label="Time range"
 				/>
+				{/* The tree, its time range and its month live here, so this row carries the treemap's exports. */}
+				<div className="order-2 md:order-0">
+					<ChartExportButtons
+						chart={chartExport}
+						filename={slug(exportTitle)}
+						title={exportTitle}
+						csvSource={{ type: 'dataset', prepare: prepareCsv }}
+						pngProfile="treemapNormalized"
+						disabled={chartDataTree.length === 0}
+					/>
+				</div>
 			</div>
 
 			<div className="w-full overflow-hidden" style={{ height, padding: TREEMAP_CHART_INSET_PX }}>

@@ -74,6 +74,7 @@ export default function Staking() {
 				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
+							exportButtons="auto"
 							dataset={chart.dataset}
 							charts={chart.charts}
 							valueSymbol=""
@@ -92,6 +93,7 @@ export default function Staking() {
 				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
+							exportButtons="auto"
 							dataset={pctChart.dataset}
 							charts={pctChart.charts}
 							valueSymbol="%"

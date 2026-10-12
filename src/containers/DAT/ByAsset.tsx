@@ -99,8 +99,6 @@ export function DATByAsset({
 							hideDataZoom={dailyFlowsChart.dataset.source.length < 2}
 							title="Inflows"
 							exportButtons={{
-								png: true,
-								csv: true,
 								filename: `${metadata.name}-inflows`,
 								pngTitle: `${metadata.name} Inflows`
 							}}
@@ -335,7 +333,7 @@ function MNAVChart({
 		setSelectedSeries: setSelectedInstitution
 	} = useLocalSelection({ availableSeries: institutionsNames, scope: `${metadata.name}:${title}` })
 
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 
 	return (
 		<Panel className="col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
@@ -353,7 +351,7 @@ function MNAVChart({
 					/>
 				) : null}
 				<ChartExportButtons
-					chartInstance={chartInstance}
+					chart={chartExport}
 					filename={`${metadata.name}-${title}`}
 					title={`${metadata.name} ${title}`}
 					csvSource={{
@@ -368,12 +366,12 @@ function MNAVChart({
 			</ChartPanelToolbar>
 			<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<MultiSeriesChart
+					exportButtons={chartExport}
 					charts={data.charts}
 					selectedCharts={selectedCharts}
 					dataset={data.dataset}
 					valueSymbol=""
 					hideDataZoom={data.dataset.source.length < 2}
-					onReady={handleChartReady}
 				/>
 			</Suspense>
 		</Panel>

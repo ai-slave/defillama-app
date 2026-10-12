@@ -86,8 +86,6 @@ function RaisesContainer({ raises, investors, rounds, sectors, chains, investorN
 							valueSymbol="$"
 							groupBy="monthly"
 							exportButtons={{
-								png: true,
-								csv: true,
 								filename: 'monthly-funding',
 								pngTitle: monthlyInvestmentTitle
 							}}

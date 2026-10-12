@@ -2,6 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { type ReactNode, useState } from 'react'
 import toast from 'react-hot-toast'
+import type { OmittedChartExport } from '~/components/ChartExport/types'
 import { type ChartPngExportOptions, useChartPngExport } from '~/components/ChartExport/useChartPngExport'
 import {
 	CSV_DOWNLOAD_ERROR,
@@ -58,6 +59,9 @@ export function ProCardEditControls({ children }: { children: ReactNode }) {
 		</div>
 	)
 }
+/** A Pro card exports through its More actions menu, which reads the chart through `onReady`, so its charts draw no buttons. */
+export const PRO_CARD_MENU_EXPORTS: OmittedChartExport = { omit: 'exports through the Pro card menu (ProCardHeader)' }
+
 export interface ProCardOverflowMenuProps {
 	image?: ChartPngExportOptions | undefined
 	csv?:

@@ -1,10 +1,14 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { lazy, Suspense } from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import type { ChartExportHandle } from '~/components/ChartExport/types'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { buildTreemapCsvDataset } from '~/components/ECharts/TreemapChart/csv'
 import type { TreemapChartProps, TreemapNode } from '~/components/ECharts/TreemapChart/types'
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { TablePager } from '~/components/Table/TablePager'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { ChartPanelBody, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
@@ -20,12 +24,16 @@ import { SonicIcon } from './SonicIcon'
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 const TreemapChart = lazy(() => import('~/components/ECharts/TreemapChart')) as React.FC<TreemapChartProps>
 
-function FeeMTreemap({ leaderboard }: { leaderboard: Array<FeeMLeaderboardEntry> }) {
+function feemTreeData(leaderboard: Array<FeeMLeaderboardEntry>) {
 	const treeData: Array<TreemapNode> = []
 	for (const item of leaderboard) {
 		if (!(item.collectedRewards > 0)) continue
 		treeData.push({ name: item.name || 'Sonic', value: [item.collectedRewards, null, null] })
 	}
+	return treeData
+}
+
+function FeeMTreemap({ treeData, exportButtons }: { treeData: Array<TreemapNode>; exportButtons: ChartExportHandle }) {
 	return (
 		<ChartPanelBody>
 			<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
@@ -35,6 +43,7 @@ function FeeMTreemap({ leaderboard }: { leaderboard: Array<FeeMLeaderboardEntry>
 					colorMode="categorical"
 					valueLabel="Collected"
 					valueSymbol="S"
+					exportButtons={exportButtons}
 				/>
 			</Suspense>
 		</ChartPanelBody>
@@ -125,6 +134,8 @@ const columns = columnHelper.columns([
 export default function FeeM() {
 	const query = useFeeMData()
 	const data = query.data
+	const dailyStats = useGetChartInstance()
+	const rewardsTreemap = useGetChartInstance()
 
 	const table = usePaginatedTable({
 		defaultColumn: { sortUndefined: 'last' },
@@ -144,6 +155,8 @@ export default function FeeM() {
 			</PanelStatus>
 		)
 	if (!data) return <PanelLoadingStatus />
+
+	const rewardsTreeData = feemTreeData(data.leaderboard)
 
 	return (
 		<div className="flex flex-col gap-6">
@@ -187,7 +200,14 @@ export default function FeeM() {
 			<div className="flex flex-col gap-4">
 				<h2 className="heading-xs">Daily activity</h2>
 				<Panel>
-					<ChartPanelToolbar leading={<ChartPanelTitle>{data.dailyStatsTitle}</ChartPanelTitle>} />
+					<ChartPanelToolbar leading={<ChartPanelTitle>{data.dailyStatsTitle}</ChartPanelTitle>}>
+						<ChartExportButtons
+							chart={dailyStats}
+							filename="sonic-feem-daily-activity"
+							title={data.dailyStatsTitle}
+							csvSource={{ type: 'dataset', prepare: () => data.dailyStatsModel.dataset }}
+						/>
+					</ChartPanelToolbar>
 					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={data.dailyStatsModel.dataset}
@@ -195,7 +215,7 @@ export default function FeeM() {
 							valueSymbol=""
 							chartOptions={lastNDaysZoom(data.dailyStatsLength)}
 							showLegend
-							exportButtons="hidden"
+							exportButtons={dailyStats}
 						/>
 					</Suspense>
 				</Panel>
@@ -205,8 +225,16 @@ export default function FeeM() {
 			<div className="flex flex-col gap-4">
 				<h2 className="heading-xs">Rewards distribution</h2>
 				<Panel>
-					<ChartPanelToolbar leading={<ChartPanelTitle>Collected Rewards by protocol</ChartPanelTitle>} />
-					<FeeMTreemap leaderboard={data.leaderboard} />
+					<ChartPanelToolbar leading={<ChartPanelTitle>Collected Rewards by protocol</ChartPanelTitle>}>
+						<ChartExportButtons
+							chart={rewardsTreemap}
+							filename="sonic-feem-collected-rewards"
+							title="Collected Rewards by protocol"
+							csvSource={{ type: 'dataset', prepare: () => buildTreemapCsvDataset(rewardsTreeData) }}
+							pngProfile="treemapNormalized"
+						/>
+					</ChartPanelToolbar>
+					<FeeMTreemap treeData={rewardsTreeData} exportButtons={rewardsTreemap} />
 				</Panel>
 			</div>
 

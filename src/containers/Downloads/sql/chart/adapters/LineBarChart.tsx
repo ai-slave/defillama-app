@@ -1,6 +1,7 @@
 import type { LineSeriesOption } from 'echarts/charts'
 import type * as echarts from 'echarts/core'
 import { lazy, Suspense, useMemo } from 'react'
+import type { HeadlessChartExportButtons } from '~/components/ChartExport/types'
 import { createCappedRemainderTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
 import type {
 	MultiSeriesChartDataset,
@@ -43,6 +44,7 @@ interface LineBarChartProps {
 	result: QueryResult
 	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
+	exportButtons: HeadlessChartExportButtons
 	height: string
 	forceType?: 'line' | 'bar'
 	forceArea?: boolean
@@ -54,6 +56,7 @@ export function LineBarChart({
 	result,
 	classified,
 	onReady,
+	exportButtons,
 	height,
 	forceType,
 	forceArea,
@@ -80,7 +83,7 @@ export function LineBarChart({
 					chartOptions={chartOptions}
 					onReady={onReady}
 					showLegend
-					exportButtons="hidden"
+					exportButtons={exportButtons}
 				/>
 			</Suspense>
 			{truncatedCount > 0 ? (

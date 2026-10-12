@@ -1,5 +1,5 @@
 import { type CSSProperties, lazy, startTransition, Suspense, useMemo, useState } from 'react'
-import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { sankeyMobileMinHeight } from '~/components/ECharts/SankeyChart/height'
 import {
@@ -103,7 +103,7 @@ export function IncomeStatement({
 	const [groupBy, setGroupBy] = useState<IncomeStatementGroupBy>('Quarterly')
 	const [sankeyGroupBy, setSankeyGroupBy] = useState<IncomeStatementGroupBy>('Quarterly')
 	const [selectedSankeyPeriod, setSelectedSankeyPeriod] = useState<string | null>(null)
-	const { chartInstance: sankeyChartInstance, handleChartReady: handleSankeyChartReady } = useGetChartInstance()
+	const sankeyChartExport = useGetChartInstance()
 	const headerId = anchorId ?? 'income-statement'
 	const showTable = view === 'table' || view === 'both'
 	const showSankey = view === 'sankey' || view === 'both'
@@ -780,11 +780,19 @@ export function IncomeStatement({
 										size="md"
 									/>
 								) : null}
-								<ChartPngExportButton
-									chartInstance={sankeyChartInstance}
+								<ChartExportButtons
+									chart={sankeyChartExport}
 									filename={`${name}-income-statement`}
 									title={`Income Statement for ${name}`}
 									iconUrl={tokenIconUrl(name)}
+									// One row per flow the sankey draws for the selected period.
+									csvSource={{
+										type: 'dataset',
+										prepare: () => ({
+											dimensions: ['Source', 'Target', 'Amount (USD)'],
+											source: sankeyData.links.map((link) => [link.source, link.target, link.value])
+										})
+									}}
 								/>
 							</ChartPanelToolbar>
 							{/* The body and its fallback take the chart's own heights: its node-count height on desktop, its
@@ -810,7 +818,7 @@ export function IncomeStatement({
 										nodes={sankeyData.nodes}
 										links={sankeyData.links}
 										height={sankeyHeight}
-										onReady={handleSankeyChartReady}
+										exportButtons={sankeyChartExport}
 									/>
 								</Suspense>
 							</ChartPanelBody>

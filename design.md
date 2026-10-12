@@ -496,6 +496,7 @@ Every chart draws through the renderer for its shape in [`src/components/ECharts
 - HTML tooltips use the `.defillama-echarts-tooltip` recipe in `src/tailwind.css`.
 - Cartesian geometry comes from [`chartSpacing.ts`](src/components/ECharts/shared/chartSpacing.ts) (`chartGrid()`). Never copy grid, legend or slider offsets, and never pad a chart body in the DOM.
 - The 360px chart body is a floor: `ChartPanelBody` grows with a stretched panel, and a chart without `height` fills it (`MultiSeriesChart`, `PieChart`, `HBarChart`, `ScatterChart`, every treemap, `CandlestickChart`; `src/components/ECharts/README.md` → Size).
+- Every chart a reader can see exports .csv and .png. A chart draws its own buttons (`exportButtons="auto"`), or takes the handle the panel toolbar's `ChartExportButtons` also take, or states `{ omit: reason }` at the call site (`src/components/ECharts/README.md` → Exports).
 - A `MultiSeriesChart` that shows its export buttons takes its own `title`, `subtitle` and `titleTooltip`, so they share one row with .csv/.png. A `ChartPanelToolbar` title above a chart that draws its own export row stacks two rows; keep the toolbar only when it also holds a control or a value.
 
 Exceptions and chart-specific rules: `src/components/ECharts/README.md`.

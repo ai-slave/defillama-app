@@ -196,7 +196,7 @@ export function CalendarView({ initialUnlocksData, precomputedData }: CalendarVi
 		setQueryParams({ date: newDate.format('YYYY-MM-DD') })
 	}
 
-	const { chartInstance: exportChartInstance, handleChartReady: onChartReady } = useGetChartInstance()
+	const exportChartExport = useGetChartInstance()
 
 	return (
 		<div className="flex flex-col gap-3">
@@ -287,7 +287,7 @@ export function CalendarView({ initialUnlocksData, precomputedData }: CalendarVi
 				</Button>
 				{viewMode === 'Week' || viewMode === 'Month' ? (
 					<ChartExportButtons
-						chartInstance={exportChartInstance}
+						chart={exportChartExport}
 						filename={`unlocks-${viewMode.toLowerCase()}-view`}
 						title={`Unlocks ${viewMode} View`}
 						csvSource={selectedChart?.csvSource ?? null}
@@ -303,8 +303,7 @@ export function CalendarView({ initialUnlocksData, precomputedData }: CalendarVi
 						showLegend={selectedChart.charts.length > 1}
 						chartOptions={calendarChartOptions}
 						tooltipMaxItems={30}
-						exportButtons="hidden"
-						onReady={onChartReady}
+						exportButtons={exportChartExport}
 					/>
 				</Suspense>
 			) : null}
@@ -323,8 +322,7 @@ export function CalendarView({ initialUnlocksData, precomputedData }: CalendarVi
 								showLegend={selectedChart.charts.length > 1}
 								chartOptions={calendarChartOptions}
 								tooltipMaxItems={30}
-								exportButtons="hidden"
-								onReady={onChartReady}
+								exportButtons={exportChartExport}
 							/>
 						</Suspense>
 					) : null}

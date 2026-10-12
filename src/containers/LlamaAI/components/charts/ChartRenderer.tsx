@@ -1,4 +1,3 @@
-import type * as echarts from 'echarts/core'
 import {
 	type Dispatch,
 	lazy,
@@ -15,6 +14,7 @@ import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { AddToDashboardButton } from '~/components/AddToDashboard/AddToDashboardButton'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
+import type { ChartExportHandle, HeadlessChartExportButtons } from '~/components/ChartExport/types'
 import { saveChartToLibrary } from '~/containers/LlamaAI/api/saveChartToLibrary'
 import { updateChartStyle } from '~/containers/LlamaAI/api/updateChartStyle'
 import type {
@@ -46,6 +46,7 @@ import {
 	areStringArraysEqual
 } from '~/containers/LlamaAI/utils/chartComparison'
 import { ChartDataTransformer } from '~/containers/LlamaAI/utils/chartDataTransformer'
+import { buildExportModel } from '~/containers/LlamaAI/utils/chartExportModel'
 import { buildRenderPlan, type ChartRenderPlan } from '~/containers/LlamaAI/utils/chartRenderPlan'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
@@ -56,7 +57,7 @@ import { TabPanel, Tabs, UnderlineTabList } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
-const noop = () => {}
+const STYLE_PREVIEW_EXPORTS = { omit: 'live preview inside the chart style editor; the chart it edits exports' }
 
 const CandlestickChart = lazy(() => import('~/components/ECharts/CandlestickChart'))
 const HBarChart = lazy(() => import('~/components/ECharts/HBarChart'))
@@ -197,37 +198,47 @@ function buildChartPresentation(
 	return buildRenderPlan(config, transformedChart, normalizedState, base.capabilities)
 }
 
-function renderChartContent(
-	renderPlan: ChartRenderPlan,
-	chartKey: string,
-	onChartReady: (instance: echarts.ECharts | null) => void,
+function ChartContent({
+	renderPlan,
+	chartKey,
+	exportButtons,
 	height = CHAT_CHART_HEIGHT
-) {
+}: {
+	renderPlan: ChartRenderPlan
+	chartKey: string
+	exportButtons: HeadlessChartExportButtons
+	height?: number
+}) {
 	const heightProp = { height: `${height}px` }
 	const fallback = <div style={{ height }} />
 	switch (renderPlan.rendererKind) {
 		case 'cartesian':
 			return (
 				<Suspense fallback={fallback}>
-					<MultiSeriesChart key={chartKey} {...renderPlan.rendererProps} {...heightProp} onReady={onChartReady} />
+					<MultiSeriesChart
+						key={chartKey}
+						{...renderPlan.rendererProps}
+						{...heightProp}
+						exportButtons={exportButtons}
+					/>
 				</Suspense>
 			)
 		case 'hbar':
 			return (
 				<Suspense fallback={fallback}>
-					<HBarChart key={chartKey} {...renderPlan.rendererProps} {...heightProp} onReady={onChartReady} />
+					<HBarChart key={chartKey} {...renderPlan.rendererProps} {...heightProp} exportButtons={exportButtons} />
 				</Suspense>
 			)
 		case 'pie':
 			return (
 				<Suspense fallback={fallback}>
-					<PieChart key={chartKey} {...renderPlan.rendererProps} {...heightProp} onReady={onChartReady} />
+					<PieChart key={chartKey} {...renderPlan.rendererProps} {...heightProp} exportButtons={exportButtons} />
 				</Suspense>
 			)
 		case 'scatter':
 			return (
 				<Suspense fallback={fallback}>
-					<ScatterChart key={chartKey} {...renderPlan.rendererProps} {...heightProp} onReady={onChartReady} />
+					<ScatterChart key={chartKey} {...renderPlan.rendererProps} {...heightProp} exportButtons={exportButtons} />
 				</Suspense>
 			)
 		default:
@@ -236,17 +247,17 @@ function renderChartContent(
 }
 
 function ChartExportButtonsSlot({
-	chartInstance,
+	chart,
 	exportModel,
-	renderPlan,
+	filename,
 	chartTitle,
 	chartId,
 	sessionId,
 	messageId
 }: {
-	chartInstance: () => echarts.ECharts | null
+	chart: ChartExportHandle
 	exportModel: ChartRenderPlan['exportModel']
-	renderPlan: ChartRenderPlan
+	filename: string
 	chartTitle: string | undefined
 	chartId: string
 	sessionId: string | null | undefined
@@ -289,8 +300,8 @@ function ChartExportButtonsSlot({
 	// Other pages keep the separate .csv/.png buttons from ChartExportButtons.
 	return (
 		<ChartPngExportButton
-			chartInstance={chartInstance}
-			filename={renderPlan.filename}
+			chart={chart}
+			filename={filename}
 			title={chartTitle}
 			iconOnly
 			csvMenuItem={
@@ -393,7 +404,13 @@ function ChartEditorSession({
 			</div>
 		)
 	} else {
-		previewContent = renderChartContent(previewPresentation.plan, previewChartKey, noop)
+		previewContent = (
+			<ChartContent
+				renderPlan={previewPresentation.plan}
+				chartKey={previewChartKey}
+				exportButtons={STYLE_PREVIEW_EXPORTS}
+			/>
+		)
 	}
 
 	return (
@@ -592,7 +609,7 @@ function ActiveSingleChart({
 		return out
 	}, [data, config])
 
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 	const handleStackedChange = useCallback(
 		(stacked: boolean) => dispatch({ type: 'SET_STACKED', payload: stacked }),
 		[dispatch]
@@ -655,11 +672,23 @@ function ActiveSingleChart({
 			candlestickData.indicators === undefined
 				? { data: candlestickData.data }
 				: { data: candlestickData.data, indicators: candlestickData.indicators }
+		const candlestickExportModel = buildExportModel(config, { chartType: 'candlestick', data: candlestickData.data })
 		return (
 			<div className="flex flex-col p-2" data-chart-id={config.id}>
-				{addToDashboardButton ? <div className="flex justify-end">{addToDashboardButton}</div> : null}
+				<div className="flex items-center justify-end gap-1.5">
+					<ChartExportButtonsSlot
+						chart={chartExport}
+						exportModel={candlestickExportModel}
+						filename={candlestickExportModel.csvFilename}
+						chartTitle={chartTitle}
+						chartId={config.id}
+						sessionId={sessionId}
+						messageId={messageId}
+					/>
+					{addToDashboardButton}
+				</div>
 				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="min-h-[480px]" />}>
-					<CandlestickChart {...candlestickProps} containerClassName="min-h-[480px]" />
+					<CandlestickChart {...candlestickProps} containerClassName="min-h-[480px]" exportButtons={chartExport} />
 				</Suspense>
 			</div>
 		)
@@ -687,7 +716,9 @@ function ActiveSingleChart({
 	const normalizedState = renderPlan.controls.state
 	const exportModel = renderPlan.exportModel
 	const chartKey = `${config.id}-${normalizedState.stacked}-${normalizedState.percentage}-${normalizedState.cumulative}-${normalizedState.grouping}-${normalizedState.showHallmarks}-${normalizedState.showLabels}-${normalizedState.logScale}`
-	const chartContent = renderChartContent(renderPlan, chartKey, handleChartReady, height)
+	const chartContent = (
+		<ChartContent renderPlan={renderPlan} chartKey={chartKey} exportButtons={chartExport} height={height} />
+	)
 	const controls = title === undefined ? renderPlan.controls : { ...renderPlan.controls, title }
 
 	return (
@@ -704,9 +735,9 @@ function ActiveSingleChart({
 				onOpenStyleEditor={canEdit ? handleOpenStyleEditor : undefined}
 			>
 				<ChartExportButtonsSlot
-					chartInstance={chartInstance}
+					chart={chartExport}
 					exportModel={exportModel}
-					renderPlan={renderPlan}
+					filename={renderPlan.filename}
 					chartTitle={chartTitle}
 					chartId={config.id}
 					sessionId={sessionId}

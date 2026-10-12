@@ -1,10 +1,13 @@
 import * as React from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { buildAlignedCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import { ASSET_BRAND_COLORS, chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
-import { ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { ChartPanelBody, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { slug } from '~/utils'
 import { formatUsd, formatPercent } from '~/utils/numberFormat'
 import type { QueryRetry } from '~/utils/query'
 import { researchHallmarks } from './chartHallmarks'
@@ -120,8 +123,24 @@ export function ResearchChart({ chart, toolbar }: { chart: ExchangeResearchChart
 		[chart, isDark]
 	)
 	const hallmarks = React.useMemo(() => researchHallmarks(chart.metric), [chart.metric])
+	const chartExport = useGetChartInstance()
 	return (
-		<ResearchChartFrame title={chart.title} description={chart.description} toolbar={toolbar} updatedAt={chart.builtAt}>
+		<ResearchChartFrame
+			title={chart.title}
+			description={chart.description}
+			toolbar={
+				<>
+					{toolbar}
+					<ChartExportButtons
+						chart={chartExport}
+						filename={slug(chart.title)}
+						title={chart.title}
+						csvSource={{ type: 'dataset', prepare: () => chartModel.dataset }}
+					/>
+				</>
+			}
+			updatedAt={chart.builtAt}
+		>
 			<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<ChartPanelBody role="img" aria-label={researchChartAriaLabel(chart)}>
 					<MultiSeriesChart
@@ -129,7 +148,7 @@ export function ResearchChart({ chart, toolbar }: { chart: ExchangeResearchChart
 						charts={chartModel.charts}
 						valueSymbol={chart.valueSymbol}
 						showLegend
-						exportButtons="hidden"
+						exportButtons={chartExport}
 						hallmarks={hallmarks}
 					/>
 				</ChartPanelBody>
@@ -177,9 +196,12 @@ function ResearchChartFrame({
 	return (
 		<Panel className="flex-1">
 			<ChartPanelToolbar align="start">
-				<div className="mr-auto flex min-w-0 basis-full flex-col">
-					<h2 className="heading-xs">{title}</h2>
-					<p className="body-sm text-secondary">{description}</p>
+				{/* A full row rather than `leading`: the description changes with the view, and a short one in `leading`
+				    would pull the controls up beside it, so the view switch would jump away from the pointer. */}
+				<div className="min-w-0 basis-full">
+					<ChartPanelTitle headingAs="h2" subtitle={description}>
+						{title}
+					</ChartPanelTitle>
 				</div>
 				{toolbar}
 			</ChartPanelToolbar>

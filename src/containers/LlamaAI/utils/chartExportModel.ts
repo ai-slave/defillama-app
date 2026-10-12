@@ -1,5 +1,7 @@
 import { buildCsvRowsFromDataset } from '~/components/ChartExport/ChartCsvExportButton'
 import type { PngExportProfile } from '~/components/ChartExport/ChartPngExportButton'
+import { buildCandlestickCsvDataset } from '~/components/ECharts/CandlestickChart/csv'
+import type { CandlestickPoint } from '~/components/ECharts/CandlestickChart/types'
 import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import type { AdaptedChartData } from '~/containers/LlamaAI/utils/adaptedChartTypes'
 import type { CsvCell } from '~/utils/csvCell'
@@ -47,7 +49,11 @@ function buildCartesianCsvRows(
 	return csvRows
 }
 
-export function buildExportModel(config: ChartConfiguration, adaptedChart: AdaptedChartData): ChartExportModel | null {
+/** A candlestick skips the presentation pipeline (ChartRenderer adapts it on its own), so it arrives as its points. */
+export function buildExportModel(
+	config: ChartConfiguration,
+	adaptedChart: AdaptedChartData | { chartType: 'candlestick'; data: Array<CandlestickPoint> }
+): ChartExportModel | null {
 	const csvFilename = slugifyTitle(config.title) || 'chart'
 
 	switch (adaptedChart.chartType) {
@@ -99,6 +105,14 @@ export function buildExportModel(config: ChartConfiguration, adaptedChart: Adapt
 				csvRows,
 				csvFilename,
 				pngProfile: 'hbar'
+			}
+		}
+		case 'candlestick': {
+			const { dimensions, source } = buildCandlestickCsvDataset(adaptedChart.data)
+			return {
+				csvRows: buildCsvRowsFromDataset(dimensions, source, 'daily'),
+				csvFilename,
+				pngProfile: 'default'
 			}
 		}
 		default:

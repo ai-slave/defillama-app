@@ -83,8 +83,7 @@ const EMPTY_SERIES: Array<string> = []
 const TOTAL_CIRCULATING_CHARTS: Array<MultiSeriesChartSeriesConfig> = [
 	{ type: 'line', name: 'Circulating', encode: { x: 'timestamp', y: 'Circulating' }, color: CHART_COLORS[0] }
 ]
-const AREA_EXPORT_BUTTONS = { csv: true, png: true, filename: 'chart' }
-const BAR_EXPORT_BUTTONS = { csv: true, png: false, filename: 'bar-chart-data' }
+const AREA_EXPORT_BUTTONS = { filename: 'chart' }
 
 export function StablecoinsChartTab({
 	error,
@@ -311,6 +310,7 @@ export function StablecoinsChartTab({
 			return (
 				<Suspense fallback={<ChartPanelExportShellLoading />}>
 					<PieChart
+						exportButtons={{ omit: 'live preview inside the Add Chart modal; the saved card exports through its menu' }}
 						chartData={chainPiePresentation.chartData}
 						stackColors={{ ...chainPiePresentation.stackColors, ...brandColors }}
 					/>
@@ -326,8 +326,6 @@ export function StablecoinsChartTab({
 					: chainChartType === 'usdInflows'
 						? STABLECOIN_SINGLE_UNITLESS_CHART_OPTIONS
 						: STABLECOIN_DOLLAR_CHART_OPTIONS
-		const exportButtons =
-			chainChartType === 'usdInflows' || chainChartType === 'tokenInflows' ? BAR_EXPORT_BUTTONS : AREA_EXPORT_BUTTONS
 
 		return (
 			<Suspense fallback={<ChartPanelExportShellLoading />}>
@@ -342,7 +340,7 @@ export function StablecoinsChartTab({
 					{...(chainChartType === 'totalMcap' ? { hallmarks: EMPTY_HALLMARKS } : {})}
 					chartOptions={chartOptions}
 					csvSource={{ type: 'dataset', prepare: prepareChainCsvDataset }}
-					exportButtons={exportButtons}
+					exportButtons={AREA_EXPORT_BUTTONS}
 				/>
 			</Suspense>
 		)
@@ -388,6 +386,9 @@ export function StablecoinsChartTab({
 				return (
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<PieChart
+							exportButtons={{
+								omit: 'live preview inside the Add Chart modal; the saved card exports through its menu'
+							}}
 							chartData={assetPiePresentation.chartData}
 							stackColors={assetPiePresentation.stackColors}
 							valueSymbol={stablecoinSymbol}

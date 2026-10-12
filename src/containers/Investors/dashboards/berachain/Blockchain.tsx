@@ -10,7 +10,7 @@ import { StatTile } from '~/ui/SummaryStats'
 import { formatCompactNumber } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
 import { useBlockchainData, type TopToken } from './blockchainApi'
-import { AREA_CHART_EXPORTS, BAR_CHART_EXPORTS, createChartOptions } from './chartDefaults'
+import { createChartOptions } from './chartDefaults'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -160,7 +160,7 @@ export default function Blockchain() {
 						dataset={data.chartDatasets.transactions}
 						charts={TRANSACTIONS_CHART}
 						chartOptions={DEFAULT_CHART_OPTIONS}
-						exportButtons={BAR_CHART_EXPORTS}
+						exportButtons="auto"
 						valueSymbol=""
 					/>
 				</Suspense>
@@ -174,7 +174,7 @@ export default function Blockchain() {
 						dataset={data.chartDatasets.addresses}
 						charts={ADDRESSES_CHARTS}
 						chartOptions={DEFAULT_CHART_OPTIONS}
-						exportButtons={AREA_CHART_EXPORTS}
+						exportButtons="auto"
 						valueSymbol=""
 					/>
 				</Suspense>
@@ -197,7 +197,7 @@ export default function Blockchain() {
 						dataset={data.chartDatasets.gasFees}
 						charts={GAS_FEES_CHART}
 						chartOptions={DOLLAR_CHART_OPTIONS}
-						exportButtons={BAR_CHART_EXPORTS}
+						exportButtons="auto"
 						valueSymbol="$"
 					/>
 				</Suspense>
@@ -211,7 +211,7 @@ export default function Blockchain() {
 						dataset={data.chartDatasets.blockUtilization}
 						charts={UTILIZATION_CHART}
 						chartOptions={PERCENT_CHART_OPTIONS}
-						exportButtons={AREA_CHART_EXPORTS}
+						exportButtons="auto"
 						valueSymbol="%"
 					/>
 				</Suspense>
@@ -227,7 +227,7 @@ export default function Blockchain() {
 						dataset={data.chartDatasets.contractDeployments}
 						charts={CONTRACTS_CHART}
 						chartOptions={DEFAULT_CHART_OPTIONS}
-						exportButtons={BAR_CHART_EXPORTS}
+						exportButtons="auto"
 						valueSymbol=""
 					/>
 				</Suspense>
@@ -243,7 +243,7 @@ export default function Blockchain() {
 						dataset={data.chartDatasets.tokenTransfers}
 						charts={TRANSFERS_CHART}
 						chartOptions={DOLLAR_CHART_OPTIONS}
-						exportButtons={BAR_CHART_EXPORTS}
+						exportButtons="auto"
 						valueSymbol="$"
 					/>
 				</Suspense>

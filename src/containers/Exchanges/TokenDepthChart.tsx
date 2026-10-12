@@ -16,8 +16,10 @@
  * picture of whichever rows the table happens to be filtered to.
  */
 import * as React from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { CHART_SERIES_LIMIT } from '~/constants/colors'
-import { applySlippageHaircut, sumLadders, venueEntries, type DepthCurveVenue } from './depthCurve'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { applySlippageHaircut, depthCurveDataset, sumLadders, venueEntries, type DepthCurveVenue } from './depthCurve'
 import { DepthCurveBody } from './DepthCurveBody'
 import type { ExchangeDepthLadder, ExchangePairModel } from './models'
 
@@ -75,19 +77,33 @@ export function TokenDepthChart({
 }) {
 	const venues = React.useMemo(() => tokenDepthVenues(pairs, slippage), [pairs, slippage])
 	const entries = React.useMemo(() => venueEntries(venues, CHART_SERIES_LIMIT), [venues])
+	const dataset = React.useMemo(() => depthCurveDataset(entries), [entries])
+	const chartExport = useGetChartInstance()
 
 	// Nothing measured for this token: no panel rather than an empty frame.
 	if (entries.length === 0) return null
 
 	return (
 		<section className="flex flex-col gap-2" aria-label={`${symbol} order-book depth`}>
-			<div className="flex flex-col gap-0.5 px-1">
-				<h3 className="label-md text-secondary">USD perp order book</h3>
-				<p className="body-sm text-tertiary">
-					{`Cumulative USD resting within each distance of mid across each venue's USD perp ${symbol} books. Where we measure fills, the book they were measured on is discounted by how far they missed its quote. Past where a book's snapshot reached, its widest measured total is carried forward, so a curve never falls outward. Curves are drawn on their own, not stacked.`}
-				</p>
+			<div className="flex items-start gap-2 px-1">
+				<div className="flex min-w-0 flex-1 flex-col gap-0.5">
+					<h3 className="label-md text-secondary">USD perp order book</h3>
+					<p className="body-sm text-tertiary">
+						{`Cumulative USD resting within each distance of mid across each venue's USD perp ${symbol} books. Where we measure fills, the book they were measured on is discounted by how far they missed its quote. Past where a book's snapshot reached, its widest measured total is carried forward, so a curve never falls outward. Curves are drawn on their own, not stacked.`}
+					</p>
+				</div>
+				<ChartExportButtons
+					chart={chartExport}
+					filename={`${symbol.toLowerCase()}-usd-perp-order-book`}
+					title={`${symbol} USD Perp Order Book`}
+					csvSource={{
+						type: 'dataset',
+						prepare: () => ({ dimensions: ['Distance From Mid', ...dataset.series], source: dataset.source })
+					}}
+					disabled={!dataset}
+				/>
 			</div>
-			<DepthCurveBody entries={entries} />
+			<DepthCurveBody entries={entries} dataset={dataset} exportButtons={chartExport} />
 		</section>
 	)
 }

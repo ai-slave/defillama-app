@@ -7,6 +7,15 @@ test('labels a narrative leaf with its name, return, and market cap', () => {
 	)
 })
 
+test('a narrative leaf and tooltip without a return show a dash, never 0%', () => {
+	expect(formatNarrativeTreemapLabel('Aave', [2_500_000_000, null, null])).toBe(
+		'{name|Aave}\nReturn: {apy| —}\nMarket Cap: {mcap| $2.5b}'
+	)
+	expect(
+		formatNarrativeTreemapTooltip([{ name: 'All' }, { name: 'AI' }, { name: 'Render' }], [2_500_000_000, null, null])
+	).toBe('Render<br>Return: —<br>Market Cap: $2.5b<br>')
+})
+
 test('keeps treemap dollar labels short: one decimal from millions up, whole dollars below', () => {
 	expect([formatTreemapUsd(1_234_567), formatTreemapUsd(12_345), formatTreemapUsd(-2_500_000_000)]).toEqual([
 		'$1.2M',

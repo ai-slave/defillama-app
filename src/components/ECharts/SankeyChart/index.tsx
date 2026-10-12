@@ -5,6 +5,7 @@ import * as echarts from 'echarts/core'
 import { LabelLayout } from 'echarts/features'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { chartExportHandle } from '~/components/ChartExport/types'
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { chartWatermarkGraphic, useCanvasWatermarkEnabled } from '~/components/ECharts/shared/watermark'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
@@ -64,6 +65,7 @@ function SankeyChart({
 	nodeAlign = 'justify',
 	orient = 'horizontal',
 	onReady,
+	exportButtons,
 	...props
 }: ISankeyChartProps) {
 	const canvasWatermarkEnabled = useCanvasWatermarkEnabled()
@@ -76,10 +78,12 @@ function SankeyChart({
 	const persistentLifecycle = usePersistentEChartsLifecycle()
 	const isVisibleRef = useRef(false)
 	const onReadyRef = useRef(onReady)
+	const chartExportHandleRef = useRef(chartExportHandle(exportButtons))
 	const formatSankeyValue = useCallback((value: number): string => formatChartValue(value, valueSymbol), [valueSymbol])
 
 	useEffect(() => {
 		onReadyRef.current = onReady
+		chartExportHandleRef.current = chartExportHandle(exportButtons)
 	})
 
 	const nodeMetadata = useMemo(() => buildSankeyNodeMetadata(nodes), [nodes])
@@ -250,6 +254,7 @@ function SankeyChart({
 		persistentLifecycle.restore(instance)
 		isVisibleRef.current = true
 		onReadyRef.current?.(instance)
+		chartExportHandleRef.current?.handleChartReady(instance)
 		applyOption()
 	}, [applyOption, persistentLifecycle])
 
@@ -284,6 +289,7 @@ function SankeyChart({
 			chartRef.current = null
 			isVisibleRef.current = false
 			onReadyRef.current?.(null)
+			chartExportHandleRef.current?.handleChartReady(null)
 			if (instance && !instance.isDisposed()) instance.dispose()
 		}
 	}, [persistentLifecycle])

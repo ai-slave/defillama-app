@@ -288,8 +288,7 @@ export function RWAOverviewChartPanel({
 		[selectedFlowOverlayMetrics, flowOnChainMcapByTimestamp, flowActiveMcapByTimestamp, flowDefiActiveTvlByTimestamp]
 	)
 
-	const { chartInstance: multiSeriesChart2Instance, handleChartReady: handleMultiSeriesChartReady } =
-		useGetChartInstance()
+	const multiSeriesChart2Export = useGetChartInstance()
 	const chartMetricLabel = isFlowVsPrice
 		? 'Flow vs Price'
 		: isFlowMetric
@@ -499,7 +498,7 @@ export function RWAOverviewChartPanel({
 						{plotsSeries ? (
 							<>
 								<ChartCsvExportButton
-									chartInstance={multiSeriesChart2Instance}
+									chart={multiSeriesChart2Export}
 									filename={chartFilename}
 									source={{
 										type: 'dataset',
@@ -519,7 +518,7 @@ export function RWAOverviewChartPanel({
 									}}
 								/>
 								<ChartPngExportButton
-									chartInstance={multiSeriesChart2Instance}
+									chart={multiSeriesChart2Export}
 									filename={chartFilename}
 									title={exportChartTitle}
 								/>
@@ -542,12 +541,12 @@ export function RWAOverviewChartPanel({
 						) : groupedFlowChart ? (
 							<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 								<MultiSeriesChart
+									exportButtons={multiSeriesChart2Export}
 									dataset={groupedFlowChart.dataset}
 									charts={groupedFlowChart.charts}
 									groupBy={groupedFlowChart.groupBy}
 									showLegend
 									valueSymbol="$"
-									onReady={handleMultiSeriesChartReady}
 								/>
 							</Suspense>
 						) : flowChart ? (
@@ -558,7 +557,7 @@ export function RWAOverviewChartPanel({
 										? { defaultStartTimestamp: flowDefaultStartTimestamp }
 										: {})}
 									onVisibleRangeChange={(range) => setFlowZoom({ source: flowChart.dataset.source, range })}
-									onReady={handleMultiSeriesChartReady}
+									exportButtons={multiSeriesChart2Export}
 								/>
 							</Suspense>
 						) : (
@@ -573,6 +572,7 @@ export function RWAOverviewChartPanel({
 					) : (
 						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<MultiSeriesChart
+								exportButtons={multiSeriesChart2Export}
 								dataset={deferredTimeSeriesChart.dataset}
 								charts={deferredTimeSeriesChart.charts}
 								showLegend
@@ -581,7 +581,6 @@ export function RWAOverviewChartPanel({
 									!deferredTimeSeriesChart.isShare && !deferredTimeSeriesChart.dataset.dimensions.includes('Total')
 								}
 								valueSymbol="$"
-								onReady={handleMultiSeriesChartReady}
 							/>
 						</Suspense>
 					)}

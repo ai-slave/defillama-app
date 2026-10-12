@@ -1,6 +1,7 @@
 import { createColumnHelper, type SortingState } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useMemo } from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChart/categoryOptions'
 import type { TreemapNode } from '~/components/ECharts/TreemapChart/types'
@@ -9,8 +10,10 @@ import { type paginatedTableFeatures, usePaginatedTable } from '~/components/Tab
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { prepareTableCsv } from '~/components/Table/utils'
 import { childColors } from '~/constants/colors'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { Change } from '~/ui/Change'
+import { ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { MetaLine } from '~/ui/MetaLine'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -288,6 +291,7 @@ function IndustriesReadyPage({
 		dimensions: ['Industry', 'Companies'],
 		source: mostPopulatedIndustries.map((industry) => [industry.industry, industry.companyCount])
 	}
+	const companyCountChartExport = useGetChartInstance()
 	const matrixRows = selectIndustryReturnMatrix(sectorRows)
 	const sectorOptions = buildIndustrySectorOptions(classifiedIndustries)
 
@@ -386,16 +390,27 @@ function IndustriesReadyPage({
 				/>
 
 				<Panel>
-					<PanelHeader>
-						<div className="mr-auto">
-							<PanelTitle>Industries with most companies</PanelTitle>
-							<p className="body-sm text-tertiary">
-								{mostPopulatedIndustry
-									? `${mostPopulatedIndustry.industry} leads with ${mostPopulatedIndustry.companyCount} listed companies`
-									: 'Ranked by number of listed companies'}
-							</p>
-						</div>
-					</PanelHeader>
+					<ChartPanelToolbar
+						leading={
+							<ChartPanelTitle
+								headingAs="h2"
+								subtitle={
+									mostPopulatedIndustry
+										? `${mostPopulatedIndustry.industry} leads with ${mostPopulatedIndustry.companyCount} listed companies`
+										: 'Ranked by number of listed companies'
+								}
+							>
+								Industries with most companies
+							</ChartPanelTitle>
+						}
+					>
+						<ChartExportButtons
+							chart={companyCountChartExport}
+							filename="industries-with-most-companies"
+							title="Industries with most companies"
+							csvSource={{ type: 'dataset', prepare: () => companyCountDataset }}
+						/>
+					</ChartPanelToolbar>
 					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
 							dataset={companyCountDataset}
@@ -417,7 +432,7 @@ function IndustriesReadyPage({
 								}
 							}}
 							valueSymbol=""
-							exportButtons="hidden"
+							exportButtons={companyCountChartExport}
 							hideDataZoom
 						/>
 					</Suspense>

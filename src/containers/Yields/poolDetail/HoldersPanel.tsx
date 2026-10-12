@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import { lazy, type ReactNode, Suspense, useEffect, useState } from 'react'
 import { useBlockExplorers } from '~/api/client'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import type { ChartExportHandle } from '~/components/ChartExport/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import {
@@ -12,6 +13,7 @@ import {
 	TokenPageTableScroller
 } from '~/components/Table/helpers'
 import { childColors, OTHERS_COLOR } from '~/constants/colors'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
 import { CopyHelper } from '~/ui/Copy'
@@ -112,11 +114,14 @@ function HolderDistribution({
 	list,
 	colors,
 	top10Pct,
+	exportButtons,
 	onReady
 }: {
 	list: Array<Holder>
 	colors: Array<string>
 	top10Pct: number | null
+	exportButtons: ChartExportHandle
+	/** Hands the instance to the table's hover sync; exports go through `exportButtons`. */
 	onReady: (instance: ECharts | null) => void
 }) {
 	const distribution = holderDistributionShares(list, top10Pct)
@@ -153,7 +158,7 @@ function HolderDistribution({
 						const value = typeof rawValue === 'number' ? rawValue : Number(rawValue ?? 0)
 						return `${item.marker}${escapeHtml(item.name)}: <b>${formatPercent(value, PERCENT_POINTS_TWO_DECIMALS_OPTIONS)}</b>`
 					}}
-					exportButtons="hidden"
+					exportButtons={exportButtons}
 					onReady={onReady}
 				/>
 			</Suspense>
@@ -348,6 +353,7 @@ export function HoldersPanel({
 	const router = useRouter()
 	const mode = getHolderMode(router.query.holderMode)
 	const [donutInstance, setDonutInstance] = useState<ECharts | null>(null)
+	const donutExport = useGetChartInstance()
 	const [active, setActive] = useState<number | null>(null)
 
 	useEffect(() => {
@@ -413,7 +419,7 @@ export function HoldersPanel({
 						size="md"
 					/>
 					<ChartExportButtons
-						chartInstance={() => donutInstance}
+						chart={donutExport}
 						filename={`${poolId}-top-10-holder-distribution`}
 						title={exportTitle ? `${exportTitle} Top 10 Holder Distribution` : 'Top 10 Holder Distribution'}
 						csvSource="rendered-chart"
@@ -423,7 +429,15 @@ export function HoldersPanel({
 			<div className="grid grid-cols-1 lg:grid-cols-[minmax(17rem,1fr)_minmax(0,3fr)]">
 				<HolderSummary
 					holders={holders}
-					donut={<HolderDistribution list={list} colors={colors} top10Pct={top10Pct} onReady={setDonutInstance} />}
+					donut={
+						<HolderDistribution
+							list={list}
+							colors={colors}
+							top10Pct={top10Pct}
+							exportButtons={donutExport}
+							onReady={setDonutInstance}
+						/>
+					}
 				/>
 				<HoldersTable
 					list={list}

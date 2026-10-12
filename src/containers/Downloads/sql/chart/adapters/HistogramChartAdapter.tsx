@@ -1,5 +1,6 @@
 import type * as echarts from 'echarts/core'
 import { lazy, Suspense, useMemo } from 'react'
+import type { HeadlessChartExportButtons } from '~/components/ChartExport/types'
 import { buildAlignedCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
@@ -20,10 +21,18 @@ interface HistogramChartAdapterProps {
 	result: QueryResult
 	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
+	exportButtons: HeadlessChartExportButtons
 	height: string
 }
 
-export function HistogramChartAdapter({ config, result, classified, onReady, height }: HistogramChartAdapterProps) {
+export function HistogramChartAdapter({
+	config,
+	result,
+	classified,
+	onReady,
+	exportButtons,
+	height
+}: HistogramChartAdapterProps) {
 	const formatter = useMemo(() => makeValueFormatter(config.numberFormat), [config.numberFormat])
 	const valueColName =
 		config.histogram?.valueCol ?? config.yCols[0] ?? classified.find((c) => c.coarse === 'number')?.name ?? null
@@ -110,7 +119,7 @@ export function HistogramChartAdapter({ config, result, classified, onReady, hei
 				chartOptions={chartOptions}
 				onReady={onReady}
 				showLegend
-				exportButtons="hidden"
+				exportButtons={exportButtons}
 			/>
 		</Suspense>
 	)

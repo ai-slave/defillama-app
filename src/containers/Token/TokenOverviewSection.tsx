@@ -3,7 +3,9 @@ import dynamic from 'next/dynamic'
 import { useRouter } from 'next/router'
 import { useMemo } from 'react'
 import { useAuthContext } from '~/auth'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { ChartMetricsDialog } from '~/components/ChartMetricsDialog'
+import { prepareChartCsv } from '~/components/ECharts/shared/csv'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -15,6 +17,7 @@ import { RaisesTotal } from '~/containers/Raises/RaisesTotal'
 import { summarizeRaises } from '~/containers/Raises/summary'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useIsClient } from '~/hooks/useIsClient'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
@@ -31,6 +34,7 @@ import { StaleText } from '~/ui/StaleText'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryChange, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'
+import { slug } from '~/utils'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatDate } from '~/utils/dateFormat'
 import { tokenIconUrl } from '~/utils/icons'
@@ -519,6 +523,8 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 		activeChartCount: activeCharts.length
 	})
 	const [pendingChart] = pendingCharts
+	const chartExport = useGetChartInstance()
+	const prepareCsv = () => prepareChartCsv(displayedChartData, `${overview.name}.csv`, 'daily')
 	const loadingLabel = pendingChart ? getChartLabel(pendingChart, overview.symbol) : `${pendingCharts.length} metrics`
 	const setActiveTimeframe = (timeframe: PriceChartTimeframe) => {
 		void pushShallowQuery(router, {
@@ -577,6 +583,14 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 					options={PRICE_CHART_TIMEFRAMES.map((value) => ({ value, label: value }))}
 					label="Price history timeframe"
 				/>
+				<ChartExportButtons
+					chart={chartExport}
+					csvSource={{ type: 'prepare-csv', prepare: prepareCsv }}
+					filename={slug(overview.name)}
+					title={overview.name}
+					iconUrl={tokenIconUrl(overview.name)}
+					disabled={chartBody !== 'chart'}
+				/>
 			</ChartPanelToolbar>
 			<ChartPanelBody>
 				{chartBody === 'wait-for-client' ? null : chartBody === 'error' ? (
@@ -595,6 +609,7 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 						groupBy="daily"
 						hallmarks={null}
 						rangeHallmarks={null}
+						exportButtons={chartExport}
 					/>
 				) : (
 					<SurfaceBodyStatus variant="empty" className="max-w-sm">

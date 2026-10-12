@@ -22,9 +22,6 @@ import { TablePager } from '~/components/Table/TablePager'
 import { Card } from '~/ui/Card'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 
-export const AAVE_AREA_EXPORT = { csv: true, png: true, filename: 'chart' } as const
-export const AAVE_BAR_EXPORT = { csv: true, png: false, filename: 'bar-chart-data' } as const
-
 export const AAVE_CATEGORY_DOLLAR_CHART_OPTIONS = createCategoryChartOptions('$')
 
 export const AAVE_CATEGORY_PERCENT_CHART_OPTIONS = createCategoryChartOptions('%')

@@ -1,4 +1,4 @@
-import type * as echarts from 'echarts/core'
+import type { HeadlessChartExportButtons } from '~/components/ChartExport/types'
 import type {
 	ChartTimeGrouping,
 	ChartTimeGroupingWithCumulative,
@@ -308,5 +308,5 @@ export interface IProtocolCoreChartProps {
 	isThemeDark: boolean
 	groupBy?: ChartTimeGroupingWithCumulative
 	hideDataZoom?: boolean
-	onReady?: (instance: echarts.ECharts | null) => void
+	exportButtons: HeadlessChartExportButtons
 }

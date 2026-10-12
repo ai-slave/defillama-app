@@ -1,9 +1,9 @@
-import type * as echarts from 'echarts/core'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { AddToDashboardButton } from '~/components/AddToDashboard/AddToDashboardButton'
 import type { ChartCsvSource } from '~/components/ChartExport/ChartCsvExportButton'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import type { ChartExportHandle } from '~/components/ChartExport/types'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import {
@@ -171,28 +171,28 @@ export function PeggedAssetInfo({
 	const volumeGroupBy = parseStablecoinVolumeGroupBy(router.query.groupBy)
 	const chartTypeOptions = ASSET_CHART_TYPE_OPTIONS
 	const chartViewOptions = React.useMemo(() => getStablecoinChartViewOptions(chartState), [chartState])
-	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
+	const exportChartExport = useGetChartInstance()
 
 	const onChartTypeChange = React.useCallback(
 		(nextChartType: StablecoinChartCategory) => {
-			handleChartReady(null)
+			exportChartExport.handleChartReady(null)
 			void pushShallowQuery(router, {
 				chartType: getStablecoinChartTypeQueryValue(ASSET_CHART_MODE, nextChartType),
 				chartView: undefined
 			})
 		},
-		[handleChartReady, router]
+		[exportChartExport, router]
 	)
 	const onChartViewChange = React.useCallback(
 		(nextChartView: string) => {
 			const view = parseStablecoinChartView(nextChartView)
 			if (!view) return
-			handleChartReady(null)
+			exportChartExport.handleChartReady(null)
 			void pushShallowQuery(router, {
 				chartView: getStablecoinChartViewQueryValue(ASSET_CHART_MODE, chartType, view)
 			})
 		},
-		[chartType, handleChartReady, router]
+		[chartType, exportChartExport, router]
 	)
 	const onVolumeGroupByChange = React.useCallback(
 		(nextGroupBy: LowercaseDwmcGrouping) => {
@@ -518,7 +518,7 @@ export function PeggedAssetInfo({
 							/>
 						) : null}
 						<ChartExportButtons
-							chartInstance={exportChartInstance}
+							chart={exportChartExport}
 							filename={getImageExportFilename()}
 							title={getImageExportTitle()}
 							iconUrl={peggedAssetIconUrl(name)}
@@ -528,10 +528,10 @@ export function PeggedAssetInfo({
 					{chartType === 'marketCap' && chartView === 'pie' ? (
 						<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="w-full" />}>
 							<PieChart
+								exportButtons={exportChartExport}
 								chartData={marketCapPresentation?.kind === 'pie' ? marketCapPresentation.chartData : []}
 								{...(marketCapPresentation?.kind === 'pie' ? { stackColors: marketCapPresentation.stackColors } : {})}
 								valueSymbol={symbol}
-								onReady={handleChartReady}
 							/>
 						</React.Suspense>
 					) : chartType === 'volume' ? (
@@ -542,7 +542,7 @@ export function PeggedAssetInfo({
 							showLegend={chartView === 'byChain'}
 							{...(activeSelectedCharts === undefined ? {} : { selectedCharts: activeSelectedCharts })}
 							groupBy={deferredVolumeChart.groupBy}
-							onReady={handleChartReady}
+							exportButtons={exportChartExport}
 						/>
 					) : (
 						<SelectedAssetChart
@@ -551,7 +551,7 @@ export function PeggedAssetInfo({
 							failedRead={!usesDefaultChartData && queryReadFailed(chartSeriesQuery) ? chartSeriesQuery : null}
 							showLegend={showDefaultLegend}
 							{...(activeSelectedCharts === undefined ? {} : { selectedCharts: activeSelectedCharts })}
-							onReady={handleChartReady}
+							exportButtons={exportChartExport}
 						/>
 					)}
 				</Panel>
@@ -641,7 +641,7 @@ function SelectedAssetChart({
 	showLegend,
 	selectedCharts,
 	groupBy,
-	onReady
+	exportButtons
 }: {
 	data: StablecoinChartSeriesPayload | null
 	isLoading: boolean
@@ -649,7 +649,7 @@ function SelectedAssetChart({
 	showLegend: boolean
 	selectedCharts?: Set<string>
 	groupBy?: LowercaseDwmcGrouping
-	onReady: (instance: echarts.ECharts | null) => void
+	exportButtons: ChartExportHandle
 }) {
 	if (failedRead) {
 		return (
@@ -671,6 +671,7 @@ function SelectedAssetChart({
 	return (
 		<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="w-full" />}>
 			<MultiSeriesChart
+				exportButtons={exportButtons}
 				dataset={data.dataset}
 				charts={data.charts}
 				{...(selectedCharts === undefined ? {} : { selectedCharts })}
@@ -680,7 +681,6 @@ function SelectedAssetChart({
 				showTotalInTooltip={data.showTotalInTooltip}
 				showLegend={showLegend}
 				{...(groupBy === undefined ? {} : { groupBy })}
-				onReady={onReady}
 			/>
 		</React.Suspense>
 	)

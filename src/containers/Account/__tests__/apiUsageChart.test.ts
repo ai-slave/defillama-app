@@ -19,7 +19,7 @@ test('ranks routes by total requests across days, breaking ties alphabetically',
 test('fills days without requests across the window and groups routes past the top six into Others', () => {
 	const { dataset, charts } = buildApiUsageChartData(stats, 3, allRoutes, allRoutes, fetchedAt)
 	expect(dataset).toEqual({
-		dimensions: ['date', 'a', 'b', 'c', 'd', 'e', 'f', 'Others'],
+		dimensions: ['timestamp', 'a', 'b', 'c', 'd', 'e', 'f', 'Others'],
 		source: [
 			[Date.UTC(2026, 6, 17), 0, 0, 0, 0, 0, 0, 0],
 			[Date.UTC(2026, 6, 18), 0, 0, 0, 0, 0, 0, 0],
@@ -39,7 +39,7 @@ test('fills days without requests across the window and groups routes past the t
 
 test('charts only the selected routes and keeps each route on its ranked color', () => {
 	const { dataset, charts } = buildApiUsageChartData(stats, 1, allRoutes, ['c', 'g'], fetchedAt)
-	expect(dataset).toEqual({ dimensions: ['date', 'c', 'g'], source: [[Date.UTC(2026, 6, 19), 5, 1]] })
+	expect(dataset).toEqual({ dimensions: ['timestamp', 'c', 'g'], source: [[Date.UTC(2026, 6, 19), 5, 1]] })
 	expect(charts.map((chart) => [chart.name, chart.color])).toEqual([
 		['c', chartColor(2)],
 		['g', chartColor(6)]
@@ -48,6 +48,6 @@ test('charts only the selected routes and keeps each route on its ranked color',
 
 test('deselecting every route leaves an empty chart over the window', () => {
 	const { dataset, charts } = buildApiUsageChartData(stats, 2, allRoutes, [], fetchedAt)
-	expect(dataset).toEqual({ dimensions: ['date'], source: [[Date.UTC(2026, 6, 18)], [Date.UTC(2026, 6, 19)]] })
+	expect(dataset).toEqual({ dimensions: ['timestamp'], source: [[Date.UTC(2026, 6, 18)], [Date.UTC(2026, 6, 19)]] })
 	expect(charts).toEqual([])
 })

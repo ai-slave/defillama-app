@@ -83,6 +83,11 @@ if [ -s "$staged_files" ]; then
 	fi
 
 	if [ "$status" -eq 0 ] && [ -s "$policy_files" ]; then
+		echo "Checking chart export policy on staged files..."
+		xargs -0 bun scripts/policies/check-chart-exports.ts < "$policy_files" || status=$?
+	fi
+
+	if [ "$status" -eq 0 ] && [ -s "$policy_files" ]; then
 		echo "Checking image size policy on staged files..."
 		xargs -0 bun scripts/policies/check-image-size.ts < "$policy_files" || status=$?
 	fi

@@ -13,7 +13,7 @@ vi.mock('~/components/ECharts/TreemapChart', () => ({ default: () => <p>treemap 
 let unmount = () => {}
 afterEach(() => unmount())
 
-test('picking Heatmap draws the treemap and drops the chart CSV export, which has no series to export', async () => {
+test('picking Heatmap draws the treemap and keeps both chart exports', async () => {
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
 	const container = document.createElement('div')
 	document.body.append(container)
@@ -47,5 +47,5 @@ test('picking Heatmap draws the treemap and drops the chart CSV export, which ha
 
 	await waitForUi(() => expect(container.textContent).toContain('treemap chart'))
 	expect(container.textContent).not.toContain('series chart')
-	expect(exportNames()).toEqual(['.png', '.csv'])
+	expect(exportNames()).toEqual(['.csv', '.png', '.csv'])
 })

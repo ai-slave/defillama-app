@@ -3,8 +3,6 @@ import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/com
 
 const THREE_MONTH_DAYS = 90
 
-export const CSV_ONLY_EXPORT = { csv: true, png: false } as const
-
 type TimeSeries = { name: string }
 
 export function multiSeriesCharts(

@@ -212,7 +212,7 @@ export function BreakdownChartCard({
 		[activeSeries, snapshot, view]
 	)
 
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 	const chartSnapshot = React.useMemo(
 		() => ({
 			dataset: dominance?.dataset ?? dataset,
@@ -254,7 +254,7 @@ export function BreakdownChartCard({
 					/>
 				) : null}
 				<ChartExportButtons
-					chartInstance={chartInstance}
+					chart={chartExport}
 					filename={exportsDominance ? `${exportFilenameBase}-dominance` : exportFilenameBase}
 					title={exportsDominance ? `${exportTitle} (Dominance)` : exportTitle}
 					iconUrl={exportIconUrl}
@@ -269,6 +269,7 @@ export function BreakdownChartCard({
 			) : (
 				<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 					<MultiSeriesChart
+						exportButtons={chartExport}
 						dataset={deferredChart.dataset}
 						charts={deferredChart.charts}
 						csvSource={deferredChart.csvSource}
@@ -278,7 +279,6 @@ export function BreakdownChartCard({
 							? { stacked: true, expandTo100Percent: true }
 							: { selectedCharts: deferredChart.selectedCharts })}
 						showTotalInTooltip={!deferredChart.isDominance && valueSymbol === '$'}
-						onReady={handleChartReady}
 					/>
 				</React.Suspense>
 			)}
@@ -329,7 +329,7 @@ export function TokensBreakdownPieChartCard({
 		[selectedCharts, tokenBreakdownPieSeries, view]
 	)
 
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 
 	return (
 		<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
@@ -355,7 +355,7 @@ export function TokensBreakdownPieChartCard({
 					/>
 				) : null}
 				<ChartExportButtons
-					chartInstance={chartInstance}
+					chart={chartExport}
 					filename={exportFilenameBase}
 					title={exportTitle}
 					iconUrl={exportIconUrl}
@@ -370,9 +370,9 @@ export function TokensBreakdownPieChartCard({
 			) : (
 				<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 					<PieChart
+						exportButtons={chartExport}
 						chartData={deferredPresentation.chartData}
 						stackColors={deferredPresentation.stackColors}
-						onReady={handleChartReady}
 					/>
 				</React.Suspense>
 			)}

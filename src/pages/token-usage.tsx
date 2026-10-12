@@ -62,7 +62,7 @@ export default function Tokens() {
 	const router = useRouter()
 	const isClient = useIsClient()
 	const { authorizedFetch, hasActiveSubscription, isAuthenticated, loaders } = useAuthContext()
-	const { chartInstance: treemapChartInstance, handleChartReady: handleTreemapChartReady } = useGetChartInstance()
+	const treemapChartExport = useGetChartInstance()
 	const signInDialogStore = Ariakit.useDialogStore()
 
 	const { token, includecex } = router.query
@@ -223,9 +223,9 @@ export default function Tokens() {
 							) : null}
 							{treemapTreeData.length > 0 ? (
 								<>
-									<ChartRestoreButton chartInstance={treemapChartInstance} />
+									<ChartRestoreButton chartInstance={treemapChartExport.chartInstance} />
 									<ChartPngExportButton
-										chartInstance={treemapChartInstance}
+										chart={treemapChartExport}
 										filename={tokenUsageExportFilename}
 										title={tokenUsageExportTitle}
 									/>
@@ -249,7 +249,7 @@ export default function Tokens() {
 								height="480px"
 								valueLabel="Amount"
 								valueSymbol="$"
-								onReady={handleTreemapChartReady}
+								exportButtons={treemapChartExport}
 							/>
 						</Suspense>
 					) : null}

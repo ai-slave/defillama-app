@@ -165,7 +165,7 @@ function USDInflowsChartCard({
 	exportTitle: string
 	exportIconUrl: string | undefined
 }) {
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 	const deferredDataset = React.useDeferredValue(dataset)
 
 	return (
@@ -173,7 +173,7 @@ function USDInflowsChartCard({
 			<ChartPanelToolbar>
 				<h2 className="mr-auto heading-xs">{title}</h2>
 				<ChartExportButtons
-					chartInstance={chartInstance}
+					chart={chartExport}
 					filename={exportFilenameBase}
 					title={exportTitle}
 					iconUrl={exportIconUrl}
@@ -182,11 +182,11 @@ function USDInflowsChartCard({
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<MultiSeriesChart
+					exportButtons={chartExport}
 					dataset={deferredDataset}
 					charts={USD_INFLOWS_CHARTS}
 					valueSymbol="$"
 					selectedCharts={USD_INFLOWS_SERIES}
-					onReady={handleChartReady}
 				/>
 			</React.Suspense>
 		</Panel>
@@ -223,7 +223,7 @@ function InflowsByTokenChartCard({
 		[activeSeries, breakdown, view]
 	)
 
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 	const chartSnapshot = React.useMemo(
 		() => ({ dataset, charts, selectedCharts, csvSource }),
 		[charts, csvSource, dataset, selectedCharts]
@@ -255,7 +255,7 @@ function InflowsByTokenChartCard({
 					/>
 				) : null}
 				<ChartExportButtons
-					chartInstance={chartInstance}
+					chart={chartExport}
 					filename={exportFilenameBase}
 					title={exportTitle}
 					iconUrl={exportIconUrl}
@@ -268,6 +268,7 @@ function InflowsByTokenChartCard({
 			) : (
 				<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 					<MultiSeriesChart
+						exportButtons={chartExport}
 						dataset={deferredChart.dataset}
 						charts={deferredChart.charts}
 						csvSource={deferredChart.csvSource}
@@ -277,7 +278,6 @@ function InflowsByTokenChartCard({
 						{...(deferredChart.selectedCharts.size > 1
 							? { chartOptions: { tooltip: { formatter: INFLOWS_TOOLTIP_FORMATTER_USD } } }
 							: {})}
-						onReady={handleChartReady}
 					/>
 				</React.Suspense>
 			)}

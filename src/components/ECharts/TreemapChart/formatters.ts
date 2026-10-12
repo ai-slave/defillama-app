@@ -20,7 +20,7 @@ export function formatTreemapUsd(value: number): string {
 export function formatNarrativeTreemapLabel(name: string, value: TreemapValue): string {
 	return [
 		`{name|${name}}`,
-		`Return: {apy| ${formatPercent(value[1] ?? 0, { input: 'percent' })}}`,
+		`Return: {apy| ${formatPercent(value[1], { input: 'percent' }) ?? '—'}}`,
 		`Market Cap: {mcap| ${formatUsd(value[0], { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}}`
 	].join('\n')
 }
@@ -38,7 +38,7 @@ export function formatNarrativeTreemapTooltip(treePathInfo: Array<{ name?: unkno
 	if (treePath.length < 2) return ''
 	return [
 		`${escapeHtml(treePath[1]!)}<br>`,
-		`Return: ${formatPercent(value[1], { input: 'percent' })}<br>`,
+		`Return: ${formatPercent(value[1], { input: 'percent' }) ?? '—'}<br>`,
 		`Market Cap: ${formatUsd(value[0], { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br>`
 	].join('')
 }

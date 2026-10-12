@@ -1,6 +1,7 @@
 import { createColumnHelper, type SortingState } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useMemo } from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { BasicLink } from '~/components/Link'
 import { readSelectionFromQuery, updateQueryFromSelected } from '~/components/Select/query'
@@ -9,8 +10,10 @@ import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { prepareTableCsv } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import { chartColor, OTHERS_COLOR } from '~/constants/colors'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { Change, formatChange } from '~/ui/Change'
+import { ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { MetaLine } from '~/ui/MetaLine'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -195,6 +198,7 @@ function ConstituentsPanel({
 
 export function SectorDetailPage({ state }: { state: EquitiesPageDataState<IEquitiesSectorPageViewData> }) {
 	const router = useRouter()
+	const valuationChartExport = useGetChartInstance()
 
 	if (state.status === 'error') {
 		return (
@@ -387,7 +391,9 @@ export function SectorDetailPage({ state }: { state: EquitiesPageDataState<IEqui
 									radius={['55%', '78%']}
 									height={CONCENTRATION_PIE_HEIGHT}
 									showLegend={false}
-									exportButtons="hidden"
+									exportButtons={{
+										omit: 'draws one number, the top-10 share printed in its center, with the split listed beside it'
+									}}
 								/>
 							</Suspense>
 							<div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -444,14 +450,36 @@ export function SectorDetailPage({ state }: { state: EquitiesPageDataState<IEqui
 
 			<div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
 				<Panel>
-					<PanelHeader>
-						<div className="mr-auto">
-							<PanelTitle>Valuation vs market</PanelTitle>
-							<p className="body-sm text-tertiary">
-								Sector totals valued as one company; marker is the all-equities median
-							</p>
-						</div>
-					</PanelHeader>
+					<ChartPanelToolbar
+						leading={
+							<ChartPanelTitle
+								headingAs="h2"
+								subtitle="Sector totals valued as one company; marker is the all-equities median"
+							>
+								Valuation vs market
+							</ChartPanelTitle>
+						}
+					>
+						<ChartExportButtons
+							chart={valuationChartExport}
+							filename="valuation-vs-market"
+							disabled={valuationComparisonRows.length === 0}
+							title={`${sector.sector} valuation vs market`}
+							csvSource={{
+								type: 'dataset',
+								prepare: () => ({
+									dimensions: ['Metric', 'Sector Value', 'Market Median', 'Sector / Median (%)'],
+									source: valuationComparisonRows.map(([label, value, median]) => [
+										label,
+										value,
+										median,
+										(value / median) * 100
+									])
+								})
+							}}
+							pngProfile="hbar"
+						/>
+					</ChartPanelToolbar>
 					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<HBarChart
 							categories={valuationComparisonRows.map(([label]) => label)}
@@ -469,6 +497,7 @@ export function SectorDetailPage({ state }: { state: EquitiesPageDataState<IEqui
 								}
 							]}
 							valueSymbol=""
+							exportButtons={valuationChartExport}
 						/>
 					</Suspense>
 					<div className="flex flex-col gap-3 p-4">

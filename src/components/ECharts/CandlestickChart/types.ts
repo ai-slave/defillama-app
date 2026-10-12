@@ -1,4 +1,5 @@
 import type * as echarts from 'echarts/core'
+import type { HeadlessChartExportButtons } from '~/components/ChartExport/types'
 
 export type CandlestickPoint = [
 	timestampMs: number,
@@ -16,6 +17,8 @@ export interface ICandlestickChartProps {
 	height?: string
 	/** A min-h-* class that moves the 360px floor of a chart without `height`. */
 	containerClassName?: string
+	/** Where this chart's .csv/.png live: the handle its page's export buttons also take, or why it has none. */
+	exportButtons: HeadlessChartExportButtons
 	onReady?: (instance: echarts.ECharts | null) => void
 	indicators?: Array<{
 		name: string

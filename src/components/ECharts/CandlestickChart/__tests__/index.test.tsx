@@ -25,7 +25,7 @@ afterEach(async () => {
 })
 
 async function drawnPanels(data: Array<CandlestickPoint>) {
-	await act(async () => root.render(<CandlestickChart data={data} />))
+	await act(async () => root.render(<CandlestickChart exportButtons={{ omit: 'renderer test' }} data={data} />))
 	const instance = echarts.getInstanceByDom(container.querySelector<HTMLElement>('[_echarts_instance_]')!)!
 	const option = instance.getOption() as { grid: Array<unknown>; series: Array<{ type: string }> }
 	return { grids: option.grid.length, series: option.series.map((series) => series.type) }

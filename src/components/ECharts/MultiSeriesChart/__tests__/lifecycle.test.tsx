@@ -59,7 +59,7 @@ function Chart({
 	return (
 		<ChartMotionContext.Provider value={motion}>
 			<EChartsRenderVisibilityProvider visible={visible}>
-				<MultiSeriesChart dataset={dataset(10)} charts={CHARTS} exportButtons="hidden" {...props} />
+				<MultiSeriesChart dataset={dataset(10)} charts={CHARTS} exportButtons={{ omit: 'renderer test' }} {...props} />
 			</EChartsRenderVisibilityProvider>
 		</ChartMotionContext.Provider>
 	)

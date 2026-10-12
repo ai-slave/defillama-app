@@ -17,12 +17,7 @@ import {
 } from '~/utils/numberFormat'
 import type { FlatReserve } from './api'
 import { useAaveMarkets } from './api'
-import {
-	AAVE_BAR_EXPORT,
-	AAVE_CATEGORY_DOLLAR_CHART_OPTIONS,
-	AAVE_CATEGORY_PERCENT_CHART_OPTIONS,
-	InvestorsTable
-} from './shared'
+import { AAVE_CATEGORY_DOLLAR_CHART_OPTIONS, AAVE_CATEGORY_PERCENT_CHART_OPTIONS, InvestorsTable } from './shared'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -289,7 +284,7 @@ export default function Markets() {
 							title="Market Size by chain"
 							headingAs="h3"
 							chartOptions={AAVE_CATEGORY_DOLLAR_CHART_OPTIONS}
-							exportButtons={AAVE_BAR_EXPORT}
+							exportButtons="auto"
 						/>
 					</Suspense>
 				</Panel>
@@ -304,7 +299,7 @@ export default function Markets() {
 								title="Utilization by top assets"
 								headingAs="h3"
 								chartOptions={AAVE_CATEGORY_PERCENT_CHART_OPTIONS}
-								exportButtons={AAVE_BAR_EXPORT}
+								exportButtons="auto"
 							/>
 						</Suspense>
 					</Panel>

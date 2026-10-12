@@ -305,8 +305,6 @@ export function OracleOverview({
 								charts={charts}
 								alwaysShowTooltip
 								exportButtons={{
-									png: true,
-									csv: true,
 									filename: slug(chartFilenameTitle),
 									pngTitle: chartTitle,
 									...(chain ? { pngIconUrl: chainIconUrl(chain) } : {})

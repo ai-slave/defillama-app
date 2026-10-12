@@ -7,7 +7,6 @@ import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { queryReadFailed } from '~/utils/query'
 import { readInvestorApiJson } from '../../api.types'
-import { CSV_ONLY_EXPORT } from './chartDefaults'
 import { buildFlareNetworkData, type NetworkAPIResponse } from './data'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
@@ -57,7 +56,7 @@ export default function Network() {
 							title={c.transactions.title ?? 'Daily Transactions'}
 							subtitle="Transactions settled on Flare each day."
 							headingAs="h3"
-							exportButtons={CSV_ONLY_EXPORT}
+							exportButtons="auto"
 							chartOptions={c.transactions.chartOptions}
 						/>
 					</Suspense>
@@ -74,7 +73,7 @@ export default function Network() {
 							title={c.activeAccounts.title ?? 'Daily Active Accounts'}
 							subtitle="Unique accounts active on Flare each day."
 							headingAs="h3"
-							exportButtons={CSV_ONLY_EXPORT}
+							exportButtons="auto"
 							chartOptions={c.activeAccounts.chartOptions}
 						/>
 					</Suspense>

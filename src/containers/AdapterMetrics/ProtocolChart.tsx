@@ -244,7 +244,7 @@ function ChartByType({
 		scope: `${protocolName}:${adapterType}:${chartType}`,
 		availableSeries: uniqueBreakdownNames
 	})
-	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
+	const exportChartExport = useGetChartInstance()
 
 	const chartBuilderConfig = React.useMemo<ChartBuilderConfig | null>(() => {
 		const builderMetric = getAdapterBuilderMetric(adapterType)
@@ -333,7 +333,7 @@ function ChartByType({
 				) : null}
 				{chartBuilderConfig ? <AddToDashboardButton chartConfig={chartBuilderConfig} smol /> : null}
 				<ChartExportButtons
-					chartInstance={exportChartInstance}
+					chart={exportChartExport}
 					filename={exportFilename}
 					title={exportTitle}
 					iconUrl={tokenIconUrl(exportProtocolName)}
@@ -351,6 +351,7 @@ function ChartByType({
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<MultiSeriesChart
+					exportButtons={exportChartExport}
 					dataset={deferredMainChartData.dataset}
 					charts={deferredMainChartData.charts}
 					selectedCharts={renderedCharts}
@@ -358,7 +359,6 @@ function ChartByType({
 					valueSymbol="$"
 					showTotalInTooltip
 					{...(hallmarks !== undefined ? { hallmarks } : {})}
-					onReady={handleChartReady}
 				/>
 			</React.Suspense>
 		</>

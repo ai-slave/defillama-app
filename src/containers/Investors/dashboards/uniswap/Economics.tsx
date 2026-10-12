@@ -417,6 +417,7 @@ export default function Economics() {
 				{data.protocolFeesByCategory.dates.length < 2 ? (
 					<BarListCard
 						title={`Protocol Fees by Pair Category (${data.protocolFeesByCategory.dates[0]?.slice(0, 7) ?? 'latest month'})`}
+						csvColumns={['Pair Category', 'Protocol Fees (USD)']}
 						subtitle="The monthly protocol-fee total split by pair category (fee-switch cut, not total swap fees; the category mix is measured on v2 and v3 pools). Renders as a monthly trend once more history accumulates."
 						items={data.protocolFeesByCategory.series
 							.map((series) => ({ name: series.name, value: series.data[0] ?? 0 }))

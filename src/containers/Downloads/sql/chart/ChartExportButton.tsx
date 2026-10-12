@@ -1,5 +1,5 @@
-import type * as echarts from 'echarts/core'
 import { ChartPngExportButton, type PngExportProfile } from '~/components/ChartExport/ChartPngExportButton'
+import type { ChartExportHandle } from '~/components/ChartExport/types'
 import type { ChartType } from '../chartConfig'
 
 function profileFor(chartType: ChartType): PngExportProfile {
@@ -10,16 +10,16 @@ function profileFor(chartType: ChartType): PngExportProfile {
 }
 
 interface ChartExportButtonProps {
-	chartInstance: () => echarts.ECharts | null
+	chart: ChartExportHandle
 	chartType: ChartType
 	title?: string | null
 	filename?: string
 }
 
-export function ChartExportButton({ chartInstance, chartType, title, filename }: ChartExportButtonProps) {
+export function ChartExportButton({ chart, chartType, title, filename }: ChartExportButtonProps) {
 	return (
 		<ChartPngExportButton
-			chartInstance={chartInstance}
+			chart={chart}
 			pngProfile={profileFor(chartType)}
 			title={title ?? undefined}
 			filename={filename}

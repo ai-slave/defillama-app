@@ -1,5 +1,5 @@
-import type * as echarts from 'echarts/core'
 import { lazy, type ReactNode, startTransition, Suspense, useDeferredValue, useMemo, useState } from 'react'
+import type { ChartExportHandle } from '~/components/ChartExport/types'
 import {
 	ChartGroupingSelector,
 	DWM_GROUPING_OPTIONS_LOWERCASE,
@@ -25,7 +25,7 @@ const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChar
 interface BridgeVolumeChartProps {
 	data: Array<BridgeVolumePoint> | null | undefined
 	height?: string
-	onReady?: (instance: echarts.ECharts | null) => void
+	exportButtons: ChartExportHandle
 	headerStart?: ReactNode
 	headerEnd?: ReactNode
 	/** A `ScopeNote` for the page to place under this chart's own toolbar. */
@@ -35,7 +35,7 @@ interface BridgeVolumeChartProps {
 export function BridgeVolumeChart({
 	data,
 	height,
-	onReady,
+	exportButtons,
 	headerStart,
 	headerEnd,
 	scopeNote
@@ -89,13 +89,13 @@ export function BridgeVolumeChart({
 
 			<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" style={{ minHeight: height }} />}>
 				<MultiSeriesChart
+					exportButtons={exportButtons}
 					dataset={deferredChartData.dataset}
 					charts={deferredChartData.charts}
 					{...(height !== undefined ? { height } : {})}
 					showLegend
 					groupBy={deferredChartData.groupBy}
 					valueSymbol={deferredChartData.metricType === 'Volume' ? '$' : ''}
-					{...(onReady !== undefined ? { onReady } : {})}
 				/>
 			</Suspense>
 		</>

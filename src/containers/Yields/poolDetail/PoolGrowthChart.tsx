@@ -1,7 +1,6 @@
 import * as Ariakit from '@ariakit/react'
-import type * as echarts from 'echarts/core'
 import { useRouter } from 'next/router'
-import { lazy, Suspense, useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type {
 	IMultiSeriesChartProps,
@@ -13,6 +12,7 @@ import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
 import { getTooltipAxisValue } from '~/components/ECharts/shared/tooltip'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Change } from '~/ui/Change'
 import { ChartPanelBody } from '~/ui/ChartPanel'
 import { Field } from '~/ui/Field'
@@ -607,7 +607,7 @@ export function PoolGrowthChart({
 		(next) => fetchHistory(next).then(({ history }) => buildGrowthChart(history, intrinsicSeries)),
 		!historyAccessPending
 	)
-	const [instance, setInstance] = useState<echarts.ECharts | null>(null)
+	const chartExport = useGetChartInstance()
 	const anchorDate = getGrowthAnchorDate(router.query.growthFrom)
 	const deposit = getGrowthDeposit(router.query.deposit)
 	const withIntrinsic = getSeriesVisibility(router.query[INTRINSIC_QUERY_KEY], INTRINSIC_DEFAULT_ON)
@@ -685,7 +685,7 @@ export function PoolGrowthChart({
 						</Tooltip>
 					) : null}
 					<ChartExportButtons
-						chartInstance={() => instance}
+						chart={chartExport}
 						filename={`yields-${poolId}-growth`}
 						csvSource={{ type: 'dataset', prepare: () => dataset }}
 					/>
@@ -725,9 +725,8 @@ export function PoolGrowthChart({
 							charts={charts}
 							chartOptions={chartOptions}
 							valueSymbol="$"
-							exportButtons="hidden"
 							// The slider only narrows the view; options apply with `notMerge`, so a new day or deposit resets the zoom.
-							onReady={setInstance}
+							exportButtons={chartExport}
 						/>
 					</Suspense>
 				)}

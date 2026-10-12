@@ -19,8 +19,6 @@ export function timeSeriesChartOptions(
 	}
 }
 
-export const CSV_ONLY_EXPORT = { csv: true, png: false } as const
-
 export const FLARE_PINK = '#E62058'
 export const FLARE_ORANGE = '#FF7A1A'
 export const FLARE_BLUE = '#2D63F6'

@@ -1,4 +1,5 @@
 import type * as echarts from 'echarts/core'
+import type { HeadlessChartExportButtons } from '~/components/ChartExport/types'
 
 export interface ISankeyChartProps {
 	height?: string
@@ -15,5 +16,7 @@ export interface ISankeyChartProps {
 	valueSymbol?: string
 	nodeAlign?: 'left' | 'right' | 'justify'
 	orient?: 'horizontal' | 'vertical'
+	/** Where this chart's .csv/.png live: the handle its page's export buttons also take, or why it has none. */
+	exportButtons: HeadlessChartExportButtons
 	onReady?: (instance: echarts.ECharts | null) => void
 }

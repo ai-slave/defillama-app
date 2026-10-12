@@ -3,10 +3,13 @@
  * venue, bids and asks on one axis.
  */
 import * as React from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { CHART_SERIES_LIMIT } from '~/constants/colors'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { aggregateEntries, depthCurveVenues, venueEntries, type DepthCurveRow } from './depthCurve'
+import { slug } from '~/utils'
+import { aggregateEntries, depthCurveDataset, depthCurveVenues, venueEntries, type DepthCurveRow } from './depthCurve'
 import { DepthCurveBody } from './DepthCurveBody'
 import { EXCHANGE_SEGMENT_LABELS, type ExchangeSegment } from './models'
 
@@ -32,22 +35,26 @@ export function DepthCurveChart({ rows }: { rows: Array<DepthCurveRow> }) {
 		() => (view === 'breakdown' ? venueEntries(venues, CHART_SERIES_LIMIT) : aggregateEntries(venues)),
 		[venues, view]
 	)
+	const dataset = React.useMemo(() => depthCurveDataset(entries), [entries])
+	const chartExport = useGetChartInstance()
 
 	return (
 		<>
-			<ChartPanelToolbar>
-				<SegmentedControl<DepthSegment>
-					value={activeSegment}
-					onValueChange={setSegment}
-					options={(available.length > 0 ? available : DEPTH_SEGMENTS).map((option) => ({
-						value: option,
-						label: EXCHANGE_SEGMENT_LABELS[option]
-					}))}
-					label="Depth segment"
-					variant="default"
-					size="md"
-					className="mr-auto"
-				/>
+			<ChartPanelToolbar
+				leading={
+					<SegmentedControl<DepthSegment>
+						value={activeSegment}
+						onValueChange={setSegment}
+						options={(available.length > 0 ? available : DEPTH_SEGMENTS).map((option) => ({
+							value: option,
+							label: EXCHANGE_SEGMENT_LABELS[option]
+						}))}
+						label="Depth segment"
+						variant="default"
+						size="md"
+					/>
+				}
+			>
 				<SegmentedControl<DepthView>
 					value={view}
 					onValueChange={setView}
@@ -59,8 +66,18 @@ export function DepthCurveChart({ rows }: { rows: Array<DepthCurveRow> }) {
 					variant="default"
 					size="md"
 				/>
+				<ChartExportButtons
+					chart={chartExport}
+					filename={`order-book-depth-${slug(EXCHANGE_SEGMENT_LABELS[activeSegment])}`}
+					title={`Order Book Depth (${EXCHANGE_SEGMENT_LABELS[activeSegment]})`}
+					csvSource={{
+						type: 'dataset',
+						prepare: () => ({ dimensions: ['Distance From Mid', ...dataset.series], source: dataset.source })
+					}}
+					disabled={!dataset}
+				/>
 			</ChartPanelToolbar>
-			<DepthCurveBody entries={entries} />
+			<DepthCurveBody entries={entries} dataset={dataset} exportButtons={chartExport} />
 			<p className="px-2 pb-2 body-sm text-tertiary">
 				{`Cumulative USD resting within each distance of mid across ${venues.length} books, unstacked. Only books measured that far out are counted, so a curve can step down where a shallower book drops out. A venue trading on another's book counts once, under that book.`}
 			</p>

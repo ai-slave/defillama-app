@@ -25,6 +25,7 @@ import {
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useEffectEvent, useMemo, useRef } from 'react'
+import { chartExportHandle } from '~/components/ChartExport/types'
 import { chartColor, oldBlue } from '~/constants/colors'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
@@ -70,6 +71,7 @@ function CandleStickAndVolumeChart({
 	height,
 	containerClassName,
 	indicators = EMPTY_INDICATORS,
+	exportButtons,
 	onReady
 }: ICandlestickChartProps) {
 	const [isThemeDark] = useDarkModeManager()
@@ -80,6 +82,7 @@ function CandleStickAndVolumeChart({
 	const persistentLifecycle = usePersistentEChartsLifecycle()
 	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
 		onReady?.(instance)
+		chartExportHandle(exportButtons)?.handleChartReady(instance)
 	})
 
 	// Stable resize listener - never re-attaches when dependencies change

@@ -21,6 +21,7 @@ import { CanvasRenderer } from 'echarts/renderers'
 import { useContext, useEffect, useEffectEvent, useMemo, useRef } from 'react'
 import type { ChartCsvSource } from '~/components/ChartExport/ChartCsvExportButton'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { chartExportHandle } from '~/components/ChartExport/types'
 import { chartWatermarkGraphic, useCanvasWatermarkEnabled } from '~/components/ECharts/shared/watermark'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
@@ -221,35 +222,15 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		[defaultChartSettings, chartOptions]
 	)
 
-	// Default exports ON for charts with at least one series unless explicitly disabled by the caller.
-	// (Historically this was limited to line charts, which made `exportButtons="auto"` appear "broken"
-	// on bar-chart pages like Raises.)
-	const hasAnySeries = displayedCharts.length > 0
-	// If a caller provides `onReady`, they often manage export instances + buttons outside the chart,
-	// so avoid showing duplicate toolbars by default in that case (auto mode).
-	const autoExportsEnabled = !onReady && hasAnySeries
-
-	const exportButtonsMode = exportButtons ?? 'auto'
-	const exportButtonsConfig =
-		typeof exportButtonsMode === 'object' && exportButtonsMode !== null ? exportButtonsMode : undefined
-	const exportButtonsHidden = exportButtonsMode === 'hidden'
-	const exportButtonsAuto = exportButtonsMode === 'auto'
-
-	const shouldEnableImageExport = exportButtonsHidden
-		? false
-		: exportButtonsConfig
-			? (exportButtonsConfig.png ?? true)
-			: exportButtonsAuto
-				? autoExportsEnabled
-				: false
-
-	const shouldEnableCSVDownload = exportButtonsHidden
-		? false
-		: exportButtonsConfig
-			? (exportButtonsConfig.csv ?? true)
-			: exportButtonsAuto
-				? autoExportsEnabled
-				: false
+	// The chart draws its own .csv/.png for `'auto'` and an export-names object, and only while it plots a point: a
+	// series with no rows (a protocol whose data failed to load) leaves nothing to export.
+	const exportNames =
+		typeof exportButtons === 'object' && !('handleChartReady' in exportButtons) && !('omit' in exportButtons)
+			? exportButtons
+			: undefined
+	const drawsOwnExportButtons =
+		(exportButtons === 'auto' || exportNames !== undefined) &&
+		(dataset.source.length > 0 || displayedCharts.some((chart) => (chart.data?.length ?? 0) > 0))
 
 	const referenceMarkLine = useMemo(
 		() =>
@@ -408,8 +389,8 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		]
 	)
 
-	const exportFilename = exportButtonsConfig?.filename || (title ? slug(title) : 'multi-series-chart')
-	const exportTitle = exportButtonsConfig?.pngTitle || title
+	const exportFilename = exportNames?.filename || (title ? slug(title) : 'multi-series-chart')
+	const exportTitle = exportNames?.pngTitle || title
 	// Without a `csvSource` the export follows the picker: only the series `selectedCharts` shows.
 	const defaultCsvSource = useMemo(() => {
 		if (!renderedCharts.some((chart) => chart.data)) {
@@ -463,6 +444,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 	)
 	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
 		onReady?.(instance)
+		chartExportHandle(exportButtons)?.handleChartReady(instance)
 	})
 	const syncCategoryLogos = useStableCallback(() => {
 		const layer = categoryLogosOverlayRef.current
@@ -877,7 +859,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 				) : null
 			}
 			header={
-				title || shouldEnableCSVDownload || shouldEnableImageExport ? (
+				title || drawsOwnExportButtons ? (
 					<ChartHeader
 						title={title}
 						subtitle={subtitle}
@@ -885,12 +867,12 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 						headingAs={headingAs}
 						exportButtons={
 							<ChartExportButtons
-								chartInstance={getChart}
+								chart={{ chartInstance: getChart }}
 								filename={exportFilename}
 								title={exportTitle}
-								iconUrl={exportButtonsConfig?.pngIconUrl}
-								showCsv={shouldEnableCSVDownload}
-								showPng={shouldEnableImageExport}
+								iconUrl={exportNames?.pngIconUrl}
+								showCsv={drawsOwnExportButtons}
+								showPng={drawsOwnExportButtons}
 								csvSource={exportCsvSource}
 							/>
 						}

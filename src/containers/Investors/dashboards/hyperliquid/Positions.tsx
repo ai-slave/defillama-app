@@ -10,11 +10,13 @@ import {
 	useTable
 } from '@tanstack/react-table'
 import { lazy, Suspense, useMemo, useState } from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { Table } from '~/components/Table/Table'
 import { TablePager } from '~/components/Table/TablePager'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
@@ -123,6 +125,7 @@ function PortfolioTrend({
 	window: 'day' | 'week' | 'month' | 'allTime'
 }) {
 	const dataset = useMemo(() => buildPortfolioTrendDataset(points), [points])
+	const chartExport = useGetChartInstance()
 
 	if (points.length < 2) return null
 
@@ -142,6 +145,12 @@ function PortfolioTrend({
 						useGrouping: false
 					})}
 				</span>
+				<ChartExportButtons
+					chart={chartExport}
+					filename={`hyperliquid-portfolio-trend-${window}`}
+					title={`Portfolio trend (${window})`}
+					csvSource={{ type: 'dataset', prepare: () => dataset }}
+				/>
 			</ChartPanelToolbar>
 			<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<MultiSeriesChart
@@ -150,7 +159,7 @@ function PortfolioTrend({
 					valueSymbol="$"
 					chartOptions={PORTFOLIO_CHART_OPTIONS}
 					hideDataZoom
-					exportButtons="hidden"
+					exportButtons={chartExport}
 				/>
 			</Suspense>
 			<div className="flex items-center justify-between px-2 pb-2 body-sm text-secondary">

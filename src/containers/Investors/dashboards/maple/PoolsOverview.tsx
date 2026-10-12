@@ -21,7 +21,6 @@ import { useMapleActivePools } from './api'
 import { buildMaplePoolsData, type PoolRow } from './chartData'
 import {
 	CardSkeleton,
-	MAPLE_CSV_ONLY_EXPORT,
 	MAPLE_PERCENT_CATEGORY_CHART_OPTIONS,
 	MAPLE_USD_CATEGORY_CHART_OPTIONS,
 	Pagination
@@ -190,7 +189,7 @@ export default function PoolsOverview() {
 								charts={TVL_CHART}
 								valueSymbol="$"
 								chartOptions={MAPLE_USD_CATEGORY_CHART_OPTIONS}
-								exportButtons={MAPLE_CSV_ONLY_EXPORT}
+								exportButtons="auto"
 							/>
 						</Suspense>
 					</Panel>
@@ -208,7 +207,7 @@ export default function PoolsOverview() {
 								charts={UTILIZATION_CHART}
 								valueSymbol="%"
 								chartOptions={MAPLE_PERCENT_CATEGORY_CHART_OPTIONS}
-								exportButtons={MAPLE_CSV_ONLY_EXPORT}
+								exportButtons="auto"
 							/>
 						</Suspense>
 					</Panel>
@@ -227,7 +226,7 @@ export default function PoolsOverview() {
 							charts={APY_CHART}
 							valueSymbol="%"
 							chartOptions={MAPLE_PERCENT_CATEGORY_CHART_OPTIONS}
-							exportButtons={MAPLE_CSV_ONLY_EXPORT}
+							exportButtons="auto"
 						/>
 					</Suspense>
 				</Panel>

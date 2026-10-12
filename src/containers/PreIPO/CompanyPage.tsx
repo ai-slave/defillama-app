@@ -97,8 +97,6 @@ export function PreIpoCompanyPage({
 								showLegend
 								title={HISTORY_CHART_TITLE}
 								exportButtons={{
-									png: true,
-									csv: true,
 									filename: `${summary.id}-valuation-history`,
 									pngTitle: `${summary.name} ${HISTORY_CHART_TITLE}`
 								}}

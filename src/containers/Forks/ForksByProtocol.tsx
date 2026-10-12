@@ -102,8 +102,6 @@ export function ForksByProtocol({ fork, forkLinks, protocolTableData, chartData 
 								charts={charts}
 								alwaysShowTooltip
 								exportButtons={{
-									png: true,
-									csv: true,
 									filename: slug(chartFilenameTitle),
 									pngTitle: chartTitle,
 									pngIconUrl: tokenIconUrl(fork)

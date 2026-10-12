@@ -63,7 +63,7 @@ export function DexSpotShareChart({
 	cexVenueCount: number | null
 }) {
 	const router = useRouter()
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 	const groupBy = parseDexSpotShareGrouping(readSingleQueryValue(router.query[GROUPING_QUERY_KEY]))
 	const methodology = buildDexSpotShareMethodology({ dexProtocolCount, cexVenueCount })
 	const dataset = React.useMemo(
@@ -96,7 +96,7 @@ export function DexSpotShareChart({
 					options={DWM_GROUPING_OPTIONS_LOWERCASE}
 				/>
 				<ChartExportButtons
-					chartInstance={chartInstance}
+					chart={chartExport}
 					filename={`dex-share-of-spot-volume-${groupBy}`}
 					title={CHART_TITLE}
 					csvSource={hasData ? { type: 'dataset', prepare: () => ({ ...dataset, groupBy }) } : null}
@@ -111,8 +111,7 @@ export function DexSpotShareChart({
 							chartOptions={{ yAxis: { min: 0 } }}
 							valueSymbol="%"
 							groupBy={groupBy}
-							exportButtons="hidden"
-							onReady={handleChartReady}
+							exportButtons={chartExport}
 						/>
 					</ChartPanelBody>
 				</React.Suspense>

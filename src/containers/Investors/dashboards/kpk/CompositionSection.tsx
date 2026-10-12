@@ -161,6 +161,7 @@ export function CompositionSection({
 						<>
 							<Suspense fallback={<ChartPanelExportShellLoading />}>
 								<MultiSeriesChart
+									exportButtons="auto"
 									dataset={model.dataset}
 									charts={model.charts}
 									chartOptions={chartOptions}

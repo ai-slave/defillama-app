@@ -101,7 +101,7 @@ export function BridgeInfo({
 	const [chartType, setChartType] = React.useState<ChartType>('Volume')
 	const [groupBy, setGroupBy] = React.useState<LowercaseDwmGrouping>('daily')
 	const [currentChain, setCurrentChain] = React.useState(defaultChain)
-	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
+	const exportChartExport = useGetChartInstance()
 	// The completed days are the data's, so they follow the clock the props were built with, not the visitor's.
 	const nowSec = usePageClockSec()
 
@@ -358,7 +358,7 @@ export function BridgeInfo({
 							<ChartGroupingSelector value={groupBy} setValue={setGroupBy} options={DWM_GROUPING_OPTIONS_LOWERCASE} />
 						) : null}
 						<ChartExportButtons
-							chartInstance={exportChartInstance}
+							chart={exportChartExport}
 							filename={chartFilename}
 							title={`${chartScopeTitle} ${chartType}`}
 							iconUrl={logo}
@@ -369,40 +369,40 @@ export function BridgeInfo({
 						{chartType === 'Volume' && isAllChains && volumeDataset.source.length > 0 ? (
 							<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 								<MultiSeriesChart
+									exportButtons={exportChartExport}
 									dataset={volumeDataset}
 									charts={VOLUME_CHARTS}
 									groupBy={groupBy}
 									valueSymbol="$"
-									onReady={handleChartReady}
 								/>
 							</React.Suspense>
 						) : null}
 						{chartType === 'Inflows' && !isAllChains && inflowsDataset.source.length > 0 ? (
 							<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 								<MultiSeriesChart
+									exportButtons={exportChartExport}
 									dataset={inflowsDataset}
 									charts={INFLOW_CHARTS}
 									groupBy={groupBy}
 									valueSymbol="$"
-									onReady={handleChartReady}
 								/>
 							</React.Suspense>
 						) : null}
 						{chartType === 'Tokens To' && tokenWithdrawals && tokenWithdrawals.peers.length > 0 ? (
 							<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 								<PieChart
+									exportButtons={exportChartExport}
 									chartData={visibleTokenPresentation.chartData}
 									stackColors={visibleTokenPresentation.stackColors}
-									onReady={handleChartReady}
 								/>
 							</React.Suspense>
 						) : null}
 						{chartType === 'Tokens From' && tokenDeposits && tokenDeposits.peers.length > 0 ? (
 							<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 								<PieChart
+									exportButtons={exportChartExport}
 									chartData={visibleTokenPresentation.chartData}
 									stackColors={visibleTokenPresentation.stackColors}
-									onReady={handleChartReady}
 								/>
 							</React.Suspense>
 						) : null}

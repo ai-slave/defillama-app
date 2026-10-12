@@ -49,8 +49,6 @@ export function ExtraTvlByChain(props: IExtraTvlByChainPageData) {
 	const chartTitle = props.chain === 'All' ? metricInfo.header : props.chain
 	const chartFilenameTitle = props.chain === 'All' ? metricInfo.header : `${props.chain} ${metricInfo.header}`
 	const exportButtons = {
-		png: true,
-		csv: true,
 		filename: slug(chartFilenameTitle),
 		pngTitle: chartTitle,
 		...(props.chain !== 'All' ? { pngIconUrl: chainIconUrl(props.chain) } : {})

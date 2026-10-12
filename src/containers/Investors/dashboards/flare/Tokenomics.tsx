@@ -14,7 +14,6 @@ import { StatTile } from '~/ui/SummaryStats'
 import { formatNumber } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
 import { readInvestorApiJson } from '../../api.types'
-import { CSV_ONLY_EXPORT } from './chartDefaults'
 import { buildFlareTokenomicsData, type TokenomicsAPIResponse } from './data'
 import { NarrativeCallout } from './ui'
 
@@ -132,7 +131,7 @@ export default function Tokenomics() {
 									title={inf.pctChart.title ?? 'Annualized Inflation Rate'}
 									subtitle={inf.pctChart.subtitle}
 									headingAs="h3"
-									exportButtons={CSV_ONLY_EXPORT}
+									exportButtons="auto"
 									chartOptions={inf.pctChart.chartOptions}
 								/>
 							</Suspense>
@@ -149,7 +148,7 @@ export default function Tokenomics() {
 										title={inf.circulatingChart.title ?? 'Circulating Supply (Monthly)'}
 										subtitle={inf.circulatingChart.subtitle}
 										headingAs="h3"
-										exportButtons={CSV_ONLY_EXPORT}
+										exportButtons="auto"
 										chartOptions={inf.circulatingChart.chartOptions}
 									/>
 								</Suspense>
@@ -176,9 +175,9 @@ export default function Tokenomics() {
 										onValueChange={setProtocolView}
 									/>
 									<ChartExportButtons
-										chartInstance={protocolExport.chartInstance}
+										chart={protocolExport}
 										filename="flr-by-protocol"
-										showPng={false}
+										title={protocolChart.title ?? 'FLR by Protocol (Monthly)'}
 										csvSource={{ type: 'dataset', prepare: () => protocolChart.dataset }}
 									/>
 								</ChartPanelToolbar>
@@ -187,8 +186,7 @@ export default function Tokenomics() {
 										dataset={protocolChart.dataset}
 										charts={protocolChart.charts}
 										valueSymbol=""
-										exportButtons="hidden"
-										onReady={protocolExport.handleChartReady}
+										exportButtons={protocolExport}
 										chartOptions={protocolChart.chartOptions}
 									/>
 								</Suspense>
@@ -227,9 +225,9 @@ export default function Tokenomics() {
 						onValueChange={setBurnView}
 					/>
 					<ChartExportButtons
-						chartInstance={burnExport.chartInstance}
+						chart={burnExport}
 						filename={`flr-burn-${burnView}`}
-						showPng={false}
+						title={b.burnTitle}
 						csvSource={{
 							type: 'dataset',
 							prepare: () => (burnView === 'daily' ? b.dailyDataset : b.cumulativeDataset)
@@ -243,8 +241,7 @@ export default function Tokenomics() {
 							dataset={b.dailyDataset}
 							charts={b.charts.daily}
 							valueSymbol=""
-							exportButtons="hidden"
-							onReady={burnExport.handleChartReady}
+							exportButtons={burnExport}
 							chartOptions={b.chartOptions}
 						/>
 					) : (
@@ -253,8 +250,7 @@ export default function Tokenomics() {
 							dataset={b.cumulativeDataset}
 							charts={b.charts.cumulative}
 							valueSymbol=""
-							exportButtons="hidden"
-							onReady={burnExport.handleChartReady}
+							exportButtons={burnExport}
 							chartOptions={b.chartOptions}
 						/>
 					)}
@@ -278,7 +274,7 @@ export default function Tokenomics() {
 						valueSymbol=""
 						title={e.emissionsTitle}
 						headingAs="h3"
-						exportButtons={CSV_ONLY_EXPORT}
+						exportButtons="auto"
 						chartOptions={e.perEpochChartOptions}
 					/>
 				</Suspense>
@@ -316,7 +312,7 @@ export default function Tokenomics() {
 						title={e.burnVsEmitTitle}
 						headingAs="h3"
 						showLegend
-						exportButtons={CSV_ONLY_EXPORT}
+						exportButtons="auto"
 						chartOptions={e.burnVsEmitChartOptions}
 					/>
 				</Suspense>
@@ -358,9 +354,9 @@ export default function Tokenomics() {
 						>
 							<StatusBadge status="good">Live{fire.liveSince ? ` since ${fire.liveSince}` : ''}</StatusBadge>
 							<ChartExportButtons
-								chartInstance={fireExport.chartInstance}
+								chart={fireExport}
 								filename="flare-fire-fees"
-								showPng={false}
+								title={fire.title}
 								csvSource={{ type: 'dataset', prepare: () => fire.dataset }}
 							/>
 						</ChartPanelToolbar>
@@ -370,8 +366,7 @@ export default function Tokenomics() {
 								charts={fire.charts}
 								valueSymbol="$"
 								showLegend
-								exportButtons="hidden"
-								onReady={fireExport.handleChartReady}
+								exportButtons={fireExport}
 								chartOptions={fire.chartOptions}
 							/>
 						</Suspense>

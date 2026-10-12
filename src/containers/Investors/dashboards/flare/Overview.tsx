@@ -45,6 +45,7 @@ export default function Overview() {
 			<Panel>
 				<Suspense fallback={<ChartPanelExportShellLoading />}>
 					<MultiSeriesChart
+						exportButtons="auto"
 						dataset={tvl.dataset}
 						charts={tvl.charts}
 						valueSymbol="$"
@@ -133,6 +134,7 @@ export default function Overview() {
 			<Panel>
 				<Suspense fallback={<ChartPanelExportShellLoading />}>
 					<MultiSeriesChart
+						exportButtons="auto"
 						dataset={stables.dataset}
 						charts={stables.charts}
 						valueSymbol="$"

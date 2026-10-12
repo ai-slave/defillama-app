@@ -1,4 +1,3 @@
-import type { ECharts } from 'echarts/core'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
@@ -78,7 +77,6 @@ function LiquidationsDistributionChartCard({
 	deferredChartModel,
 	prepareExportDataset,
 	displayOptions,
-	onChartReady,
 	setBreakdownMode,
 	setChartMode,
 	setMetric,
@@ -88,8 +86,7 @@ function LiquidationsDistributionChartCard({
 	timestamp,
 	title,
 	iconUrl,
-	tokenOptions,
-	chartInstance
+	tokenOptions
 }: {
 	availableSeries: Array<string>
 	breakdownOptions: Array<{ key: BreakdownMode; name: string }>
@@ -108,7 +105,6 @@ function LiquidationsDistributionChartCard({
 		showBreakdownLegend: boolean
 		showBreakdownSelector: boolean
 	}
-	onChartReady: (instance: ECharts | null) => void
 	setBreakdownMode: (mode: BreakdownMode) => void
 	setChartMode: (mode: ChartMode) => void
 	setMetric: (metric: LiquidationsMetric) => void
@@ -119,8 +115,8 @@ function LiquidationsDistributionChartCard({
 	title: string | undefined
 	iconUrl: string | undefined
 	tokenOptions: Array<{ key: string; name: string }>
-	chartInstance: () => ECharts | null
 }) {
+	const chartExport = useGetChartInstance()
 	const exportFilename = slug(
 		[title ?? 'liquidation-distribution', '100k', chartState.token, chartState.modeLabel, chartState.breakdownLabel]
 			.filter(Boolean)
@@ -209,7 +205,7 @@ function LiquidationsDistributionChartCard({
 					size="md"
 				/>
 				<ChartExportButtons
-					chartInstance={chartInstance}
+					chart={chartExport}
 					filename={exportFilename}
 					title={[
 						title ?? 'Liquidation Distribution',
@@ -226,13 +222,13 @@ function LiquidationsDistributionChartCard({
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 				<MultiSeriesChart
+					exportButtons={chartExport}
 					dataset={deferredChartModel.dataset}
 					charts={deferredChartModel.charts}
 					selectedCharts={deferredChartModel.selectedCharts}
 					chartOptions={deferredChartModel.chartOptions}
 					hideDataZoom={displayOptions.shouldHideDataZoom}
 					showLegend={displayOptions.showBreakdownLegend}
-					onReady={onChartReady}
 					valueSymbol={deferredChartModel.valueSymbol}
 				/>
 			</React.Suspense>
@@ -440,7 +436,6 @@ export function LiquidationsDistributionChart({
 	tokenStateMode?: 'query' | 'local'
 }) {
 	const router = useRouter()
-	const { chartInstance, handleChartReady } = useGetChartInstance()
 
 	const tokenOptions = React.useMemo(
 		() => chart.tokens.map((entry) => ({ key: entry.key, name: entry.label })),
@@ -697,7 +692,6 @@ export function LiquidationsDistributionChart({
 			deferredChartModel={deferredChartModel}
 			prepareExportDataset={prepareExportDataset}
 			displayOptions={{ hideTokenSelector, shouldHideDataZoom, showBreakdownLegend, showBreakdownSelector }}
-			onChartReady={handleChartReady}
 			setBreakdownMode={setBreakdownMode}
 			setChartMode={setChartMode}
 			setMetric={setMetric}
@@ -708,7 +702,6 @@ export function LiquidationsDistributionChart({
 			title={title}
 			iconUrl={iconUrl}
 			tokenOptions={tokenOptions}
-			chartInstance={chartInstance}
 		/>
 	)
 }

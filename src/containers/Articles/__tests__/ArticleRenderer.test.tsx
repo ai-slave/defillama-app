@@ -1,8 +1,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { normalizeLocalArticleDocument } from '../document'
 import { ArticleRenderer } from '../renderer/ArticleRenderer'
+
+// Chart blocks render export buttons, which read the router.
+vi.mock('next/router', () => ({ useRouter: () => ({ query: {}, pathname: '/', asPath: '/', push: vi.fn() }) }))
 
 const ARTICLE_NOW = '2026-07-14T00:00:00.000Z'
 

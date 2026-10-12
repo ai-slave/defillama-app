@@ -4,6 +4,7 @@ import { GraphicComponent, GridComponent, LegendComponent, TooltipComponent } fr
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useCallback, useEffect, useEffectEvent, useLayoutEffect, useRef } from 'react'
+import { chartExportHandle } from '~/components/ChartExport/types'
 import { CHART_COLORS } from '~/constants/colors'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
@@ -56,6 +57,7 @@ function HBarChart({
 	valueAxisMax,
 	valueAxisInterval,
 	showValueLabels = false,
+	exportButtons,
 	onReady
 }: IHBarChartProps) {
 	const grouped = series != null && series.length > 1
@@ -68,6 +70,7 @@ function HBarChart({
 	const overlayRef = useRef<HTMLDivElement>(null)
 	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
 		onReady?.(instance)
+		chartExportHandle(exportButtons)?.handleChartReady(instance)
 	})
 
 	// All-or-nothing logos: sparse icons (some 404) look worse than none and throw off left-margin

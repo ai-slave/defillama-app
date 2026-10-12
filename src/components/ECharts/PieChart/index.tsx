@@ -5,6 +5,7 @@ import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useContext, useEffect, useEffectEvent, useMemo, useRef } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { chartExportHandle } from '~/components/ChartExport/types'
 import { useCanvasWatermarkEnabled } from '~/components/ECharts/shared/watermark'
 import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
@@ -74,37 +75,26 @@ function PieChart({
 	const [isDark] = useDarkModeManager()
 	const chartTheme = useChartTheme(isDark)
 	const isSmall = useMedia(`(max-width: 37.5rem)`)
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const ownExport = useGetChartInstance()
 	const persistentLifecycle = usePersistentEChartsLifecycle()
 	const { hasEnteredRef } = persistentLifecycle
 
-	const exportButtonsMode = exportButtons ?? 'hidden'
-	const exportButtonsConfig =
-		typeof exportButtonsMode === 'object' && exportButtonsMode !== null ? exportButtonsMode : undefined
-	const exportButtonsHidden = exportButtonsMode === 'hidden'
-	const exportButtonsAuto = exportButtonsMode === 'auto'
+	// The chart draws its own .csv/.png for `'auto'` and an export-names object.
+	const exportNames =
+		typeof exportButtons === 'object' && !('handleChartReady' in exportButtons) && !('omit' in exportButtons)
+			? exportButtons
+			: undefined
+	const drawsOwnExportButtons = exportButtons === 'auto' || exportNames !== undefined
 
-	const imageExportEnabled = exportButtonsHidden
-		? false
-		: exportButtonsConfig
-			? (exportButtonsConfig.png ?? true)
-			: exportButtonsAuto
-
-	const csvDownloadEnabled = exportButtonsHidden
-		? false
-		: exportButtonsConfig
-			? (exportButtonsConfig.csv ?? true)
-			: exportButtonsAuto
-
-	const exportFilename =
-		exportButtonsConfig?.filename || (title ? title.replace(/\s+/g, '-').toLowerCase() : 'pie-chart')
-	const exportTitle = exportButtonsConfig?.pngTitle || title
+	const exportFilename = exportNames?.filename || (title ? title.replace(/\s+/g, '-').toLowerCase() : 'pie-chart')
+	const exportTitle = exportNames?.pngTitle || title
 	const stackColorByName = useMemo(() => new Map(Object.entries(stackColors ?? {})), [stackColors])
 	const chartDomRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 	const chartMotion = useContext(ChartMotionContext)
 	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
 		onReady?.(instance)
+		chartExportHandle(exportButtons)?.handleChartReady(instance)
 	})
 
 	const { percentByName, formatSlicePercent } = useMemo(() => {
@@ -308,17 +298,17 @@ function PieChart({
 		const instance = echarts.init(el, null, { renderer: 'canvas' })
 		chartRef.current = instance
 		persistentLifecycle.restore(instance)
-		handleChartReady(instance)
+		ownExport.handleChartReady(instance)
 		emitReady(instance)
 
 		return () => {
 			persistentLifecycle.capture(instance)
 			chartRef.current = null
 			instance.dispose()
-			handleChartReady(null)
+			ownExport.handleChartReady(null)
 			emitReady(null)
 		}
-	}, [handleChartReady, persistentLifecycle])
+	}, [ownExport, persistentLifecycle])
 
 	useEffect(() => {
 		const instance = chartRef.current
@@ -427,18 +417,18 @@ function PieChart({
 			chartClassName={height ? undefined : 'flex-1 initial:min-h-[360px]'}
 			chartStyle={height ? { height } : undefined}
 			header={
-				title || imageExportEnabled || csvDownloadEnabled ? (
+				title || drawsOwnExportButtons ? (
 					<ChartHeader
 						title={title}
 						headingAs={headingAs}
 						exportButtons={
 							<ChartExportButtons
-								chartInstance={chartInstance}
+								chart={ownExport}
 								filename={exportFilename}
 								title={exportTitle}
-								iconUrl={exportButtonsConfig?.pngIconUrl}
-								showCsv={csvDownloadEnabled}
-								showPng={imageExportEnabled}
+								iconUrl={exportNames?.pngIconUrl}
+								showCsv={drawsOwnExportButtons}
+								showPng={drawsOwnExportButtons}
 								csvSource={csvSource}
 							/>
 						}

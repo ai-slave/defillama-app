@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
+import type { HeadlessChartExportButtons } from '~/components/ChartExport/types'
 import MultiSeriesChart from '~/components/ECharts/MultiSeriesChart'
 import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChart/categoryOptions'
+import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import PieChart from '~/components/ECharts/PieChart'
 import { CHART_COLORS } from '~/constants/colors'
 import { SecondaryBadge } from '~/containers/MarketMakers/badges'
@@ -11,7 +13,7 @@ import { EmptyState } from '~/ui/Status'
 import { TagLink } from '~/ui/Tag'
 import { formatPercent } from '~/utils/numberFormat'
 import { UTR_PERCENT_OPTIONS } from './constants'
-import { disclosedVestingDurationMonths, disclosedVestingSchedule } from './disclosedVesting'
+import { disclosedVestingDataset, disclosedVestingDurationMonths } from './disclosedVesting'
 import { ChartCaption } from './TokenPage'
 import type { UtrDisclosedAllocation, UtrDisclosedTokenomicsGroup, UtrDisclosures } from './types'
 
@@ -111,18 +113,24 @@ function NotDisclosed() {
 
 const VESTING_CHART_OPTIONS = createCategoryChartOptions('%')
 
-export function DisclosedVestingChart({ groups }: { groups: Array<UtrDisclosedTokenomicsGroup> }) {
-	const { months, series } = disclosedVestingSchedule(groups)
-	const source = months.map((month, row) => [String(month), ...series.map((entry) => entry.data[row])])
+export function DisclosedVestingChart({
+	dataset,
+	exportButtons,
+	actions
+}: {
+	dataset: MultiSeriesChartDataset
+	exportButtons: HeadlessChartExportButtons
+	actions?: ReactNode
+}) {
 	return (
 		<>
-			<ChartCaption>Disclosed Maximum Token Supply (%) | Months Since TGE</ChartCaption>
+			<ChartCaption actions={actions}>Disclosed Maximum Token Supply (%) | Months Since TGE</ChartCaption>
 			<ChartPanelBody>
 				<MultiSeriesChart
-					dataset={{ source, dimensions: ['month', ...series.map((entry) => entry.name)] }}
-					charts={series.map((entry, index) => ({
+					dataset={dataset}
+					charts={dataset.dimensions.slice(1).map((name, index) => ({
 						type: 'bar' as const,
-						name: entry.name,
+						name,
 						encode: { x: 0, y: index + 1 },
 						stack: 'vesting',
 						color: tokenomicsGroupColor(index)
@@ -131,7 +139,7 @@ export function DisclosedVestingChart({ groups }: { groups: Array<UtrDisclosedTo
 					chartOptions={VESTING_CHART_OPTIONS}
 					showLegend
 					hideDataZoom
-					exportButtons="hidden"
+					exportButtons={exportButtons}
 				/>
 			</ChartPanelBody>
 		</>
@@ -164,7 +172,10 @@ function VestingSchedule({ groups }: { groups: Array<UtrDisclosedTokenomicsGroup
 						<span className="label-md">{groups.length}</span>
 					</span>
 				</div>
-				<DisclosedVestingChart groups={groups} />
+				<DisclosedVestingChart
+					dataset={disclosedVestingDataset(groups)}
+					exportButtons={{ omit: "the Vesting Schedule table below lists every group's terms this chart plots" }}
+				/>
 			</Panel>
 			<h4 className="label-lg">Vesting Schedule</h4>
 			<DisclosureTable
@@ -196,6 +207,7 @@ function DistributionSchedule({ groups }: { groups: Array<UtrDisclosedTokenomics
 			<div className="flex flex-col gap-4 lg:flex-row lg:items-start">
 				<div className="w-full shrink-0 lg:w-[200px]">
 					<PieChart
+						exportButtons={{ omit: "the table beside it lists every group's allocation this pie draws" }}
 						chartData={groups.map((group) => ({ name: group.groupName, value: group.allocationPct }))}
 						valueSymbol="%"
 						radius={['55%', '85%']}

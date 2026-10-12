@@ -38,7 +38,12 @@ async function renderBars(logos: Array<string>) {
 	await act(async () =>
 		root.render(
 			<QueryClientProvider client={client}>
-				<HBarChart categories={['Aave', 'Lido']} values={[2, 1]} logos={logos} />
+				<HBarChart
+					exportButtons={{ omit: 'renderer test' }}
+					categories={['Aave', 'Lido']}
+					values={[2, 1]}
+					logos={logos}
+				/>
 			</QueryClientProvider>
 		)
 	)

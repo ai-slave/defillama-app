@@ -34,7 +34,7 @@ export function buildApiUsageChartData(
 	fetchedAt: number | null
 ): { dataset: MultiSeriesChartDataset; charts: NonNullable<IMultiSeriesChartProps['charts']> } {
 	if (sortedStats.length === 0 || fetchedAt === null) {
-		return { dataset: { source: [], dimensions: ['date'] }, charts: [] }
+		return { dataset: { source: [], dimensions: ['timestamp'] }, charts: [] }
 	}
 
 	const selected = new Set(selectedRoutes)
@@ -45,7 +45,7 @@ export function buildApiUsageChartData(
 	const hasOthers = omittedRoutes.length > 0
 
 	const seriesNames = hasOthers ? [...topRoutes, 'Others'] : topRoutes
-	const dimensions = ['date', ...seriesNames]
+	const dimensions = ['timestamp', ...seriesNames]
 
 	const statsByDay = new Map<number, ApiUsageDay>()
 	for (const day of sortedStats) {

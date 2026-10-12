@@ -51,7 +51,11 @@ let rendered: HydrationResult | null = null
 beforeAll(async () => {
 	// Production's server render waits for the lazy chart chunk; renderToString cannot, so load it once up front.
 	const root = createRoot(document.createElement('div'))
-	await act(async () => root.render(<BridgeVolumeChart data={[]} />))
+	await act(async () =>
+		root.render(
+			<BridgeVolumeChart data={[]} exportButtons={{ chartInstance: () => null, handleChartReady: () => {} }} />
+		)
+	)
 	act(() => root.unmount())
 })
 

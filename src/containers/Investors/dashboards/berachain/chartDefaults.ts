@@ -9,17 +9,6 @@ import {
 	TOOLTIP_POINTED_ROW_STYLE
 } from '~/components/ECharts/shared/tooltip'
 
-export const AREA_CHART_EXPORTS = {
-	csv: true,
-	png: true,
-	filename: 'chart'
-} as const
-export const BAR_CHART_EXPORTS = {
-	csv: true,
-	png: false,
-	filename: 'bar-chart-data'
-} as const
-
 export function createChartOptions(valueSymbol: string, reverseSeries = false): MultiSeriesChartOptions {
 	return {
 		...createTimeSeriesChartOptions(valueSymbol),

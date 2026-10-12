@@ -1,9 +1,10 @@
-import type * as echarts from 'echarts/core'
 import { ChartCsvExportButton, type ChartCsvSource } from './ChartCsvExportButton'
 import { ChartPngExportButton, type PngExportProfile } from './ChartPngExportButton'
+import type { ChartExportHandle } from './types'
 
 interface ChartExportButtonsProps {
-	chartInstance: () => echarts.ECharts | null
+	/** The handle the chart also takes as `exportButtons`, so the buttons export that chart. */
+	chart: Pick<ChartExportHandle, 'chartInstance'>
 	filename?: string | undefined
 	title?: string | undefined
 	iconUrl?: string | undefined
@@ -20,7 +21,7 @@ interface ChartExportButtonsProps {
 }
 
 export function ChartExportButtons({
-	chartInstance,
+	chart,
 	filename,
 	title,
 	iconUrl,
@@ -39,7 +40,7 @@ export function ChartExportButtons({
 		<div className="flex items-center gap-1.5">
 			{showCsv && csvSource ? (
 				<ChartCsvExportButton
-					chartInstance={chartInstance}
+					chart={chart}
 					filename={filename}
 					smol={smol}
 					disabled={disabled}
@@ -49,7 +50,7 @@ export function ChartExportButtons({
 			) : null}
 			{showPng ? (
 				<ChartPngExportButton
-					chartInstance={chartInstance}
+					chart={chart}
 					filename={filename}
 					title={title}
 					iconUrl={iconUrl}

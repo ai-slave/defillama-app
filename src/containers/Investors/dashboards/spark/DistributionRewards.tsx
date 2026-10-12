@@ -1,12 +1,12 @@
 import { lazy, Suspense } from 'react'
-import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { queryReadFailed } from '~/utils/query'
-import { DOLLAR_SCROLL_CHART_OPTIONS, DOLLAR_STACKED_SCROLL_CHART_OPTIONS, HIDDEN_EXPORT } from './chartDefaults'
+import { DOLLAR_SCROLL_CHART_OPTIONS, DOLLAR_STACKED_SCROLL_CHART_OPTIONS } from './chartDefaults'
 import { useDistributionData } from './distributionApi'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
@@ -39,11 +39,12 @@ export default function DistributionRewards() {
 		<div className="flex flex-col gap-4">
 			<Panel>
 				<ChartPanelToolbar leading={<ChartPanelTitle>Actual Revenue - User</ChartPanelTitle>}>
-					<ChartPngExportButton
-						chartInstance={actualRev.chartInstance}
+					<ChartExportButtons
+						chart={actualRev}
 						filename="actual-revenue-user"
 						title={sparkExportTitle('Actual Revenue - User')}
-						smol
+						disabled={!data}
+						csvSource={{ type: 'dataset', prepare: () => data.actualRevenue.dataset }}
 					/>
 				</ChartPanelToolbar>
 				{data ? (
@@ -54,8 +55,7 @@ export default function DistributionRewards() {
 							valueSymbol="$"
 							showLegend={data.actualRevenue.charts.length > 1}
 							chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
-							exportButtons={HIDDEN_EXPORT}
-							onReady={actualRev.handleChartReady}
+							exportButtons={actualRev}
 						/>
 					</Suspense>
 				) : (
@@ -65,11 +65,12 @@ export default function DistributionRewards() {
 
 			<Panel>
 				<ChartPanelToolbar leading={<ChartPanelTitle>Revenue Projection - User</ChartPanelTitle>}>
-					<ChartPngExportButton
-						chartInstance={revProjection.chartInstance}
+					<ChartExportButtons
+						chart={revProjection}
 						filename="revenue-projection-user"
 						title={sparkExportTitle('Revenue Projection - User')}
-						smol
+						disabled={!data}
+						csvSource={{ type: 'dataset', prepare: () => data.revenueProjection.dataset }}
 					/>
 				</ChartPanelToolbar>
 				{data ? (
@@ -81,8 +82,7 @@ export default function DistributionRewards() {
 							stacked
 							solidChartAreaStyle
 							chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
-							exportButtons={HIDDEN_EXPORT}
-							onReady={revProjection.handleChartReady}
+							exportButtons={revProjection}
 						/>
 					</Suspense>
 				) : (
@@ -92,11 +92,12 @@ export default function DistributionRewards() {
 
 			<Panel>
 				<ChartPanelToolbar leading={<ChartPanelTitle>sUSDS & sUSDC TVL by Spark referrals</ChartPanelTitle>}>
-					<ChartPngExportButton
-						chartInstance={susdsTvl.chartInstance}
+					<ChartExportButtons
+						chart={susdsTvl}
 						filename="susds-susdc-tvl-spark-referrals"
 						title={sparkExportTitle('sUSDS & sUSDC TVL by Spark referrals')}
-						smol
+						disabled={!data}
+						csvSource={{ type: 'dataset', prepare: () => data.susdsTvl.dataset }}
 					/>
 				</ChartPanelToolbar>
 				{data ? (
@@ -108,8 +109,7 @@ export default function DistributionRewards() {
 							stacked
 							solidChartAreaStyle
 							chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
-							exportButtons={HIDDEN_EXPORT}
-							onReady={susdsTvl.handleChartReady}
+							exportButtons={susdsTvl}
 						/>
 					</Suspense>
 				) : (
@@ -119,11 +119,12 @@ export default function DistributionRewards() {
 
 			<Panel>
 				<ChartPanelToolbar leading={<ChartPanelTitle>XR Rewards - sUSDS cross-chain</ChartPanelTitle>}>
-					<ChartPngExportButton
-						chartInstance={xrSusds.chartInstance}
+					<ChartExportButtons
+						chart={xrSusds}
 						filename="xr-rewards-susds-crosschain"
 						title={sparkExportTitle('XR Rewards - sUSDS cross-chain')}
-						smol
+						disabled={!data}
+						csvSource={{ type: 'dataset', prepare: () => data.xrSusds.dataset }}
 					/>
 				</ChartPanelToolbar>
 				{data ? (
@@ -134,8 +135,7 @@ export default function DistributionRewards() {
 							valueSymbol="$"
 							showLegend={data.xrSusds.charts.length > 1}
 							chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
-							exportButtons={HIDDEN_EXPORT}
-							onReady={xrSusds.handleChartReady}
+							exportButtons={xrSusds}
 						/>
 					</Suspense>
 				) : (
@@ -145,11 +145,12 @@ export default function DistributionRewards() {
 
 			<Panel>
 				<ChartPanelToolbar leading={<ChartPanelTitle>XR Rewards - sUSDC cross-chain</ChartPanelTitle>}>
-					<ChartPngExportButton
-						chartInstance={xrSusdc.chartInstance}
+					<ChartExportButtons
+						chart={xrSusdc}
 						filename="xr-rewards-susdc-crosschain"
 						title={sparkExportTitle('XR Rewards - sUSDC cross-chain')}
-						smol
+						disabled={!data}
+						csvSource={{ type: 'dataset', prepare: () => data.xrSusdc.dataset }}
 					/>
 				</ChartPanelToolbar>
 				{data ? (
@@ -160,8 +161,7 @@ export default function DistributionRewards() {
 							valueSymbol="$"
 							showLegend={data.xrSusdc.charts.length > 1}
 							chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
-							exportButtons={HIDDEN_EXPORT}
-							onReady={xrSusdc.handleChartReady}
+							exportButtons={xrSusdc}
 						/>
 					</Suspense>
 				) : (
@@ -171,11 +171,12 @@ export default function DistributionRewards() {
 
 			<Panel>
 				<ChartPanelToolbar leading={<ChartPanelTitle>Staked USDS TVL by Spark referrals</ChartPanelTitle>}>
-					<ChartPngExportButton
-						chartInstance={stakedUsds.chartInstance}
+					<ChartExportButtons
+						chart={stakedUsds}
 						filename="staked-usds-tvl-spark-referrals"
 						title={sparkExportTitle('Staked USDS TVL by Spark referrals')}
-						smol
+						disabled={!data}
+						csvSource={{ type: 'dataset', prepare: () => data.stakedUsdsTvl.dataset }}
 					/>
 				</ChartPanelToolbar>
 				{data ? (
@@ -187,8 +188,7 @@ export default function DistributionRewards() {
 							stacked
 							solidChartAreaStyle
 							chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
-							exportButtons={HIDDEN_EXPORT}
-							onReady={stakedUsds.handleChartReady}
+							exportButtons={stakedUsds}
 						/>
 					</Suspense>
 				) : (

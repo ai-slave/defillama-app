@@ -1,4 +1,5 @@
 import type * as echarts from 'echarts/core'
+import type { HeadlessChartExportButtons } from '~/components/ChartExport/types'
 
 /** `change` is a percent change the RWA tooltip shows as the 1D return. */
 export type TreemapValue = [size: number, secondary: number | null, color: number | null, change?: number | null]
@@ -24,6 +25,8 @@ export interface TreemapChartProps {
 	height?: string
 	/** A min-h-* class that moves the 360px floor of a chart without `height`. */
 	containerClassName?: string
+	/** Where this chart's .csv/.png live: the handle its page's export buttons also take, or why it has none. */
+	exportButtons: HeadlessChartExportButtons
 	onReady?: (instance: echarts.ECharts | null) => void
 	showRootLabel?: boolean
 	valueLabel?: string

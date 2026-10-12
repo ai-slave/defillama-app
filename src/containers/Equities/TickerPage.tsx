@@ -232,9 +232,8 @@ function useIntradayPriceHistoryChart(
 
 export function EquityTickerPage(props: IEquityTickerPageProps) {
 	const router = useRouter()
-	const { chartInstance: priceChartInstance, handleChartReady: handlePriceChartReady } = useGetChartInstance()
-	const { chartInstance: fundamentalsChartInstance, handleChartReady: handleFundamentalsChartReady } =
-		useGetChartInstance()
+	const priceChartExport = useGetChartInstance()
+	const fundamentalsChartExport = useGetChartInstance()
 	const availableTabs = useMemo<ReadonlyArray<EquityTab>>(
 		() =>
 			getAvailableEquityTabs({
@@ -382,7 +381,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 								label="Price history timeframe"
 							/>
 							<ChartExportButtons
-								chartInstance={priceChartInstance}
+								chart={priceChartExport}
 								filename={exportFilename}
 								title={exportTitle}
 								disabled={!activePriceHistoryChart}
@@ -405,12 +404,12 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 								<SurfaceBodyLoadingStatus label="Loading price history" />
 							) : activePriceHistoryChart ? (
 								<MultiSeriesChart
+									exportButtons={priceChartExport}
 									dataset={activePriceHistoryChart.dataset}
 									charts={activePriceHistoryChart.charts}
 									chartOptions={priceHistoryChartOptions}
 									valueSymbol="$"
 									hideDataZoom={intradayPriceHistoryChart !== null || activePriceHistoryChart.dataset.source.length < 2}
-									onReady={handlePriceChartReady}
 								/>
 							) : (
 								<SurfaceBodyStatus variant="empty">No price history available for this timeframe.</SurfaceBodyStatus>
@@ -446,7 +445,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 							label="Fundamentals period"
 						/>
 						<ChartExportButtons
-							chartInstance={fundamentalsChartInstance}
+							chart={fundamentalsChartExport}
 							filename={fundamentalsExportFilename}
 							title={fundamentalsExportTitle}
 							csvSource={{
@@ -460,12 +459,12 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 					</ChartPanelToolbar>
 					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
+							exportButtons={fundamentalsChartExport}
 							dataset={activeFundamentalsChart.dataset}
 							charts={activeFundamentalsChart.charts}
 							chartOptions={fundamentalsChartOptions}
 							valueSymbol={FUNDAMENTAL_CHART_VALUE_SYMBOLS[activeFundamentalMetric]}
 							hideDataZoom={activeFundamentalsChart.dataset.source.length < 2}
-							onReady={handleFundamentalsChartReady}
 						/>
 					</Suspense>
 				</Panel>

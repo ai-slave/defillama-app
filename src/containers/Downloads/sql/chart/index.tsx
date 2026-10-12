@@ -1,4 +1,5 @@
 import type * as echarts from 'echarts/core'
+import type { HeadlessChartExportButtons } from '~/components/ChartExport/types'
 import { EmptyState } from '~/ui/Status'
 import type { ChartConfig } from '../chartConfig'
 import type { ClassifiedColumn } from '../columnKind'
@@ -18,12 +19,22 @@ interface ChartRouterProps {
 	config: ChartConfig
 	result: QueryResult
 	classified: Array<ClassifiedColumn>
+	/** Where the chart's .png lives: the page's handle, or why it has none here. */
+	exportButtons: HeadlessChartExportButtons
+	/** The Pro cards read the instance for the image export in their menu. */
 	onReady?: (instance: echarts.ECharts | null) => void
 	height?: string
 }
 
-export function ChartRouter({ config, result, classified, onReady, height = SQL_CHART_HEIGHT }: ChartRouterProps) {
-	const common = { config, result, classified, onReady, height }
+export function ChartRouter({
+	config,
+	result,
+	classified,
+	exportButtons,
+	onReady,
+	height = SQL_CHART_HEIGHT
+}: ChartRouterProps) {
+	const common = { config, result, classified, exportButtons, onReady, height }
 	switch (config.chartType) {
 		case 'line':
 			return <LineBarChart {...common} forceType="line" />

@@ -165,7 +165,7 @@ export const getStaticPaths = () => {
 
 export default function Protocols(props: PerpsAggregatorProtocolPageProps) {
 	const [groupBy, setGroupBy] = useState<LowercaseDwmcGrouping>(props.defaultChartView)
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 
 	const finalCharts = useMemo(() => {
 		return {
@@ -218,7 +218,7 @@ export default function Protocols(props: PerpsAggregatorProtocolPageProps) {
 					<ChartPanelToolbar>
 						<ChartGroupingSelector value={groupBy} setValue={setGroupBy} options={DWMC_GROUPING_OPTIONS_LOWERCASE} />
 						<ChartExportButtons
-							chartInstance={chartInstance}
+							chart={chartExport}
 							filename={`${props.name}-perp-aggregator-volume`}
 							title={props.name}
 							iconUrl={tokenIconUrl(props.name)}
@@ -230,12 +230,12 @@ export default function Protocols(props: PerpsAggregatorProtocolPageProps) {
 					</ChartPanelToolbar>
 					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
+							exportButtons={chartExport}
 							dataset={deferredFinalCharts.dataset}
 							charts={deferredFinalCharts.charts}
 							groupBy={deferredFinalCharts.groupBy}
 							valueSymbol="$"
 							{...(props.hallmarks ? { hallmarks: props.hallmarks } : {})}
-							onReady={handleChartReady}
 						/>
 					</Suspense>
 				</Panel>

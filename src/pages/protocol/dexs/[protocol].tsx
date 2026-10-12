@@ -198,7 +198,7 @@ export const getStaticPaths = () => {
 export default function Protocols(props: DexProtocolPageProps) {
 	const [groupBy, setGroupBy] = useState<LowercaseDwmcGrouping>(props.defaultChartView)
 	const [charts, setCharts] = useState<Array<string>>(props.defaultCharts)
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 
 	const finalCharts = useMemo(() => {
 		const series: Array<ProtocolFlowChartSeries> = []
@@ -272,7 +272,7 @@ export default function Protocols(props: DexProtocolPageProps) {
 							/>
 						) : null}
 						<ChartExportButtons
-							chartInstance={chartInstance}
+							chart={chartExport}
 							filename={`${props.name}-dex-volume`}
 							title={props.name}
 							iconUrl={tokenIconUrl(props.name)}
@@ -284,12 +284,12 @@ export default function Protocols(props: DexProtocolPageProps) {
 					</ChartPanelToolbar>
 					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
+							exportButtons={chartExport}
 							dataset={deferredFinalCharts.dataset}
 							charts={deferredFinalCharts.charts}
 							groupBy={deferredFinalCharts.groupBy}
 							valueSymbol="$"
 							{...(props.hallmarks ? { hallmarks: props.hallmarks } : {})}
-							onReady={handleChartReady}
 						/>
 					</Suspense>
 				</Panel>

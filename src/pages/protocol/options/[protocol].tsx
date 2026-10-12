@@ -201,7 +201,7 @@ export const getStaticPaths = () => {
 export default function Protocols(props: OptionsProtocolPageProps) {
 	const [groupBy, setGroupBy] = useState<LowercaseDwmcGrouping>(props.defaultChartView)
 	const [charts, setCharts] = useState<Array<string>>(props.defaultCharts)
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 
 	const finalCharts = useMemo(() => {
 		const series: Array<ProtocolFlowChartSeries> = []
@@ -275,7 +275,7 @@ export default function Protocols(props: OptionsProtocolPageProps) {
 							/>
 						) : null}
 						<ChartExportButtons
-							chartInstance={chartInstance}
+							chart={chartExport}
 							filename={`${props.name}-options-volume`}
 							title={props.name}
 							iconUrl={tokenIconUrl(props.name)}
@@ -287,12 +287,12 @@ export default function Protocols(props: OptionsProtocolPageProps) {
 					</ChartPanelToolbar>
 					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
+							exportButtons={chartExport}
 							dataset={deferredFinalCharts.dataset}
 							charts={deferredFinalCharts.charts}
 							groupBy={deferredFinalCharts.groupBy}
 							valueSymbol="$"
 							{...(props.hallmarks ? { hallmarks: props.hallmarks } : {})}
-							onReady={handleChartReady}
 						/>
 					</Suspense>
 				</Panel>

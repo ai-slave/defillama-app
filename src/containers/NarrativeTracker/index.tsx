@@ -1,5 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
+import type { ChartCsvDataset } from '~/components/ChartExport/ChartCsvExportButton'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { selectChartDatasetColumns } from '~/components/ECharts/MultiSeriesChart/selection'
 import type { IMultiSeriesChartProps, MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
@@ -27,7 +28,8 @@ import {
 	buildNarrativeTreemapTreeData,
 	calculateDenominatedChange,
 	calculateDenominatedTimeSeries,
-	filterNarrativeTreemapTreeData
+	filterNarrativeTreemapTreeData,
+	type NarrativeTreemapTreeData
 } from './chartData'
 import type { CategoryPerformanceProps, IPctChangeRow } from './types'
 
@@ -67,6 +69,16 @@ const DENOM_COIN_NAME_SET = new Set<string>(DENOM_COIN_NAMES)
 const BAR_CHART_OPTIONS: MultiSeriesChartOptions = { yAxis: { position: 'right' } }
 const LINE_CHART_OPTIONS: MultiSeriesChartOptions = { yAxis: { position: 'right' } }
 const EMPTY_SERIES: Array<string> = []
+
+/** The heatmap's tiles with both numbers each one shows: market cap sizes it, the period return colors it.
+    buildTreemapCsvDataset writes only the size, which would drop the return the heatmap exists to show. */
+function heatmapCsvDataset(treeData: NarrativeTreemapTreeData): ChartCsvDataset {
+	const source: Array<[category: string, name: string, marketCap: number, returnPct: number | null]> = []
+	for (const category of treeData) {
+		for (const coin of category.children) source.push([category.name, coin.name, coin.value[0], coin.value[1]])
+	}
+	return { dimensions: ['Category', 'Name', 'Market Cap', 'Return (%)'], source }
+}
 
 type NarrativeChartType = 'linechart' | 'barchart' | 'heatmap'
 const NARRATIVE_CHART_TYPE_OPTIONS: ReadonlyArray<{ value: NarrativeChartType; label: string }> = [
@@ -226,7 +238,7 @@ export function CategoryPerformanceContainer({
 		[canonicalTreemapTreeData, displayedSelectedCharts]
 	)
 
-	const { chartInstance: exportChartInstance, handleChartReady: onChartReady } = useGetChartInstance()
+	const exportChartExport = useGetChartInstance()
 
 	return (
 		<>
@@ -289,20 +301,22 @@ export function CategoryPerformanceContainer({
 						/>
 					) : null}
 					<ChartExportButtons
-						chartInstance={exportChartInstance}
-						showCsv={chartType !== 'heatmap'}
+						chart={exportChartExport}
 						filename={`category-performance-${chartType}`}
 						title={`Category Performance ${chartType}`}
 						csvSource={{
 							type: 'dataset',
 							prepare: () =>
-								selectChartDatasetColumns(
-									deferredChartData.dataset,
-									(chartType === 'barchart' ? deferredChartData.barCharts : deferredChartData.lineCharts).filter(
-										(chart) => displayedSelectedCharts.has(chart.name)
-									)
-								)
+								chartType === 'heatmap'
+									? heatmapCsvDataset(treemapTreeData)
+									: selectChartDatasetColumns(
+											deferredChartData.dataset,
+											(chartType === 'barchart' ? deferredChartData.barCharts : deferredChartData.lineCharts).filter(
+												(chart) => displayedSelectedCharts.has(chart.name)
+											)
+										)
 						}}
+						pngProfile={chartType === 'heatmap' ? 'treemapNormalized' : undefined}
 					/>
 				</ChartPanelToolbar>
 
@@ -317,8 +331,7 @@ export function CategoryPerformanceContainer({
 								containerClassName="min-h-[533px]"
 								hideDataZoom={false}
 								chartOptions={barChartOptions}
-								exportButtons="hidden"
-								onReady={onChartReady}
+								exportButtons={exportChartExport}
 							/>
 						) : chartType === 'linechart' ? (
 							<MultiSeriesChart
@@ -330,15 +343,14 @@ export function CategoryPerformanceContainer({
 								solidChartAreaStyle={false}
 								chartOptions={lineChartOptions}
 								tooltipMaxItems={30}
-								exportButtons="hidden"
-								onReady={onChartReady}
+								exportButtons={exportChartExport}
 							/>
 						) : (
 							<TreemapChart
 								treeData={treemapTreeData}
 								variant="narrative"
 								containerClassName="min-h-[533px]"
-								onReady={onChartReady}
+								exportButtons={exportChartExport}
 							/>
 						)}
 					</React.Suspense>

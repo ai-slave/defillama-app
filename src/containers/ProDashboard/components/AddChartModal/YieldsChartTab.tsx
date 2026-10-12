@@ -680,6 +680,7 @@ export function YieldsChartTab({
 										<Suspense fallback={<SurfaceBodyLoadingStatus className="min-h-[280px]" />}>
 											{selectedYieldChartType === 'tvl-apy' ? (
 												<MultiSeriesChart
+													exportButtons="auto"
 													height="280px"
 													dataset={yieldsChartDataset}
 													charts={tvlApyCharts}
@@ -689,6 +690,7 @@ export function YieldsChartTab({
 											) : null}
 											{selectedYieldChartType === 'supply-apy' ? (
 												<MultiSeriesChart
+													exportButtons="auto"
 													height="280px"
 													dataset={yieldsChartDataset}
 													charts={supplyApyCharts}
@@ -700,6 +702,7 @@ export function YieldsChartTab({
 											) : null}
 											{selectedYieldChartType === 'supply-apy-7d' ? (
 												<MultiSeriesChart
+													exportButtons="auto"
 													height="280px"
 													dataset={yieldsChartDataset}
 													charts={supplyApy7dCharts}
@@ -710,6 +713,7 @@ export function YieldsChartTab({
 											) : null}
 											{selectedYieldChartType === 'borrow-apy' ? (
 												<MultiSeriesChart
+													exportButtons="auto"
 													height="280px"
 													dataset={yieldsChartDataset}
 													charts={borrowApyCharts}
@@ -721,6 +725,7 @@ export function YieldsChartTab({
 											) : null}
 											{selectedYieldChartType === 'net-borrow-apy' ? (
 												<MultiSeriesChart
+													exportButtons="auto"
 													height="280px"
 													dataset={yieldsChartDataset}
 													charts={netBorrowApyCharts}

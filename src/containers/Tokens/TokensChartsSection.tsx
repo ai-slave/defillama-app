@@ -1,7 +1,9 @@
 import type * as echarts from 'echarts/core'
 import Router, { useRouter } from 'next/router'
 import * as React from 'react'
+import { ChartCsvExportButton } from '~/components/ChartExport/ChartCsvExportButton'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
 import { CHANGE_SCALE_GRADIENT } from '~/components/ECharts/TreemapChart/Market/colors'
@@ -11,6 +13,7 @@ import { useStableCallback } from '~/hooks/useStableCallback'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
+import { slug } from '~/utils'
 import { queryReadFailed } from '~/utils/query'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import {
@@ -69,7 +72,7 @@ export function TokensChartsSection({
 }) {
 	const router = useRouter()
 	const { universe, colorBy, mapMode, moversWindow } = parseTokensChartState(router.query)
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 	const datasetQuery = useTokensChartDataset(filterQueryString)
 	const data = datasetQuery.data
 
@@ -133,9 +136,9 @@ export function TokensChartsSection({
 							/>
 							{treemap && treemap.treeData.length > 0 ? (
 								<>
-									<ChartRestoreButton chartInstance={chartInstance} />
+									<ChartRestoreButton chartInstance={chartExport.chartInstance} />
 									<ChartExportButtons
-										chartInstance={chartInstance}
+										chart={chartExport}
 										filename={EXPORT_FILENAME}
 										title="Tokens market map"
 										csvSource={{
@@ -163,11 +166,12 @@ export function TokensChartsSection({
 								variant="default"
 								size="md"
 							/>
+							{/* One file for both lists, with a Direction column; each chart's .png sits on its own title. */}
 							{movers && (movers.gainers.length > 0 || movers.losers.length > 0) ? (
-								<ChartExportButtons
-									chartInstance={chartInstance}
+								<ChartCsvExportButton
+									chart={chartExport}
 									filename={`tokens-movers-${moversWindow}-top-${universe}`}
-									csvSource={{
+									source={{
 										type: 'prepare-csv',
 										prepare: () =>
 											prepareTokensMoversCsv({
@@ -176,8 +180,6 @@ export function TokensChartsSection({
 												filename: `tokens-movers-${moversWindow}-top-${universe}`
 											})
 									}}
-									showPng={false}
-									smol
 								/>
 							) : null}
 						</>
@@ -208,7 +210,7 @@ export function TokensChartsSection({
 							height={MAP_HEIGHT}
 							showMarketCapRow={false}
 							groupItemsLabel="Tokens"
-							onReady={handleChartReady}
+							exportButtons={chartExport}
 						/>
 					</React.Suspense>
 					<div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-3 pb-2 body-sm text-tertiary">
@@ -229,9 +231,15 @@ export function TokensChartsSection({
 				</>
 			) : movers ? (
 				<div className="grid grid-cols-1 lg:grid-cols-2">
-					<MoversChart title="Top gainers" entries={movers.gainers} color={CHART_UP} />
+					<MoversChart
+						title="Top gainers"
+						exportName={`${moversWindow}-top-${universe}`}
+						entries={movers.gainers}
+						color={CHART_UP}
+					/>
 					<MoversChart
 						title="Top losers"
+						exportName={`${moversWindow}-top-${universe}`}
 						className="border-t border-subtle lg:border-t-0 lg:border-l"
 						entries={movers.losers}
 						color={CHART_DOWN}
@@ -244,15 +252,19 @@ export function TokensChartsSection({
 
 function MoversChart({
 	title,
+	exportName,
 	className,
 	entries,
 	color
 }: {
 	title: string
+	/** The window and universe the bars show, as a filename part such as `7d-top-100`. */
+	exportName: string
 	className?: string
 	entries: Array<TokensMoverEntry>
 	color: string
 }) {
+	const chartExport = useGetChartInstance()
 	// ECharts calls this on a bar click, so it reads the bars shown now, after any filter change.
 	const openEntry = useStableCallback((dataIndex: number) => {
 		const href = entries[dataIndex]?.href
@@ -281,7 +293,16 @@ function MoversChart({
 
 	return (
 		<div className={`flex min-w-0 flex-col ${className ?? ''}`.trim()}>
-			<h3 className="px-3 pt-2 label-md">{title}</h3>
+			<div className="flex items-center justify-between gap-2 px-3 pt-2">
+				<h3 className="label-md">{title}</h3>
+				<ChartPngExportButton
+					chart={chartExport}
+					filename={`tokens-${slug(title)}-${exportName}`}
+					title={`Tokens ${title}`}
+					pngProfile="hbar"
+					disabled={entries.length === 0}
+				/>
+			</div>
 			{entries.length === 0 ? (
 				<div className="flex items-center justify-center body-sm text-tertiary" style={{ height: MOVERS_HEIGHT }}>
 					Nothing to show
@@ -295,6 +316,7 @@ function MoversChart({
 						logos={chartData.logos}
 						valueSymbol="%"
 						height={MOVERS_HEIGHT}
+						exportButtons={chartExport}
 						onReady={handleReady}
 					/>
 				</React.Suspense>

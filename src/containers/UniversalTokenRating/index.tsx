@@ -1,11 +1,15 @@
 import { useRouter } from 'next/router'
-import { useMemo, useRef, useState } from 'react'
+import { type ReactNode, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import type { CsvPayload } from '~/components/CsvDownloadButton'
 import { updateQueryFromSelected } from '~/components/Select/query'
 import { UrlSelectWithCombobox } from '~/components/Select/UrlSelect'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { focusNeighborOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
@@ -21,7 +25,7 @@ import { findUtrSearchMatch, type UtrFocusRequest } from './navigation'
 import { PerformanceMatrix } from './PerformanceMatrix'
 import { CantFindTokenBanner, UtrDisclaimer } from './TokenPage'
 import { TopMovers } from './TopMovers'
-import type { UtrScoringConfig, UtrTopMover, UtrUniverse } from './types'
+import type { UtrGradingConfig, UtrLeaderboardRow, UtrScoringConfig, UtrTopMover, UtrUniverse } from './types'
 import { UtrDocsDrawer } from './UtrDocsDrawer'
 
 export type UniversalTokenRatingProps = {
@@ -274,30 +278,28 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 				</div>
 			) : null}
 
-			<Panel className="max-lg:hidden">
-				<PanelHeader>
-					<PanelTitle>Performance matrix</PanelTitle>
-					{scoredLabel}
-				</PanelHeader>
-				<PerformanceMatrix rows={filteredRows} grading={scoringConfig?.grading} />
-			</Panel>
+			<MatrixPanel
+				title="Performance matrix"
+				scoredLabel={scoredLabel}
+				rows={filteredRows}
+				grading={scoringConfig?.grading}
+				className="max-lg:hidden"
+			/>
 
-			<Panel className="lg:hidden">
-				<PanelHeader>
-					<PanelTitle>Top-10 project rating matrix</PanelTitle>
-				</PanelHeader>
-				<PerformanceMatrix
-					rows={filteredRows.slice(0, 10)}
-					grading={scoringConfig?.grading}
-					className="h-[320px] w-full"
-				/>
+			<MatrixPanel
+				title="Top-10 project rating matrix"
+				rows={filteredRows.slice(0, 10)}
+				grading={scoringConfig?.grading}
+				className="lg:hidden"
+				chartClassName="h-[320px] w-full"
+			>
 				<div className="p-3">
 					<div className="flex items-center gap-2 rounded-lg bg-surface-elevated-1 px-3 py-2.5 body-sm text-secondary">
 						<Icon name="help-circle" className="size-4 shrink-0 text-link" />
 						View the full chart on desktop
 					</div>
 				</div>
-			</Panel>
+			</MatrixPanel>
 
 			<Panel>
 				<PanelHeader>
@@ -338,5 +340,49 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 				onReset={resetFilters}
 			/>
 		</div>
+	)
+}
+
+function MatrixPanel({
+	title,
+	scoredLabel,
+	rows,
+	grading,
+	className,
+	chartClassName,
+	children
+}: {
+	title: string
+	scoredLabel?: ReactNode
+	rows: Array<UtrLeaderboardRow>
+	grading: UtrGradingConfig | null | undefined
+	className: string
+	chartClassName?: string
+	children?: ReactNode
+}) {
+	const chartExport = useGetChartInstance()
+	const filename = title.toLowerCase().replaceAll(' ', '-')
+	return (
+		<Panel className={className}>
+			<ChartPanelToolbar leading={<ChartPanelTitle headingAs="h2">{title}</ChartPanelTitle>}>
+				{scoredLabel}
+				<ChartExportButtons
+					chart={chartExport}
+					filename={filename}
+					title={title}
+					pngProfile="scatterWithImageSymbols"
+					csvSource={{
+						type: 'prepare-csv',
+						prepare: () => {
+							const csvRows: CsvPayload['rows'] = [['Token', 'Disclosure Score', 'Performance Score']]
+							for (const row of rows) csvRows.push([row.name, row.scores.disclosure, row.scores.performance])
+							return { filename: `${filename}.csv`, rows: csvRows }
+						}
+					}}
+				/>
+			</ChartPanelToolbar>
+			<PerformanceMatrix rows={rows} grading={grading} className={chartClassName} exportButtons={chartExport} />
+			{children}
+		</Panel>
 	)
 }

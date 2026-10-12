@@ -107,7 +107,7 @@ export function TokenUsageSection({
 	initialPageSize = DEFAULT_TABLE_PAGE_SIZE
 }: TokenUsageSectionProps) {
 	const { authorizedFetch, hasActiveSubscription, isAuthenticated, loaders } = useAuthContext()
-	const { chartInstance: treemapChartInstance, handleChartReady: handleTreemapChartReady } = useGetChartInstance()
+	const treemapChartExport = useGetChartInstance()
 	const [includeCentralizedExchanges, setIncludeCentralizedExchanges] = useState(initialIncludeCentralizedExchanges)
 	const [view, setView] = useState<TokenUsageView>('list')
 	const [sorting, setSorting] = useState<SortingState>(DEFAULT_SORTING)
@@ -244,9 +244,9 @@ export function TokenUsageSection({
 						) : null}
 						{view === 'treemap' ? (
 							<>
-								<ChartRestoreButton chartInstance={treemapChartInstance} />
+								<ChartRestoreButton chartInstance={treemapChartExport.chartInstance} />
 								<ChartPngExportButton
-									chartInstance={treemapChartInstance}
+									chart={treemapChartExport}
 									filename={tokenUsageExportFilename}
 									title={tokenUsageExportTitle}
 								/>
@@ -276,7 +276,7 @@ export function TokenUsageSection({
 						containerClassName="min-h-[480px]"
 						valueLabel="Amount"
 						valueSymbol="$"
-						onReady={handleTreemapChartReady}
+						exportButtons={treemapChartExport}
 					/>
 				</ChartPanelBody>
 			) : (

@@ -224,7 +224,7 @@ export function AdapterByChainChart({
 	isCategoryFiltered: boolean
 }) {
 	const router = useRouter()
-	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
+	const exportChartExport = useGetChartInstance()
 
 	const combinedGroupByParam = readSingleQueryValue(router.query.groupBy)?.toLowerCase()
 	const combinedInterval = DWMC_GROUPING_OPTIONS_LOWERCASE.find((option) => option.value === combinedGroupByParam)
@@ -594,13 +594,13 @@ export function AdapterByChainChart({
 				) : null}
 				{chartViewMode === 'Breakdown' ? (
 					breakdownChartState.chartKind === 'treemap' ? (
-						<ChartRestoreButton chartInstance={exportChartInstance} />
+						<ChartRestoreButton chartInstance={exportChartExport.chartInstance} />
 					) : null
 				) : null}
 				{chartViewMode === 'Breakdown' ? (
 					canExportBreakdownChart ? (
 						<ChartExportButtons
-							chartInstance={exportChartInstance}
+							chart={exportChartExport}
 							filename={breakdownExportConfig.filename}
 							title={breakdownExportConfig.title}
 							iconUrl={chain !== 'All' ? chainIconUrl(chain) : undefined}
@@ -610,7 +610,7 @@ export function AdapterByChainChart({
 					) : null
 				) : (
 					<ChartExportButtons
-						chartInstance={exportChartInstance}
+						chart={exportChartExport}
 						filename={`${chain}-${adapterType}-${chartName}`}
 						title={chain === 'All' ? 'All Chains' : chain}
 						iconUrl={chain !== 'All' ? chainIconUrl(chain) : undefined}
@@ -647,7 +647,7 @@ export function AdapterByChainChart({
 							<BuilderTreemapChart
 								data={deferredBreakdownPresentation.data}
 								containerClassName={CHAINS_BY_ADAPTER_CHART_CLASS}
-								onReady={handleChartReady}
+								exportButtons={exportChartExport}
 							/>
 						) : deferredBreakdownPresentation.kind === 'hbar' ? (
 							<HBarChart
@@ -656,10 +656,11 @@ export function AdapterByChainChart({
 								colors={deferredBreakdownPresentation.data.map((item) => item.itemStyle.color)}
 								containerClassName={CHAINS_BY_ADAPTER_CHART_CLASS}
 								valueSymbol="$"
-								onReady={handleChartReady}
+								exportButtons={exportChartExport}
 							/>
 						) : (
 							<MultiSeriesChart
+								exportButtons={exportChartExport}
 								dataset={deferredBreakdownPresentation.dataset}
 								charts={deferredBreakdownPresentation.charts}
 								csvSource={deferredBreakdownPresentation.csvSource}
@@ -677,7 +678,6 @@ export function AdapterByChainChart({
 										? deferredBreakdownPresentation.showTotalInTooltip
 										: false
 								}
-								onReady={handleChartReady}
 							/>
 						)}
 					</React.Suspense>
@@ -686,6 +686,7 @@ export function AdapterByChainChart({
 				<ChartPanelBody>
 					<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
+							exportButtons={exportChartExport}
 							dataset={deferredCombinedFinalCharts.dataset}
 							charts={deferredCombinedFinalCharts.charts}
 							csvSource={{
@@ -697,7 +698,6 @@ export function AdapterByChainChart({
 							}}
 							showLegend={deferredCombinedFinalCharts.charts.length !== 1}
 							groupBy={deferredCombinedFinalCharts.groupBy}
-							onReady={handleChartReady}
 						/>
 					</React.Suspense>
 				</ChartPanelBody>
@@ -779,7 +779,7 @@ export function ChainsByAdapterChart({
 	chartName: string
 }) {
 	const router = useRouter()
-	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
+	const exportChartExport = useGetChartInstance()
 	const chartState = React.useMemo(
 		() =>
 			normalizeChartStateFromQueryValues({
@@ -1006,10 +1006,12 @@ export function ChainsByAdapterChart({
 					variant="filter"
 					size="md"
 				/>
-				{chartState.chartKind === 'treemap' ? <ChartRestoreButton chartInstance={exportChartInstance} /> : null}
+				{chartState.chartKind === 'treemap' ? (
+					<ChartRestoreButton chartInstance={exportChartExport.chartInstance} />
+				) : null}
 				{canExportChart ? (
 					<ChartExportButtons
-						chartInstance={exportChartInstance}
+						chart={exportChartExport}
 						filename={exportConfig.filename}
 						title={exportConfig.title}
 						csvSource={deferredChartPresentation.csvSource}
@@ -1030,7 +1032,7 @@ export function ChainsByAdapterChart({
 							<BuilderTreemapChart
 								data={deferredChartPresentation.data}
 								containerClassName={CHAINS_BY_ADAPTER_CHART_CLASS}
-								onReady={handleChartReady}
+								exportButtons={exportChartExport}
 							/>
 						) : deferredChartPresentation.kind === 'hbar' ? (
 							<HBarChart
@@ -1039,10 +1041,11 @@ export function ChainsByAdapterChart({
 								colors={deferredChartPresentation.data.map((item) => item.itemStyle.color)}
 								containerClassName={CHAINS_BY_ADAPTER_CHART_CLASS}
 								valueSymbol="$"
-								onReady={handleChartReady}
+								exportButtons={exportChartExport}
 							/>
 						) : (
 							<MultiSeriesChart
+								exportButtons={exportChartExport}
 								dataset={deferredChartPresentation.dataset}
 								charts={deferredChartPresentation.charts}
 								csvSource={deferredChartPresentation.csvSource}
@@ -1058,7 +1061,6 @@ export function ChainsByAdapterChart({
 								showTotalInTooltip={
 									deferredChartPresentation.kind === 'bar' ? deferredChartPresentation.showTotalInTooltip : false
 								}
-								onReady={handleChartReady}
 							/>
 						)}
 					</React.Suspense>

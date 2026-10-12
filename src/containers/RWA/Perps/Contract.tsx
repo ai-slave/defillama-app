@@ -265,7 +265,7 @@ function RWAPerpsContractChartPanel({ contract }: { contract: IRWAPerpsContractD
 	const router = useRouter()
 	const path = readyAsPath(router)
 	const searchParams = useMemo(() => new URLSearchParams(path.split('?')[1]?.split('#')[0] ?? ''), [path])
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 
 	const groupBy = getRWAPerpsContractChartGroup(searchParams.get('groupBy'))
 	const enabledMetrics = useMemo(() => getRWAPerpsContractEnabledMetrics(searchParams), [searchParams])
@@ -350,7 +350,7 @@ function RWAPerpsContractChartPanel({ contract }: { contract: IRWAPerpsContractD
 					options={DWM_GROUPING_OPTIONS_LOWERCASE}
 				/>
 				<ChartExportButtons
-					chartInstance={chartInstance}
+					chart={chartExport}
 					filename={`${contractSlugBase}-market-metrics`}
 					title={`${contract.contract.contract} Market Metrics`}
 					smol
@@ -364,12 +364,12 @@ function RWAPerpsContractChartPanel({ contract }: { contract: IRWAPerpsContractD
 			{hasChartData ? (
 				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 					<MultiSeriesChart
+						exportButtons={chartExport}
 						dataset={deferredChartSpec.dataset}
 						charts={deferredChartSpec.charts}
 						showLegend
 						groupBy={deferredChartSpec.groupBy}
 						valueSymbol="$"
-						onReady={handleChartReady}
 					/>
 				</Suspense>
 			) : enabledMetrics.length === 0 ? (

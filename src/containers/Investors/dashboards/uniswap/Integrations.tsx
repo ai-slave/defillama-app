@@ -200,6 +200,7 @@ export default function Integrations() {
 				<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 					<BarListCard
 						title={data.hookCategories?.title ?? 'v4 Hook Volume by Category'}
+						csvColumns={['Category', 'Hook Volume (USD)']}
 						subtitle="90-day hooked volume rolled up by project category."
 						items={hookCategoryItems}
 						valueSymbol="$"

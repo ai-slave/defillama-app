@@ -798,7 +798,13 @@ export function ChartBuilderTab({
 							<div className="absolute inset-0 p-2">
 								<Suspense fallback={<Skeleton className="size-full rounded-md" />}>
 									{chartBuilder.chartType === 'treemap' ? (
-										<BuilderTreemapChart data={treemapData} height="450px" />
+										<BuilderTreemapChart
+											data={treemapData}
+											height="450px"
+											exportButtons={{
+												omit: 'live preview inside the Add Chart modal; the saved card exports through its menu'
+											}}
+										/>
 									) : (
 										<MultiSeriesChart
 											height="450px"
@@ -808,7 +814,9 @@ export function ChartBuilderTab({
 											hideDataZoom
 											showLegend
 											solidChartAreaStyle={chartBuilder.chartType === 'stackedArea'}
-											exportButtons="hidden"
+											exportButtons={{
+												omit: 'live preview inside the Add Chart modal; the saved card exports through its menu'
+											}}
 											chartOptions={previewChartOptions}
 										/>
 									)}

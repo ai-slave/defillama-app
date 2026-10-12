@@ -1,11 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useMemo, useState } from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { buildSparseCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { chartColor } from '~/constants/colors'
 import { IncomeStatement } from '~/containers/ProtocolOverview/IncomeStatement'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
@@ -124,6 +126,10 @@ export default function Revenue() {
 	const llamaDailyChart = data?.llamaDailyChart
 	const holderRevenueChart = data?.holderRevenueChart
 	const [holderMode, setHolderMode] = useState<'daily' | 'monthly'>('monthly')
+	const dailyClaimedChart = useGetChartInstance()
+	// One instance serves both holder periods: only one chart is mounted at a time.
+	const holderChart = useGetChartInstance()
+	const pipelineChart = useGetChartInstance()
 
 	const dailyModel = useMemo(
 		() =>
@@ -269,7 +275,15 @@ export default function Revenue() {
 			<Panel>
 				<ChartPanelToolbar
 					leading={<ChartPanelTitle subtitle="Stacked by protocol">Daily claimed revenue</ChartPanelTitle>}
-				/>
+				>
+					<ChartExportButtons
+						chart={dailyClaimedChart}
+						filename="odyssey-daily-claimed-revenue"
+						title="Daily claimed revenue"
+						disabled={isLoading || !dailyModel}
+						csvSource={{ type: 'dataset', prepare: () => dailyModel.dataset }}
+					/>
+				</ChartPanelToolbar>
 				{isLoading || !dailyModel ? (
 					<SurfaceBodyLoadingStatus label="Loading chart" />
 				) : (
@@ -279,7 +293,7 @@ export default function Revenue() {
 							charts={dailyModel.charts}
 							valueSymbol="$"
 							showLegend
-							exportButtons="hidden"
+							exportButtons={dailyClaimedChart}
 						/>
 					</Suspense>
 				)}
@@ -301,6 +315,17 @@ export default function Revenue() {
 							{ value: 'daily', label: 'Daily' }
 						]}
 					/>
+					<ChartExportButtons
+						chart={holderChart}
+						filename="odyssey-holder-buybacks"
+						title="Holder buybacks"
+						disabled={isLoading || !(holderMode === 'monthly' ? holdersByMonthModel : holderModel)}
+						csvSource={{
+							type: 'dataset',
+							prepare: () =>
+								holderMode === 'monthly' ? { ...holdersByMonthModel.dataset, groupBy: 'monthly' } : holderModel.dataset
+						}}
+					/>
 				</ChartPanelToolbar>
 				{isLoading || (!holderModel && !holdersByMonthModel) ? (
 					<SurfaceBodyLoadingStatus label="Loading chart" />
@@ -314,7 +339,7 @@ export default function Revenue() {
 								valueSymbol="$"
 								groupBy="monthly"
 								showLegend
-								exportButtons="hidden"
+								exportButtons={holderChart}
 							/>
 						</Suspense>
 					) : (
@@ -328,7 +353,7 @@ export default function Revenue() {
 							charts={holderModel.charts}
 							valueSymbol="$"
 							showLegend
-							exportButtons="hidden"
+							exportButtons={holderChart}
 						/>
 					</Suspense>
 				) : (
@@ -381,11 +406,25 @@ export default function Revenue() {
 					}
 				>
 					{up.asOf && <span className="body-sm text-secondary">As of {up.asOf}</span>}
+					<ChartExportButtons
+						chart={pipelineChart}
+						filename="odyssey-unclaimed-pipeline"
+						title="Unclaimed pipeline"
+						disabled={!up.pie}
+						csvSource={{
+							type: 'dataset',
+							prepare: () => ({
+								dimensions: ['Source', 'Unclaimed (USD)'],
+								source: up.pie.map((item) => [item.name, item.value])
+							})
+						}}
+					/>
 				</ChartPanelToolbar>
 				{up.pie && (
 					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<PieChart
 							chartData={up.pie}
+							exportButtons={pipelineChart}
 							valueSymbol="$"
 							showLegend
 							legendPosition={{ orient: 'vertical', left: 'right', top: 'middle' }}

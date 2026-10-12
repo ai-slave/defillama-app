@@ -400,8 +400,8 @@ export function RWAAssetPage({
 	const hasParentPlatformName = asset.parentPlatform != null && asset.parentPlatform.trim().length > 0
 
 	const { data: yieldHistory, isLoading: isLoadingYieldChart } = useNativeYieldHistory(asset.nativeYieldPoolId)
-	const { chartInstance: nativeYieldChartInstance, handleChartReady: onNativeYieldChartReady } = useGetChartInstance()
-	const { chartInstance: assetChartInstance, handleChartReady: onAssetChartReady } = useGetChartInstance()
+	const nativeYieldChartExport = useGetChartInstance()
+	const assetChartExport = useGetChartInstance()
 	const { data: flowSummary, isLoading: isLoadingFlowSummary, isError: isFlowSummaryError } = useRWAFlowSummary()
 	const assetFlowsQuery = useRWAAssetFlows(asset.id, isFlowChart)
 	const assetFlows = assetFlowsQuery.data
@@ -547,7 +547,7 @@ export function RWAAssetPage({
 							) : null}
 							{isFlowChart && flowCoverage != null ? <RWAFlowCoverageTag coverage={flowCoverage} /> : null}
 							<ChartExportButtons
-								chartInstance={assetChartInstance}
+								chart={assetChartExport}
 								filename={assetChartExportFilename}
 								title={assetChartExportTitle}
 								csvSource={
@@ -574,7 +574,7 @@ export function RWAAssetPage({
 									<RWAFlowsChart
 										chart={flowChart}
 										onVisibleRangeChange={(range) => setFlowZoom({ source: flowChart.dataset.source, range })}
-										onReady={onAssetChartReady}
+										exportButtons={assetChartExport}
 									/>
 								</Suspense>
 							) : (
@@ -586,8 +586,7 @@ export function RWAAssetPage({
 									charts={timeSeriesCharts}
 									dataset={assetChartDataset}
 									showLegend
-									exportButtons="hidden"
-									onReady={onAssetChartReady}
+									exportButtons={assetChartExport}
 								/>
 							</Suspense>
 						) : (
@@ -939,7 +938,7 @@ export function RWAAssetPage({
 						}
 					>
 						<ChartExportButtons
-							chartInstance={nativeYieldChartInstance}
+							chart={nativeYieldChartExport}
 							filename={nativeYieldExportFilename}
 							title={nativeYieldExportTitle}
 							csvSource={nativeYieldDataset ? { type: 'dataset', prepare: () => nativeYieldDataset } : null}
@@ -955,8 +954,7 @@ export function RWAAssetPage({
 								dataset={nativeYieldDataset ?? { source: [], dimensions: [] }}
 								valueSymbol="%"
 								showLegend
-								exportButtons="hidden"
-								onReady={onNativeYieldChartReady}
+								exportButtons={nativeYieldChartExport}
 							/>
 						</Suspense>
 					)}

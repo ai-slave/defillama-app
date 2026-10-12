@@ -17,7 +17,7 @@ import {
 } from '~/utils/numberFormat'
 import type { TimeWindow } from './api'
 import { num, pct, useAaveAPYHistory, useAaveGHOReserve, useAaveMarkets } from './api'
-import { AAVE_AREA_EXPORT, AAVE_PERCENT_TIME_CHART_OPTIONS, InvestorsTable } from './shared'
+import { AAVE_PERCENT_TIME_CHART_OPTIONS, InvestorsTable } from './shared'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -220,7 +220,7 @@ export default function GHO() {
 								charts={BORROW_APY_CHART}
 								valueSymbol="%"
 								chartOptions={AAVE_PERCENT_TIME_CHART_OPTIONS}
-								exportButtons={AAVE_AREA_EXPORT}
+								exportButtons={{ filename: 'gho-borrow-apy-history', pngTitle: 'GHO Borrow APY history' }}
 							/>
 						</Suspense>
 					</Panel>

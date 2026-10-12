@@ -1,6 +1,7 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { buildCandlestickCsvDataset } from '~/components/ECharts/CandlestickChart/csv'
 import type { ICandlestickChartProps } from '~/components/ECharts/CandlestickChart/types'
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { BasicLink } from '~/components/Link'
@@ -67,7 +68,8 @@ function getSourceType(sourceType: string): string {
 
 export function DATCompany(props: IDATCompanyPageProps) {
 	const [selectedAsset, setSelectedAsset] = useState<string | null>(() => props.assets[0] ?? null)
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
+	const sharePriceChartExport = useGetChartInstance()
 	const chartData = useMemo(() => {
 		return props.chartByAsset.find((asset) => asset.ticker === selectedAsset)
 	}, [selectedAsset, props.chartByAsset])
@@ -230,7 +232,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 							/>
 						) : null}
 						<ChartExportButtons
-							chartInstance={chartInstance}
+							chart={chartExport}
 							filename={`${props.name}-holdings`}
 							title={holdingsExportTitle}
 							csvSource={chartData ? { type: 'dataset', prepare: () => chartData.holdingsChart.dataset } : null}
@@ -239,12 +241,12 @@ export function DATCompany(props: IDATCompanyPageProps) {
 					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						{chartData != null ? (
 							<MultiSeriesChart
+								exportButtons={chartExport}
 								dataset={chartData.holdingsChart.dataset}
 								charts={chartData.holdingsChart.charts}
 								valueSymbol={chartData.ticker}
 								hideDataZoom={chartData.holdingsChart.dataset.source.length < 2}
 								chartOptions={chartOptions}
-								onReady={handleChartReady}
 							/>
 						) : (
 							<SurfaceBodyStatus variant="empty">No holdings recorded.</SurfaceBodyStatus>
@@ -263,8 +265,6 @@ export function DATCompany(props: IDATCompanyPageProps) {
 								showLegend
 								title="mNAV"
 								exportButtons={{
-									png: true,
-									csv: true,
 									filename: `${props.name}-mnav`,
 									pngTitle: `${props.name} mNAV`
 								}}
@@ -282,8 +282,6 @@ export function DATCompany(props: IDATCompanyPageProps) {
 								showLegend
 								title="Fully Diluted Shares"
 								exportButtons={{
-									png: true,
-									csv: true,
 									filename: `${props.name}-fully-diluted-shares`,
 									pngTitle: `${props.name} Fully Diluted Shares`
 								}}
@@ -293,11 +291,18 @@ export function DATCompany(props: IDATCompanyPageProps) {
 				) : null}
 				{props.ohlcvChartData != null ? (
 					<Panel className="col-span-full">
-						<ChartPanelToolbar leading={<ChartPanelTitle headingAs="h2">Share price</ChartPanelTitle>} />
+						<ChartPanelToolbar leading={<ChartPanelTitle headingAs="h2">Share price</ChartPanelTitle>}>
+							<ChartExportButtons
+								chart={sharePriceChartExport}
+								filename={`${props.name}-share-price`}
+								title={`${props.name} Share Price`}
+								csvSource={{ type: 'dataset', prepare: () => buildCandlestickCsvDataset(props.ohlcvChartData) }}
+							/>
+						</ChartPanelToolbar>
 						{/* 480px gives the price and volume grids room; the candlestick fills the body. */}
 						<ChartPanelBody className="min-h-[480px]">
 							<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="min-h-[480px]" />}>
-								<CandlestickChart data={props.ohlcvChartData} />
+								<CandlestickChart data={props.ohlcvChartData} exportButtons={sharePriceChartExport} />
 							</Suspense>
 						</ChartPanelBody>
 						<p className="p-2 pt-0 body-sm text-tertiary">Source: Yahoo Finance</p>
@@ -312,8 +317,6 @@ export function DATCompany(props: IDATCompanyPageProps) {
 								valueSymbol="$"
 								title="Total Asset Value"
 								exportButtons={{
-									png: true,
-									csv: true,
 									filename: `${props.name}-total-asset-value`,
 									pngTitle: `${props.name} Total Asset Value`
 								}}

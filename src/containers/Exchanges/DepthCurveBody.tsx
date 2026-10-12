@@ -7,17 +7,26 @@
  * exchanges rather than exchange-and-side pairs.
  */
 import * as React from 'react'
+import type { ChartExportHandle } from '~/components/ChartExport/types'
 import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChart/categoryOptions'
 import { ChartPanelBody } from '~/ui/ChartPanel'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
-import { depthCurveAriaLabel, depthCurveDataset, type DepthCurveEntry } from './depthCurve'
+import { depthCurveAriaLabel, type DepthCurveDataset, type DepthCurveEntry } from './depthCurve'
 
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 const categoryOptions = createCategoryChartOptions('$')
 
-export function DepthCurveBody({ entries }: { entries: Array<DepthCurveEntry> }) {
-	const dataset = React.useMemo(() => depthCurveDataset(entries), [entries])
+/** The caller builds `dataset` with `depthCurveDataset(entries)`, because its export buttons read it too. */
+export function DepthCurveBody({
+	entries,
+	dataset,
+	exportButtons
+}: {
+	entries: Array<DepthCurveEntry>
+	dataset: DepthCurveDataset | null
+	exportButtons: ChartExportHandle
+}) {
 	const ariaLabel = React.useMemo(() => depthCurveAriaLabel(entries), [entries])
 	const charts = React.useMemo(
 		() =>
@@ -49,7 +58,7 @@ export function DepthCurveBody({ entries }: { entries: Array<DepthCurveEntry> })
 					valueSymbol="$"
 					hideDataZoom
 					showLegend
-					exportButtons="hidden"
+					exportButtons={exportButtons}
 					// Category options bring a tooltip formatter built for a labeled axis;
 					// without them the chart falls back to its time-series defaults and prints
 					// a date for every band.

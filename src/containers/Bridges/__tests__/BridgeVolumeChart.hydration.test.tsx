@@ -19,7 +19,11 @@ let rendered: HydrationResult | null = null
 beforeAll(async () => {
 	// Production's server render waits for the lazy chart chunk; renderToString cannot, so load it once up front.
 	const root = createRoot(document.createElement('div'))
-	await act(async () => root.render(<BridgeVolumeChart data={[]} />))
+	await act(async () =>
+		root.render(
+			<BridgeVolumeChart data={[]} exportButtons={{ chartInstance: () => null, handleChartReady: () => {} }} />
+		)
+	)
 	act(() => root.unmount())
 })
 
@@ -31,7 +35,10 @@ afterEach(async () => {
 
 test('HTML built while the data was fresh hydrates cleanly, then warns that it is stale', async () => {
 	vi.useFakeTimers({ now: Date.UTC(2026, 6, 15, 3) })
-	rendered = await renderHydrated(<BridgeVolumeChart data={data} />, { pageClockSec: PAGE_CLOCK_SEC })
+	rendered = await renderHydrated(
+		<BridgeVolumeChart data={data} exportButtons={{ chartInstance: () => null, handleChartReady: () => {} }} />,
+		{ pageClockSec: PAGE_CLOCK_SEC }
+	)
 
 	expect(rendered.errors).toEqual([])
 	expect(rendered.serverHtml).not.toContain(STALE_LABEL)
@@ -40,7 +47,10 @@ test('HTML built while the data was fresh hydrates cleanly, then warns that it i
 
 test('an open page starts warning when the clock crosses into the stale day', async () => {
 	vi.useFakeTimers({ now: Date.UTC(2026, 6, 14, 23, 59, 50) })
-	rendered = await renderHydrated(<BridgeVolumeChart data={data} />, { pageClockSec: PAGE_CLOCK_SEC })
+	rendered = await renderHydrated(
+		<BridgeVolumeChart data={data} exportButtons={{ chartInstance: () => null, handleChartReady: () => {} }} />,
+		{ pageClockSec: PAGE_CLOCK_SEC }
+	)
 	expect(rendered.container.textContent).not.toContain(STALE_LABEL)
 
 	await act(async () => {

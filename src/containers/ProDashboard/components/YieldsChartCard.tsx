@@ -15,6 +15,7 @@ import { PRO_DASHBOARD_METRIC_STALE_TIME } from '../queryPolicy'
 import { fetchProDashboardProxy } from '../services/fetchViaProxy'
 import { normalizeYieldChartType, type ActiveYieldChartType, type YieldsChartConfig } from '../types'
 import { scaledPx, useCardHeightScale } from './cardHeightContext'
+import { PRO_CARD_MENU_EXPORTS } from './ProCardActions'
 import { ProCardHeader } from './ProCardHeader'
 import { ProCardEmpty, ProCardError, ProCardLoading, ProCardRefreshFailed } from './ProCardStatus'
 import { useChartSyncGroup } from './useChartSyncGroup'
@@ -48,7 +49,7 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 	const { poolConfigId, poolName, project, chain } = config
 	const chartType = normalizeYieldChartType(config.chartType)
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 
 	const streamDone = useContext(StreamDoneContext)
 	const authToken = useContext(ProxyAuthTokenContext)
@@ -224,7 +225,7 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 				menu={
 					currentChartDataset.source.length > 0
 						? {
-								image: { chartInstance, filename: imageFilename, title: imageTitle },
+								image: { chartInstance: chartExport.chartInstance, filename: imageFilename, title: imageTitle },
 								csv: { onClick: handleCsvExport }
 							}
 						: {}
@@ -260,6 +261,8 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 					>
 						{chartType === 'tvl-apy' ? (
 							<MultiSeriesChart
+								exportButtons={PRO_CARD_MENU_EXPORTS}
+								onReady={chartExport.handleChartReady}
 								height={chartHeight}
 								{...(hallmarks ? { hallmarks } : {})}
 								{...(syncGroup ? { syncGroup } : {})}
@@ -268,11 +271,12 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 								valueSymbol=""
 								alwaysShowTooltip={false}
 								showLegend
-								onReady={handleChartReady}
 							/>
 						) : null}
 						{chartType === 'supply-apy' ? (
 							<MultiSeriesChart
+								exportButtons={PRO_CARD_MENU_EXPORTS}
+								onReady={chartExport.handleChartReady}
 								height={chartHeight}
 								{...(hallmarks ? { hallmarks } : {})}
 								{...(syncGroup ? { syncGroup } : {})}
@@ -281,11 +285,12 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 								{...(percentTimeChartOptions ? { chartOptions: percentTimeChartOptions } : {})}
 								valueSymbol="%"
 								showLegend
-								onReady={handleChartReady}
 							/>
 						) : null}
 						{chartType === 'supply-apy-7d' ? (
 							<MultiSeriesChart
+								exportButtons={PRO_CARD_MENU_EXPORTS}
+								onReady={chartExport.handleChartReady}
 								height={chartHeight}
 								{...(hallmarks ? { hallmarks } : {})}
 								{...(syncGroup ? { syncGroup } : {})}
@@ -293,11 +298,12 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 								charts={supplyApy7dCharts}
 								{...(singlePercentTimeChartOptions ? { chartOptions: singlePercentTimeChartOptions } : {})}
 								valueSymbol="%"
-								onReady={handleChartReady}
 							/>
 						) : null}
 						{chartType === 'borrow-apy' ? (
 							<MultiSeriesChart
+								exportButtons={PRO_CARD_MENU_EXPORTS}
+								onReady={chartExport.handleChartReady}
 								height={chartHeight}
 								{...(hallmarks ? { hallmarks } : {})}
 								{...(syncGroup ? { syncGroup } : {})}
@@ -306,11 +312,12 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 								{...(percentTimeChartOptions ? { chartOptions: percentTimeChartOptions } : {})}
 								valueSymbol="%"
 								showLegend
-								onReady={handleChartReady}
 							/>
 						) : null}
 						{chartType === 'net-borrow-apy' ? (
 							<MultiSeriesChart
+								exportButtons={PRO_CARD_MENU_EXPORTS}
+								onReady={chartExport.handleChartReady}
 								height={chartHeight}
 								{...(hallmarks ? { hallmarks } : {})}
 								{...(syncGroup ? { syncGroup } : {})}
@@ -318,7 +325,6 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 								charts={netBorrowApyCharts}
 								{...(singlePercentTimeChartOptions ? { chartOptions: singlePercentTimeChartOptions } : {})}
 								valueSymbol="%"
-								onReady={handleChartReady}
 							/>
 						) : null}
 					</Suspense>

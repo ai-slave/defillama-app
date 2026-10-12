@@ -1,6 +1,5 @@
-import type * as echarts from 'echarts/core'
 import { useRouter } from 'next/router'
-import { lazy, type ReactNode, Suspense, useMemo, useRef } from 'react'
+import { lazy, type ReactNode, Suspense, useMemo } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type { StateTimelineOption, StateTimelinePoint } from '~/components/ECharts/MultiSeriesChart/stateTimeline'
 import type {
@@ -17,6 +16,7 @@ import {
 } from '~/components/ECharts/shared/tooltip'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanelBody } from '~/ui/ChartPanel'
 import { DividedGrid } from '~/ui/DividedGrid'
 import { MetaLine } from '~/ui/MetaLine'
@@ -545,7 +545,7 @@ export function PoolLiquidityChart({
 		() => (exitStatus === 'queued' ? depositsOnly(widestModel) : widestModel),
 		[exitStatus, widestModel]
 	)
-	const chartRef = useRef<echarts.ECharts | null>(null)
+	const chartExport = useGetChartInstance()
 	// USD is the default. Native units are only offered when the pool carries a denomination, and are
 	// the honest way to read FLOWS: in dollars a fall can be an outflow or the token's price dropping.
 	// The URL says 'native'; the model keys the series 'units'. Translated here so neither side has
@@ -620,7 +620,7 @@ export function PoolLiquidityChart({
 				) : null}
 				<PoolRangeControl kind="liquidity" />
 				<ChartExportButtons
-					chartInstance={() => chartRef.current}
+					chart={chartExport}
 					filename={`yields-${poolId}-liquidity`}
 					csvSource={{ type: 'dataset', prepare: () => dataset }}
 				/>
@@ -650,10 +650,7 @@ export function PoolLiquidityChart({
 							valueSymbol={unit === 'usd' ? '$' : ''}
 							stacked
 							stateTimeline={timeline}
-							exportButtons="hidden"
-							onReady={(inst) => {
-								chartRef.current = inst
-							}}
+							exportButtons={chartExport}
 						/>
 					</Suspense>
 				)}

@@ -485,7 +485,7 @@ function ChartContainer({
 
 	const setQueryParam = (key: string, value: string | undefined) => pushShallowQuery(router, { [key]: value })
 
-	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
+	const exportChartExport = useGetChartInstance()
 
 	const categoriesFromData = data.categories[dataType]
 	const stackColors = data.stackColors[dataType]
@@ -878,8 +878,6 @@ function ChartContainer({
 
 	const allocationExportButtons = useMemo(
 		() => ({
-			png: true,
-			csv: true,
 			filename: `${data.name}-allocation`,
 			pngTitle: `${data.name} Allocation`
 		}),
@@ -891,8 +889,6 @@ function ChartContainer({
 			unlockedPercent === null
 				? null
 				: {
-						png: true,
-						csv: true,
 						filename: `${data.name}-unlocked`,
 						pngTitle: `${data.name} Unlocked ${formatPercent(unlockedPercent, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
 					},
@@ -1005,7 +1001,7 @@ function ChartContainer({
 								/>
 							) : null}
 							<ChartExportButtons
-								chartInstance={exportChartInstance}
+								chart={exportChartExport}
 								filename={`${data.name}-unlock-schedule`}
 								title={`${data.name} Unlock Schedule`}
 								csvSource={{
@@ -1019,6 +1015,7 @@ function ChartContainer({
 						) : (
 							<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 								<MultiSeriesChart
+									exportButtons={exportChartExport}
 									dataset={deferredScheduleChartData.dataset}
 									charts={deferredScheduleChartData.charts}
 									referenceLines={deferredScheduleChartData.todayLine}
@@ -1027,7 +1024,6 @@ function ChartContainer({
 									valueSymbol={data.tokenPrice.symbol ?? ''}
 									groupBy={deferredScheduleChartData.groupBy}
 									showTotalInTooltip
-									onReady={handleChartReady}
 									showLegend
 								/>
 							</Suspense>

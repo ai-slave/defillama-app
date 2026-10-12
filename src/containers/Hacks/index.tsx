@@ -123,7 +123,7 @@ export function HacksContainer({
 	const [chartType, setChartType] = React.useState('Monthly Sum')
 	// The time filter's window ends where the hacks list ends: the page clock it was built at.
 	const pageClockSec = usePageClockSec()
-	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
+	const exportChartExport = useGetChartInstance()
 	const router = useRouter()
 	const { time: timeQ, minLost, maxLost } = router.query
 	const minLostVal = parseNumberQueryParam(minLost)
@@ -211,7 +211,7 @@ export function HacksContainer({
 							label="Chart type"
 						/>
 						<ChartExportButtons
-							chartInstance={exportChartInstance}
+							chart={exportChartExport}
 							filename="total-value-hacked"
 							title="Total Value Hacked"
 							csvSource={
@@ -230,15 +230,15 @@ export function HacksContainer({
 					{chartType === 'Monthly Sum' ? (
 						<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<MultiSeriesChart
+								exportButtons={exportChartExport}
 								dataset={deferredMonthlyHacksChartData.dataset}
 								charts={deferredMonthlyHacksChartData.charts}
 								groupBy="monthly"
-								onReady={handleChartReady}
 							/>
 						</React.Suspense>
 					) : (
 						<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
-							<PieChart chartData={deferredPieChartData} onReady={handleChartReady} />
+							<PieChart exportButtons={exportChartExport} chartData={deferredPieChartData} />
 						</React.Suspense>
 					)}
 				</Panel>

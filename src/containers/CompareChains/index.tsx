@@ -358,8 +358,6 @@ export function CompareChains({ chains }: { chains: Array<ChainOption> }) {
 									charts={chartData.charts}
 									showTotalInTooltip={chartData.showTotalInTooltip}
 									exportButtons={{
-										png: true,
-										csv: true,
 										filename: `compare-chains-${selectedChains.map((chain) => chain.label).join('-vs-')}`,
 										pngTitle: `${selectedChains.map((chain) => chain.label).join(' vs ')}`
 									}}

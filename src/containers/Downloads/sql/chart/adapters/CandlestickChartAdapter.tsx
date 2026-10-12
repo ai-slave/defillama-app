@@ -1,5 +1,6 @@
 import type * as echarts from 'echarts/core'
 import { lazy, Suspense, useMemo } from 'react'
+import type { HeadlessChartExportButtons } from '~/components/ChartExport/types'
 import type { CandlestickPoint } from '~/components/ECharts/CandlestickChart/types'
 import { EmptyState, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import type { ChartConfig } from '../../chartConfig'
@@ -14,10 +15,18 @@ interface CandlestickChartAdapterProps {
 	result: QueryResult
 	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
+	exportButtons: HeadlessChartExportButtons
 	height: string
 }
 
-export function CandlestickChartAdapter({ config, result, classified, onReady, height }: CandlestickChartAdapterProps) {
+export function CandlestickChartAdapter({
+	config,
+	result,
+	classified,
+	onReady,
+	exportButtons,
+	height
+}: CandlestickChartAdapterProps) {
 	const mapping = config.candlestick
 	const data = useMemo(() => {
 		if (!mapping) return []
@@ -59,7 +68,7 @@ export function CandlestickChartAdapter({ config, result, classified, onReady, h
 		<Suspense
 			fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="min-h-0 w-full" style={{ height }} />}
 		>
-			<CandlestickChart data={data} height={height} onReady={onReady} />
+			<CandlestickChart data={data} height={height} onReady={onReady} exportButtons={exportButtons} />
 		</Suspense>
 	)
 }

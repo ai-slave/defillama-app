@@ -1,5 +1,6 @@
 import type * as echarts from 'echarts/core'
 import { lazy, Suspense, useMemo } from 'react'
+import type { HeadlessChartExportButtons } from '~/components/ChartExport/types'
 import type { PieTooltipParams } from '~/components/ECharts/PieChart/types'
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { CHART_SERIES_LIMIT, chartColor, OTHERS_COLOR } from '~/constants/colors'
@@ -18,10 +19,11 @@ interface PieChartAdapterProps {
 	result: QueryResult
 	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
+	exportButtons: HeadlessChartExportButtons
 	height: string
 }
 
-export function PieChartAdapter({ config, result, classified, onReady, height }: PieChartAdapterProps) {
+export function PieChartAdapter({ config, result, classified, onReady, exportButtons, height }: PieChartAdapterProps) {
 	const formatter = useMemo(() => makeValueFormatter(config.numberFormat), [config.numberFormat])
 	const nameCol = classified.find(
 		(column) => column.name === (config.xCol ?? classified.find((c) => c.coarse === 'category')?.name)
@@ -57,6 +59,7 @@ export function PieChartAdapter({ config, result, classified, onReady, height }:
 				fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="min-h-0 w-full" style={{ height }} />}
 			>
 				<PieChart
+					exportButtons={exportButtons}
 					chartData={chartData}
 					stackColors={stackColors}
 					valueSymbol={formatter.valueSymbol}

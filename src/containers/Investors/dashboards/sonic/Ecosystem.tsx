@@ -9,11 +9,13 @@ import {
 	useTable
 } from '@tanstack/react-table'
 import { lazy, Suspense, useMemo, useState } from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { columnVisibilityFeature } from '~/components/Table/features/display'
 import { sortingFeatures } from '~/components/Table/features/sorting'
 import { TablePager } from '~/components/Table/TablePager'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { ChartPanelExportShellLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
@@ -22,7 +24,6 @@ import { PanelLoadingStatus, PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/
 import { StatTile } from '~/ui/SummaryStats'
 import { formatPercent } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
-import { CSV_ONLY_EXPORT } from './chartDefaults'
 import { useEcosystemData, type AssetCategory, type TopProtocolEntry } from './ecosystemApi'
 import { formatSonicUsd } from './format'
 
@@ -186,6 +187,7 @@ function AssetBreakdownSection({
 	title: string
 }) {
 	const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set())
+	const chartExport = useGetChartInstance()
 
 	const toggleRow = (idx: number) => {
 		setExpandedRows((prev) => {
@@ -198,12 +200,26 @@ function AssetBreakdownSection({
 
 	return (
 		<Panel>
-			<ChartPanelToolbar leading={<ChartPanelTitle>{title}</ChartPanelTitle>} />
+			<ChartPanelToolbar leading={<ChartPanelTitle>{title}</ChartPanelTitle>}>
+				<ChartExportButtons
+					chart={chartExport}
+					filename="sonic-chain-assets"
+					title={title}
+					csvSource={{
+						type: 'dataset',
+						prepare: () => ({
+							dimensions: ['Category', 'Assets (USD)'],
+							source: categories.map((cat) => [cat.name, cat.value])
+						})
+					}}
+				/>
+			</ChartPanelToolbar>
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 				<div className="min-h-[320px]">
 					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" style={{ minHeight: '320px' }} />}>
 						<PieChart
 							chartData={categories}
+							exportButtons={chartExport}
 							stackColors={pieColors}
 							radius={['40%', '70%']}
 							height="320px"
@@ -277,6 +293,7 @@ function AssetBreakdownSection({
 export default function Ecosystem() {
 	const query = useEcosystemData()
 	const data = query.data
+	const stablecoinBreakdown = useGetChartInstance()
 
 	// A failed refresh of data already shown keeps it; the error and its Try again replace the tab only before data loads.
 	if (queryReadFailed(query))
@@ -296,6 +313,7 @@ export default function Ecosystem() {
 				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
+							exportButtons="auto"
 							title={data.tvl.title}
 							headingAs="h3"
 							dataset={data.tvl.dataset}
@@ -331,7 +349,7 @@ export default function Ecosystem() {
 							showLegend={data.fees.charts.length > 1}
 							stacked
 							chartOptions={data.fees.chartOptions}
-							exportButtons={CSV_ONLY_EXPORT}
+							exportButtons="auto"
 						/>
 					</Suspense>
 				</Panel>
@@ -363,7 +381,7 @@ export default function Ecosystem() {
 							showLegend={data.dexVolume.charts.length > 1}
 							stacked
 							chartOptions={data.dexVolume.chartOptions}
-							exportButtons={CSV_ONLY_EXPORT}
+							exportButtons="auto"
 						/>
 					</Suspense>
 				</Panel>
@@ -382,6 +400,7 @@ export default function Ecosystem() {
 				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
+							exportButtons="auto"
 							title={data.stablecoins.title}
 							headingAs="h3"
 							dataset={data.stablecoins.dataset}
@@ -398,12 +417,26 @@ export default function Ecosystem() {
 			{/* Stablecoin Supply Breakdown */}
 			{data.stablecoins.breakdown.length > 0 && (
 				<Panel>
-					<ChartPanelToolbar leading={<ChartPanelTitle>Stablecoin Supply breakdown</ChartPanelTitle>} />
+					<ChartPanelToolbar leading={<ChartPanelTitle>Stablecoin Supply breakdown</ChartPanelTitle>}>
+						<ChartExportButtons
+							chart={stablecoinBreakdown}
+							filename="sonic-stablecoin-supply-breakdown"
+							title="Stablecoin Supply breakdown"
+							csvSource={{
+								type: 'dataset',
+								prepare: () => ({
+									dimensions: ['Stablecoin', 'Supply (USD)'],
+									source: data.stablecoins.breakdown.map((coin) => [coin.name, coin.value])
+								})
+							}}
+						/>
+					</ChartPanelToolbar>
 					<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 						<div className="min-h-[320px]">
 							<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" style={{ minHeight: '320px' }} />}>
 								<PieChart
 									chartData={data.stablecoins.breakdown}
+									exportButtons={stablecoinBreakdown}
 									stackColors={data.stablecoins.pieColors}
 									radius={['40%', '70%']}
 									height="320px"

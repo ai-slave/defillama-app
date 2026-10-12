@@ -21,13 +21,7 @@ import {
 	useSyrupTxes
 } from './api'
 import { aggregateByMonth, aggregateDripByMonth, monthTimestampMs, type DripRow, type TxRow } from './chartData'
-import {
-	CardSkeleton,
-	MAPLE_CSV_ONLY_EXPORT,
-	MAPLE_DOLLAR_TIME_CHART_OPTIONS,
-	MAPLE_UNITLESS_TIME_CHART_OPTIONS,
-	Pagination
-} from './shared'
+import { CardSkeleton, MAPLE_DOLLAR_TIME_CHART_OPTIONS, MAPLE_UNITLESS_TIME_CHART_OPTIONS, Pagination } from './shared'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -383,7 +377,7 @@ export default function SyrupActivity() {
 							valueSymbol="$"
 							showLegend
 							chartOptions={MAPLE_DOLLAR_TIME_CHART_OPTIONS}
-							exportButtons={MAPLE_CSV_ONLY_EXPORT}
+							exportButtons="auto"
 						/>
 					</Suspense>
 				</Panel>
@@ -402,7 +396,7 @@ export default function SyrupActivity() {
 							charts={MIGRATIONS_CHART}
 							valueSymbol=""
 							chartOptions={MAPLE_UNITLESS_TIME_CHART_OPTIONS}
-							exportButtons={MAPLE_CSV_ONLY_EXPORT}
+							exportButtons="auto"
 						/>
 					</Suspense>
 				</Panel>
@@ -441,7 +435,7 @@ export default function SyrupActivity() {
 								charts={DRIP_CLAIMS_CHART}
 								valueSymbol=""
 								chartOptions={MAPLE_UNITLESS_TIME_CHART_OPTIONS}
-								exportButtons={MAPLE_CSV_ONLY_EXPORT}
+								exportButtons="auto"
 							/>
 						</Suspense>
 					</Panel>

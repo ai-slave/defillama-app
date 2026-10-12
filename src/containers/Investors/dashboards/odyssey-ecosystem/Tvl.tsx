@@ -1,10 +1,13 @@
 import { lazy, Suspense, useMemo } from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { buildAlignedCartesianChartModel, type CartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
+import { slug } from '~/utils'
 import { formatPercent } from '~/utils/numberFormat'
 import {
 	useTab,
@@ -75,12 +78,80 @@ function buildMorphoHistoryModel(market: MorphoMarketHistory): CartesianChartMod
 	}
 }
 
+function ChainTvlPanel({
+	title,
+	model,
+	zoom
+}: {
+	title: string
+	model: CartesianChartModel
+	zoom: IMultiSeriesChartProps['chartOptions']
+}) {
+	const chartExport = useGetChartInstance()
+	return (
+		<Panel>
+			<ChartPanelToolbar leading={<ChartPanelTitle subtitle="Stacked by chain">{title}</ChartPanelTitle>}>
+				<ChartExportButtons
+					chart={chartExport}
+					filename={`odyssey-tvl-by-chain-${slug(title)}`}
+					title={title}
+					csvSource={{ type: 'dataset', prepare: () => model.dataset }}
+				/>
+			</ChartPanelToolbar>
+			<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
+				<MultiSeriesChart
+					dataset={model.dataset}
+					charts={model.charts}
+					valueSymbol="$"
+					chartOptions={zoom}
+					showLegend
+					exportButtons={chartExport}
+				/>
+			</Suspense>
+		</Panel>
+	)
+}
+
+function MorphoHistoryPanel({ market, model }: { market: MorphoMarketHistory; model: CartesianChartModel }) {
+	const chartExport = useGetChartInstance()
+	const title = market.name || market.marketId
+	return (
+		<Panel>
+			<ChartPanelToolbar
+				leading={
+					<ChartPanelTitle subtitle={`${market.chain}${market.source ? ` · ${market.source}` : ''}`}>
+						{title}
+					</ChartPanelTitle>
+				}
+			>
+				<ChartExportButtons
+					chart={chartExport}
+					filename={`odyssey-morpho-${slug(title)}`}
+					title={title}
+					csvSource={{ type: 'dataset', prepare: () => model.dataset }}
+				/>
+			</ChartPanelToolbar>
+			<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
+				<MultiSeriesChart
+					dataset={model.dataset}
+					charts={model.charts}
+					valueSymbol="$"
+					showLegend
+					exportButtons={chartExport}
+				/>
+			</Suspense>
+		</Panel>
+	)
+}
+
 export default function Tvl() {
 	const { data, isLoading } = useTab<TvlResponse>('tvl')
 	const k = data?.kpis ?? ({} as Partial<NonNullable<typeof data>['kpis']>)
 	const fromDate = data?.defaultFrom || '2025-01-01'
 	const ecosystemChart = data?.ecosystemChart
 	const marketOverlay = data?.marketOverlay
+	const ecoChart = useGetChartInstance()
+	const ethChart = useGetChartInstance()
 
 	const ecoModel = useMemo(
 		() =>
@@ -204,7 +275,15 @@ export default function Tvl() {
 							Ecosystem TVL
 						</ChartPanelTitle>
 					}
-				/>
+				>
+					<ChartExportButtons
+						chart={ecoChart}
+						filename="odyssey-ecosystem-tvl"
+						title="Ecosystem TVL"
+						disabled={isLoading || !ecoModel}
+						csvSource={{ type: 'dataset', prepare: () => ecoModel.dataset }}
+					/>
+				</ChartPanelToolbar>
 				{isLoading || !ecoModel ? (
 					<SurfaceBodyLoadingStatus label="Loading chart" />
 				) : (
@@ -215,7 +294,7 @@ export default function Tvl() {
 							valueSymbol="$"
 							chartOptions={ecoZoom}
 							showLegend
-							exportButtons="hidden"
+							exportButtons={ecoChart}
 						/>
 					</Suspense>
 				)}
@@ -225,7 +304,15 @@ export default function Tvl() {
 			<Panel>
 				<ChartPanelToolbar
 					leading={<ChartPanelTitle subtitle="Correlation overlay">Ecosystem TVL vs ETH/USD</ChartPanelTitle>}
-				/>
+				>
+					<ChartExportButtons
+						chart={ethChart}
+						filename="odyssey-ecosystem-tvl-vs-eth"
+						title="Ecosystem TVL vs ETH/USD"
+						disabled={isLoading || !ethOverlay}
+						csvSource={{ type: 'dataset', prepare: () => ethOverlay.dataset }}
+					/>
+				</ChartPanelToolbar>
 				{isLoading || !ethOverlay ? (
 					<SurfaceBodyLoadingStatus label="Loading chart" />
 				) : (
@@ -236,7 +323,7 @@ export default function Tvl() {
 							valueSymbol="$"
 							chartOptions={ethZoom}
 							showLegend
-							exportButtons="hidden"
+							exportButtons={ethChart}
 						/>
 					</Suspense>
 				)}
@@ -244,25 +331,9 @@ export default function Tvl() {
 
 			<h2 className="heading-xs">TVL by chain</h2>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-				{protocolByChainModels.map(({ protocol, model, zoom }) => {
-					return (
-						<Panel key={protocol.protocol}>
-							<ChartPanelToolbar
-								leading={<ChartPanelTitle subtitle="Stacked by chain">{protocol.protocol}</ChartPanelTitle>}
-							/>
-							<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
-								<MultiSeriesChart
-									dataset={model.dataset}
-									charts={model.charts}
-									valueSymbol="$"
-									chartOptions={zoom}
-									showLegend
-									exportButtons="hidden"
-								/>
-							</Suspense>
-						</Panel>
-					)
-				})}
+				{protocolByChainModels.map(({ protocol, model, zoom }) => (
+					<ChainTvlPanel key={protocol.protocol} title={protocol.protocol} model={model} zoom={zoom} />
+				))}
 			</div>
 
 			{u && (
@@ -358,28 +429,9 @@ export default function Tvl() {
 						{data.morphoMarketHistory.title || 'Morpho Market · Supply / Borrow / Utilization'}
 					</h2>
 					<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-						{morphoHistoryModels.map(({ market, model }) => {
-							return (
-								<Panel key={market.marketId}>
-									<ChartPanelToolbar
-										leading={
-											<ChartPanelTitle subtitle={`${market.chain}${market.source ? ` · ${market.source}` : ''}`}>
-												{market.name || market.marketId}
-											</ChartPanelTitle>
-										}
-									/>
-									<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
-										<MultiSeriesChart
-											dataset={model.dataset}
-											charts={model.charts}
-											valueSymbol="$"
-											showLegend
-											exportButtons="hidden"
-										/>
-									</Suspense>
-								</Panel>
-							)
-						})}
+						{morphoHistoryModels.map(({ market, model }) => (
+							<MorphoHistoryPanel key={market.marketId} market={market} model={model} />
+						))}
 					</div>
 				</>
 			) : null}

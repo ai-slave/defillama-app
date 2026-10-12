@@ -177,7 +177,7 @@ function MarketsExchangeProfile({
 				/>
 				<div className="flex flex-col gap-2 xl:col-[2/-1]">
 					<VenueChart
-						exchange={profile.slug}
+						exchange={profile}
 						loadSeries={loadSeries}
 						showGlobalDataNotice={countryView.status !== 'global'}
 					/>

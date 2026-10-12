@@ -74,7 +74,7 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 	const name = props.category ?? props.tag ?? ''
 	const namePrefix = name ? `${name}-` : ''
 	const [groupBy, setGroupBy] = useState<LowercaseDwmcGrouping>('daily')
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 	const year = new Date(usePageClockSec() * 1000).getUTCFullYear()
 	const categoryPresentation = useMemo(
 		() =>
@@ -262,7 +262,7 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 							<ChartGroupingSelector value={groupBy} setValue={setGroupBy} options={DWMC_GROUPING_OPTIONS_LOWERCASE} />
 						) : null}
 						<ChartExportButtons
-							chartInstance={chartInstance}
+							chart={chartExport}
 							filename={`protocols-${namePrefix}${props.chain || 'all'}${chartBreakdown === 'combined' ? '' : `-by-${chartBreakdown}`}`}
 							title={
 								props.chain === 'All'
@@ -278,12 +278,12 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 					</ChartPanelToolbar>
 					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
+							exportButtons={chartExport}
 							dataset={deferredGroupedCharts.dataset}
 							charts={deferredGroupedCharts.charts}
 							groupBy={chartGroupBy}
 							showLegend
 							valueSymbol="$"
-							onReady={handleChartReady}
 						/>
 					</Suspense>
 				</Panel>

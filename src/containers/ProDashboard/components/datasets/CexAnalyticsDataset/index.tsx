@@ -369,6 +369,7 @@ function SpotVsDerivativesChart({ data }: { data: Array<CexAnalyticsTotalsPoint>
 		<div className="flex h-full w-full flex-col">
 			<Suspense fallback={<ProCardLoading label="Loading chart" className="h-[calc(360px*var(--card-scale,1))]" />}>
 				<MultiSeriesChart
+					exportButtons="auto"
 					title="Spot vs derivatives volume"
 					dataset={dataset}
 					charts={SPOT_VS_DERIVATIVES_CHARTS}
@@ -391,7 +392,7 @@ function VenueMarketShareChart({
 	topN: number
 }) {
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 	const cardHeightScale = useCardHeightScale()
 	const chartHeight = scaledPx(360, cardHeightScale)
 	const filtered = useMemo(
@@ -485,7 +486,7 @@ function VenueMarketShareChart({
 						/>
 					) : null}
 					<ChartExportButtons
-						chartInstance={chartInstance}
+						chart={chartExport}
 						filename={`cex-${metric}-market-share`}
 						title={title}
 						csvSource={shareChart.csvSource}
@@ -502,8 +503,7 @@ function VenueMarketShareChart({
 					valueSymbol="%"
 					height={chartHeight}
 					showLegend
-					exportButtons="hidden"
-					onReady={handleChartReady}
+					exportButtons={chartExport}
 				/>
 			</Suspense>
 		</div>

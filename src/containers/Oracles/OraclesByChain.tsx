@@ -107,8 +107,8 @@ export function OraclesByChain({
 			}),
 		[oraclesColors, selectedPieSeries, tableAndPieData.pieSeries]
 	)
-	const { chartInstance, handleChartReady } = useGetChartInstance()
-	const { chartInstance: pieChartInstance, handleChartReady: handlePieChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
+	const pieChartExport = useGetChartInstance()
 
 	return (
 		<>
@@ -129,7 +129,7 @@ export function OraclesByChain({
 							/>
 						) : null}
 						<ChartExportButtons
-							chartInstance={pieChartInstance}
+							chart={pieChartExport}
 							filename="oracles-tvs-pie"
 							title="Oracles TVS"
 							csvSource={{
@@ -144,9 +144,9 @@ export function OraclesByChain({
 					</ChartPanelToolbar>
 					<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<PieChart
+							exportButtons={pieChartExport}
 							chartData={piePresentation.chartData}
 							stackColors={piePresentation.stackColors}
-							onReady={handlePieChartReady}
 						/>
 					</React.Suspense>
 				</Panel>
@@ -165,7 +165,7 @@ export function OraclesByChain({
 							/>
 						) : null}
 						<ChartExportButtons
-							chartInstance={chartInstance}
+							chart={chartExport}
 							filename="oracles-dominance"
 							title="Oracle Dominance"
 							csvSource={selectedDominance.csvSource}
@@ -182,13 +182,13 @@ export function OraclesByChain({
 					) : (
 						<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<MultiSeriesChart
+								exportButtons={chartExport}
 								dataset={selectedDominance.dataset}
 								charts={selectedDominance.charts}
 								csvSource={selectedDominance.csvSource}
 								stacked
 								expandTo100Percent
 								valueSymbol="%"
-								onReady={handleChartReady}
 							/>
 						</React.Suspense>
 					)}

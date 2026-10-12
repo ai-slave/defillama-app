@@ -1,6 +1,8 @@
 import { lazy, Suspense, useMemo, useState } from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { createCappedRemainderTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -105,6 +107,7 @@ export default function Incentives() {
 	const k = data?.kpis ?? ({} as Partial<NonNullable<typeof data>['kpis']>)
 	const [poolTab, setPoolTab] = useState<VenueId>('aerodrome')
 	const [epochTab, setEpochTab] = useState<VenueId>('aerodrome')
+	const poolExport = useGetChartInstance()
 
 	const poolChart = data?.weeklyPoolCharts?.[poolTab]
 	const poolModel = useMemo(
@@ -184,6 +187,13 @@ export default function Incentives() {
 						value={poolTab}
 						onValueChange={setPoolTab}
 					/>
+					<ChartExportButtons
+						chart={poolExport}
+						filename="odyssey-per-pool-weekly-spend"
+						title="Per-pool Weekly Spend"
+						disabled={!poolModel?.dataset.source.length}
+						csvSource={{ type: 'dataset', prepare: () => poolModel.dataset }}
+					/>
 				</ChartPanelToolbar>
 				{!data ? (
 					<SurfaceBodyLoadingStatus label="Loading chart" />
@@ -196,7 +206,7 @@ export default function Incentives() {
 							chartOptions={POOL_CHART_OPTIONS}
 							valueSymbol="$"
 							showLegend
-							exportButtons="hidden"
+							exportButtons={poolExport}
 						/>
 					</Suspense>
 				) : (

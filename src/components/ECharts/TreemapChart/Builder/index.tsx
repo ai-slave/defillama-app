@@ -4,6 +4,7 @@ import { GraphicComponent, ToolboxComponent, TooltipComponent } from 'echarts/co
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useEffectEvent, useRef } from 'react'
+import { chartExportHandle, type HeadlessChartExportButtons } from '~/components/ChartExport/types'
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { chartWatermarkGraphic, useCanvasWatermarkEnabled } from '~/components/ECharts/shared/watermark'
 import { TreemapLabelContrast } from '~/components/ECharts/TreemapChart/labelContrast'
@@ -26,6 +27,8 @@ interface BuilderTreemapChartProps {
 	height?: string
 	/** A min-h-* class that moves the 360px floor of a chart without `height`. */
 	containerClassName?: string
+	/** Where this chart's .csv/.png live: the handle its page's export buttons also take, or why it has none. */
+	exportButtons: HeadlessChartExportButtons
 	onReady?: (instance: echarts.ECharts | null) => void
 }
 
@@ -41,7 +44,7 @@ function normalizeTreemapFormatterParams(params: unknown): TreemapFormatterParam
 	return params && typeof params === 'object' ? (params as TreemapFormatterParams) : {}
 }
 
-function BuilderTreemapChart({ data, height, containerClassName, onReady }: BuilderTreemapChartProps) {
+function BuilderTreemapChart({ data, height, containerClassName, onReady, exportButtons }: BuilderTreemapChartProps) {
 	const canvasWatermarkEnabled = useCanvasWatermarkEnabled()
 	const [isDark] = useDarkModeManager()
 	const containerRef = useRef<HTMLDivElement | null>(null)
@@ -49,6 +52,7 @@ function BuilderTreemapChart({ data, height, containerClassName, onReady }: Buil
 	const persistentLifecycle = usePersistentEChartsLifecycle()
 	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
 		onReady?.(instance)
+		chartExportHandle(exportButtons)?.handleChartReady(instance)
 	})
 
 	// Stable resize listener - never re-attaches when dependencies change

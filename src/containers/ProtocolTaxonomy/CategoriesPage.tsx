@@ -157,7 +157,7 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 		selectedCharts,
 		setSelectedSeries: setSelectedCategories
 	} = useLocalSelection({ scope: 'categories-tvl', availableSeries: categories })
-	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
 	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl')
 	const enabledTvls = React.useMemo(() => getEnabledProtocolsCategoriesTvls(extraTvlsEnabled), [extraTvlsEnabled])
 	const enabledTvlsKey = enabledTvls.join(',')
@@ -224,7 +224,7 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 						/>
 					) : null}
 					<ChartExportButtons
-						chartInstance={chartInstance}
+						chart={chartExport}
 						filename="categories-tvl"
 						title="Protocol TVL"
 						csvSource={selectedPresentation.csvSource}
@@ -239,12 +239,12 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 				) : (
 					<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						<MultiSeriesChart
+							exportButtons={chartExport}
 							dataset={selectedPresentation.dataset}
 							charts={selectedPresentation.charts}
 							csvSource={selectedPresentation.csvSource}
 							valueSymbol="$"
 							solidChartAreaStyle
-							onReady={handleChartReady}
 							showTotalInTooltip
 							requireCompleteTooltipTotal
 						/>

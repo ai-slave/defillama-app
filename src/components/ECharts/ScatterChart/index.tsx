@@ -14,6 +14,7 @@ import {
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useEffectEvent, useRef } from 'react'
+import { chartExportHandle } from '~/components/ChartExport/types'
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
@@ -92,6 +93,7 @@ function ScatterChart({
 	logScale = false,
 	domain,
 	pinnableTooltip = false,
+	exportButtons,
 	onReady
 }: IScatterChartProps) {
 	const [isDark] = useDarkModeManager()
@@ -103,6 +105,7 @@ function ScatterChart({
 	const pinnedPointRef = useRef<{ seriesIndex: number; dataIndex: number } | null>(null)
 	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
 		onReady?.(instance)
+		chartExportHandle(exportButtons)?.handleChartReady(instance)
 	})
 
 	// Stable resize listener - never re-attaches when dependencies change

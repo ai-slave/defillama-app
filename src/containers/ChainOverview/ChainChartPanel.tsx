@@ -148,7 +148,7 @@ export function ChainChartPanel({
 	// Cumulative hides Active Addresses, so a chart picked down to it alone draws nothing to export or embed.
 	const plotsSeries = toggledCharts.length > (isActiveAddressesHidden ? 1 : 0)
 
-	const { chartInstance: chainChartInstance, handleChartReady } = useGetChartInstance()
+	const chainChartExport = useGetChartInstance()
 	const imageExportFilename = slug(metadata.name)
 	const imageExportTitle = metadata.name === 'All' ? 'All Chains' : metadata.name
 
@@ -245,7 +245,7 @@ export function ChainChartPanel({
 				) : null}
 				{plotsSeries ? (
 					<ChartExportButtons
-						chartInstance={chainChartInstance}
+						chart={chainChartExport}
 						csvSource={{ type: 'prepare-csv', prepare: prepareCsv }}
 						filename={imageExportFilename}
 						title={imageExportTitle}
@@ -284,7 +284,7 @@ export function ChainChartPanel({
 							valueSymbol={deferredChartRenderModel.valueSymbol}
 							isThemeDark={darkMode}
 							groupBy={deferredChartRenderModel.groupBy}
-							onReady={handleChartReady}
+							exportButtons={chainChartExport}
 						/>
 					</Suspense>
 				)}

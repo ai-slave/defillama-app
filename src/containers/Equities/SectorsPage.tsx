@@ -2,6 +2,7 @@ import { createColumnHelper, type SortingState } from '@tanstack/react-table'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useMemo } from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import type { TreemapNode } from '~/components/ECharts/TreemapChart/types'
 import { type paginatedTableFeatures, usePaginatedTable } from '~/components/Table/features/pagination'
@@ -9,10 +10,11 @@ import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { prepareTableCsv } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import { chartColor } from '~/constants/colors'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Change, formatChange } from '~/ui/Change'
-import { ChartPanelBody } from '~/ui/ChartPanel'
+import { ChartPanelBody, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { MetaLine } from '~/ui/MetaLine'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -203,6 +205,7 @@ function SectorsReadyPage({
 	const cardSort = CARD_SORT_OPTIONS.find((option) => option.value === router.query.cardSort)?.value ?? 'marketCap'
 	const performancePeriod =
 		PERFORMANCE_PERIOD_OPTIONS.find((option) => option.value === router.query.period)?.value ?? '1d'
+	const performanceChartExport = useGetChartInstance()
 
 	const { overview, sectors } = state.data
 	const classifiedSectors = useClassifiedSectors(sectors)
@@ -321,11 +324,13 @@ function SectorsReadyPage({
 			/>
 
 			<Panel>
-				<PanelHeader>
-					<div className="mr-auto">
-						<PanelTitle>Sector performance</PanelTitle>
-						<p className="body-sm text-tertiary">Cap-weighted price return by sector</p>
-					</div>
+				<ChartPanelToolbar
+					leading={
+						<ChartPanelTitle headingAs="h2" subtitle="Cap-weighted price return by sector">
+							Sector performance
+						</ChartPanelTitle>
+					}
+				>
 					<SegmentedControl<SectorPerformancePeriod>
 						value={performancePeriod}
 						onValueChange={(next) => void pushShallowQuery(router, { period: next === '1d' ? undefined : next })}
@@ -334,7 +339,25 @@ function SectorsReadyPage({
 						variant="default"
 						size="md"
 					/>
-				</PanelHeader>
+					{performanceRows.length > 0 ? (
+						<ChartExportButtons
+							chart={performanceChartExport}
+							filename="sector-performance"
+							title="Sector performance"
+							csvSource={{
+								type: 'dataset',
+								prepare: () => ({
+									dimensions: [
+										'Sector',
+										`${PERFORMANCE_PERIOD_OPTIONS.find((option) => option.value === performancePeriod)!.label} Return`
+									],
+									source: performanceRows.map(({ row, value }) => [row.sector, value])
+								})
+							}}
+							pngProfile="hbar"
+						/>
+					) : null}
+				</ChartPanelToolbar>
 				{performanceRows.length > 0 ? (
 					<ChartPanelBody>
 						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
@@ -344,6 +367,7 @@ function SectorsReadyPage({
 								color={chartColor(0)}
 								valueSymbol="%"
 								showValueLabels
+								exportButtons={performanceChartExport}
 							/>
 						</Suspense>
 					</ChartPanelBody>

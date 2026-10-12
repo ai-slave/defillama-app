@@ -1,10 +1,12 @@
 import { lazy, Suspense, useMemo } from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
 import { buildAlignedCartesianChartModel, type CartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { CHART_SERIES_LIMIT } from '~/constants/colors'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { ChartPanelExportShellLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
@@ -173,6 +175,13 @@ function HeadlinePill({ label, value }: { label: string; value?: string }) {
 
 export default function Ecosystem() {
 	const { data, isLoading } = useEcosystemData()
+	const volumeChart = useGetChartInstance()
+	const feesChart = useGetChartInstance()
+	const activityChart = useGetChartInstance()
+	const tokenPieChart = useGetChartInstance()
+	const blockchainPieChart = useGetChartInstance()
+	const channelsChart = useGetChartInstance()
+	const supplyChart = useGetChartInstance()
 
 	const intents = data?.intents
 	const eco = data?.ecosystem
@@ -266,7 +275,15 @@ export default function Ecosystem() {
 			</div>
 
 			<Panel>
-				<ChartPanelToolbar leading={<ChartPanelTitle>NEAR Intents Daily Volume</ChartPanelTitle>} />
+				<ChartPanelToolbar leading={<ChartPanelTitle>NEAR Intents Daily Volume</ChartPanelTitle>}>
+					<ChartExportButtons
+						chart={volumeChart}
+						filename="near-intents-daily-volume"
+						title="NEAR Intents Daily Volume"
+						disabled={isLoading || !intentModels.volume}
+						csvSource={{ type: 'dataset', prepare: () => intentModels.volume.dataset }}
+					/>
+				</ChartPanelToolbar>
 				{isLoading || !intentModels.volume ? (
 					<SurfaceBodyLoadingStatus label="Loading chart" />
 				) : (
@@ -277,7 +294,7 @@ export default function Ecosystem() {
 							valueSymbol="$"
 							showTotalInTooltip
 							showLegend
-							exportButtons="hidden"
+							exportButtons={volumeChart}
 						/>
 					</Suspense>
 				)}
@@ -285,7 +302,15 @@ export default function Ecosystem() {
 
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 				<Panel>
-					<ChartPanelToolbar leading={<ChartPanelTitle>NEAR Intents Fees</ChartPanelTitle>} />
+					<ChartPanelToolbar leading={<ChartPanelTitle>NEAR Intents Fees</ChartPanelTitle>}>
+						<ChartExportButtons
+							chart={feesChart}
+							filename="near-intents-fees"
+							title="NEAR Intents Fees"
+							disabled={isLoading || !intentModels.fees}
+							csvSource={{ type: 'dataset', prepare: () => intentModels.fees.dataset }}
+						/>
+					</ChartPanelToolbar>
 					{isLoading || !intentModels.fees ? (
 						<SurfaceBodyLoadingStatus label="Loading chart" />
 					) : (
@@ -296,13 +321,21 @@ export default function Ecosystem() {
 								valueSymbol="$"
 								showTotalInTooltip
 								showLegend
-								exportButtons="hidden"
+								exportButtons={feesChart}
 							/>
 						</Suspense>
 					)}
 				</Panel>
 				<Panel>
-					<ChartPanelToolbar leading={<ChartPanelTitle>NEAR Intents Swap Activity</ChartPanelTitle>} />
+					<ChartPanelToolbar leading={<ChartPanelTitle>NEAR Intents Swap Activity</ChartPanelTitle>}>
+						<ChartExportButtons
+							chart={activityChart}
+							filename="near-intents-swap-activity"
+							title="NEAR Intents Swap Activity"
+							disabled={isLoading || !intentModels.activity}
+							csvSource={{ type: 'dataset', prepare: () => intentModels.activity.dataset }}
+						/>
+					</ChartPanelToolbar>
 					{isLoading || !intentModels.activity ? (
 						<SurfaceBodyLoadingStatus label="Loading chart" />
 					) : (
@@ -313,7 +346,7 @@ export default function Ecosystem() {
 								valueSymbol=""
 								showTotalInTooltip
 								showLegend
-								exportButtons="hidden"
+								exportButtons={activityChart}
 							/>
 						</Suspense>
 					)}
@@ -322,13 +355,28 @@ export default function Ecosystem() {
 
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 				<Panel>
-					<ChartPanelToolbar leading={<ChartPanelTitle>Volume by token (all-time, top 10)</ChartPanelTitle>} />
+					<ChartPanelToolbar leading={<ChartPanelTitle>Volume by token (all-time, top 10)</ChartPanelTitle>}>
+						<ChartExportButtons
+							chart={tokenPieChart}
+							filename="near-intents-volume-by-token"
+							title="Volume by token (all-time, top 10)"
+							disabled={isLoading || !tokenPie}
+							csvSource={{
+								type: 'dataset',
+								prepare: () => ({
+									dimensions: ['Token', 'Volume'],
+									source: tokenPie.map((item) => [item.name, item.value])
+								})
+							}}
+						/>
+					</ChartPanelToolbar>
 					{isLoading || !tokenPie ? (
 						<SurfaceBodyLoadingStatus label="Loading chart" />
 					) : (
 						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<PieChart
 								chartData={tokenPie}
+								exportButtons={tokenPieChart}
 								valueSymbol="$"
 								showLegend
 								legendPosition={{
@@ -341,13 +389,28 @@ export default function Ecosystem() {
 					)}
 				</Panel>
 				<Panel>
-					<ChartPanelToolbar leading={<ChartPanelTitle>Volume by blockchain (all-time)</ChartPanelTitle>} />
+					<ChartPanelToolbar leading={<ChartPanelTitle>Volume by blockchain (all-time)</ChartPanelTitle>}>
+						<ChartExportButtons
+							chart={blockchainPieChart}
+							filename="near-intents-volume-by-blockchain"
+							title="Volume by blockchain (all-time)"
+							disabled={isLoading || !blockchainPie}
+							csvSource={{
+								type: 'dataset',
+								prepare: () => ({
+									dimensions: ['Blockchain', 'Volume'],
+									source: blockchainPie.map((item) => [item.name, item.value])
+								})
+							}}
+						/>
+					</ChartPanelToolbar>
 					{isLoading || !blockchainPie ? (
 						<SurfaceBodyLoadingStatus label="Loading chart" />
 					) : (
 						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<PieChart
 								chartData={blockchainPie}
+								exportButtons={blockchainPieChart}
 								valueSymbol="$"
 								showLegend
 								legendPosition={{
@@ -362,7 +425,22 @@ export default function Ecosystem() {
 			</div>
 
 			<Panel>
-				<ChartPanelToolbar leading={<ChartPanelTitle>Fees by referral channel</ChartPanelTitle>} />
+				<ChartPanelToolbar leading={<ChartPanelTitle>Fees by referral channel</ChartPanelTitle>}>
+					<ChartExportButtons
+						chart={channelsChart}
+						filename="near-intents-fees-by-referral-channel"
+						title="Fees by referral channel"
+						disabled={isLoading || !channelBars}
+						csvSource={{
+							type: 'dataset',
+							prepare: () => ({
+								dimensions: ['Referral Channel', 'Fees'],
+								source: channelBars.categories.map((category, i) => [category, channelBars.values[i]])
+							})
+						}}
+						pngProfile="hbar"
+					/>
+				</ChartPanelToolbar>
 				{isLoading || !channelBars ? (
 					<SurfaceBodyLoadingStatus label="Loading chart" />
 				) : (
@@ -372,6 +450,7 @@ export default function Ecosystem() {
 							values={channelBars.values}
 							valueSymbol="$"
 							colors={channelBars.categories.map((_, i) => BREAKDOWN_PALETTE[i % BREAKDOWN_PALETTE.length])}
+							exportButtons={channelsChart}
 						/>
 					</Suspense>
 				)}
@@ -419,6 +498,7 @@ export default function Ecosystem() {
 					) : (
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
+								exportButtons="auto"
 								title="Daily Transactions"
 								headingAs="h3"
 								dataset={areaDatasets.transactions}
@@ -435,6 +515,7 @@ export default function Ecosystem() {
 					) : (
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
+								exportButtons="auto"
 								title="Daily Active Accounts"
 								headingAs="h3"
 								dataset={areaDatasets.activeAccounts}
@@ -451,6 +532,7 @@ export default function Ecosystem() {
 					) : (
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
+								exportButtons="auto"
 								title="New Accounts Created"
 								headingAs="h3"
 								dataset={areaDatasets.newAccounts}
@@ -467,6 +549,7 @@ export default function Ecosystem() {
 					) : (
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
+								exportButtons="auto"
 								title="Daily Gas Fees (NEAR)"
 								headingAs="h3"
 								dataset={areaDatasets.gasFees}
@@ -507,6 +590,7 @@ export default function Ecosystem() {
 				) : (
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
+							exportButtons="auto"
 							title="NEAR Price (USD)"
 							headingAs="h3"
 							dataset={areaDatasets.nearPrice}
@@ -519,7 +603,15 @@ export default function Ecosystem() {
 			</Panel>
 
 			<Panel>
-				<ChartPanelToolbar leading={<ChartPanelTitle>Token Supply</ChartPanelTitle>} />
+				<ChartPanelToolbar leading={<ChartPanelTitle>Token Supply</ChartPanelTitle>}>
+					<ChartExportButtons
+						chart={supplyChart}
+						filename="near-token-supply"
+						title="Token Supply"
+						disabled={isLoading || !supplyModel}
+						csvSource={{ type: 'dataset', prepare: () => supplyModel.dataset }}
+					/>
+				</ChartPanelToolbar>
 				{isLoading || !supplyModel ? (
 					<SurfaceBodyLoadingStatus label="Loading chart" />
 				) : (
@@ -529,7 +621,7 @@ export default function Ecosystem() {
 							charts={supplyModel.charts}
 							valueSymbol=" NEAR"
 							showLegend
-							exportButtons="hidden"
+							exportButtons={supplyChart}
 						/>
 					</Suspense>
 				)}

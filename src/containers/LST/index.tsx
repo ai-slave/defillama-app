@@ -285,9 +285,9 @@ export function LSTOverview({
 			}),
 		[lsdColors, pieSeries, selectedPieTokensSet]
 	)
-	const { chartInstance: breakdownChartInstance, handleChartReady: handleBreakdownReady } = useGetChartInstance()
-	const { chartInstance: inflowsChartInstance, handleChartReady: handleInflowsReady } = useGetChartInstance()
-	const { chartInstance: pieChartInstance, handleChartReady: handlePieReady } = useGetChartInstance()
+	const breakdownChartExport = useGetChartInstance()
+	const inflowsChartExport = useGetChartInstance()
+	const pieChartExport = useGetChartInstance()
 	const columns = ratesAvailable
 		? apyAvailable
 			? LST_COLUMNS_WITH_RATES_AND_APY
@@ -398,7 +398,7 @@ export function LSTOverview({
 											/>
 										) : null}
 										<ChartExportButtons
-											chartInstance={pieChartInstance}
+											chart={pieChartExport}
 											filename="lst-breakdown"
 											title="LST breakdown"
 											csvSource={{
@@ -414,9 +414,9 @@ export function LSTOverview({
 									<ChartPanelBody>
 										<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 											<PieChart
+												exportButtons={pieChartExport}
 												chartData={deferredPiePresentation.chartData}
 												stackColors={deferredPiePresentation.stackColors}
-												onReady={handlePieReady}
 											/>
 										</React.Suspense>
 									</ChartPanelBody>
@@ -435,7 +435,7 @@ export function LSTOverview({
 											/>
 										) : null}
 										<ChartExportButtons
-											chartInstance={breakdownChartInstance}
+											chart={breakdownChartExport}
 											filename={breakdownExportFilenameBase}
 											title={breakdownExportTitle}
 											csvSource={chartPresentation.csvSource}
@@ -444,13 +444,13 @@ export function LSTOverview({
 									<ChartPanelBody>
 										<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 											<MultiSeriesChart
+												exportButtons={breakdownChartExport}
 												dataset={chartPresentation.dataset}
 												charts={chartPresentation.charts}
 												csvSource={chartPresentation.csvSource}
 												stacked
 												expandTo100Percent
 												valueSymbol="%"
-												onReady={handleBreakdownReady}
 											/>
 										</React.Suspense>
 									</ChartPanelBody>
@@ -477,7 +477,7 @@ export function LSTOverview({
 										/>
 									) : null}
 									<ChartExportButtons
-										chartInstance={inflowsChartInstance}
+										chart={inflowsChartExport}
 										filename={inflowsExportFilenameBase}
 										title={inflowsExportTitle}
 										csvSource={
@@ -503,6 +503,7 @@ export function LSTOverview({
 								<ChartPanelBody>
 									<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 										<MultiSeriesChart
+											exportButtons={inflowsChartExport}
 											dataset={chartPresentation.dataset}
 											charts={chartPresentation.charts}
 											csvSource={chartPresentation.csvSource}
@@ -516,7 +517,6 @@ export function LSTOverview({
 														}
 													}
 												: {})}
-											onReady={handleInflowsReady}
 										/>
 									</React.Suspense>
 								</ChartPanelBody>

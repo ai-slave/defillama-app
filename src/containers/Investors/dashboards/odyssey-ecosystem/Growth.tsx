@@ -1,12 +1,15 @@
 import { lazy, Suspense, useMemo, useState } from 'react'
-import { buildSparseCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { buildSparseCartesianChartModel, type CartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanelExportShellLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
+import { slug } from '~/utils'
 import { formatPercent } from '~/utils/numberFormat'
 import { useTab, chartToModel, type LooprDailyRow, type GrowthResponse } from './api'
 import { ChartCard, SimpleTable, fmtUsd } from './ui'
@@ -96,6 +99,33 @@ function capitalize(s: string) {
 	return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
+function MorphoMarketPanel({ title, model }: { title: string; model: CartesianChartModel }) {
+	const chartExport = useGetChartInstance()
+	return (
+		<Panel>
+			<ChartPanelToolbar
+				leading={<ChartPanelTitle subtitle="Daily supply / borrow / utilization">{title}</ChartPanelTitle>}
+			>
+				<ChartExportButtons
+					chart={chartExport}
+					filename={slug(title)}
+					title={title}
+					csvSource={{ type: 'dataset', prepare: () => model.dataset }}
+				/>
+			</ChartPanelToolbar>
+			<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
+				<MultiSeriesChart
+					dataset={model.dataset}
+					charts={model.charts}
+					valueSymbol="$"
+					showLegend
+					exportButtons={chartExport}
+				/>
+			</Suspense>
+		</Panel>
+	)
+}
+
 export default function Growth() {
 	const { data, isLoading } = useTab<GrowthResponse>('growth')
 	const k = data?.kpis ?? ({} as Partial<NonNullable<typeof data>['kpis']>)
@@ -106,6 +136,12 @@ export default function Growth() {
 	const cs = data?.caseStudies ?? ({} as Partial<NonNullable<typeof data>['caseStudies']>)
 
 	const [spendVenue, setSpendVenue] = useState('aerodrome')
+	const activeUsersChart = useGetChartInstance()
+	const activePositionsChart = useGetChartInstance()
+	const depositsChart = useGetChartInstance()
+	const marketComboChart = useGetChartInstance()
+	const morphoMarketChart = useGetChartInstance()
+	const spendVsTvlChart = useGetChartInstance()
 
 	const looprTotalDatasets = useMemo(() => {
 		const activeAccounts: Array<Array<number>> = []
@@ -285,6 +321,7 @@ export default function Growth() {
 					) : (
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
+								exportButtons="auto"
 								title="Active Accounts"
 								subtitle="Owner-deduped across chains"
 								headingAs="h3"
@@ -302,6 +339,7 @@ export default function Growth() {
 					) : (
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
+								exportButtons="auto"
 								title="Active Positions"
 								subtitle="Combined open positions"
 								headingAs="h3"
@@ -323,6 +361,7 @@ export default function Growth() {
 					) : (
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
+								exportButtons="auto"
 								title="Cumulative Accounts"
 								subtitle="Owner-deduped across chains"
 								headingAs="h3"
@@ -340,6 +379,7 @@ export default function Growth() {
 					) : (
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
+								exportButtons="auto"
 								title="Cumulative Positions"
 								subtitle="Across all chains"
 								headingAs="h3"
@@ -357,28 +397,42 @@ export default function Growth() {
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				{perChainModels?.activeUsers && (
 					<Panel>
-						<ChartPanelToolbar leading={<ChartPanelTitle>Active Users by chain</ChartPanelTitle>} />
+						<ChartPanelToolbar leading={<ChartPanelTitle>Active Users by chain</ChartPanelTitle>}>
+							<ChartExportButtons
+								chart={activeUsersChart}
+								filename="odyssey-active-users-by-chain"
+								title="Active Users by chain"
+								csvSource={{ type: 'dataset', prepare: () => perChainModels.activeUsers.dataset }}
+							/>
+						</ChartPanelToolbar>
 						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<MultiSeriesChart
 								dataset={perChainModels.activeUsers.dataset}
 								charts={perChainModels.activeUsers.charts}
 								valueSymbol=""
 								showLegend
-								exportButtons="hidden"
+								exportButtons={activeUsersChart}
 							/>
 						</Suspense>
 					</Panel>
 				)}
 				{perChainModels?.activePositions && (
 					<Panel>
-						<ChartPanelToolbar leading={<ChartPanelTitle>Active Positions by chain</ChartPanelTitle>} />
+						<ChartPanelToolbar leading={<ChartPanelTitle>Active Positions by chain</ChartPanelTitle>}>
+							<ChartExportButtons
+								chart={activePositionsChart}
+								filename="odyssey-active-positions-by-chain"
+								title="Active Positions by chain"
+								csvSource={{ type: 'dataset', prepare: () => perChainModels.activePositions.dataset }}
+							/>
+						</ChartPanelToolbar>
 						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<MultiSeriesChart
 								dataset={perChainModels.activePositions.dataset}
 								charts={perChainModels.activePositions.charts}
 								valueSymbol=""
 								showLegend
-								exportButtons="hidden"
+								exportButtons={activePositionsChart}
 							/>
 						</Suspense>
 					</Panel>
@@ -391,14 +445,21 @@ export default function Growth() {
 					<Panel>
 						<ChartPanelToolbar
 							leading={<ChartPanelTitle subtitle="USD deposits per chain">Total deposits over time</ChartPanelTitle>}
-						/>
+						>
+							<ChartExportButtons
+								chart={depositsChart}
+								filename="odyssey-total-deposits-over-time"
+								title="Total deposits over time"
+								csvSource={{ type: 'dataset', prepare: () => depositsModel.dataset }}
+							/>
+						</ChartPanelToolbar>
 						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<MultiSeriesChart
 								dataset={depositsModel.dataset}
 								charts={depositsModel.charts}
 								valueSymbol="$"
 								showLegend
-								exportButtons="hidden"
+								exportButtons={depositsChart}
 							/>
 						</Suspense>
 					</Panel>
@@ -449,6 +510,7 @@ export default function Growth() {
 					<Panel>
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
+								exportButtons="auto"
 								title="MET Price"
 								subtitle="Metronome governance token"
 								headingAs="h3"
@@ -464,6 +526,7 @@ export default function Growth() {
 					<Panel>
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
+								exportButtons="auto"
 								title="VSP Price"
 								subtitle="Vesper governance token"
 								headingAs="h3"
@@ -487,14 +550,21 @@ export default function Growth() {
 									Cumulative % change since baseline
 								</ChartPanelTitle>
 							}
-						/>
+						>
+							<ChartExportButtons
+								chart={marketComboChart}
+								filename="odyssey-cumulative-tvl-change-vs-eth"
+								title="Cumulative % change since baseline"
+								csvSource={{ type: 'dataset', prepare: () => marketComboModel.dataset }}
+							/>
+						</ChartPanelToolbar>
 						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<MultiSeriesChart
 								dataset={marketComboModel.dataset}
 								charts={marketComboModel.charts}
 								valueSymbol="%"
 								showLegend
-								exportButtons="hidden"
+								exportButtons={marketComboChart}
 							/>
 						</Suspense>
 					</Panel>
@@ -509,14 +579,21 @@ export default function Growth() {
 							leading={
 								<ChartPanelTitle subtitle="Daily supply / borrow / utilization">Featured Morpho market</ChartPanelTitle>
 							}
-						/>
+						>
+							<ChartExportButtons
+								chart={morphoMarketChart}
+								filename="odyssey-featured-morpho-market"
+								title="Featured Morpho market"
+								csvSource={{ type: 'dataset', prepare: () => morphoMarketModel.dataset }}
+							/>
+						</ChartPanelToolbar>
 						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<MultiSeriesChart
 								dataset={morphoMarketModel.dataset}
 								charts={morphoMarketModel.charts}
 								valueSymbol="$"
 								showLegend
-								exportButtons="hidden"
+								exportButtons={morphoMarketChart}
 							/>
 						</Suspense>
 					</Panel>
@@ -527,28 +604,9 @@ export default function Growth() {
 				<>
 					<h2 className="heading-xs">Metronome Morpho markets</h2>
 					<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-						{morphoMarkets.map(({ market, model }) => {
-							return (
-								<Panel key={market.id}>
-									<ChartPanelToolbar
-										leading={
-											<ChartPanelTitle subtitle="Daily supply / borrow / utilization">
-												{market.title || market.label}
-											</ChartPanelTitle>
-										}
-									/>
-									<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
-										<MultiSeriesChart
-											dataset={model.dataset}
-											charts={model.charts}
-											valueSymbol="$"
-											showLegend
-											exportButtons="hidden"
-										/>
-									</Suspense>
-								</Panel>
-							)
-						})}
+						{morphoMarkets.map(({ market, model }) => (
+							<MorphoMarketPanel key={market.id} title={market.title || market.label} model={model} />
+						))}
 					</div>
 				</>
 			)}
@@ -570,6 +628,12 @@ export default function Growth() {
 								value={spendVenue}
 								onValueChange={setSpendVenue}
 							/>
+							<ChartExportButtons
+								chart={spendVsTvlChart}
+								filename="odyssey-spend-vs-pool-tvl"
+								title={`${spendVenue} — weekly spend vs pool TVL`}
+								csvSource={{ type: 'dataset', prepare: () => spendVsTvl.model.dataset }}
+							/>
 						</ChartPanelToolbar>
 						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<MultiSeriesChart
@@ -578,7 +642,7 @@ export default function Growth() {
 								charts={spendVsTvl.model.charts}
 								valueSymbol="$"
 								showLegend
-								exportButtons="hidden"
+								exportButtons={spendVsTvlChart}
 							/>
 						</Suspense>
 					</Panel>

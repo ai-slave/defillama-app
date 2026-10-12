@@ -94,7 +94,7 @@ describe('buildCsvRowsFromChartOption', () => {
 		]
 
 		expect(buildCsvRowsFromChartOption({ xAxis: [{ type: 'time' }], series } as ChartOption)).toEqual([
-			['x', 'Date', 'Volume'],
+			['Timestamp', 'Date', 'Volume'],
 			[1_704_067_200_000, '2024-01-01', 0],
 			[1_704_153_600_000, '2024-01-02', 12]
 		])

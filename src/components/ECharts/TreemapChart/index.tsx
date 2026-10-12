@@ -4,6 +4,7 @@ import { GraphicComponent, ToolboxComponent, TooltipComponent } from 'echarts/co
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useCallback, useEffect, useEffectEvent, useMemo, useRef } from 'react'
+import { chartExportHandle } from '~/components/ChartExport/types'
 import { TreemapLabelContrast } from '~/components/ECharts/TreemapChart/labelContrast'
 import { CHART_COLORS } from '~/constants/colors'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
@@ -67,6 +68,7 @@ function TreemapChart({
 	colorMode = 'value',
 	height,
 	containerClassName,
+	exportButtons,
 	onReady,
 	showRootLabel = true,
 	valueLabel = 'Market Cap',
@@ -84,6 +86,7 @@ function TreemapChart({
 	const persistentLifecycle = usePersistentEChartsLifecycle()
 	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
 		onReady?.(instance)
+		chartExportHandle(exportButtons)?.handleChartReady(instance)
 	})
 
 	// Observes the container, so a new height resizes the chart too

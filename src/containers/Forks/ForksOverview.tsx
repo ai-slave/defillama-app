@@ -164,8 +164,8 @@ export function ForksOverview({
 			}),
 		[chartColors, pieSeries, selectedPieSeries]
 	)
-	const { chartInstance, handleChartReady } = useGetChartInstance()
-	const { chartInstance: pieChartInstance, handleChartReady: handlePieChartReady } = useGetChartInstance()
+	const chartExport = useGetChartInstance()
+	const pieChartExport = useGetChartInstance()
 	return (
 		<>
 			<RowLinksWithDropdown heading="Forks" links={forkLinks} activeLink="All" />
@@ -184,7 +184,7 @@ export function ForksOverview({
 							/>
 						) : null}
 						<ChartExportButtons
-							chartInstance={pieChartInstance}
+							chart={pieChartExport}
 							filename="forks-tvl-pie"
 							title="Forks TVL breakdown"
 							csvSource={{
@@ -202,9 +202,9 @@ export function ForksOverview({
 					) : (
 						<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<PieChart
+								exportButtons={pieChartExport}
 								chartData={piePresentation.chartData}
 								stackColors={piePresentation.stackColors}
-								onReady={handlePieChartReady}
 							/>
 						</React.Suspense>
 					)}
@@ -224,7 +224,7 @@ export function ForksOverview({
 							/>
 						) : null}
 						<ChartExportButtons
-							chartInstance={chartInstance}
+							chart={chartExport}
 							filename="forks-dominance-chart"
 							title="Forks TVL Dominance (%)"
 							csvSource={selectedDominance.csvSource}
@@ -241,13 +241,13 @@ export function ForksOverview({
 					) : (
 						<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<MultiSeriesChart
+								exportButtons={chartExport}
 								dataset={selectedDominance.dataset}
 								charts={selectedDominance.charts}
 								csvSource={selectedDominance.csvSource}
 								stacked
 								expandTo100Percent
 								valueSymbol="%"
-								onReady={handleChartReady}
 							/>
 						</React.Suspense>
 					)}
