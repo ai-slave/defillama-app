@@ -642,6 +642,21 @@ function matchChartToolbarAutoMargin(content) {
 	return found.length > 0 ? found : null
 }
 
+// The link look by hand: link blue plus an underline, at rest or on hover, in one class string. TextLink owns that look for an
+// entity's name, Button variant="link" for a text action, and variant="inlineLink" (underlined at rest) in a sentence.
+function matchHandBuiltLink(content) {
+	const found = []
+	for (const [literal] of content.matchAll(STRING_LITERAL)) {
+		const hit = classStrings(literal).some(
+			(classes) =>
+				/(?<![\w:-])text-link(?![\w-])/.test(classes) &&
+				/(?<![\w-])hover:underline(?![\w-])|(?<![\w:-])underline(?![\w-])/.test(classes)
+		)
+		if (hit) found.push(literal.slice(0, 60))
+	}
+	return found.length > 0 ? found : null
+}
+
 const RULES = [
 	{
 		id: 'hex-in-classname',
@@ -896,6 +911,28 @@ const RULES = [
 				"the link bubble's borderless URL box, inside the bubble's own frame (src/ui/Field.tsx, hideLabel)",
 			'src/containers/Downloads/sql/notebook/MarkdownCell.tsx':
 				"a notebook cell's source editor, which edits in place in the cell's own frame"
+		}
+	},
+	{
+		id: 'hand-built-link',
+		description:
+			'text-link with underline or hover:underline by hand — an entity name that opens its page is TextLink, a text action is Button variant="link", a link in a sentence is Button variant="inlineLink" (as={BasicLink} for a link), a source is TagLink',
+		match: matchHandBuiltLink,
+		uiOwned: true,
+		skipTests: true,
+		exceptions: {
+			'src/containers/LlamaAI/components/markdown/ChatMarkdownRenderer.tsx':
+				"a chat answer's links take the answer's prose link style (prose-a on the answer, which also styles its Sources card); an entity mention holds its logo and wraps with the prose",
+			'src/containers/Articles/renderer/EntityPreviewLink.tsx':
+				"an article's entity mention wraps with its prose and takes the article theme's underline (article-entity-link)",
+			'src/containers/Bridges/Transactions.tsx':
+				"a hash cell's explorer link is the render of its full-hash Tooltip and holds the external-link icon, which TextLink keeps outside",
+			'src/containers/MarketMakers/PerformanceIndex/columns.tsx':
+				"a market maker's name cell is a button that opens its detail drawer and holds its logo, which TextLink (a link) cannot be",
+			'src/containers/MarketMakers/RankTable/columns.ts':
+				"a market maker's name cell is a button that opens its detail drawer and holds its logo, which TextLink (a link) cannot be",
+			'src/containers/Yields/Tables/Name.tsx':
+				"the pool name is a span inside the row's one link, which also holds the pool's meta line; the span is the render of its clipped-name Tooltip"
 		}
 	},
 	{

@@ -835,7 +835,7 @@ test('a late purchase response cannot close a new opening after navigation', asy
 	expect(namedDialog('Purchase seats')).toBeTruthy()
 })
 
-test('assignment requires a selected available plan and retains it after failure', async () => {
+test('assignment requires a selected available plan, names the choice once and retains it after failure', async () => {
 	const request = Promise.withResolvers<Response>()
 	api.fetch.mockImplementation((_url, options) =>
 		options?.method === 'POST' ? request.promise : Promise.resolve(Response.json({ team }))
@@ -846,6 +846,12 @@ test('assignment requires a selected available plan and retains it after failure
 	await click('Assign')
 	expect(fieldErrorTexts(dialog())).toHaveLength(1)
 	expect(document.activeElement).toBe(radio)
+	// The groups a screen reader announces on entering the first plan: the choice's name once, with its error.
+	const groups = [...dialog().querySelectorAll('[role=group], [role=radiogroup]')].filter((group) =>
+		group.contains(radio)
+	)
+	expect(groups.map(accessibleName)).toEqual(['Subscription type'])
+	expect(fieldErrorOf(groups[0])).not.toBeNull()
 	expect(posts()).toHaveLength(0)
 	await act(async () => radio.click())
 	expect(fieldErrorTexts(dialog())).toEqual([])

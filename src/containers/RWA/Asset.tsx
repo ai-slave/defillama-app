@@ -28,6 +28,7 @@ import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Switch } from '~/ui/Switch'
+import { TagLink } from '~/ui/Tag'
 import { TextLink } from '~/ui/TextLink'
 import { Definition } from '~/ui/Tooltip'
 import { truncateAddress } from '~/utils'
@@ -776,16 +777,15 @@ export function RWAAssetPage({
 										{definitions.source.label}
 									</Definition>
 									{asset.issuerSourceLink.map((link) => (
-										<a
+										<TagLink
 											key={link}
 											href={link}
 											target="_blank"
 											rel="noopener noreferrer"
-											className="flex items-center gap-1 font-medium break-all text-link hover:underline"
+											className="self-start break-all"
 										>
-											<Icon name="external-link" className="size-4 shrink-0" />
 											{link}
-										</a>
+										</TagLink>
 									))}
 								</p>
 							) : null}

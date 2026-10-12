@@ -31,7 +31,7 @@ import { typography } from './foundations/type'
 import { ExampleLevel, type Family, type Foundation, SplitContext } from './shared'
 
 /* ----------------------------------------------------------------------------
-   The design system page (/dev/design-system, development only): the tokens
+   The design system page (/dev/design-system, development and preview builds): the tokens
    (foundations) and every finished src/ui part, plus the src/components parts
    design.md's "Which component for which job" table names, in every variant
    and state, in light, dark or both side by side, so drift shows up next to
@@ -144,7 +144,7 @@ export function DesignSystem({ page, rows }: { page: string | null; rows: Readon
 				<div className="mx-auto flex min-h-14 max-w-[1760px] flex-wrap items-center gap-x-4 gap-y-2 px-6 py-2">
 					<div className="mr-auto flex flex-wrap items-baseline gap-x-2">
 						<h1 className="heading-xs text-primary">Design system</h1>
-						<span className="body-sm text-tertiary">tokens and src/ui components · development only</span>
+						<span className="body-sm text-tertiary">tokens and src/ui components · development and preview builds</span>
 					</div>
 					<SegmentedControl
 						label="Theme"

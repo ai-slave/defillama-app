@@ -13,9 +13,11 @@ import { BasicLink } from '~/components/Link'
  * name with an ellipsis where the link is a flex item or a block.
  *
  * Text only: a logo, an icon or a marker with a tooltip sits beside the link, never inside it, so the link's name is
- * the entity's name and no control nests in it. A link inside a sentence, or a text action aligned to a text edge
- * (See all, View profile, Verify), is `Button variant="link"`, underlined at rest; a source or reference is `TagLink`.
- * `className` is placement only.
+ * the entity's name and no control nests in it. A text action aligned to a text edge (See all, View profile, Verify)
+ * is `Button variant="link"`, the same look; a link inside a sentence is `Button variant="inlineLink"`, underlined at
+ * rest; a source or reference is `TagLink`.
+ * `className` is placement only, plus a named type style with `size="inherit"` when the link has no row of its own to
+ * inherit from.
  */
 const SIZE_CLASSES = {
 	md: 'label-md',

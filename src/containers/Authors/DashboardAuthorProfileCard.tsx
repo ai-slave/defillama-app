@@ -268,9 +268,9 @@ function DashboardAuthorProfileEditor({ profile }: { profile: PublicDashboardAut
 					<span className="label-lg text-primary">Public Profile</span>
 				</div>
 				{profile.slug ? (
-					<BasicLink href={publicHref} className="label-md text-link hover:underline">
+					<Button as={BasicLink} href={publicHref} variant="link" className="label-md">
 						View profile
-					</BasicLink>
+					</Button>
 				) : null}
 			</div>
 

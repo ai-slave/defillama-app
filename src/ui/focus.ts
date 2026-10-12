@@ -135,8 +135,8 @@ export function keepFocus(commit: () => void, target: () => HTMLElement | null |
 }
 
 /** A submit that found invalid fields: `commit` shows the errors (usually `setSubmitted(true)`), then the first invalid
-    Field or FieldGroup (./Field.tsx) inside `scope` (the form, or the region whose action checks it) takes focus, so a
-    screen reader reads the field with its error. Rendering first matters: focus that lands before the error exists
+    Field, FieldGroup or hand-wired group (./Field.tsx) inside `scope` (the form, or the region whose action checks it)
+    takes focus, so a screen reader reads the field with its error. Rendering first matters: focus that lands before the error exists
     reads the field without it. */
 export function showFieldErrors(scope: HTMLElement, commit: () => void) {
 	flushSync(commit)
@@ -144,7 +144,9 @@ export function showFieldErrors(scope: HTMLElement, commit: () => void) {
 	for (const field of scope.querySelectorAll<HTMLElement>('[data-invalid]')) {
 		if (!field.checkVisibility()) continue
 		const target = field.querySelector<HTMLElement>('[aria-invalid="true"]')
-		;(target?.checkVisibility() ? target : firstFocusableIn(field)).focus()
+		const invalid = target?.checkVisibility() ? target : field
+		// An invalid radio group is not a control itself: its tabbable radio takes focus and reads the group's error.
+		;(invalid.matches(':is(input, select, textarea, button)') ? invalid : firstFocusableIn(invalid)).focus()
 		return
 	}
 }

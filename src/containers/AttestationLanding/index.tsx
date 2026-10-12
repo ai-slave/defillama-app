@@ -1303,9 +1303,9 @@ export default function VerifiedLanding() {
 											<Button as="a" href="#get" variant="primary" size="lg">
 												Get verified
 											</Button>
-											<a href="#reconcile" className="label-sm text-link hover:underline">
+											<Button as="a" href="#reconcile" variant="link" className="label-sm">
 												See the public record ↓
-											</a>
+											</Button>
 										</div>
 										<ul className="mt-8 flex flex-wrap gap-x-6 gap-y-3 body-sm text-secondary">
 											{['Read-only access', 'Private by default', 'Public on DefiLlama'].map((promise) => (

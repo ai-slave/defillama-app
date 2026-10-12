@@ -52,13 +52,13 @@ export function OAuthWelcomeDialog({
 						>
 							<span>
 								I agree to the{' '}
-								<BasicLink href="/terms" target="_blank" className="text-link underline">
+								<Button as={BasicLink} href="/terms" target="_blank" variant="inlineLink">
 									Terms of Service
-								</BasicLink>{' '}
+								</Button>{' '}
 								and{' '}
-								<BasicLink href="/privacy-policy" target="_blank" className="text-link underline">
+								<Button as={BasicLink} href="/privacy-policy" target="_blank" variant="inlineLink">
 									Privacy Policy
-								</BasicLink>
+								</Button>
 							</span>
 						</Checkbox>
 						{termsError ? (

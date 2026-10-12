@@ -16,6 +16,7 @@ import { Icon } from '~/ui/Icon'
 import { Menu } from '~/ui/Menu'
 import { MetricRow } from '~/ui/MetricPrimitives'
 import { QuestionHelper } from '~/ui/QuestionHelper'
+import { TextLink } from '~/ui/TextLink'
 import { Definition } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { formatDate } from '~/utils/dateFormat'
@@ -258,9 +259,9 @@ function ChildProtocolRow({ child }: { child: NonNullable<IProtocolOverviewPageD
 		<li className="flex items-center gap-2 rounded-lg bg-surface-elevated-1 p-2">
 			<TokenLogo name={child.name} kind="token" size={24} alt="" />
 			<div className="flex min-w-0 flex-1 flex-col gap-0.5">
-				<BasicLink href={child.href} className="truncate label-md text-primary hover:text-link hover:underline">
+				<TextLink href={child.href} truncate>
 					{child.name}
-				</BasicLink>
+				</TextLink>
 				{child.category ? <span className="truncate label-sm text-secondary">{child.category}</span> : null}
 			</div>
 			{/* Fixed width: IconsRow sizes its overflow from its own measured width, so a shrink-to-fit cell renders nothing. */}

@@ -1,7 +1,9 @@
 import { useMemo, type ReactNode } from 'react'
+import { BasicLink } from '~/components/Link'
 import { CODE_BLOCK } from '~/containers/LlamaAI/components/codeBlockStyles'
 import type { UnifiedCitationReference } from '~/containers/LlamaAI/types'
 import { sanitizeUrl } from '~/containers/LlamaAI/utils/markdownHelpers'
+import { Button } from '~/ui/Button'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { Tag } from '~/ui/Tag'
@@ -78,9 +80,9 @@ function openUrl(reference: UnifiedCitationReference): string | null {
 
 function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
 	return (
-		<a href={href} target="_blank" rel="noopener noreferrer" className="body-sm text-link hover:underline">
+		<Button as={BasicLink} href={href} target="_blank" rel="noopener noreferrer" variant="link" className="body-sm">
 			{children}
-		</a>
+		</Button>
 	)
 }
 
@@ -226,10 +228,10 @@ function DataView({
 			) : null}
 			{hasRows ? (
 				<details open={!citedRow && sources.length === 0} className="group">
-					<summary className="cursor-pointer list-none label-sm text-link not-disabled:not-aria-disabled:hover:underline">
+					<Button as="summary" variant="link" className="list-none label-sm">
 						<span className="group-open:hidden">{citedRow ? 'Show full table' : 'See the data'}</span>
 						<span className="hidden group-open:inline">Hide table</span>
-					</summary>
+					</Button>
 					<CitationRowsTable rows={reference.rows} columns={reference.columns} citedCell={citedCell} />
 				</details>
 			) : hiddenLabel ? (
@@ -265,10 +267,10 @@ function ComputedView({ reference }: { reference: UnifiedCitationReference }) {
 			) : null}
 			{hasWork ? (
 				<details open className="group">
-					<summary className="cursor-pointer list-none label-sm text-link not-disabled:not-aria-disabled:hover:underline">
+					<Button as="summary" variant="link" className="list-none label-sm">
 						<span className="group-open:hidden">How this was calculated</span>
 						<span className="hidden group-open:inline">Hide calculation</span>
-					</summary>
+					</Button>
 					<div className="mt-1 flex flex-col gap-1.5">
 						{sources.map((source, i) => (
 							<SourceMiniCard key={source.id ?? i} reference={source} />
@@ -506,24 +508,22 @@ export function CitationPill({ reference, numberOnlyMarker }: CitationPillProps)
 								<p className="m-0 body-sm text-secondary">{sanitizeExcerpt(reference.excerpt)}</p>
 							) : null}
 							{url ? (
-								<a
+								<Button
+									as={BasicLink}
 									href={url}
 									target="_blank"
 									rel="noopener noreferrer"
-									className="self-start label-sm text-link hover:underline"
+									variant="link"
+									className="self-start label-sm"
 								>
 									Open link ↗
-								</a>
+								</Button>
 							) : null}
 						</>
 					) : (
-						<button
-							type="button"
-							onClick={() => open(reference)}
-							className="self-start label-sm text-link not-disabled:not-aria-disabled:hover:underline"
-						>
+						<Button variant="link" onClick={() => open(reference)} className="self-start label-sm">
 							Click to see the source →
-						</button>
+						</Button>
 					)}
 				</>
 			}

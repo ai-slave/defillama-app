@@ -390,9 +390,9 @@ export function ExchangeRanking({ ranking }: { ranking: ExchangeRankingModel | n
 						{insufficient.map((venue, index) => (
 							<React.Fragment key={venue.slug}>
 								{index > 0 ? ', ' : ''}
-								<BasicLink href={venue.profileHref} className="text-link hover:underline">
+								<Button as={BasicLink} href={venue.profileHref} variant="inlineLink">
 									{venue.name}
-								</BasicLink>
+								</Button>
 							</React.Fragment>
 						))}
 						.
@@ -410,14 +410,15 @@ export function ExchangeRanking({ ranking }: { ranking: ExchangeRankingModel | n
 				</p>
 				<p>
 					The full method, every check and its thresholds:{' '}
-					<a
+					<Button
+						as={BasicLink}
 						href={EXCHANGES_METHODOLOGY_URL}
 						target="_blank"
 						rel="noopener noreferrer"
-						className="text-link hover:underline"
+						variant="inlineLink"
 					>
 						Exchanges methodology
-					</a>
+					</Button>
 					.
 				</p>
 			</Card>

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { BasicLink } from '~/components/Link'
+import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { DividedGrid } from '~/ui/DividedGrid'
 import { Icon } from '~/ui/Icon'
@@ -211,9 +212,10 @@ export function AnswerStrip({
 									className={snapshot.current ? '' : 'text-warning'}
 								/>
 							) : null}
-							<a href={`#${HOW_WE_VERIFY_ID}`} className="ml-auto text-link hover:underline">
+							{/* A plain anchor: a native fragment jump also moves keyboard and screen reader focus to the panel. */}
+							<Button as="a" href={`#${HOW_WE_VERIFY_ID}`} variant="link" className="ml-auto">
 								How we verify
-							</a>
+							</Button>
 						</span>
 					</Cell>
 				) : null}
@@ -265,9 +267,9 @@ export function AnswerStrip({
 				{hasRisk ? (
 					<Cell>
 						<span className="label-md text-secondary">Risk</span>
-						<BasicLink href={`/yields/pool/${poolId}/risk`} className="w-fit body-md text-link hover:underline">
+						<Button as={BasicLink} href={`/yields/pool/${poolId}/risk`} variant="link" className="w-fit body-md">
 							Full report
-						</BasicLink>
+						</Button>
 					</Cell>
 				) : null}
 

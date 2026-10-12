@@ -9,6 +9,7 @@ import { RWAOverview } from '~/containers/RWA'
 import { getRwaPlatformPageOutcome } from '~/containers/RWA/platformRoutes'
 import { getRWAAssetsOverview } from '~/containers/RWA/queries'
 import { findByRwaSlug } from '~/containers/RWA/rwaSlug'
+import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -108,9 +109,9 @@ export default function ProtocolRWA(props: InferGetStaticPropsType<typeof getSta
 				<Card padding="sm">
 					<p className="body-md">
 						{props.name} lists RWA perpetual markets, not spot assets.{' '}
-						<BasicLink href={props.rwaOverview.perpsVenueHref} className="text-link hover:underline">
+						<Button as={BasicLink} href={props.rwaOverview.perpsVenueHref} variant="inlineLink">
 							See its markets on the venue page
-						</BasicLink>
+						</Button>
 						.
 					</p>
 				</Card>

@@ -5,6 +5,7 @@ import { Button } from '~/ui/Button'
 import { useCopy } from '~/ui/Copy'
 import { Icon } from '~/ui/Icon'
 import { MetaLine } from '~/ui/MetaLine'
+import { TextLink } from '~/ui/TextLink'
 import { Tooltip } from '~/ui/Tooltip'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import styles from '../ArticleStyles.module.css'
@@ -1022,12 +1023,13 @@ export function ArticleRenderer({
 					</h1>
 					{article.subtitle ? <p className="body-lg text-secondary md:body-xl">{article.subtitle}</p> : null}
 					{article.client ? (
-						<Link
+						<TextLink
 							href={researchClientHref(article.client.id)}
-							className="w-fit label-sm tracking-[0.08em] text-link uppercase hover:underline"
+							size="inherit"
+							className="w-fit label-sm tracking-[0.08em] uppercase"
 						>
 							{articleClientLabel(article.client)}
-						</Link>
+						</TextLink>
 					) : null}
 					{article.section === 'report' && article.reportPdf ? (
 						<div>

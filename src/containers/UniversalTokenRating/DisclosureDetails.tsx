@@ -8,6 +8,7 @@ import { Card } from '~/ui/Card'
 import { ChartPanelBody } from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { EmptyState } from '~/ui/Status'
+import { TagLink } from '~/ui/Tag'
 import { formatPercent } from '~/utils/numberFormat'
 import { UTR_PERCENT_OPTIONS } from './constants'
 import { disclosedVestingDurationMonths, disclosedVestingSchedule } from './disclosedVesting'
@@ -49,9 +50,9 @@ function ExternalLink({ href }: { href: string | null }) {
 	const link = httpHref(href)
 	if (!link) return <span className="break-all">{href}</span>
 	return (
-		<a href={link} target="_blank" rel="noopener noreferrer nofollow" className="break-all text-link hover:underline">
+		<TagLink href={link} target="_blank" rel="noopener noreferrer nofollow" className="break-all">
 			{link}
-		</a>
+		</TagLink>
 	)
 }
 

@@ -1,9 +1,11 @@
 import { useState, type ReactNode } from 'react'
+import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import type { Raise } from '~/containers/Raises/model'
 import { RaisesTotal } from '~/containers/Raises/RaisesTotal'
 import { summarizeRaises } from '~/containers/Raises/summary'
 import { TOKEN_RIGHTS_SECTION_ID } from '~/containers/Token/types'
+import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { CopyHelper } from '~/ui/Copy'
 import { DividedGrid } from '~/ui/DividedGrid'
@@ -12,7 +14,7 @@ import { MetaLine } from '~/ui/MetaLine'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StatusBadge, type Status } from '~/ui/StatusBadge'
 import { Tabs, TabPanel } from '~/ui/Tabs'
-import { Tag } from '~/ui/Tag'
+import { Tag, TagLink } from '~/ui/Tag'
 import { Definition, Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
@@ -183,14 +185,15 @@ export function TokenRightsByProtocol({
 											<div key={key} className="flex min-w-0 flex-col gap-0.5">
 												{a.label ? <span className="text-secondary">{a.label}</span> : null}
 												{isLink ? (
-													<a
+													<Button
+														as={BasicLink}
 														href={a.value}
 														target="_blank"
 														rel="noopener noreferrer"
-														className="truncate text-link underline"
+														variant="link"
 													>
-														{a.value}
-													</a>
+														<span className="truncate">{a.value}</span>
+													</Button>
 												) : (
 													<div className="flex items-center justify-between gap-4">
 														<span className="truncate mono-sm text-secondary">{a.value}</span>
@@ -209,15 +212,9 @@ export function TokenRightsByProtocol({
 										{resources.reports.map((r) => (
 											<div key={r.url} className="flex items-center justify-between gap-4">
 												<span>{r.label}</span>
-												<a
-													href={r.url}
-													target="_blank"
-													rel="noopener noreferrer"
-													className="inline-flex shrink-0 items-center gap-1 label-sm text-link hover:underline"
-												>
+												<TagLink href={r.url} target="_blank" rel="noopener noreferrer" className="shrink-0">
 													{tryHostname(r.url)}
-													<Icon name="external-link" className="size-3.5" />
-												</a>
+												</TagLink>
 											</div>
 										))}
 									</div>
@@ -586,16 +583,9 @@ function InlineLinks({ links }: { links: Array<ITokenRightsParsedLink> }) {
 	return (
 		<nav className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-1">
 			{links.map((l) => (
-				<a
-					key={l.url}
-					href={l.url}
-					target="_blank"
-					rel="noopener noreferrer"
-					className="inline-flex items-center gap-1 label-sm text-link hover:underline"
-				>
-					<Icon name="external-link" className="size-3 shrink-0" />
+				<TagLink key={l.url} href={l.url} target="_blank" rel="noopener noreferrer">
 					{l.label}
-				</a>
+				</TagLink>
 			))}
 		</nav>
 	)

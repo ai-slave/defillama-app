@@ -1,9 +1,8 @@
 import * as Ariakit from '@ariakit/react'
-import { useState, type FormEvent, type RefObject } from 'react'
+import { useId, useState, type FormEvent, type RefObject } from 'react'
 import toast from 'react-hot-toast'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter, DialogHeader, DialogCancelButton } from '~/ui/Dialog'
-import { FieldGroup } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { OptionTile } from '~/ui/OptionTile'
 import { InlineStatus } from '~/ui/Status'
@@ -31,7 +30,8 @@ export function AssignSubscriptionModal({ onClose, member, finalFocus }: AssignS
 	const [error, setError] = useState<string | null>(null)
 
 	const availableSubscriptions = teamSubscriptions.filter((sub) => sub.seats.availableSeats > 0)
-	const choiceMessage = subscriptionType ? null : 'Choose a subscription type.'
+	const choiceError = submitted && !subscriptionType ? 'Choose a subscription type.' : null
+	const id = useId()
 
 	const handleAssign = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
@@ -63,12 +63,21 @@ export function AssignSubscriptionModal({ onClose, member, finalFocus }: AssignS
 							No seats are available. Purchase more seats to assign a subscription.
 						</InlineStatus>
 					) : (
-						<FieldGroup label="Subscription type" error={submitted ? choiceMessage : null}>
+						// The radio group is the group, so it takes the label and error ids instead of sitting in a FieldGroup.
+						<div data-invalid={choiceError ? '' : undefined} className="flex min-w-0 flex-col gap-1">
+							<span id={`${id}-label`} className="label-sm text-secondary">
+								Subscription type
+							</span>
 							<Ariakit.RadioProvider
 								value={subscriptionType}
 								setValue={(value) => setSubscriptionType(value as string)}
 							>
-								<Ariakit.RadioGroup aria-label="Subscription type" className="flex flex-col gap-2">
+								<Ariakit.RadioGroup
+									aria-labelledby={`${id}-label`}
+									aria-invalid={choiceError ? true : undefined}
+									aria-describedby={choiceError ? `${id}-error` : undefined}
+									className="flex flex-col gap-2"
+								>
 									{availableSubscriptions.map((sub, index) => (
 										<OptionTile
 											key={sub.id}
@@ -87,7 +96,12 @@ export function AssignSubscriptionModal({ onClose, member, finalFocus }: AssignS
 									))}
 								</Ariakit.RadioGroup>
 							</Ariakit.RadioProvider>
-						</FieldGroup>
+							{choiceError ? (
+								<p id={`${id}-error`} className="body-sm text-error">
+									{choiceError}
+								</p>
+							) : null}
+						</div>
 					)}
 
 					{error ? <InlineStatus variant="error">{error}</InlineStatus> : null}

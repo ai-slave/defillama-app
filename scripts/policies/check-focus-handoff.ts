@@ -229,10 +229,12 @@ export function scanSource(relative: string, source: string): Array<string> {
 					)
 				}
 			}
+			// `<Button as={BasicLink} variant="link">` is a link, so a label may hold it as it holds BasicLink.
+			const as = attribute(opening, 'as') && expressionText(attribute(opening, 'as')!)
 			if (
 				CONTROL_TAGS.has(tag) &&
-				!(attribute(opening, 'as') && expressionText(attribute(opening, 'as')!) === 'span') &&
-				(isInside(node, CONTROL_HOSTS) || (!LINK_TAGS.has(tag) && isInside(node, LABEL_HOSTS)))
+				as !== 'span' &&
+				(isInside(node, CONTROL_HOSTS) || (!LINK_TAGS.has(tag) && !LINK_TAGS.has(as) && isInside(node, LABEL_HOSTS)))
 			) {
 				violations.push(
 					`${at(opening)} puts a control inside a disclosure, button, link or label; move it beside or into the expanded content`
@@ -656,6 +658,18 @@ if (process.argv.includes('--self-test')) {
 			source:
 				'export const F = () => <Checkbox variant="consent" checked={ok}>I agree to the <BasicLink href="/terms">Terms</BasicLink></Checkbox>',
 			violation: false
+		},
+		{
+			name: 'consent checkbox linking its terms through a link button',
+			source:
+				'export const F = () => <Checkbox variant="consent" checked={ok}>I agree to the <Button as={BasicLink} href="/terms" variant="link">Terms</Button></Checkbox>',
+			violation: false
+		},
+		{
+			name: 'link button inside a disclosure summary',
+			source:
+				'export const F = () => <details><summary><Button as={BasicLink} href="/terms" variant="link">Terms</Button></summary>Body</details>',
+			violation: true
 		},
 		{
 			name: 'button styled as a span inside an option',

@@ -1,5 +1,7 @@
 import type { InferGetStaticPropsType } from 'next'
+import { BasicLink } from '~/components/Link'
 import Layout from '~/layout'
+import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -53,23 +55,25 @@ function AboutPage(props: InferGetStaticPropsType<typeof getStaticProps>) {
 				<hr className="border-subtle" />
 				<p>
 					DefiLlama is the largest TVL aggregator for DeFi (Decentralized Finance). Our data is fully{' '}
-					<a
-						className="text-link hover:underline"
+					<Button
+						as={BasicLink}
 						target="_blank"
 						rel="noopener noreferrer"
 						href="https://github.com/DefiLlama/DefiLlama-Adapters"
+						variant="inlineLink"
 					>
 						open-source
-					</a>{' '}
+					</Button>{' '}
 					and maintained by a team of passionate individuals and{' '}
-					<a
-						className="text-link hover:underline"
+					<Button
+						as={BasicLink}
 						target="_blank"
 						rel="noopener noreferrer"
 						href="https://github.com/DefiLlama/DefiLlama-Adapters/graphs/contributors"
+						variant="inlineLink"
 					>
 						contributors
-					</a>{' '}
+					</Button>{' '}
 					from hundreds of protocols.
 				</p>
 				<p>Our focus is on accurate data and transparent methodology.</p>
@@ -98,9 +102,9 @@ function AboutPage(props: InferGetStaticPropsType<typeof getStaticProps>) {
 				<p>
 					University students who need DefiLlama for their coursework or research can request free access to our Pro and
 					API plans. To request access, email{' '}
-					<a className="text-link hover:underline" href="mailto:support@defillama.com">
+					<Button as={BasicLink} href="mailto:support@defillama.com" variant="inlineLink">
 						support@defillama.com
-					</a>{' '}
+					</Button>{' '}
 					from your university-issued .edu address, with a brief description of what you’re working on and the name of
 					your university.
 				</p>
@@ -111,33 +115,35 @@ function AboutPage(props: InferGetStaticPropsType<typeof getStaticProps>) {
 				<hr className="border-subtle" />
 				<p>
 					The best way to contact us and the one in which you'll get a reply the fastest is through our{' '}
-					<a className="text-link hover:underline" target="_blank" rel="noopener noreferrer" href="/support">
+					<Button as={BasicLink} target="_blank" rel="noopener noreferrer" href="/support" variant="inlineLink">
 						our support page
-					</a>
+					</Button>
 					.
 				</p>
 				<p>
 					For questions around product, methodology, data, etc. You'll get much faster responses by using our priority
 					support, available{' '}
-					<a
-						className="text-link hover:underline"
+					<Button
+						as={BasicLink}
 						target="_blank"
 						rel="noopener noreferrer"
 						href="https://defillama.com/subscription"
+						variant="inlineLink"
 					>
 						here after subscribing
-					</a>
+					</Button>
 				</p>
 				<p>
 					DefiLlama is a part of{' '}
-					<a
-						className="text-link hover:underline"
+					<Button
+						as={BasicLink}
 						target="_blank"
 						rel="noopener noreferrer"
 						href="https://x.com/llamacorporg"
+						variant="inlineLink"
 					>
 						Llama Corp
-					</a>
+					</Button>
 					.
 				</p>
 				<p>
@@ -151,9 +157,15 @@ function AboutPage(props: InferGetStaticPropsType<typeof getStaticProps>) {
 				<hr className="border-subtle" />
 				<p>
 					Thanks to{' '}
-					<a className="text-link hover:underline" target="_blank" rel="noopener noreferrer" href="https://allium.so/">
+					<Button
+						as={BasicLink}
+						target="_blank"
+						rel="noopener noreferrer"
+						href="https://allium.so/"
+						variant="inlineLink"
+					>
 						Allium
-					</a>{' '}
+					</Button>{' '}
 					for their indexer service.
 				</p>
 			</Card>

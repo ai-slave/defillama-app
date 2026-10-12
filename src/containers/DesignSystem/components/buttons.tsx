@@ -268,12 +268,20 @@ export const buttons: Family = {
 							]}
 						/>
 					</Example>
-					<Example name="In a sentence" prop='variant="link"'>
+					<Example name="In a sentence" prop='variant="inlineLink"'>
 						<p className="body-sm text-secondary">
 							Already have an account?{' '}
-							<Button variant="link" type="button">
+							<Button variant="inlineLink" type="button">
 								Sign in
 							</Button>
+						</p>
+						{/* A long link wraps with its sentence instead of dropping to its own line. */}
+						<p className="max-w-64 body-sm text-secondary">
+							Inputs we could not measure never count as zero.{' '}
+							<Button as={BasicLink} href="/exchanges/rank" variant="inlineLink">
+								Compare every exchange and read how the score is built
+							</Button>
+							.
 						</p>
 					</Example>
 					<Example name="Full-width CTA" prop='size="lg"'>

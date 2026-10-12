@@ -1,20 +1,6 @@
 import { Card } from '~/ui/Card'
-import { Icon } from '~/ui/Icon'
+import { TagLink } from '~/ui/Tag'
 import { NearIcon } from './NearIcon'
-
-function ExternalLink({ href, children }: { href: string; children: React.ReactNode }) {
-	return (
-		<a
-			href={href}
-			target="_blank"
-			rel="noopener noreferrer"
-			className="inline-flex items-center gap-1 label-md text-link hover:underline"
-		>
-			{children}
-			<Icon name="arrow-up-right" className="size-3" />
-		</a>
-	)
-}
 
 function ProductCard({
 	title,
@@ -30,11 +16,11 @@ function ProductCard({
 			<h3 className="heading-xs text-primary">{title}</h3>
 			<div className="flex flex-col gap-3 body-md text-secondary">{children}</div>
 			{links && links.length > 0 && (
-				<div className="mt-auto flex flex-wrap gap-x-4 gap-y-2 pt-1">
+				<div className="mt-auto flex flex-wrap gap-2 pt-1">
 					{links.map((link) => (
-						<ExternalLink key={link.url} href={link.url}>
+						<TagLink key={link.url} href={link.url} target="_blank" rel="noopener noreferrer">
 							{link.label}
-						</ExternalLink>
+						</TagLink>
 					))}
 				</div>
 			)}
@@ -130,7 +116,9 @@ export default function Products() {
 			<Card padding="md">
 				<div className="flex items-center justify-between">
 					<h3 className="heading-xs text-primary">Governance: House of Stake</h3>
-					<ExternalLink href="https://houseofstake.org/">houseofstake.org</ExternalLink>
+					<TagLink href="https://houseofstake.org/" target="_blank" rel="noopener noreferrer" className="shrink-0">
+						houseofstake.org
+					</TagLink>
 				</div>
 				<p className="mt-3 max-w-3xl body-md text-secondary">
 					NEAR&apos;s governance body providing a framework for coordinating protocol upgrades, economic parameters, and

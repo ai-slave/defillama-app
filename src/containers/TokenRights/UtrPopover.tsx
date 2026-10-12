@@ -1,6 +1,7 @@
 import { BasicLink } from '~/components/Link'
 import { utrGradeColor } from '~/containers/UniversalTokenRating/gradeBands'
 import { GradeBadge } from '~/containers/UniversalTokenRating/grades'
+import { Button } from '~/ui/Button'
 import { Change } from '~/ui/Change'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
@@ -121,17 +122,18 @@ export function UtrPopover({
 					Disclosure: what the project publishes. Performance: whether market data backs it up.
 				</p>
 
-				<div className="flex justify-end">
-					<BasicLink
+				<div className="flex justify-end label-sm">
+					<Button
+						as={BasicLink}
 						href={utr.href}
 						data-umami-event="utr-link"
 						data-umami-event-card="utr"
 						data-umami-event-entity={name}
-						className="inline-flex items-center gap-1 label-sm text-link hover:underline"
+						variant="link"
 					>
 						View full rating
 						<Icon name="arrow-right" className="size-3.5" />
-					</BasicLink>
+					</Button>
 				</div>
 			</div>
 		</div>

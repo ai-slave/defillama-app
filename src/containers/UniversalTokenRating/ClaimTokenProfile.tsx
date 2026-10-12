@@ -709,23 +709,25 @@ export function ClaimTokenProfile({
 							>
 								<span>
 									I understand and agree to the Forgd{' '}
-									<a
+									<Button
+										as="a"
 										href="https://www.forgd.com/terms-conditions"
 										target="_blank"
 										rel="noreferrer noopener"
-										className="text-link hover:underline"
+										variant="inlineLink"
 									>
 										Terms & Conditions
-									</a>{' '}
+									</Button>{' '}
 									and{' '}
-									<a
+									<Button
+										as="a"
 										href="https://www.forgd.com/privacy-policy"
 										target="_blank"
 										rel="noreferrer noopener"
-										className="text-link hover:underline"
+										variant="inlineLink"
 									>
 										Privacy Policy
-									</a>
+									</Button>
 									.*
 								</span>
 							</Checkbox>

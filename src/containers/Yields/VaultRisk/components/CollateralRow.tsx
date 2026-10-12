@@ -1,5 +1,6 @@
 import type { BlockExplorersResponse } from '~/api/types'
 import { BasicLink } from '~/components/Link'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Logo } from '~/ui/Logo'
 import { MetaLine } from '~/ui/MetaLine'
@@ -429,9 +430,9 @@ export function CollateralRow({
 				<div className="flex min-w-0 flex-col gap-4">
 					<div className="flex items-baseline justify-between gap-2">
 						<h4 className={DETAIL_LABEL}>What it&apos;s made of</h4>
-						<BasicLink href={`/token/${slug(c.symbol)}`} className="body-sm text-link hover:underline">
+						<Button as={BasicLink} href={`/token/${slug(c.symbol)}`} variant="link" className="body-sm">
 							{c.symbol} token page
-						</BasicLink>
+						</Button>
 					</div>
 
 					<div className="flex flex-col gap-2.5 text-secondary">

@@ -1,3 +1,5 @@
+import { BasicLink } from '~/components/Link'
+import { Button } from '~/ui/Button'
 import { DirectoryHeader } from './DirectoryHeader'
 import { DirectoryOverview } from './DirectoryOverview'
 import { DirectoryTable } from './DirectoryTable'
@@ -73,23 +75,25 @@ export function ExchangeDirectory({ directory, loadOverview, countryState }: Exc
 			/>
 			<p className="px-1 pb-2 body-sm text-tertiary">
 				Exchange missing?{' '}
-				<a
+				<Button
+					as={BasicLink}
 					href={LIST_YOUR_EXCHANGE_URL}
 					target="_blank"
 					rel="noopener noreferrer"
-					className="text-link hover:underline"
+					variant="inlineLink"
 				>
 					List your exchange
-				</a>
+				</Button>
 				. How every number here is built:{' '}
-				<a
+				<Button
+					as={BasicLink}
 					href={EXCHANGES_METHODOLOGY_URL}
 					target="_blank"
 					rel="noopener noreferrer"
-					className="text-link hover:underline"
+					variant="inlineLink"
 				>
 					Methodology
-				</a>
+				</Button>
 				.
 			</p>
 		</div>

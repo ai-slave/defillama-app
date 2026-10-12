@@ -1,6 +1,7 @@
 import { Fragment } from 'react'
 import { BasicLink } from '~/components/Link'
 import { divergingColor } from '~/constants/colors'
+import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Definition, Tooltip } from '~/ui/Tooltip'
 import { formatUsd, formatNumber } from '~/utils/numberFormat'
@@ -194,9 +195,9 @@ export function ProfileRanking({ profile }: { profile: ExchangeProfileModel }) {
 				quality measured from tick-level fills, and how steadily it all holds. Inputs we could not measure never count
 				as zero; their weight redistributes. The indented rows split the Execution pillar into its sub-metrics, each
 				with its peer-relative score and the measured figure behind it. Experimental; weights will move.{' '}
-				<BasicLink href="/exchanges/rank" className="text-link hover:underline">
+				<Button as={BasicLink} href="/exchanges/rank" variant="inlineLink">
 					Compare every exchange and read how the score is built
-				</BasicLink>
+				</Button>
 			</p>
 		</Card>
 	)

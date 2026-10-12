@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
-import { BasicLink } from '~/components/Link'
 import { Card } from '~/ui/Card'
 import { IconTile } from '~/ui/IconTile'
 import { MetaLine } from '~/ui/MetaLine'
 import { InlineLoading, InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { type Status, StatusBadge } from '~/ui/StatusBadge'
+import { TagLink } from '~/ui/Tag'
 import { type QueryRetry, queryReadFailed } from '~/utils/query'
 import { countryLabel, ExchangeCountrySelect, type useExchangeCountry } from './ExchangeCountrySelect'
 import { fetchExchangeRegionalMetadata } from './master.api'
@@ -242,14 +242,9 @@ function RegionalAvailability({
 				<MetaLine>
 					<span>
 						Source:{' '}
-						<BasicLink
-							href={regional.source.url}
-							target="_blank"
-							rel="noopener noreferrer"
-							className="text-link hover:underline"
-						>
+						<TagLink href={regional.source.url} target="_blank" rel="noopener noreferrer">
 							{regional.source.note ?? 'Regional availability'}
-						</BasicLink>
+						</TagLink>
 					</span>
 					{regional.source.asOf}
 				</MetaLine>

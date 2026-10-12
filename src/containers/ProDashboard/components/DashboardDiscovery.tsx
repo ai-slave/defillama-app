@@ -189,9 +189,9 @@ export function DashboardDiscovery({
 			<div className="flex flex-col gap-1">
 				{!isBrowseMode ? (
 					<nav className="flex items-center gap-1 body-md">
-						<BasicLink href="/pro?tab=discover" shallow className="text-link hover:underline">
+						<Button as={BasicLink} href="/pro?tab=discover" shallow variant="link">
 							Discover
-						</BasicLink>
+						</Button>
 						<Icon name="chevron-right" className="size-3.5 text-secondary" />
 						<span className="text-secondary">
 							{selectedSortBy.name}

@@ -478,7 +478,7 @@ export function PoolApyChart({
 				<p className="px-2 pt-2 body-md text-secondary">
 					This pool's rewards arrive in lumps rather than daily, so single days swing between little or no yield and
 					more than the true rate.{' '}
-					<Button variant="link" onClick={() => selectWindow('30d')}>
+					<Button variant="inlineLink" onClick={() => selectWindow('30d')}>
 						Show 30d average
 					</Button>
 				</p>

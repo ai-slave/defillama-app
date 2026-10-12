@@ -1,5 +1,4 @@
 import { createColumnHelper } from '@tanstack/react-table'
-import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
 import { SearchTableView } from '~/components/Table/search/SearchTableView'
@@ -8,6 +7,7 @@ import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { TextLink } from '~/ui/TextLink'
 import { TableToolbar } from '~/ui/Toolbar'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import type { PreIpoPerpIntegration, PreIpoTokenIssuerIntegration } from './api.types'
@@ -16,15 +16,12 @@ import { preIpoDefinitions } from './definitions'
 
 function IntegrationLink({ href, label }: { href: string; label: string }) {
 	return (
-		<BasicLink
-			href={href}
-			target="_blank"
-			rel="noopener noreferrer"
-			className="inline-flex max-w-full items-center gap-1 text-link hover:underline"
-		>
-			<span className="truncate">{label}</span>
-			<Icon name="arrow-up-right" className="size-3.5 shrink-0" aria-hidden="true" />
-		</BasicLink>
+		<span className="inline-flex max-w-full items-center gap-1">
+			<TextLink href={href} target="_blank" rel="noopener noreferrer" size="inherit" truncate>
+				{label}
+			</TextLink>
+			<Icon name="arrow-up-right" className="size-3.5 shrink-0 text-tertiary" aria-hidden="true" />
+		</span>
 	)
 }
 

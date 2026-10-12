@@ -47,23 +47,39 @@ import { LoadingSpinner } from './internal/Loaders'
                   over the picture holds ghost-like buttons instead
    - onBrand:     a control on the brand-blue mobile header: translucent
                   white fill, white icon. Header squares are lg (44px)
-   - link:        text-link with no padding, no height and no type of its own,
-                  so it inherits the sentence or label it sits in, case
-                  included (preflight resets a button's text-transform): "Back to
-                  history", "Use another sign-in method", "Sign out". A retry
+   - link:        a standalone text action: text-link with no padding, no
+                  height and no type of its own, so it inherits the label or
+                  row it sits in, case included (preflight resets a button's
+                  text-transform): "← Exchanges", "See all", "View profile",
+                  "Back to history", "Sign out". Underlined on hover and focus
+                  only: it stands apart from running text, so its blue, its
+                  place at a text edge and any arrow already mark it. One
+                  inline-flex row with gap-1, so an icon stays centered and
+                  spaced and a `truncate` span can end in an ellipsis. A retry
                   after an error is a secondary sm "Try again", never a link
                   (docs/focus-and-errors.md). The row around a link carries a
-                  named type style (`label-sm`, `body-sm`), never a raw text-*.
-                  Takes no `size`. Anything aligned to a text edge or inside a
-                  sentence is a link; ghost is a quiet button among other
-                  buttons. Never pull a text action into line with a
-                  negative margin; that is what the link's missing padding is for.
-                  It is always underlined, softly at rest and solid on hover
-                  and focus: the link blue is too close to body text for
-                  color alone to mark it in a sentence. A disabled link's
-                  underline is solid, in the disabled color. An entity's name
-                  in a table cell or list row is TextLink, underlined only on
-                  hover, since a column of names reads as data.
+                  named type style (`label-sm`, `body-sm`), never a raw text-*;
+                  a link alone in its row takes that named style in className.
+                  Takes no `size`. Anything aligned to a text edge is a link;
+                  ghost is a quiet button among other buttons. Never pull a
+                  text action into line with a negative margin; that is what
+                  the link's missing padding is for.
+   - inlineLink:  a link inside running text: a sentence, a paragraph, a
+                  consent label, a FAQ answer. Underlined at rest, softly, and
+                  solid on hover and focus: inside a sentence the link blue is
+                  too close to body text for color alone to mark it. Inline,
+                  so a long link (`as={BasicLink}` or `as="a"`) wraps with its
+                  sentence; a `<button>` never wraps, since browsers lay it out
+                  as inline-block, so an action in a sentence keeps a short
+                  label. Text only: an icon would break the line's flow.
+                  No enlarged touch target: a link in running text is exempt
+                  from target size, and a taller hit area would catch taps on
+                  the lines above and below, such as a consent checkbox's
+                  label. Takes no `size`.
+                  A disabled link of either look is text-disabled.
+                  An entity's name in a table cell or list row is TextLink
+                  (the same look as link), since a column of names reads as
+                  data.
    Pick a pill by its job: a removable active filter or a filter picker is
    `filter`; a pill that turns a list filter on or off is `toggle` (whether
    its value lives in the URL or in state is in docs/url-state.md); a pill
@@ -230,8 +246,10 @@ const DISABLED_CLASSES: Record<ButtonVariant, string> = {
 	ghostDestructive: ''
 }
 
-const LINK_CLASSES =
-	'touch-target inline-flex cursor-pointer items-center gap-1 text-link [text-transform:inherit] underline decoration-link-underline underline-offset-2 not-disabled:not-aria-disabled:hover:decoration-current focus-visible:decoration-current disabled:not-aria-busy:decoration-current aria-disabled:not-aria-busy:decoration-current disabled:not-aria-busy:cursor-not-allowed disabled:not-aria-busy:text-disabled aria-disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:text-disabled aria-busy:cursor-progress'
+const LINK_STATES =
+	'cursor-pointer text-link [text-transform:inherit] underline-offset-2 disabled:not-aria-busy:cursor-not-allowed disabled:not-aria-busy:text-disabled aria-disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:text-disabled aria-busy:cursor-progress'
+const LINK_CLASSES = `${LINK_STATES} touch-target inline-flex items-center gap-1 not-disabled:not-aria-disabled:hover:underline focus-visible:underline`
+const INLINE_LINK_CLASSES = `${LINK_STATES} inline underline decoration-link-underline not-disabled:not-aria-disabled:hover:decoration-current focus-visible:decoration-current disabled:not-aria-busy:decoration-current aria-disabled:not-aria-busy:decoration-current`
 
 /* min-h pins the control heights (sm 24, md 32) so rows of
    mixed content (16px icons vs 16px text lines) stay exactly level; padding
@@ -264,11 +282,12 @@ const RADIUS_CLASSES: Record<ButtonSize, string> = {
 
 /** A link has no size: it takes its type from the text around it. */
 type ButtonLook =
-	| { variant: 'link'; size?: never; square?: never }
+	| { variant: 'link' | 'inlineLink'; size?: never; square?: never }
 	| { variant?: ButtonVariant; size: ButtonSize; square?: boolean }
 
 function buttonStyles(look: ButtonLook, truncate: boolean): string {
 	if (look.variant === 'link') return LINK_CLASSES
+	if (look.variant === 'inlineLink') return INLINE_LINK_CLASSES
 	const { variant = 'secondary', size, square = false } = look
 	return `touch-target flex ${truncate ? 'min-w-0' : 'min-w-fit shrink-0'} cursor-pointer items-center justify-center whitespace-nowrap disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:cursor-not-allowed aria-busy:cursor-progress ${variant === 'onMedia' || variant === 'onBrand' ? '' : DISABLED_TEXT} ${DISABLED_CLASSES[variant]} ${
 		square ? SQUARE_SIZE_CLASSES[size] : SIZE_CLASSES[size]

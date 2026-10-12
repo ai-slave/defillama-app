@@ -4,6 +4,7 @@ import { useRouter } from 'next/router'
 import { useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { toast } from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
+import { BasicLink } from '~/components/Link'
 import { TrialCsvLimitModal } from '~/containers/Subscription/shared/TrialCsvLimitModal'
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
 import { useIsClient } from '~/hooks/useIsClient'
@@ -360,9 +361,9 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 									{category === 'RWA' ? (
 										<p className="body-md text-secondary">
 											Download more RWA data from the{' '}
-											<a href="https://defillama.com/rwa" className="text-link underline">
+											<Button as={BasicLink} href="https://defillama.com/rwa" variant="inlineLink">
 												RWA overview
-											</a>
+											</Button>
 											.
 										</p>
 									) : null}
@@ -430,38 +431,41 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 					<div className="divide-y divide-(--border-subtle) border-y border-subtle">
 						<FaqItem question="How do I subscribe to download data from DefiLlama?">
 							DefiLlama data is available to subscribers of our Pro and API plans. Learn more about these plans on the{' '}
-							<a
+							<Button
+								as={BasicLink}
 								href="https://defillama.com/subscription"
-								className="text-link underline"
+								variant="inlineLink"
 								target="_blank"
 								rel="noopener noreferrer"
 							>
 								subscription page
-							</a>
+							</Button>
 							.
 						</FaqItem>
 						<FaqItem question="Is DefiLlama data available through an API?">
 							Yes, DefiLlama data is available through both a free and paid{' '}
-							<a
+							<Button
+								as={BasicLink}
 								href="https://api-docs.defillama.com/"
-								className="text-link underline"
+								variant="inlineLink"
 								target="_blank"
 								rel="noopener noreferrer"
 							>
 								API
-							</a>
+							</Button>
 							.
 						</FaqItem>
 						<FaqItem question="How can I contact DefiLlama with questions?">
 							You can contact us by email, a support form, or live support on the{' '}
-							<a
+							<Button
+								as={BasicLink}
 								href="https://defillama.com/support"
-								className="text-link underline"
+								variant="inlineLink"
 								target="_blank"
 								rel="noopener noreferrer"
 							>
 								support page
-							</a>
+							</Button>
 							.
 						</FaqItem>
 					</div>

@@ -2,6 +2,7 @@
 // Unmeasured pools get nothing: a missing measurement is not a negative claim about the pool.
 import { useRouter } from 'next/router'
 import { Fragment, type ReactNode } from 'react'
+import { BasicLink } from '~/components/Link'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
 import { Hovercard } from '~/ui/Hovercard'
@@ -414,14 +415,16 @@ export function MeasuredCard({
 
 			{/* The exit has its own column and card; a fee stays here because it comes out of the yield. */}
 			<span className="flex items-center justify-end border-t border-subtle pt-2">
-				<a
+				<Button
+					as={BasicLink}
 					href={poolUrl}
 					data-umami-event="yields-verified-evidence-click"
 					data-umami-event-source="apy"
-					className="shrink-0 whitespace-nowrap text-link hover:underline"
+					variant="link"
+					className="shrink-0 whitespace-nowrap"
 				>
 					Evidence →
-				</a>
+				</Button>
 			</span>
 		</span>
 	)

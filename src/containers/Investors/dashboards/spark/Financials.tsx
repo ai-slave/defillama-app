@@ -11,6 +11,7 @@ import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelStatus, PanelLoadingStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
+import { TextLink } from '~/ui/TextLink'
 import { formatPercent } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
 import { assignColors } from './api'
@@ -651,15 +652,12 @@ export default function Financials() {
 					<Card padding="md">
 						<div className="flex flex-col">
 							{data.quarterlyReports.map((report) => (
-								<a
-									key={report.url}
-									href={report.url}
-									target="_blank"
-									rel="noopener noreferrer"
-									className="border-b border-subtle py-3 label-md text-link last:border-b-0 hover:underline"
-								>
-									{report.label}
-								</a>
+								<div key={report.url} className="border-b border-subtle last:border-b-0">
+									{/* The link fills its row, so the whole row opens the report. */}
+									<TextLink href={report.url} target="_blank" rel="noopener noreferrer" className="block py-3">
+										{report.label}
+									</TextLink>
+								</div>
 							))}
 						</div>
 					</Card>

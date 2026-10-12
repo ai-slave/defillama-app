@@ -6,6 +6,7 @@ import { RaisesTotal } from '~/containers/Raises/RaisesTotal'
 import { summarizeRaises } from '~/containers/Raises/summary'
 import { usePageClockSec } from '~/hooks/usePageClock'
 import { definitions } from '~/public/definitions'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
 import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/MetricPrimitives'
@@ -974,10 +975,12 @@ function TokenCGData(props: IKeyMetricsProps) {
 						<SubMetricRow label="All Time High" value={props.formatPrice(props.tokenCGData.price.ath)} />
 						<SubMetricRow label="All Time Low" value={props.formatPrice(props.tokenCGData.price.atl)} />
 						{props.token?.tokenPageRoute ? (
-							<BasicLink
+							<Button
+								as={BasicLink}
 								href={props.token.tokenPageRoute}
-								className="py-1 label-sm text-link hover:underline"
-							>{`View ${priceLabel.replace(' Price', '')} token page`}</BasicLink>
+								variant="link"
+								className="my-1 label-sm"
+							>{`View ${priceLabel.replace(' Price', '')} token page`}</Button>
 						) : null}
 					</MetricSection>
 				) : (

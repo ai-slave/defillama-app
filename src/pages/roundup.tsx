@@ -1,6 +1,7 @@
 import { Announcement } from '~/components/Announcement'
 import { fetchRoundup, type RoundupProps } from '~/containers/Roundup/api'
 import Layout from '~/layout'
+import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -14,9 +15,9 @@ export default function Roundup({ messages, date }: RoundupProps) {
 		>
 			<Announcement notCancellable>
 				Get the roundup delivered for free by subscribing on{' '}
-				<a href="https://t.me/defillama_tg" target="_blank" rel="noopener noreferrer" className="text-link underline">
+				<Button as="a" href="https://t.me/defillama_tg" target="_blank" rel="noopener noreferrer" variant="inlineLink">
 					Telegram
-				</a>
+				</Button>
 			</Announcement>
 
 			<Card padding="sm" className="flex flex-col gap-3">
@@ -33,10 +34,12 @@ export default function Roundup({ messages, date }: RoundupProps) {
 						}
 
 						return (
-							<a href={x[1]} target="_blank" rel="noreferrer noopener" key={x[1]}>
+							<span key={x[1]}>
 								<span>&gt; </span>
-								<span className="text-link underline">{x[0]}</span>
-							</a>
+								<Button as="a" href={x[1]} target="_blank" rel="noreferrer noopener" variant="inlineLink">
+									{x[0]}
+								</Button>
+							</span>
 						)
 					})}
 				</div>

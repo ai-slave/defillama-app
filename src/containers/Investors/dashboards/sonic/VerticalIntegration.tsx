@@ -1,4 +1,6 @@
+import { BasicLink } from '~/components/Link'
 import { SkeletonTable } from '~/containers/Investors/DashboardTabsContent'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 
 const PRODUCTS = ['Native Swap', 'Native Perps', 'Lending', 'LST', 'Concentrated Liquidity', 'Vault', 'USSD', 'Perps']
@@ -17,15 +19,17 @@ export default function VerticalIntegration() {
 					Rather than depending on gas fees alone, the goal is to own or integrate the key economic primitives across
 					the network so that adoption, usage, and revenue translate into more durable value creation for Sonic.
 				</p>
-				<a
+				<Button
+					as={BasicLink}
 					href="https://blog.soniclabs.com/vertical-integration-the-missing-link-in-l1-value-creation/"
 					target="_blank"
 					rel="noopener noreferrer"
-					className="mt-3 inline-flex items-center gap-1 label-md text-link transition-colors hover:underline"
+					variant="link"
+					className="mt-3 label-md"
 				>
 					Read more
-					<Icon name="arrow-up-right" className="size-3" />
-				</a>
+					<Icon name="arrow-up-right" className="size-3.5" />
+				</Button>
 			</div>
 
 			<div className="flex flex-1 flex-col gap-4">

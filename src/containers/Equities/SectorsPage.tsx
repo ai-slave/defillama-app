@@ -389,12 +389,9 @@ function SectorsReadyPage({
 						<Card key={sector.sectorSlug} padding="md" className="flex flex-col gap-4">
 							<div className="flex items-start justify-between gap-2">
 								<div>
-									<Link
-										href={`/equities/sectors/${sector.sectorSlug}`}
-										className="heading-xs text-link hover:underline"
-									>
+									<TextLink href={`/equities/sectors/${sector.sectorSlug}`} size="inherit" className="heading-xs">
 										{sector.sector}
-									</Link>
+									</TextLink>
 									<MetaLine>
 										{`${sector.companyCount} equities`}
 										{`${sector.industryCount} industries`}

@@ -29,6 +29,7 @@ import { MetaLine } from '~/ui/MetaLine'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { EmptyState, InlineStatus, PanelLoadingStatus } from '~/ui/Status'
 import { Tag } from '~/ui/Tag'
+import { TextLink } from '~/ui/TextLink'
 import { httpErrorMessage } from '~/utils/async'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { SponsorArticlePicker } from './SponsorArticlePicker'
@@ -103,9 +104,9 @@ function SponsorPanel({ sponsor }: { sponsor: ResearchSponsorAdmin }) {
 						<h2 className="heading-xs text-primary">{sponsor.displayName}</h2>
 						<Tag>{sponsor.entityType}</Tag>
 					</div>
-					<Link href={`/${sponsor.entityType}/${sponsor.entitySlug}`} className="body-sm text-link hover:underline">
+					<TextLink href={`/${sponsor.entityType}/${sponsor.entitySlug}`} size="inherit" className="body-sm">
 						/{sponsor.entityType}/{sponsor.entitySlug}
-					</Link>
+					</TextLink>
 				</div>
 				<div className="flex items-center gap-2">
 					<Button

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { FaqItem } from '~/containers/Subscription/types'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 
 function FaqAnswer({ text, onStartTrial }: { text: string; onStartTrial?: () => void }) {
@@ -10,9 +11,9 @@ function FaqAnswer({ text, onStartTrial }: { text: string; onStartTrial?: () => 
 	return (
 		<>
 			{text.slice(0, idx)}
-			<button type="button" onClick={onStartTrial} className="text-link underline">
+			<Button variant="inlineLink" onClick={onStartTrial}>
 				{phrase}
-			</button>
+			</Button>
 			{text.slice(idx + phrase.length)}
 		</>
 	)

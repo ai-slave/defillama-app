@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { matchSorter } from 'match-sorter'
 import { useDeferredValue, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
+import { BasicLink } from '~/components/Link'
 import { AI_SERVER } from '~/constants'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { Button } from '~/ui/Button'
@@ -185,14 +186,16 @@ function SavedCharts({ selectedChart, onChartSelect, onSignIn }: LlamaAITabProps
 							</div>
 							<p className="line-clamp-2 body-sm text-tertiary">{chart.original_query}</p>
 							{chart.session_id ? (
-								<a
+								<Button
+									as={BasicLink}
 									href={`/ai/chat/${chart.session_id}`}
 									target="_blank"
 									rel="noopener noreferrer"
-									className="relative self-start body-sm text-link hover:underline"
+									variant="link"
+									className="relative self-start body-sm"
 								>
 									View chat →
-								</a>
+								</Button>
 							) : null}
 						</div>
 					)

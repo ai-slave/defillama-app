@@ -1,10 +1,11 @@
-import Link from 'next/link'
 import { lazy, Suspense, type ReactNode } from 'react'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import type { TreemapNode } from '~/components/ECharts/TreemapChart/types'
+import { BasicLink } from '~/components/Link'
 import { usePaginatedTableDisplayRowNumber } from '~/components/Table/PaginatedTable'
 import { OTHERS_COLOR, SECTOR_COLORS } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { Button } from '~/ui/Button'
 import { Change } from '~/ui/Change'
 import { ChartPanelBody, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
@@ -49,9 +50,9 @@ export function EquitiesPageHeader({
 	return (
 		<header className="flex flex-col gap-2 py-2">
 			<p className="body-sm text-tertiary">
-				<Link href="/equities" className="text-link hover:underline">
+				<Button as={BasicLink} href="/equities" variant="link">
 					Equities
-				</Link>{' '}
+				</Button>{' '}
 				/ {crumb}
 			</p>
 			<div className="flex flex-wrap items-center gap-2">

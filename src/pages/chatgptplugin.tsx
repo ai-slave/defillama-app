@@ -1,4 +1,6 @@
+import { BasicLink } from '~/components/Link'
 import Layout from '~/layout'
+import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 
@@ -38,14 +40,15 @@ function PluginPage() {
 				</p>
 				<p>
 					If you have any feedback or bug reports, please log them here:{' '}
-					<a
-						className="text-link hover:underline"
+					<Button
+						as={BasicLink}
 						target="_blank"
 						rel="noopener noreferrer"
 						href="https://form.typeform.com/to/tJkEGYxQ"
+						variant="inlineLink"
 					>
 						Feedback Form
-					</a>
+					</Button>
 				</p>
 			</Card>
 

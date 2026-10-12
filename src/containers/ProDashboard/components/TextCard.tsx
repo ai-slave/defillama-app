@@ -2,6 +2,7 @@ import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { SANITIZE_REHYPE_PLUGINS } from '~/containers/LlamaAI/components/markdown/sanitizeConfig'
+import { Button } from '~/ui/Button'
 import type { TextConfig } from '../types'
 import { isExternalLink } from './externalLink'
 import { ExternalLinkInterstitial } from './ExternalLinkInterstitial'
@@ -47,9 +48,11 @@ export function TextCard({ text }: TextCardProps) {
 						a: ({ children, href }) => {
 							const external = isExternalLink(href)
 							return (
-								<a
+								<Button
+									as="a"
 									href={href}
-									className="m-0! text-link hover:underline"
+									variant="inlineLink"
+									className="m-0!"
 									target="_blank"
 									rel={external ? 'noopener noreferrer nofollow ugc' : 'noopener noreferrer'}
 									onClick={
@@ -62,7 +65,7 @@ export function TextCard({ text }: TextCardProps) {
 									}
 								>
 									{children}
-								</a>
+								</Button>
 							)
 						},
 						img: () => null,

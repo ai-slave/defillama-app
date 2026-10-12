@@ -50,15 +50,16 @@ export function FreeLimitCard({ offer }: { offer: FreeLimitOffer }) {
 
 				<p className="text-center body-sm text-tertiary">
 					Or get extra free questions in the{' '}
-					<BasicLink
+					<Button
+						as={BasicLink}
 						href="/app"
 						data-umami-event="mobile-app-free-limit-click"
 						data-umami-event-limit={offer.code}
 						onClick={() => track('app-click')}
-						className="font-medium text-link hover:underline"
+						variant="inlineLink"
 					>
 						DefiLlama App
-					</BasicLink>
+					</Button>
 				</p>
 			</Card>
 		)
@@ -93,15 +94,16 @@ export function FreeLimitCard({ offer }: { offer: FreeLimitOffer }) {
 
 			<p className="text-center body-sm text-tertiary">
 				Need unlimited questions?{' '}
-				<BasicLink
+				<Button
+					as={BasicLink}
 					href="/subscription"
 					data-umami-event="llamaai-free-limit-pro-click"
 					data-umami-event-limit={offer.code}
 					onClick={() => track('pro-click')}
-					className="font-medium text-link hover:underline"
+					variant="inlineLink"
 				>
 					Explore DefiLlama Pro
-				</BasicLink>
+				</Button>
 			</p>
 		</Card>
 	)

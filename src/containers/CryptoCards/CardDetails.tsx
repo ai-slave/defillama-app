@@ -7,12 +7,11 @@ import type { getProtocolWarningBanners } from '~/containers/ProtocolOverview/ut
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
-import { Icon } from '~/ui/Icon'
 import { Logo } from '~/ui/Logo'
 import { MetaLine } from '~/ui/MetaLine'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { InlineStatStrip } from '~/ui/SummaryStats'
-import { Tag } from '~/ui/Tag'
+import { Tag, TagLink } from '~/ui/Tag'
 import { formatDate } from '~/utils/dateFormat'
 import { cryptoCardIconUrl, letterLogoDataUri } from '~/utils/icons'
 import type { CardsDetailResponse, CardsDetailTier, CardsIndexCard } from './api.types'
@@ -215,15 +214,9 @@ function TierSources({ tier, title, heading }: { tier: CardsDetailTier; title: s
 											className="mt-2 border-l-2 border-medium pl-3"
 										>
 											<p>{evidence.source_verbatim}</p>
-											<a
-												href={evidence.source_url}
-												target="_blank"
-												rel="noopener noreferrer"
-												className="mt-1 inline-flex items-center gap-1 text-link hover:underline"
-											>
+											<TagLink href={evidence.source_url} target="_blank" rel="noopener noreferrer" className="mt-1">
 												Official source
-												<Icon name="external-link" className="size-3" aria-hidden="true" />
-											</a>
+											</TagLink>
 										</blockquote>
 									))}
 							</div>
@@ -356,9 +349,9 @@ export function CryptoCardDetailsPage(props: CryptoCardDetailsPageProps) {
 			<p>
 				Terms, rewards, fees, eligibility, supported assets, and source-backed disclosures for every card issued by{' '}
 				{props.name}.{' '}
-				<BasicLink href="/crypto-cards" className="text-link hover:underline">
+				<Button as={BasicLink} href="/crypto-cards" variant="inlineLink">
 					Compare all crypto cards
-				</BasicLink>
+				</Button>
 				.
 			</p>
 		</Card>

@@ -2,6 +2,7 @@ import { useRouter } from 'next/router'
 import type { ReactNode } from 'react'
 import { BasicLink } from '~/components/Link'
 import { ReportIncorrectData } from '~/components/ReportIncorrectData'
+import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ScopeNote } from '~/ui/ScopeNote'
 import { Tabs, TabPanel, UnderlineTabList } from '~/ui/Tabs'
@@ -71,12 +72,14 @@ export function ExchangeProfile({
 	const countryView = resolveProfileCountryView(countryState.country, regionalQuery)
 	return (
 		<div className="flex flex-1 flex-col gap-2">
-			<BasicLink
+			<Button
+				as={BasicLink}
 				href={withCountryParam('/exchanges', countryState.country)}
-				className="w-fit body-sm text-link hover:underline"
+				variant="link"
+				className="w-fit body-sm"
 			>
 				← Exchanges
-			</BasicLink>
+			</Button>
 			<ProfileCountryCard profileName={profile.name} view={countryView} countryState={countryState} />
 			{profile.profileMode === 'metadata-only' ? (
 				<MetadataOnlyExchangeProfile profile={profile} asOfDate={asOfDate} countryView={countryView} />

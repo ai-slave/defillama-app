@@ -13,6 +13,8 @@ import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelLoadingStatus, PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
+import { TagLink } from '~/ui/Tag'
+import { TextLink } from '~/ui/TextLink'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { queryReadFailed } from '~/utils/query'
 import { buildRevenueChartModels, timeframeStartIndex, type Aggregation, type Timeframe } from './chartData'
@@ -55,9 +57,9 @@ const walletColumns = walletColumnHelper.columns([
 		cell: (info) => {
 			const row = info.row.original
 			return row.link ? (
-				<a href={row.link} target="_blank" rel="noopener noreferrer" className="mono-md text-link hover:underline">
+				<TextLink href={row.link} target="_blank" rel="noopener noreferrer" size="inherit" className="mono-md">
 					{info.getValue()}
-				</a>
+				</TextLink>
 			) : (
 				<span className="mono-md">{info.getValue()}</span>
 			)
@@ -422,15 +424,12 @@ export default function Revenue() {
 
 			{data.metadata && (
 				<Card padding="sm">
-					<p className="body-sm text-secondary">
-						Data via{' '}
-						{Object.entries(data.metadata.links || {}).map(([key, url], idx, arr) => (
-							<span key={key}>
-								<a href={url} target="_blank" rel="noopener noreferrer" className="text-link hover:underline">
-									{key}
-								</a>
-								{idx < arr.length - 1 ? ' · ' : ''}
-							</span>
+					<p className="flex flex-wrap items-center gap-1.5 body-sm text-secondary">
+						Data via
+						{Object.entries(data.metadata.links || {}).map(([key, url]) => (
+							<TagLink key={key} href={url} target="_blank" rel="noopener noreferrer">
+								{key}
+							</TagLink>
 						))}
 					</p>
 					<p className="mt-1 body-sm text-secondary">Last updated: {data.metadata.updatedAt}</p>

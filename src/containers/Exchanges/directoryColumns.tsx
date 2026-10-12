@@ -200,9 +200,9 @@ export function QualityHover({
 			<span className="text-tertiary">
 				Built only on measured or independently verifiable inputs. n/a never counts as zero; its weight redistributes.
 				Tiers: S 85+ (needs measured execution), A 70+, B 55+, C 40+, else D.{' '}
-				<BasicLink href="/exchanges/rank" className="text-link hover:underline">
+				<Button as={BasicLink} href="/exchanges/rank" variant="inlineLink">
 					How the score is built
-				</BasicLink>
+				</Button>
 			</span>
 		</div>
 	)
@@ -1108,9 +1108,9 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 			cell: ({ getValue }) => {
 				const sourceUrl = getValue()
 				return sourceUrl ? (
-					<BasicLink href={sourceUrl} target="_blank" rel="noopener noreferrer" className="text-link hover:underline">
+					<Button as={BasicLink} href={sourceUrl} target="_blank" rel="noopener noreferrer" variant="link">
 						Verify
-					</BasicLink>
+					</Button>
 				) : (
 					'–'
 				)

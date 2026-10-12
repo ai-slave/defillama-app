@@ -1,5 +1,7 @@
+import { BasicLink } from '~/components/Link'
 import { oldBlue } from '~/constants/colors'
 import Layout from '~/layout'
+import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 import { Logo } from '~/ui/Logo'
@@ -74,21 +76,22 @@ function PressPage() {
 				<hr className="border-subtle" />
 				<p>
 					The best way to contact us and the one in which you'll get a reply the fastest is through our{' '}
-					<a className="text-link hover:underline" target="_blank" rel="noopener noreferrer" href="/support">
+					<Button as={BasicLink} target="_blank" rel="noopener noreferrer" href="/support" variant="inlineLink">
 						our support page
-					</a>
+					</Button>
 					.
 				</p>
 				<p>
 					DefiLlama is a part of{' '}
-					<a
-						className="text-link hover:underline"
+					<Button
+						as={BasicLink}
 						target="_blank"
 						rel="noopener noreferrer"
 						href="https://x.com/llamacorporg"
+						variant="inlineLink"
 					>
 						Llama Corp
-					</a>
+					</Button>
 					.
 				</p>
 				<p>
@@ -106,13 +109,7 @@ function PressPage() {
 				<p>DefiLlama is used across a large number of media organizations, governments, and financial institutions.</p>
 				<div className="mt-4 grid w-full grid-cols-[repeat(auto-fit,minmax(100px,200px))] place-content-center gap-2">
 					{pressList.map((imageFilename) => (
-						<a
-							className="text-link hover:underline"
-							target="_blank"
-							rel="noopener noreferrer"
-							href={imageFilename[1]}
-							key={imageFilename[0]}
-						>
+						<a target="_blank" rel="noopener noreferrer" href={imageFilename[1]} key={imageFilename[0]}>
 							<PressPanel imageFilename={imageFilename[0]} />
 						</a>
 					))}
@@ -127,15 +124,16 @@ function PressPage() {
 					consistent.
 				</p>
 				<p>
-					<a
+					<Button
+						as={BasicLink}
 						href="/defillama-press-kit.zip"
 						target="_blank"
 						rel="noopener noreferrer"
 						download
-						className="text-link hover:underline"
+						variant="link"
 					>
 						Download branding assets
-					</a>
+					</Button>
 				</p>
 				<p>“DefiLlama” is one word, with a capital D and capital L The F is not capitalized.</p>
 				<p>

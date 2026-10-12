@@ -21,16 +21,16 @@ function FeatureLabel({ item }: { item: FeatureItem }) {
 	const idx = item.linkText ? item.label.indexOf(item.linkText) : -1
 	if (idx === -1)
 		return (
-			<a href={item.link} className="text-link underline">
+			<Button as="a" href={item.link} variant="inlineLink">
 				{item.label}
-			</a>
+			</Button>
 		)
 	return (
 		<>
 			{item.label.slice(0, idx)}
-			<a href={item.link} className="text-link underline">
+			<Button as="a" href={item.link} variant="inlineLink">
 				{item.linkText}
-			</a>
+			</Button>
 			{item.label.slice(idx + item.linkText!.length)}
 		</>
 	)

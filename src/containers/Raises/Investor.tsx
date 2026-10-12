@@ -14,6 +14,7 @@ import { useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
 import { CHART_SERIES_LIMIT } from '~/constants/colors'
 import { RaisesFilters } from '~/containers/Raises/Filters'
+import { Button } from '~/ui/Button'
 import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
 import { Panel } from '~/ui/Panel'
@@ -123,14 +124,15 @@ export function InvestorContainer({
 		<>
 			<Announcement notCancellable>
 				<span>Are we missing any funding round?</span>{' '}
-				<a
+				<Button
+					as="a"
 					href="https://airtable.com/shrON6sFMgyFGulaq"
-					className="font-medium text-link underline"
 					target="_blank"
 					rel="noopener noreferrer"
+					variant="inlineLink"
 				>
 					Add it here!
-				</a>
+				</Button>
 			</Announcement>
 
 			<RaisesFilters

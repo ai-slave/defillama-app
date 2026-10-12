@@ -301,14 +301,15 @@ export function buildCardsColumns(
 											<p>
 												The Gnosis Pay card will be discontinued on <strong>20 December 2026</strong> at 23:59 UTC.
 											</p>
-											<BasicLink
+											<Button
+												as={BasicLink}
 												href="https://help.gnosispay.com/articles/1452055581-formal-notice-closure-of-the-gnosis-pay-web-app-and-card-21-september-2026"
 												target="_blank"
 												rel="noopener noreferrer"
-												className="text-link underline"
+												variant="link"
 											>
 												Read the official notice
-											</BasicLink>
+											</Button>
 										</div>
 									}
 								>

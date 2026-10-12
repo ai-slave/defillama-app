@@ -1,9 +1,11 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { lazy, Suspense } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { BasicLink } from '~/components/Link'
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { TablePager } from '~/components/Table/TablePager'
+import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
@@ -108,15 +110,17 @@ export default function YieldsEmissions() {
 				<div className="flex flex-col gap-4">
 					<div className="flex items-center justify-between">
 						<h2 className="heading-xs">S Token Burns</h2>
-						<a
+						<Button
+							as={BasicLink}
 							href="https://burn.soniclabs.com"
 							target="_blank"
 							rel="noopener noreferrer"
-							className="inline-flex items-center gap-1 label-md text-link transition-colors hover:underline"
+							variant="link"
+							className="label-md"
 						>
 							View Burn Counter
-							<Icon name="arrow-up-right" className="size-3" />
-						</a>
+							<Icon name="arrow-up-right" className="size-3.5" />
+						</Button>
 					</div>
 					<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
 						<StatTile label="Permanent Burn / Day" value={data.burn.permanentBurnPerDay.formatted} />

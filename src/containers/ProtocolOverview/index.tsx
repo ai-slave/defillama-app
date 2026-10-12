@@ -7,6 +7,7 @@ import { BasicLink } from '~/components/Link'
 import { LinkPreviewCard } from '~/components/SEO'
 import { TokenLogo } from '~/components/TokenLogo'
 import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
+import { Button } from '~/ui/Button'
 import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { EntityTitleRow } from '~/ui/EntityTitleRow'
 import { HeroMetric } from '~/ui/HeroMetric'
@@ -177,9 +178,9 @@ function ProtocolHeader({
 			{props.exchangeProfileRoute ? (
 				// Sits directly under the title, like the token page's issuer line: this protocol
 				// is a tracked venue, and its markets, liquidity and execution live on that page.
-				<BasicLink href={props.exchangeProfileRoute} className="-mt-4 w-fit label-md text-link hover:underline">
+				<Button as={BasicLink} href={props.exchangeProfileRoute} variant="link" className="-mt-4 w-fit label-md">
 					View exchange stats
-				</BasicLink>
+				</Button>
 			) : null}
 			{primaryMetricOverride ? (
 				<PrimaryValue

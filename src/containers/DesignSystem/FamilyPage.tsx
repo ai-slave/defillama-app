@@ -1,4 +1,5 @@
 import { Fragment, type ReactNode, useId, useState } from 'react'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Select } from '~/ui/Select'
@@ -51,12 +52,9 @@ function FamilyIntro({
 										// oxlint-disable-next-line react/no-array-index-key -- The pieces of one fixed cell.
 										<Fragment key={index}>
 											{name ? (
-												<a
-													href={`#${slug(name)}`}
-													className="text-link underline decoration-link-underline underline-offset-2 hover:decoration-current focus-visible:decoration-current"
-												>
+												<Button as="a" href={`#${slug(name)}`} variant="inlineLink">
 													{code}
-												</a>
+												</Button>
 											) : (
 												code
 											)}

@@ -3,6 +3,7 @@ import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TokenLogo } from '~/components/TokenLogo'
+import { Button } from '~/ui/Button'
 import { TextLink } from '~/ui/TextLink'
 import { letterLogoDataUri } from '~/utils/icons'
 import { KycRequirementValue } from './ComplianceCells'
@@ -259,13 +260,15 @@ export const MICA_COLUMNS = columnHelper.columns([
 		header: 'Profile',
 		enableSorting: false,
 		cell: ({ row }) => (
-			<BasicLink
+			<Button
+				as={BasicLink}
 				href={row.original.profileHref}
 				aria-label={`View ${row.original.name} exchange profile`}
-				className="label-sm text-link hover:underline"
+				variant="link"
+				className="label-sm"
 			>
 				View profile
-			</BasicLink>
+			</Button>
 		),
 		meta: {
 			headerClassName: 'w-[110px] min-w-[110px]',

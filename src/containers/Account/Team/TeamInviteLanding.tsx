@@ -28,7 +28,7 @@ export function TeamInviteLanding() {
 			</Button>
 			<p className="body-md text-tertiary">
 				Already have an account?{' '}
-				<Button variant="link" onClick={() => openDialog('signin')}>
+				<Button variant="inlineLink" onClick={() => openDialog('signin')}>
 					Sign in
 				</Button>
 			</p>

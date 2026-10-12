@@ -13,6 +13,7 @@ import { searchTableFeatures } from '~/components/Table/features/search'
 import { prepareTableCsv, useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
 import { definitions } from '~/public/definitions'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Logo } from '~/ui/Logo'
 import { Panel } from '~/ui/Panel'
@@ -78,14 +79,15 @@ export function ChainsByAdapter(props: IProps) {
 			{props.type === 'Fees' ? (
 				<Announcement notCancellable>
 					<span>Are we missing any protocol?</span>{' '}
-					<a
+					<Button
+						as="a"
 						href="https://airtable.com/shrtBA9lvj6E036Qx"
-						className="font-medium text-link underline"
 						target="_blank"
 						rel="noopener noreferrer"
+						variant="inlineLink"
 					>
 						Request it here!
-					</a>
+					</Button>
 				</Announcement>
 			) : null}
 			{showsChainsByAdapterChart(props.adapterType, props.type) ? (

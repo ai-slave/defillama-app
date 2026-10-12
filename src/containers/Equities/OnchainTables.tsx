@@ -2,10 +2,12 @@ import { createColumnHelper } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { useMemo } from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
+import { BasicLink } from '~/components/Link'
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { prepareTableCsv } from '~/components/Table/utils'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -152,15 +154,10 @@ const marketsColumns = marketsColumnHelper.columns([
 		header: 'Trade',
 		enableSorting: false,
 		cell: ({ getValue }) => (
-			<a
-				href={getValue()}
-				target="_blank"
-				rel="noopener noreferrer"
-				className="inline-flex items-center gap-1 text-link hover:underline"
-			>
+			<Button as={BasicLink} href={getValue()} target="_blank" rel="noopener noreferrer" variant="link">
 				Open
 				<Icon name="arrow-up-right" className="size-3.5" />
-			</a>
+			</Button>
 		),
 		meta: {
 			headerClassName: 'w-[92px]',

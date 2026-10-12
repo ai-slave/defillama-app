@@ -1,5 +1,6 @@
 import { BasicLink } from '~/components/Link'
 import Layout from '~/layout'
+import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 import { Icon } from '~/ui/Icon'
@@ -45,9 +46,9 @@ export default function DataDefinitions() {
 			<Definition header="Fees" id="fees">
 				<p>Total fees paid by users when using the protocol.</p>
 				<p>
-					<BasicLink className="text-link hover:underline" href="/fees">
+					<Button as={BasicLink} href="/fees" variant="inlineLink">
 						Fees
-					</BasicLink>{' '}
+					</Button>{' '}
 					are equivalent to what would traditionally be considered Revenue in most offchain businesses. They reflect the
 					total amount paid by users for using the service, regardless of where those fees end up. This is the top-line
 					number that shows how much the protocol is facilitating in economic activity.
@@ -60,9 +61,9 @@ export default function DataDefinitions() {
 					distributed among token holders. This doesn't include any fees distributed to Liquidity Providers.
 				</p>
 				<p>
-					<BasicLink className="text-link hover:underline" href="/revenue">
+					<Button as={BasicLink} href="/revenue" variant="inlineLink">
 						Revenue
-					</BasicLink>{' '}
+					</Button>{' '}
 					, in the way defined here, is closer to Gross Income in traditional accounting. It's the portion of fees that
 					the protocol keeps for itself after paying out costs to actors like liquidity providers. This is what goes to
 					the team, the treasury, or tokenholders.
@@ -75,9 +76,9 @@ export default function DataDefinitions() {
 					distribution to stakers. Holders Revenue can also be called Tokenholder Revenue.
 				</p>
 				<p>
-					<BasicLink className="text-link hover:underline" href="/holders-revenue">
+					<Button as={BasicLink} href="/holders-revenue" variant="inlineLink">
 						Holders Revenue
-					</BasicLink>{' '}
+					</Button>{' '}
 					is similar to Dividends and Buybacks in traditional finance terms. It's the part of protocol revenue that is
 					returned to tokenholders through staking rewards, fee burns, or direct payouts. Like dividends, this shows how
 					much value the protocol is distributing back to its investors.
@@ -103,18 +104,18 @@ export default function DataDefinitions() {
 
 			<Definition header="Total Staked (Staked)" id="total-staked">
 				<p>
-					<BasicLink className="text-link hover:underline" href="/total-staked">
+					<Button as={BasicLink} href="/total-staked" variant="inlineLink">
 						Staked
-					</BasicLink>{' '}
+					</Button>{' '}
 					represents the value of governance coins that are staked in the protocol's staking system.
 				</p>
 			</Definition>
 
 			<Definition header="Expenses" id="expenses">
 				<p>
-					<BasicLink className="text-link hover:underline" href="/expenses">
+					<Button as={BasicLink} href="/expenses" variant="inlineLink">
 						Expenses
-					</BasicLink>{' '}
+					</Button>{' '}
 					here represent operational costs for salaries, audits, etc. throughout the year. We collect this data mainly
 					from annual protocol reports on their forums, so it's always referencing old data and will not be up-to-date
 					in realtime like other DefiLlama data.
@@ -123,9 +124,9 @@ export default function DataDefinitions() {
 
 			<Definition header="Total Raised" id="total-raised">
 				<p>
-					<BasicLink className="text-link hover:underline" href="/raises">
+					<Button as={BasicLink} href="/raises" variant="inlineLink">
 						Total Raised
-					</BasicLink>{' '}
+					</Button>{' '}
 					includes the sum of all money raised by the protocol, including VC funding rounds, public sales and ICOs.
 				</p>
 			</Definition>
@@ -144,9 +145,9 @@ export default function DataDefinitions() {
 
 			<Definition header="Treasury" id="treasury">
 				<p>
-					<BasicLink className="text-link hover:underline" href="/treasuries">
+					<Button as={BasicLink} href="/treasuries" variant="inlineLink">
 						Treasury
-					</BasicLink>{' '}
+					</Button>{' '}
 					represents the value of coins held in ownership by the protocol. By default this excludes coins created by the
 					protocol itself.
 				</p>
@@ -163,9 +164,9 @@ export default function DataDefinitions() {
 
 			<Definition header="Fully Diluted Valuation (FDV)" id="fully-diluted-valuation">
 				<p>
-					<BasicLink className="text-link hover:underline" href="/fdv">
+					<Button as={BasicLink} href="/fdv" variant="inlineLink">
 						Fully Diluted Valuation
-					</BasicLink>{' '}
+					</Button>{' '}
 					is calculated by taking the expected maximum supply of the token and multiplying it by the price. It's mainly
 					used to calculate the hypothetical market cap of the token if all the tokens were unlocked and circulating.
 				</p>
@@ -174,9 +175,9 @@ export default function DataDefinitions() {
 
 			<Definition header="Outstanding Fully Diluted Valuation (oFDV)" id="outstanding-fdv">
 				<p>
-					<BasicLink className="text-link hover:underline" href="/outstanding-fdv">
+					<Button as={BasicLink} href="/outstanding-fdv" variant="inlineLink">
 						Outstanding Fully Diluted Valuation
-					</BasicLink>{' '}
+					</Button>{' '}
 					is calculated by multiplying the outstanding supply by the price. Outstanding supply is the total supply minus
 					the supply that is not yet allocated to anything (e.g. coins in treasury or reserve). Outstanding FDV is
 					intended to be a more accurate measurement of the market cap of coins that are already allocated.
@@ -185,9 +186,9 @@ export default function DataDefinitions() {
 
 			<Definition header="DEX Volume" id="dex-volume">
 				<p>
-					<BasicLink className="text-link hover:underline" href="/dexs">
+					<Button as={BasicLink} href="/dexs" variant="inlineLink">
 						Volume
-					</BasicLink>{' '}
+					</Button>{' '}
 					traded on the DEX. This metric is only applicable to protocols that are exchanges, and it's just the sum of
 					value of all trades that went through the DEX on a given day.
 				</p>
@@ -215,9 +216,9 @@ export default function DataDefinitions() {
 				<span id="total-borrowed" aria-hidden="true" className="block h-0 overflow-hidden" />
 				<Definition header="Active Loans" id="active-loans">
 					<p>
-						<BasicLink className="text-link hover:underline" href="/active-loans">
+						<Button as={BasicLink} href="/active-loans" variant="inlineLink">
 							Active loans
-						</BasicLink>{' '}
+						</Button>{' '}
 						from DeFi lending protocols. Active loans can also be thought of as total loans issued by a lending
 						protocol. Active loans are excluded from TVL by default to account for looping strategies which can
 						artificially inflate TVL.
@@ -228,9 +229,9 @@ export default function DataDefinitions() {
 			<Definition header="Stablecoins Market Cap" id="stablecoins-market-cap">
 				<p>The total market cap of all stablecoins on a chain.</p>
 				<p>
-					<BasicLink className="text-link hover:underline" href="/stablecoins/chains">
+					<Button as={BasicLink} href="/stablecoins/chains" variant="inlineLink">
 						Stablecoin market cap
-					</BasicLink>{' '}
+					</Button>{' '}
 					represents the total value of stablecoins on a chain, a proxy measure for liquidity and trust, as well as a
 					measure of stablecoin adoption. This metric is only available for chains.
 				</p>
@@ -238,9 +239,9 @@ export default function DataDefinitions() {
 
 			<Definition header="App Fees" id="app-fees">
 				<p>
-					<BasicLink className="text-link hover:underline" href="/app-fees/chains">
+					<Button as={BasicLink} href="/app-fees/chains" variant="inlineLink">
 						App Fees
-					</BasicLink>{' '}
+					</Button>{' '}
 					represents the sum of Fees on all protocols on a chain (excluding stablecoins, liquid staking apps and gas
 					fees). App Fees is a measure of economic activity on a chain and can be used to evaluate how active an
 					ecosystem is.
@@ -249,9 +250,9 @@ export default function DataDefinitions() {
 
 			<Definition header="App Revenue" id="app-revenue">
 				<p>
-					<BasicLink className="text-link hover:underline" href="/app-revenue/chains">
+					<Button as={BasicLink} href="/app-revenue/chains" variant="inlineLink">
 						App Revenue
-					</BasicLink>{' '}
+					</Button>{' '}
 					represents the sum of Revenue on all protocols on a chain (excluding stablecoins, liquid staking apps and gas
 					fees). App Revenue is a measure of economic activity on a chain and can be used to evaluate how active an
 					ecosystem is.
@@ -260,9 +261,9 @@ export default function DataDefinitions() {
 
 			<Definition header="REV" id="rev">
 				<p>
-					<BasicLink className="text-link hover:underline" href="/rev/chains">
+					<Button as={BasicLink} href="/rev/chains" variant="inlineLink">
 						REV
-					</BasicLink>{' '}
+					</Button>{' '}
 					(Real Economic Value) is the sum of chain fees and MEV tips.
 				</p>
 			</Definition>

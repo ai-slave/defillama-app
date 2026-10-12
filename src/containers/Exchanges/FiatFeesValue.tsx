@@ -1,3 +1,4 @@
+import { TagLink } from '~/ui/Tag'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { ValueBadge } from './feePresentation'
 import type { ExchangeFiatFeeRow, ExchangeFiatFees } from './models'
@@ -43,14 +44,9 @@ function FiatFeeTable({ label, rows }: { label: string; rows: Array<ExchangeFiat
 									</td>
 									<td className="border-b border-subtle px-2 py-1.5">
 										{row.source ? (
-											<a
-												href={row.source.url}
-												target="_blank"
-												rel="noopener noreferrer"
-												className="text-link hover:underline"
-											>
+											<TagLink href={row.source.url} target="_blank" rel="noopener noreferrer">
 												{row.source.label}
-											</a>
+											</TagLink>
 										) : (
 											<span className="text-tertiary">–</span>
 										)}

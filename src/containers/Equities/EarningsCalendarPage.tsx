@@ -16,6 +16,7 @@ import { SearchField } from '~/ui/SearchField'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { InlineStatus, PanelLoadingStatus, PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Switch } from '~/ui/Switch'
+import { TagLink } from '~/ui/Tag'
 import { TextLink } from '~/ui/TextLink'
 import { formatDate, formatMonthYear } from '~/utils/dateFormat'
 import { formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
@@ -142,15 +143,14 @@ function EarningsCard({ row, todayET }: { row: IEquitiesCalendarRow; todayET: st
 				{status === 'reported' ? (
 					<span className="flex items-center gap-2 label-sm text-secondary">
 						{filingUrl ? (
-							<a
+							<TagLink
 								href={filingUrl}
 								target="_blank"
 								rel="noopener noreferrer"
 								aria-label={`SEC filing for ${row.ticker} (opens in a new tab)`}
-								className="inline-flex items-center gap-1 text-link hover:underline"
 							>
-								SEC <Icon name="external-link" className="size-3" aria-hidden="true" />
-							</a>
+								SEC
+							</TagLink>
 						) : null}
 					</span>
 				) : row.max_drift_days == null ? null : (

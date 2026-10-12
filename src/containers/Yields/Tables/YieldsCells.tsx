@@ -1,6 +1,8 @@
 import { useRouter } from 'next/router'
 import { Fragment, type ReactNode } from 'react'
 import { useBlockExplorers } from '~/api/client'
+import { BasicLink } from '~/components/Link'
+import { Button } from '~/ui/Button'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { RelativeTime } from '~/ui/RelativeTime'
@@ -367,14 +369,16 @@ export function ExitCell({ row }: { row: IYieldTableRow }) {
 						</span>
 					) : null}
 					<span className="flex items-center justify-end border-t border-subtle pt-2">
-						<a
+						<Button
+							as={BasicLink}
 							href={`/yields/pool/${row.configID}#${EXIT_STATUS_ID}`}
 							data-umami-event="yields-verified-evidence-click"
 							data-umami-event-source="exit"
-							className="shrink-0 whitespace-nowrap text-link hover:underline"
+							variant="link"
+							className="shrink-0 whitespace-nowrap"
 						>
 							Evidence →
-						</a>
+						</Button>
 					</span>
 				</span>
 			}

@@ -9,7 +9,10 @@ import { type ReactNode, useId } from 'react'
    for each group. Render the label (label-sm text-secondary) and hint
    (body-sm text-tertiary) with ids and pass them to the control as
    `aria-labelledby` and `aria-describedby` (VisibilityField in
-   ProDashboard).
+   ProDashboard). Its error (body-sm text-error, id ending `-error`) adds
+   `aria-invalid` and that id on the group and `data-invalid` on the
+   wrapper; showFieldErrors then focuses the group's first control
+   (AssignSubscriptionModal in Account/Team).
 
    Validation (docs/focus-and-errors.md, "Validating a form"):
    - The submit button stays enabled. Disabling it to enforce input hides

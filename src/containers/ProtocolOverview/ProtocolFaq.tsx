@@ -1,4 +1,5 @@
 import { BasicLink } from '~/components/Link'
+import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import type { IProtocolFaqItem } from './types'
@@ -30,14 +31,15 @@ export function ProtocolFaq({ items }: { items: Array<IProtocolFaqItem> }) {
 						<p className="max-w-3xl px-3 pb-3.5 body-md text-secondary sm:px-4">
 							{item.answer.map((part, partIndex) =>
 								part.href ? (
-									<BasicLink
+									<Button
+										as={BasicLink}
 										// oxlint-disable-next-line react/no-array-index-key -- Answer fragments are positional prose; text and links can repeat.
 										key={`${item.id}-${partIndex}`}
 										href={part.href}
-										className="text-link underline decoration-dotted underline-offset-2"
+										variant="inlineLink"
 									>
 										{part.text}
-									</BasicLink>
+									</Button>
 								) : (
 									// oxlint-disable-next-line react/no-array-index-key -- Answer fragments are positional prose; text and links can repeat.
 									<span key={`${item.id}-${partIndex}`}>{part.text}</span>

@@ -3,6 +3,7 @@ import * as React from 'react'
 import { Announcement } from '~/components/Announcement'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { RaisesFilters } from '~/containers/Raises/Filters'
+import { Button } from '~/ui/Button'
 import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
@@ -42,20 +43,21 @@ function RaisesContainer({ raises, investors, rounds, sectors, chains, investorN
 		<>
 			<Announcement notCancellable>
 				<span>Are we missing any funding round?</span>{' '}
-				<a
+				<Button
+					as="a"
 					href="https://airtable.com/shrON6sFMgyFGulaq"
-					className="font-medium text-link underline"
 					target="_blank"
 					rel="noopener noreferrer"
+					variant="inlineLink"
 				>
 					Add it here!
-				</a>
+				</Button>
 				<br />
 				<span>
 					Are you a VC and want to submit your investments in bulk? Email them to us at{' '}
-					<a href="mailto:support@defillama.com" className="text-link underline">
+					<Button as="a" href="mailto:support@defillama.com" variant="inlineLink">
 						support@defillama.com
-					</a>
+					</Button>
 				</span>
 			</Announcement>
 			<RaisesFilters

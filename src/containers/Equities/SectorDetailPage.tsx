@@ -1,8 +1,8 @@
 import { createColumnHelper, type SortingState } from '@tanstack/react-table'
-import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useMemo } from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
+import { BasicLink } from '~/components/Link'
 import { readSelectionFromQuery, updateQueryFromSelected } from '~/components/Select/query'
 import { type paginatedTableFeatures, usePaginatedTable } from '~/components/Table/features/pagination'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
@@ -360,9 +360,9 @@ export function SectorDetailPage({ state }: { state: EquitiesPageDataState<IEqui
 								<span className="w-16 text-right">{formatMetric(remainingIndustryWeight, 'percent')}</span>
 							</div>
 						) : null}
-						<Link href="/equities/industries" className="mt-3 body-sm text-link hover:underline">
+						<Button as={BasicLink} href="/equities/industries" variant="link" className="mt-3 body-sm">
 							View all {classifiedIndustries.length} industries →
-						</Link>
+						</Button>
 					</div>
 				</Panel>
 

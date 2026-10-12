@@ -106,14 +106,15 @@ export function FreeUsageNote({
 			{note.kind === 'all-used' ? (
 				<>
 					{' · '}
-					<BasicLink
+					<Button
+						as={BasicLink}
 						href="/subscription"
 						data-umami-event="llamaai-usage-note-trial-click"
 						data-umami-event-state="no-bonus"
-						className="font-medium text-link hover:underline"
+						variant="link"
 					>
 						Try Pro free
-					</BasicLink>
+					</Button>
 				</>
 			) : null}
 		</p>
@@ -149,14 +150,16 @@ function WelcomeWeekCard({
 					)}
 				</p>
 				{remaining === 0 ? (
-					<BasicLink
+					<Button
+						as={BasicLink}
 						href="/subscription"
 						data-umami-event="llamaai-usage-note-trial-click"
 						data-umami-event-state="welcome-week"
-						className="-my-1 shrink-0 label-sm text-link hover:underline"
+						variant="link"
+						className="shrink-0 label-sm"
 					>
 						Try Pro free
-					</BasicLink>
+					</Button>
 				) : remaining > 1 ? (
 					<Tooltip
 						content="Dismiss"

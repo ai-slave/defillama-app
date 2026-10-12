@@ -3,6 +3,7 @@ import { useId, useMemo, useRef, useState, type ChangeEvent, type FormEvent, typ
 import { flushSync } from 'react-dom'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
+import { BasicLink } from '~/components/Link'
 import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
 import type { CustomColumnDef } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
@@ -359,14 +360,16 @@ function CustomColumnForm({
 							<span className="rounded-sm bg-page px-2 py-1 text-primary">{preview}</span>
 						</p>
 					) : null}
-					<a
+					<Button
+						as={BasicLink}
 						href="https://docs.llama.fi/analysts/custom-columns"
 						target="_blank"
-						className="body-sm text-link hover:underline"
 						rel="noreferrer"
+						variant="link"
+						className="body-sm"
 					>
 						Learn more on how to create custom columns
-					</a>
+					</Button>
 				</DialogBody>
 				<DialogFooter dismiss={<DialogCancelButton />}>
 					<Button type="submit" variant="primary" size="md">

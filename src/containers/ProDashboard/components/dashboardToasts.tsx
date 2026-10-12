@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import toast from 'react-hot-toast'
+import { Button } from '~/ui/Button'
 
 export const TOAST_DURATION_SHORT = 4000
 export const TOAST_DURATION_UNDO = 6000
@@ -23,9 +24,8 @@ export function actionToast({ message, icon, action, id, duration = TOAST_DURATI
 			<span className="flex items-center gap-3">
 				{icon}
 				{message}
-				<button
-					type="button"
-					className="font-medium text-link hover:underline"
+				<Button
+					variant="link"
 					{...(action.umamiEvent ? { 'data-umami-event': action.umamiEvent } : {})}
 					onClick={() => {
 						action.onClick()
@@ -33,7 +33,7 @@ export function actionToast({ message, icon, action, id, duration = TOAST_DURATI
 					}}
 				>
 					{action.label}
-				</button>
+				</Button>
 			</span>
 		),
 		statusToastOptions(id, duration)

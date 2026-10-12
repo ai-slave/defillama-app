@@ -1,5 +1,6 @@
 import { matchSorter } from 'match-sorter'
 import { Fragment, useDeferredValue, useMemo, useState } from 'react'
+import { BasicLink } from '~/components/Link'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Keycap } from '~/ui/Keycap'
@@ -432,15 +433,17 @@ export function ShortcutsTab() {
 				</ul>
 			</section>
 
-			<a
+			<Button
+				as={BasicLink}
 				href={DUCKDB_DOCS_URL}
 				target="_blank"
 				rel="noreferrer"
-				className="inline-flex items-center gap-1 self-start body-sm text-link hover:underline"
+				variant="link"
+				className="self-start body-sm"
 			>
 				Full LlamaSQL reference
 				<Icon name="external-link" className="size-3.5" aria-hidden="true" />
-			</a>
+			</Button>
 		</div>
 	)
 }

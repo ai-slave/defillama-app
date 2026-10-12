@@ -1,6 +1,7 @@
 import { BasicLink } from '~/components/Link'
 import { utrGradeColor } from '~/containers/UniversalTokenRating/gradeBands'
 import { GradeBadge } from '~/containers/UniversalTokenRating/grades'
+import { Button } from '~/ui/Button'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -98,17 +99,18 @@ export function TokenRightsPopover({
 				</p>
 
 				{fullRightsHref ? (
-					<div className="flex justify-end">
-						<BasicLink
+					<div className="flex justify-end label-sm">
+						<Button
+							as={BasicLink}
 							href={fullRightsHref}
 							data-umami-event="token-rights-link"
 							data-umami-event-card="token-rights"
 							data-umami-event-entity={name}
-							className="inline-flex items-center gap-1 label-sm text-link hover:underline"
+							variant="link"
 						>
 							View full token rights
 							<Icon name="arrow-right" className="size-3.5" />
-						</BasicLink>
+						</Button>
 					</div>
 				) : null}
 			</div>

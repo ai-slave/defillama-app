@@ -20,6 +20,7 @@ import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatusBadge } from '~/ui/StatusBadge'
 import { StatItem, SummaryChange } from '~/ui/SummaryStats'
+import { TextLink } from '~/ui/TextLink'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import {
 	formatCompactNumber,
@@ -244,14 +245,15 @@ function HoldersTable({
 											/>
 											<span className="w-4 shrink-0 text-secondary">{i + 1}</span>
 											{url ? (
-												<a
-													className="mono-md text-link hover:underline"
+												<TextLink
 													href={url}
 													target="_blank"
 													rel="noopener noreferrer"
+													size="inherit"
+													className="mono-md"
 												>
 													{shortAddr(holder.address)}
-												</a>
+												</TextLink>
 											) : (
 												<span className="mono-md text-secondary">{shortAddr(holder.address)}</span>
 											)}

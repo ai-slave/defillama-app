@@ -3,6 +3,7 @@ import type { PrecomputedData, UnlocksData } from '~/containers/Unlocks/calendar
 import { CalendarView } from '~/containers/Unlocks/CalendarView'
 import { getUnlocksCalendarStaticPropsData } from '~/containers/Unlocks/queries'
 import Layout from '~/layout'
+import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -37,14 +38,15 @@ export default function UnlocksCalendar({
 		>
 			<Announcement notCancellable>
 				<span>Are we missing any protocol?</span>{' '}
-				<a
+				<Button
+					as="a"
 					href="https://airtable.com/shrD1bSGYNcdFQ6kd"
-					className="font-medium text-link underline"
 					target="_blank"
 					rel="noopener noreferrer"
+					variant="inlineLink"
 				>
 					Add it here!
-				</a>
+				</Button>
 			</Announcement>
 			<Card padding="sm">
 				<CalendarView initialUnlocksData={initialUnlocksData} precomputedData={precomputedData} />

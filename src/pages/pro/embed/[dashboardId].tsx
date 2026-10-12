@@ -2,6 +2,7 @@ import type { InferGetServerSidePropsType } from 'next'
 import Head from 'next/head'
 import { useEffect, useMemo } from 'react'
 import { ChartWatermarkContext } from '~/components/ECharts/shared/watermark'
+import { BasicLink } from '~/components/Link'
 import { CardHeightScaleContext } from '~/containers/ProDashboard/components/cardHeightContext'
 import {
 	ChartGrid,
@@ -79,16 +80,18 @@ export default function DashboardEmbedPage({
 							{dashboardName}
 						</a>
 					</div>
-					<a
+					<Button
+						as={BasicLink}
 						href={dashboardHref}
 						target="_blank"
 						rel="noreferrer"
-						className="flex shrink-0 items-center gap-1 text-link hover:underline"
+						variant="link"
+						className="shrink-0"
 						data-umami-event="embed-open-dashboard"
 					>
 						Open on DefiLlama
 						<Icon name="external-link" className="size-3" aria-hidden="true" />
-					</a>
+					</Button>
 				</header>
 				<ProDashboardAPIProvider
 					mode="view"

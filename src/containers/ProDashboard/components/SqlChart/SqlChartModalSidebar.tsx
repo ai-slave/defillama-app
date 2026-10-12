@@ -1,4 +1,5 @@
 import { useState, type Dispatch, type SetStateAction } from 'react'
+import { BasicLink } from '~/components/Link'
 import type { ChartOptionsMap } from '~/containers/Downloads/chart-datasets'
 import type { QuerySavedConfig } from '~/containers/Downloads/savedDownloads'
 import { DUCKDB_DOCS_URL } from '~/containers/Downloads/sql/dialectDocs'
@@ -7,6 +8,7 @@ import type { ExampleQuery } from '~/containers/Downloads/sql/examples'
 import { ExamplesPanel } from '~/containers/Downloads/sql/ExamplesPanel'
 import { SchemaBrowser } from '~/containers/Downloads/sql/SchemaBrowser'
 import type { RegisteredTable, TableLoadError, TableSource } from '~/containers/Downloads/sql/useTableRegistry'
+import { Button } from '~/ui/Button'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tabs, TabPanel } from '~/ui/Tabs'
 import { SavedQueriesPanel } from './SavedQueriesPanel'
@@ -105,9 +107,16 @@ export function SqlChartModalSidebar({
 			</Tabs>
 
 			<footer className="shrink-0 border-t border-subtle px-3 py-2">
-				<a href={DUCKDB_DOCS_URL} target="_blank" rel="noreferrer" className="label-sm text-link hover:underline">
+				<Button
+					as={BasicLink}
+					href={DUCKDB_DOCS_URL}
+					target="_blank"
+					rel="noreferrer"
+					variant="link"
+					className="label-sm"
+				>
 					LlamaSQL dialect docs ↗
-				</a>
+				</Button>
 			</footer>
 		</aside>
 	)

@@ -311,14 +311,15 @@ export default function Protocols({
 		>
 			<Announcement notCancellable>
 				<span>Are we missing any protocol?</span>{' '}
-				<a
+				<Button
+					as="a"
 					href="https://airtable.com/shrD1bSGYNcdFQ6kd"
-					className="font-medium text-link underline"
 					target="_blank"
 					rel="noopener noreferrer"
+					variant="inlineLink"
 				>
 					Add it here!
-				</a>
+				</Button>
 			</Announcement>
 
 			<SummaryCardGrid>

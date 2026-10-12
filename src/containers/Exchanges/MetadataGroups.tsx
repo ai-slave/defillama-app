@@ -68,15 +68,10 @@ function MetadataPills({ values }: { values: Array<string> }) {
 
 function ExternalMetadataLink({ value }: { value: { label: string; url: string } }) {
 	return (
-		<BasicLink
-			href={value.url}
-			target="_blank"
-			rel="noopener noreferrer"
-			className="inline-flex items-center gap-1 text-link hover:underline"
-		>
+		<Button as={BasicLink} href={value.url} target="_blank" rel="noopener noreferrer" variant="link">
 			{metadataValueLabel(value.label)}
-			<Icon name="external-link" className="size-3" />
-		</BasicLink>
+			<Icon name="external-link" className="size-3.5" />
+		</Button>
 	)
 }
 

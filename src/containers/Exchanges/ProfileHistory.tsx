@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { BasicLink } from '~/components/Link'
 import { RaisesTotal } from '~/containers/Raises/RaisesTotal'
 import { summarizeRaises } from '~/containers/Raises/summary'
+import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { DividedGrid } from '~/ui/DividedGrid'
 import { Icon, type IIcon } from '~/ui/Icon'
@@ -137,15 +138,16 @@ export function ProfileHistory({ profile }: { profile: ExchangeProfileModel }) {
 								}
 								amount={
 									raise.sourceUrl ? (
-										<BasicLink
+										<Button
+											as={BasicLink}
 											href={raise.sourceUrl}
 											target="_blank"
 											rel="noopener noreferrer"
-											className="inline-flex items-center gap-1 text-link hover:underline"
+											variant="link"
 										>
 											{formatUsd(raise.amountUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'Unknown'}
-											<Icon name="external-link" className="size-3" />
-										</BasicLink>
+											<Icon name="external-link" className="size-3.5" />
+										</Button>
 									) : (
 										(formatUsd(raise.amountUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'Unknown')
 									)

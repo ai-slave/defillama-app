@@ -5,6 +5,7 @@ import {
 	TokenPageTableHeaderCell,
 	TokenPageTableScroller
 } from '~/components/Table/helpers'
+import { Button } from '~/ui/Button'
 import { keepFocus } from '~/ui/focus'
 import { Panel } from '~/ui/Panel'
 import { StatusBadge, type Status } from '~/ui/StatusBadge'
@@ -158,20 +159,21 @@ export function ExitLedger({
 						</TokenPageTable>
 					</TokenPageTableScroller>
 					{folded > 0 ? (
-						<button
-							type="button"
-							// The button leaves as the older rows appear: the first of them takes focus.
-							onClick={(event) => {
-								const table = event.currentTarget.previousElementSibling
-								keepFocus(
-									() => setExpanded(true),
-									() => table?.querySelectorAll<HTMLElement>('tbody tr')[VISIBLE_INCIDENTS]
-								)
-							}}
-							className="border-t border-subtle px-3 py-2 text-left body-sm text-link hover:underline"
-						>
-							{`Show ${count(folded)} older ${folded === 1 ? 'episode' : 'episodes'}`}
-						</button>
+						<div className="border-t border-subtle px-3 py-2 body-sm">
+							<Button
+								variant="link"
+								// The button leaves as the older rows appear: the first of them takes focus.
+								onClick={(event) => {
+									const table = event.currentTarget.parentElement?.previousElementSibling
+									keepFocus(
+										() => setExpanded(true),
+										() => table?.querySelectorAll<HTMLElement>('tbody tr')[VISIBLE_INCIDENTS]
+									)
+								}}
+							>
+								{`Show ${count(folded)} older ${folded === 1 ? 'episode' : 'episodes'}`}
+							</Button>
+						</div>
 					) : null}
 				</>
 			) : (

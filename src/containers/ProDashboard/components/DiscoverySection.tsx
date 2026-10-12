@@ -34,10 +34,10 @@ export function DiscoveryShelfHeading({
 				{subtitle ? <p className="body-sm text-tertiary">{subtitle}</p> : null}
 			</div>
 			{seeAllHref ? (
-				<BasicLink href={seeAllHref} className="flex shrink-0 items-center gap-1 label-md text-link hover:underline">
+				<Button as={BasicLink} href={seeAllHref} variant="link" className="shrink-0 label-md">
 					See all
 					<Icon name="arrow-right" className="size-3.5" />
-				</BasicLink>
+				</Button>
 			) : null}
 		</div>
 	)

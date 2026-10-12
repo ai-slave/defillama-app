@@ -3,6 +3,8 @@
  * how the numbers are built, and how to get a venue listed.
  */
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
+import { BasicLink } from '~/components/Link'
+import { Button } from '~/ui/Button'
 
 export const EXCHANGES_METHODOLOGY_URL = 'https://docs.llama.fi/exchanges/methodology'
 export const LIST_YOUR_EXCHANGE_URL = 'https://docs.llama.fi/exchanges/list-your-exchange'
@@ -10,9 +12,15 @@ export const LIST_YOUR_EXCHANGE_URL = 'https://docs.llama.fi/exchanges/list-your
 /** Inline methodology link for the end of a tooltip or a short note. */
 export function MethodologyLink() {
 	return (
-		<a href={EXCHANGES_METHODOLOGY_URL} target="_blank" rel="noopener noreferrer" className="text-link hover:underline">
+		<Button
+			as={BasicLink}
+			href={EXCHANGES_METHODOLOGY_URL}
+			target="_blank"
+			rel="noopener noreferrer"
+			variant="inlineLink"
+		>
 			See the methodology
-		</a>
+		</Button>
 	)
 }
 
