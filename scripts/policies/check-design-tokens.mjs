@@ -21,8 +21,10 @@
 // A rule's `exceptions` names files where the pattern is a deliberate choice,
 // each with its reason; they are not counted, so a baseline above zero is
 // always debt. Add one only with a reason the shared part cannot meet. The
-// baseline pins each excepted file's own count (`exceptions`), so a second copy
-// in that file fails like any other, and `--update` records a new exception.
+// baseline pins each excepted file's own match count (`exceptions`), so one
+// more match in that file fails like any other; if the file's reason covers
+// it, widen the reason and run `--update`, which also records a new exception
+// and drops the count of one no rule lists anymore.
 import { execSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -542,7 +544,8 @@ function matchHandBuiltChevron(content) {
 }
 
 // A checkbox drawn by hand: a native one, or an Ariakit.Checkbox that renders something other than the parts a chip,
-// row or tile checkbox draws (a toggle Button, ListRow, OptionTile).
+// row or tile checkbox draws (a Button, ListRow, OptionTile). A `role="checkbox"` on a plain element is not caught;
+// today every one outside src/ui sits on ListRow or OptionTile.
 function matchHandBuiltCheckbox(content) {
 	const found = [...content.matchAll(/\btype=["'{]+checkbox\b/g)].map((match) => match[0])
 	for (const tag of openingTags(content, ['Ariakit\\.Checkbox'])) {
@@ -1010,7 +1013,7 @@ const RULES = [
 	{
 		id: 'hand-built-checkbox',
 		description:
-			'a checkbox drawn by hand outside src/ui — a checkbox is `Checkbox` (src/ui/Checkbox.tsx); a chip, row or tile that toggles is Ariakit.Checkbox rendered as a toggle Button, ListRow or OptionTile',
+			'a checkbox drawn by hand outside src/ui — a checkbox is `Checkbox` (src/ui/Checkbox.tsx); a chip, row or tile that toggles is Ariakit.Checkbox rendered as a Button (variant toggle for a chip), ListRow or OptionTile',
 		match: matchHandBuiltCheckbox,
 		uiOwned: true,
 		skipTests: true,
@@ -1534,11 +1537,13 @@ let failed = false
 // An exception whose file no longer matches would sit in the list unseen and excuse the next real violation there. Its
 // count is pinned too: the reason covers the copies it was written for, not the next one added beside them.
 console.log('\nlisted exceptions (not counted against the rule)')
+const listedKeys = new Set()
 for (const rule of RULES) {
 	if (!rule.exceptions) continue
 	const problems = []
 	for (const file of Object.keys(rule.exceptions)) {
 		const key = `${rule.id} ${file}`
+		listedKeys.add(key)
 		const now = exceptionHits.get(key) ?? 0
 		const was = baseline.exceptions?.[key]
 		if (now === 0) problems.push(`stale: ${file} no longer matches; remove it from the rule's exceptions`)
@@ -1547,7 +1552,9 @@ for (const rule of RULES) {
 				`new: ${file} has ${now}; run \`bun scripts/policies/check-design-tokens.mjs --update\` to record it`
 			)
 		else if (now > was)
-			problems.push(`${file}: ${now} (baseline ${was}); a new copy needs the shared part or its own reason`)
+			problems.push(
+				`${file}: ${now} (baseline ${was}); use the shared part, or if the file's reason covers the new match, say so in the reason and run \`bun scripts/policies/check-design-tokens.mjs --update\``
+			)
 		else if (now < was)
 			problems.push(
 				`${file}: ${now} (baseline ${was}); run \`bun scripts/policies/check-design-tokens.mjs --update\` to lock it in`
@@ -1558,6 +1565,15 @@ for (const rule of RULES) {
 		failed = true
 		console.log(`  ${problem}`)
 	}
+}
+// A count left behind by a removed exception, a renamed file or a deleted rule would make a later exception at that
+// path skip its `new` step.
+const orphans = Object.keys(baseline.exceptions ?? {}).filter((key) => !listedKeys.has(key))
+if (orphans.length > 0) {
+	failed = true
+	console.log(`FAIL      recorded exception counts no rule lists: ${orphans.length}`)
+	for (const key of orphans)
+		console.log(`  ${key}; run \`bun scripts/policies/check-design-tokens.mjs --update\` to drop it`)
 }
 
 for (const bucket of buckets) {
