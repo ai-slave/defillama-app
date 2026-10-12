@@ -20,6 +20,11 @@ import { Check } from './internal/Check'
               or a QuestionHelper (policy: check-focus-handoff).
    It toggles on Space, as a native checkbox does; Enter never toggles it
    (it submits the form around it). Never pass Ariakit's `clickOnEnter`.
+   A chip or tile that is a checkbox (`Ariakit.Checkbox` rendered as a
+   toggle `Button`, an `OptionTile` or a `ListRow`) toggles on Enter too:
+   it looks like a button, and a button presses on Enter. Enter in the
+   form's text fields still submits. Every other checkbox is this part
+   (policy: hand-built-checkbox).
    Keyboard focus on the hidden input draws the ring and row wash on the
    label (`has-focus-visible:`), so callers never track focus. A disabled
    checkbox takes the disabled colors with the not-allowed cursor, like

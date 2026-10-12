@@ -5,9 +5,9 @@ import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
+import { OptionTile } from '~/ui/OptionTile'
 import { PopoverSurface } from '~/ui/PopoverSurface'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
-import { tw } from '~/ui/tw'
 import { VirtualizedSelect, type VirtualizedSelectOption } from '~/ui/VirtualizedSelect'
 import { DASHBOARD_VARIABLE_LABEL_MAX_LENGTH, type DashboardVariableKind } from '../dashboardTypes'
 import {
@@ -46,8 +46,6 @@ const VARIABLE_KIND_OPTIONS: Array<SegmentedControlOption<DashboardVariableKind>
 ]
 
 type BindMode = 'matching' | 'all' | 'none'
-
-const BIND_OPTION_STYLES = tw`flex cursor-pointer items-center gap-2 label-md text-primary has-disabled:cursor-not-allowed has-disabled:text-disabled`
 
 function cardsLabel(count: number) {
 	return `${count} ${count === 1 ? 'card' : 'cards'}`
@@ -209,19 +207,16 @@ function VariableForm({
 					</p>
 					<Ariakit.RadioGroup aria-labelledby={bindGroupId} className="flex flex-col gap-1.5">
 						{matchingTargets.length > 0 ? (
-							<label htmlFor={`${bindGroupId}-matching`} className={BIND_OPTION_STYLES}>
-								<Ariakit.Radio id={`${bindGroupId}-matching`} value="matching" className="accent-brand" />
+							<OptionTile layout="row" radio="matching">
 								{`${cardsLabel(matchingTargets.length)} that use ${valueLabel}`}
-							</label>
+							</OptionTile>
 						) : null}
-						<label htmlFor={`${bindGroupId}-all`} className={BIND_OPTION_STYLES}>
-							<Ariakit.Radio id={`${bindGroupId}-all`} value="all" className="accent-brand" />
+						<OptionTile layout="row" radio="all">
 							{`All ${cardsLabel(compatibleTargets.length)} with a ${VARIABLE_KIND_LABELS[kind].toLowerCase()}`}
-						</label>
-						<label htmlFor={`${bindGroupId}-none`} className={BIND_OPTION_STYLES}>
-							<Ariakit.Radio id={`${bindGroupId}-none`} value="none" className="accent-brand" />
+						</OptionTile>
+						<OptionTile layout="row" radio="none">
 							Don’t bind yet
-						</label>
+						</OptionTile>
 					</Ariakit.RadioGroup>
 				</Ariakit.RadioProvider>
 			) : null}

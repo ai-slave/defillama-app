@@ -7,6 +7,7 @@ import { LazySubscribeProModal } from '~/containers/Subscription/shared/Subscrib
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
+import { Checkbox } from '~/ui/Checkbox'
 import { Dialog, DialogBody, DialogHeader, DialogToolbar } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { SearchField } from '~/ui/SearchField'
@@ -650,13 +651,12 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 															boxShadow: isSticky ? 'var(--sticky-shadow, none)' : undefined
 														}}
 													>
-														<div className="flex items-center gap-0.5 p-2">
-															<input
-																type="checkbox"
+														<div className="flex items-center gap-1.5 p-2">
+															<Checkbox
+																variant="inline-sm"
 																aria-label={`Include ${column.header} column`}
 																checked={isSelected}
 																onChange={() => toggleColumn(column.index)}
-																className="mr-1 size-3.5 shrink-0 cursor-pointer accent-brand"
 															/>
 															<button
 																type="button"

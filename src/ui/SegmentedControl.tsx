@@ -38,7 +38,11 @@ import { Tooltip } from './Tooltip'
    Selects in dense card headers. In a phone sheet's rows the padded variants
    are 44px with a 4px inset and body-md labels. A disabled option dims to
    60% with the not-allowed cursor, like Button; its reason stays in visible
-   text.
+   text. Arrow keys skip a disabled option. A radio control whose every
+   option locks for a while (a form refreshing its data) passes `disabled`
+   instead: every option stays focusable and is announced unavailable, so
+   focus on it never drops to the page (docs/focus-and-errors.md). A
+   dialog that opens on the control marks its selected option `autoFocus`.
    An option's label is plain text or a fragment (icon, text, count): every
    segment lays its children out as one centered row with its own gap, so a
    label never brings a wrapper span, and never a QuestionHelper or other
@@ -141,6 +145,7 @@ export type SegmentedControlOption<T extends string> = {
 	ariaLabel?: string
 	disabled?: boolean
 	tooltip?: React.ReactNode
+	autoFocus?: boolean
 }
 
 type SegmentedControlProps<T extends string> = Omit<React.ComponentProps<'div'>, 'children' | 'onChange'> & {
@@ -152,8 +157,8 @@ type SegmentedControlProps<T extends string> = Omit<React.ComponentProps<'div'>,
 	className?: string
 	buttonClassName?: string
 } & (
-		| { semantics?: 'radio'; value: T | null; onValueChange: (value: T) => void }
-		| { semantics: 'tabs'; value?: never; onValueChange?: never }
+		| { semantics?: 'radio'; value: T | null; onValueChange: (value: T) => void; disabled?: boolean }
+		| { semantics: 'tabs'; value?: never; onValueChange?: never; disabled?: never }
 	)
 
 /** Single-value filters use radios; panel switches share their parent's Tabs provider. */
@@ -169,6 +174,7 @@ export function SegmentedControl<T extends string>(props: SegmentedControlProps<
 		semantics,
 		value,
 		onValueChange,
+		disabled,
 		...rest
 	} = props
 	const container = TAG_GROUP_VARIANTS[variant].container
@@ -179,7 +185,8 @@ export function SegmentedControl<T extends string>(props: SegmentedControlProps<
 	}
 	// A selected venue can become empty after a data refresh. Preserve the value,
 	// but keep one enabled entry point while Ariakit's active item is disabled.
-	const selectedIsDisabled = semantics !== 'tabs' && options.some((option) => option.value === value && option.disabled)
+	const selectedIsDisabled =
+		semantics !== 'tabs' && !disabled && options.some((option) => option.value === value && option.disabled)
 	const firstEnabledValue = selectedIsDisabled ? options.find((option) => !option.disabled)?.value : undefined
 	const controls = options.map((option) => {
 		const controlProps = {
@@ -210,7 +217,9 @@ export function SegmentedControl<T extends string>(props: SegmentedControlProps<
 			<Ariakit.Radio
 				value={option.value}
 				tabIndex={selectedIsDisabled ? (option.value === firstEnabledValue ? 0 : -1) : undefined}
-				disabled={option.disabled}
+				disabled={disabled || option.disabled}
+				accessibleWhenDisabled={disabled}
+				autoFocus={option.autoFocus}
 				aria-label={option.ariaLabel}
 				className="absolute inset-0 cursor-[inherit] opacity-[0.00001]"
 			/>
@@ -220,14 +229,14 @@ export function SegmentedControl<T extends string>(props: SegmentedControlProps<
 				className={clsx(
 					button,
 					buttonClassName,
-					'relative cursor-pointer has-focus-visible:focus-ring has-disabled:cursor-not-allowed has-disabled:text-disabled',
+					'relative cursor-pointer has-focus-visible:focus-ring aria-disabled:cursor-not-allowed aria-disabled:text-disabled data-[active=true]:aria-disabled:text-disabled',
 					variant === 'solid' && 'inline-flex items-center justify-center',
 					(variant === 'solid' || variant === 'solid-responsive') &&
 						'data-[active=true]:has-focus-visible:focus-ring-on-brand'
 				)}
 				key={option.value}
 				data-active={option.value === value}
-				aria-disabled={option.disabled}
+				aria-disabled={disabled || option.disabled}
 			>
 				{option.tooltip ? <Tooltip content={option.tooltip} render={radio} /> : radio}
 				{option.label}

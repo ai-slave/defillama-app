@@ -322,3 +322,38 @@ test.each(['radio', 'tabs'] as const)(
 		container.remove()
 	}
 )
+
+test('a locked radio control opens on its autoFocus option and stays focusable while locked', async () => {
+	const container = document.createElement('div')
+	document.body.append(container)
+	const root = createRoot(container)
+	const onChange = vi.fn()
+	const draw = (locked: boolean) =>
+		root.render(
+			<SegmentedControl
+				value="chart"
+				onValueChange={onChange}
+				disabled={locked}
+				options={OPTIONS.map((option) => ({ ...option, autoFocus: option.value === 'chart' }))}
+				label="Metric"
+				variant="field"
+				size="md"
+			/>
+		)
+	await act(async () => draw(false))
+	const radios = () => [...container.querySelectorAll<HTMLInputElement>('input[type="radio"]')]
+	expect(document.activeElement).toBe(radios()[1])
+	await act(async () => draw(true))
+	// Locked while its data refreshes: no native disabled, which drops focus in Chrome (happy-dom keeps it either way,
+	// docs/testing.md), so the options read unavailable and nothing picks.
+	expect(radios().map((radio) => [radio.disabled, radio.getAttribute('aria-disabled')])).toEqual([
+		[false, 'true'],
+		[false, 'true'],
+		[false, 'true']
+	])
+	await press(radios()[1], 'ArrowRight')
+	await act(async () => radios()[0].click())
+	expect(onChange).not.toHaveBeenCalled()
+	await act(async () => root.unmount())
+	container.remove()
+})

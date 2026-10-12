@@ -36,7 +36,9 @@ import { Check } from './internal/Check'
    indicator or icon beside the text), center (an icon over a centered
    label), compact (a small icon over a short label, four to a row in a
    narrow column: a chart type).
-   A one-line choice is a SegmentedControl or a toggle Button, not a tile.
+   A one-line choice is a SegmentedControl or a toggle Button, not a tile,
+   unless each option is a sentence too long for a segment (a popover's
+   "Bind cards": 3 cards that use Ethereum): then it is a `row` tile.
    `className` is for layout placement only (grid cell, width, height).
 ---------------------------------------------------------------------------- */
 

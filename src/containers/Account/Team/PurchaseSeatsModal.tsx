@@ -1,6 +1,5 @@
-import * as Ariakit from '@ariakit/react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Suspense, useId, useState, type FormEvent } from 'react'
+import { Suspense, useState, type FormEvent } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { EmbeddedCardCheckout } from '~/containers/Subscription/shared/EmbeddedCardCheckout'
@@ -11,6 +10,7 @@ import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
@@ -41,16 +41,7 @@ function getUnconfirmedPurchaseMessage(subscriptions: Array<TeamSubscription>, t
 	return `We couldn't confirm this purchase. Your team currently shows ${seats} ${label} seat${seats === 1 ? '' : 's'}.`
 }
 
-// Radio labels host a visually hidden Ariakit.Radio, so the label draws the focus ring.
-// Not a SegmentedControl: the dialog opens on the selected plan (autoFocus) and a locked plan keeps its focus
-// (accessibleWhenDisabled), and SegmentedControl offers neither; one-line choices are not OptionTiles.
-const radioOptionStyles =
-	'relative flex h-10 flex-1 cursor-pointer items-center justify-center rounded-lg label-sm transition-colors has-focus-visible:focus-ring has-[input[aria-disabled=true]]:cursor-not-allowed has-[input[aria-disabled=true]]:border-disabled has-[input[aria-disabled=true]]:text-disabled'
-const radioOptionSelectedStyles = 'border border-brand bg-brand-muted text-link'
-const radioOptionIdleStyles = 'border border-medium text-primary'
-
 export function PurchaseSeatsModal({ onClose }: { onClose: () => void }) {
-	const radioId = useId()
 	const queryClient = useQueryClient()
 	const { user } = useAuthContext()
 	const nowSeconds = useNowSeconds()
@@ -159,89 +150,38 @@ export function PurchaseSeatsModal({ onClose }: { onClose: () => void }) {
 							{/* Subscription Type */}
 							<div className="flex flex-col gap-2">
 								<span className="label-sm text-secondary">Subscription type</span>
-								<Ariakit.RadioProvider
+								<SegmentedControl<'llamafeed' | 'api'>
+									label="Subscription type"
+									variant="field"
+									size="md"
 									value={subscriptionType}
-									setValue={(value) => setSubscriptionType(value as 'api' | 'llamafeed')}
-								>
-									<Ariakit.RadioGroup aria-label="Subscription type" className="flex gap-2">
-										<label
-											htmlFor={`${radioId}-llamafeed`}
-											className={`${radioOptionStyles} ${
-												subscriptionType === 'llamafeed' ? radioOptionSelectedStyles : radioOptionIdleStyles
-											}`}
-										>
-											<Ariakit.Radio
-												id={`${radioId}-llamafeed`}
-												// The dialog opens on the selected option, its first field.
-												autoFocus={subscriptionType === 'llamafeed'}
-												accessibleWhenDisabled
-												disabled={!canChangeTeamBilling}
-												value="llamafeed"
-												className="sr-only"
-											/>
-											Pro
-										</label>
-										<label
-											htmlFor={`${radioId}-api`}
-											className={`${radioOptionStyles} ${
-												subscriptionType === 'api' ? radioOptionSelectedStyles : radioOptionIdleStyles
-											}`}
-										>
-											<Ariakit.Radio
-												id={`${radioId}-api`}
-												// The dialog opens on the selected option, its first field.
-												autoFocus={subscriptionType === 'api'}
-												accessibleWhenDisabled
-												disabled={!canChangeTeamBilling}
-												value="api"
-												className="sr-only"
-											/>
-											API
-										</label>
-									</Ariakit.RadioGroup>
-								</Ariakit.RadioProvider>
+									onValueChange={setSubscriptionType}
+									disabled={!canChangeTeamBilling}
+									options={[
+										// The dialog opens on the selected option, its first field.
+										{ value: 'llamafeed', label: 'Pro', autoFocus: subscriptionType === 'llamafeed' },
+										{ value: 'api', label: 'API', autoFocus: subscriptionType === 'api' }
+									]}
+								/>
 							</div>
 
 							{/* Billing Interval */}
 							<div className="flex flex-col gap-2">
 								<span className="label-sm text-secondary">Billing interval</span>
-								<Ariakit.RadioProvider
+								<SegmentedControl<'month' | 'year'>
+									label="Billing interval"
+									variant="field"
+									size="md"
 									value={billingInterval}
-									setValue={(value) => setBillingInterval(value as 'month' | 'year')}
-								>
-									<Ariakit.RadioGroup aria-label="Billing interval" className="flex gap-2">
-										<label
-											htmlFor={`${radioId}-month`}
-											className={`${radioOptionStyles} ${
-												billingInterval === 'month' ? radioOptionSelectedStyles : radioOptionIdleStyles
-											}`}
-										>
-											<Ariakit.Radio
-												id={`${radioId}-month`}
-												accessibleWhenDisabled
-												value="month"
-												disabled={!canChangeTeamBilling || lockedInterval === 'year'}
-												className="sr-only"
-											/>
-											Monthly
-										</label>
-										<label
-											htmlFor={`${radioId}-year`}
-											className={`${radioOptionStyles} ${
-												billingInterval === 'year' ? radioOptionSelectedStyles : radioOptionIdleStyles
-											}`}
-										>
-											<Ariakit.Radio
-												id={`${radioId}-year`}
-												accessibleWhenDisabled
-												value="year"
-												disabled={!canChangeTeamBilling || lockedInterval === 'month'}
-												className="sr-only"
-											/>
-											Yearly
-										</label>
-									</Ariakit.RadioGroup>
-								</Ariakit.RadioProvider>
+									onValueChange={setBillingInterval}
+									disabled={!canChangeTeamBilling}
+									options={[
+										// A refetch that locks the focused interval drops focus to the dialog's first control (its
+										// lost-focus net); it needs a plan bought elsewhere while this dialog is open, so it is accepted.
+										{ value: 'month', label: 'Monthly', disabled: lockedInterval === 'year' },
+										{ value: 'year', label: 'Yearly', disabled: lockedInterval === 'month' }
+									]}
+								/>
 								{lockedInterval ? (
 									<p className="body-sm text-secondary">
 										{lockedInterval === 'year'

@@ -1,6 +1,6 @@
-import * as Ariakit from '@ariakit/react'
 import type { ReactNode } from 'react'
-import { Tabs, Tab, TabPanel, TabLink } from '~/ui/Tabs'
+import { SegmentedControl } from '~/ui/SegmentedControl'
+import { Tabs, TabPanel } from '~/ui/Tabs'
 
 type TableTab<T extends string> = { id: T; label: string }
 
@@ -20,16 +20,15 @@ export function LiquidationsTableTabs<T extends string>({
 	return (
 		<Tabs value={activeTab} onValueChange={setActiveTab} values={tabs.map((tab) => tab.id)}>
 			<div className="grid grid-cols-1 sm:grid-cols-[auto_minmax(0,1fr)]">
-				<Ariakit.TabList
-					aria-label="Liquidations table view"
-					className="z-10 col-start-1 row-start-1 flex min-w-0 items-center self-start overflow-x-auto px-2 pt-2 sm:pb-2"
-				>
-					{tabs.map((tab) => (
-						<Tab key={tab.id} value={tab.id} render={<TabLink as="button" />}>
-							{tab.label}
-						</Tab>
-					))}
-				</Ariakit.TabList>
+				<div className="z-10 col-start-1 row-start-1 min-w-0 self-start px-2 pt-2 sm:pb-2">
+					<SegmentedControl
+						semantics="tabs"
+						label="Liquidations table view"
+						options={tabs.map((tab) => ({ value: tab.id, label: tab.label }))}
+						variant="default"
+						size="md"
+					/>
+				</div>
 				{/* Standalone pages reset table state; token pages keep it across views. */}
 				<TabPanel
 					key={resetTableOnChange ? activeTab : undefined}

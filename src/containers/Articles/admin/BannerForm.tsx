@@ -39,6 +39,7 @@ import {
 import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButton'
 import type { UploadScope } from '~/containers/Articles/upload/useImageUpload'
 import { Button } from '~/ui/Button'
+import { Checkbox } from '~/ui/Checkbox'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { Field, FieldGroup } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
@@ -213,15 +214,13 @@ export function BannerForm({ banner }: Props) {
 					title="Placement"
 					description="The promo shows below Latest on the landing page and on every article. Narrow it down here."
 				>
-					<label className="flex items-center gap-3">
-						<input
-							type="checkbox"
-							checked={state.showOnLanding}
-							onChange={(e) => update({ showOnLanding: e.target.checked })}
-							className="size-4 accent-link"
-						/>
-						<span className="label-md text-primary">Show on the landing page</span>
-					</label>
+					<Checkbox
+						variant="inline"
+						checked={state.showOnLanding}
+						onChange={(e) => update({ showOnLanding: e.currentTarget.checked })}
+					>
+						Show on the landing page
+					</Checkbox>
 
 					<FieldGroup label={<Optional label="Hide on these articles" />}>
 						<ArticleMultiPicker
@@ -633,15 +632,13 @@ export function BannerForm({ banner }: Props) {
 			)}
 
 			<Section title="Visibility" description="Disable a banner to hide it without deleting it.">
-				<label className="flex items-center gap-3">
-					<input
-						type="checkbox"
-						checked={state.enabled}
-						onChange={(e) => update({ enabled: e.target.checked })}
-						className="size-4 accent-link"
-					/>
-					<span className="label-md text-primary">Enabled</span>
-				</label>
+				<Checkbox
+					variant="inline"
+					checked={state.enabled}
+					onChange={(e) => update({ enabled: e.currentTarget.checked })}
+				>
+					Enabled
+				</Checkbox>
 			</Section>
 
 			<div className="sticky bottom-0 -mx-1 mt-2 grid gap-2 border-t border-medium bg-page-glass px-2 py-3 backdrop-blur">

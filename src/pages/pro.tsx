@@ -49,7 +49,7 @@ import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { MetaLine } from '~/ui/MetaLine'
 import { PanelStatus } from '~/ui/Status'
-import { Tab, TabPanel, Tabs, TabLink } from '~/ui/Tabs'
+import { Tab, TabLink, TabPanel, Tabs, UnderlineTabList } from '~/ui/Tabs'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 const CreateDashboardPicker = lazy(() =>
 	import('~/containers/ProDashboard/components/CreateDashboardPicker').then((m) => ({
@@ -333,7 +333,7 @@ function ProContent({
 		<Tabs value={activeTab} onValueChange={switchTab} values={availableTabs}>
 			<div className="flex flex-1 flex-col gap-4 p-2 lg:px-0">
 				<div className="flex items-center gap-2">
-					<Ariakit.TabList className="flex scrollbar-none min-w-0 overflow-x-auto" aria-label="Dashboard views">
+					<UnderlineTabList label="Dashboard views" className="min-w-0 flex-1">
 						<Tab
 							type="button"
 							value="discover"
@@ -387,7 +387,7 @@ function ProContent({
 								My Profile
 							</Tab>
 						) : null}
-					</Ariakit.TabList>
+					</UnderlineTabList>
 					<div className="ml-auto flex shrink-0 items-center gap-2">
 						<ProButton
 							type="button"

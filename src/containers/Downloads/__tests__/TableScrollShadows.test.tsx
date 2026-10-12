@@ -66,7 +66,7 @@ async function type(value: string) {
 // The first column's header cell carries the sticky shadow; its table scroller sits above the header row,
 // and the right-edge fade is the scroller's sibling.
 function stickyHeader() {
-	return document.querySelector<HTMLInputElement>('input[aria-label="Include date column"]')!.parentElement!
+	return document.querySelector('input[aria-label="Include date column"]')!.closest('label')!.parentElement!
 		.parentElement!
 }
 function scroller() {

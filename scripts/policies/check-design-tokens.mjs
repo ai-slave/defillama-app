@@ -511,6 +511,19 @@ function matchNeutralHoverOnHuedControl(content) {
 // Checkbox, radio, range and file inputs are not text fields.
 const FIELD_RECIPES =
 	/\b(?:inputStyles|textareaStyles|codeInputStyles|codeTextareaStyles|oneTimeCodeInputStyles|fieldFrameInputStyles|searchFieldInputStyles)\b/
+// Ariakit tab parts used outside src/ui, written either way: `<Ariakit.TabList` or a `TabList` imported by name.
+const ARIAKIT_TAB_PARTS = new Set(['TabProvider', 'TabList', 'Tab', 'TabPanel'])
+function matchRawTabList(content) {
+	const found = [...content.matchAll(/<Ariakit\.(?:TabProvider|TabList|Tab|TabPanel)\b/g)].map((match) => match[0])
+	for (const match of content.matchAll(/import\s*\{([^}]*)\}\s*from\s*['"]@ariakit\/react['"]/g)) {
+		for (const name of match[1].split(',')) {
+			const imported = name.trim().split(/\s+as\s+/)[0]
+			if (ARIAKIT_TAB_PARTS.has(imported)) found.push(`import { ${imported} }`)
+		}
+	}
+	return found.length > 0 ? found : null
+}
+
 function matchHandBuiltField(content) {
 	const found = []
 	for (const tag of openingTags(content, ['input', 'textarea', 'select'])) {
@@ -926,6 +939,57 @@ const RULES = [
 				'a field-look button that opens a token search dialog, with a search icon instead of an arrow; no picker opens a dialog',
 			'src/containers/TokenPnl/index.tsx':
 				'a field-look button that opens a token search dialog, with a search icon instead of an arrow; no picker opens a dialog'
+		}
+	},
+	{
+		id: 'raw-tab-list',
+		description:
+			'Ariakit tab parts outside src/ui — panel tabs are `Tabs` with `UnderlineTabList` over a page section or `SegmentedControl semantics="tabs"` in a card, panel, dialog or toolbar header; route tabs are `TabNav` (src/ui/Tabs.tsx)',
+		match: matchRawTabList,
+		uiOwned: true,
+		skipTests: true,
+		exceptions: {
+			'src/containers/LlamaAI/components/SettingsModal.tsx':
+				'a vertical rail of RailItem tabs; Tabs.tsx has no vertical list',
+			'src/containers/LlamaAI/components/input/CapabilityBrowser.tsx':
+				'a vertical rail of RailItem tabs; Tabs.tsx has no vertical list',
+			'src/containers/Investors/index.tsx':
+				'a vertical, nested rail of RailItem tabs with group headings; Tabs.tsx has no vertical list',
+			'src/containers/DesignSystem/components/navigation.tsx':
+				'the design system demo of a RailItem tab rail; Tabs.tsx has no vertical list to show instead',
+			'src/containers/Downloads/sql/QueryTabBar.tsx':
+				'SQL editor tabs: closable and renamable, with a context menu, a new-tab menu and overflow fades',
+			'src/containers/Downloads/sql/UpsellGate.tsx': "a static picture of the SQL editor's tab strip",
+			'src/containers/AttestationLanding/index.tsx':
+				'two-line card tabs (a title over a subtitle) on a landing page, filled when selected'
+		}
+	},
+	{
+		id: 'hand-built-radio',
+		description:
+			'an Ariakit.Radio or native radio outside src/ui — a short pick is SegmentedControl, a multi-line one-of-set (or sentence-long options) is OptionTile with `radio`',
+		pattern: /<Ariakit\.Radio\b|\btype=["'{]+radio\b/g,
+		uiOwned: true,
+		skipTests: true,
+		exceptions: {
+			'src/containers/ProDashboard/components/Rating.tsx': 'a star rating with a hover preview',
+			'src/containers/Downloads/sql/chart/ColorPicker.tsx': 'preset color swatches',
+			'src/containers/Subscription/sections/SubscriptionPricingSection.tsx':
+				"the pricing page's billing switch: an animated thumb on a large pill with a two-line option",
+			'src/containers/Downloads/sql/chart/ChartTypePicker.tsx':
+				'13 chart-type icons in five groups with dividers that wrap; SegmentedControl is one row that scrolls'
+		}
+	},
+	{
+		id: 'hand-built-checkbox',
+		description:
+			'a native checkbox outside src/ui — a checkbox is `Checkbox` (src/ui/Checkbox.tsx); a chip or tile that toggles is Ariakit.Checkbox rendered as a toggle Button, OptionTile or ListRow',
+		pattern: /\btype=["'{]+checkbox\b/g,
+		uiOwned: true,
+		skipTests: true,
+		exceptions: {
+			'src/containers/Articles/renderer/ArticleRenderer.tsx':
+				"a read-only task-list box inside an article's prose, named by its line"
 		}
 	},
 	{

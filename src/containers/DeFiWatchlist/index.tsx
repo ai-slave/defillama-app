@@ -834,24 +834,26 @@ function TopMovers({ protocols, portfolio }: TopMoversProps) {
 			<TableToolbar>
 				<h2 className="mr-auto heading-xs">Top movers</h2>
 
-				<label className="flex cursor-pointer items-center gap-1.5">
-					<input
-						type="checkbox"
-						checked={showPositive}
-						onChange={(e) => startTransition(() => setShowPositive(e.target.checked))}
-						className="size-3.5 rounded-[4px] border border-strong accent-data-up"
-					/>
-					<span className="label-sm text-data-up">Positive</span>
-				</label>
-				<label className="flex cursor-pointer items-center gap-1.5">
-					<input
-						type="checkbox"
-						checked={showNegative}
-						onChange={(e) => startTransition(() => setShowNegative(e.target.checked))}
-						className="size-3.5 rounded-[4px] border border-strong accent-data-down"
-					/>
-					<span className="label-sm text-data-down">Negative</span>
-				</label>
+				<Checkbox
+					variant="inline-sm"
+					checked={showPositive}
+					onChange={(e) => {
+						const checked = e.currentTarget.checked
+						startTransition(() => setShowPositive(checked))
+					}}
+				>
+					<span className="text-data-up">Positive</span>
+				</Checkbox>
+				<Checkbox
+					variant="inline-sm"
+					checked={showNegative}
+					onChange={(e) => {
+						const checked = e.currentTarget.checked
+						startTransition(() => setShowNegative(checked))
+					}}
+				>
+					<span className="text-data-down">Negative</span>
+				</Checkbox>
 
 				{availableChains.length > 0 ? (
 					<SelectWithCombobox
