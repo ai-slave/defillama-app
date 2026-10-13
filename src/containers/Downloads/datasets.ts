@@ -377,7 +377,7 @@ export const datasets: Array<DatasetDefinition> = [
 		],
 		extractItems: extractDataField
 	},
-	// The API route resolves these paid legacy upstreams so credentials stay out of the browser catalog bundle.
+	// The API route resolves these paid upstreams so credentials stay out of the browser catalog bundle.
 	{
 		slug: 'perp-funding',
 		name: 'Perp Funding Rates',

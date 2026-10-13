@@ -34,7 +34,6 @@ describe('PRO_API_BASE_URL', () => {
 
 		expect(constants.SERVER_URL).toBe('https://pro-api.llama.fi/secret-api-key/api')
 		expect(constants.DATASETS_SERVER_URL).toBe('https://pro-api.llama.fi/secret-api-key/datasets')
-		expect(constants.YIELDS_SERVER_URL).toBe('https://pro-api.llama.fi/secret-api-key/yields')
 		expect(constants.YIELDS_V2_SERVER_URL).toBe('https://pro-api.llama.fi/secret-api-key/yields')
 		expect(constants.MARKETS_SERVER_URL).toBe('https://pro-api.llama.fi/secret-api-key/markets')
 	})
@@ -69,7 +68,6 @@ describe('server URL constants', () => {
 			SERVER_URL: 'https://core.example.com/api/',
 			STABLECOINS_SERVER_URL: 'https://stablecoins.example.com/',
 			TRADFI_API: 'https://tradfi.example.com/',
-			YIELDS_SERVER_URL: 'https://legacy-yields.example.com/',
 			YIELDS_V2_SERVER_URL: 'https://yields.example.com/'
 		})
 
@@ -88,7 +86,6 @@ describe('server URL constants', () => {
 		expect(constants.TRADFI_API).toBe('https://tradfi.example.com')
 		expect(constants.LIQUIDATIONS_SERVER_URL_V2).toBe('https://liquidations.example.com')
 		expect(constants.RISK_SERVER_URL).toBe('https://risks.example.com')
-		expect(constants.YIELDS_SERVER_URL).toBe('https://legacy-yields.example.com')
 		expect(constants.YIELDS_V2_SERVER_URL).toBe('https://yields.example.com')
 	})
 

@@ -36,7 +36,6 @@ const PUBLIC_SINGLEFLIGHT_HOSTS = new Set([
 	'pro-api.llama.fi',
 	'defillama-datasets.llama.fi',
 	'raw.githubusercontent.com',
-	'yields.llama.fi',
 	'coins.llama.fi',
 	'stablecoins.llama.fi',
 	'bridges.llama.fi',

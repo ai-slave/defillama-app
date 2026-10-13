@@ -17,7 +17,6 @@ export const DIRECT_URL_ENV_NAMES = [
 	'TRADFI_API',
 	'V2_SERVER_URL',
 	'VAULT_RISK_SERVER_URL',
-	'YIELDS_SERVER_URL',
 	'YIELDS_V2_SERVER_URL'
 ] as const
 
@@ -109,8 +108,6 @@ export function getDirectUrlEnv(name: DirectUrlEnvName): string | undefined {
 			return normalizeDirectUrlEnv(process.env.V2_SERVER_URL)
 		case 'VAULT_RISK_SERVER_URL':
 			return normalizeDirectUrlEnv(process.env.VAULT_RISK_SERVER_URL)
-		case 'YIELDS_SERVER_URL':
-			return normalizeDirectUrlEnv(process.env.YIELDS_SERVER_URL)
 		case 'YIELDS_V2_SERVER_URL':
 			return normalizeDirectUrlEnv(process.env.YIELDS_V2_SERVER_URL)
 	}

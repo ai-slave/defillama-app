@@ -52,9 +52,6 @@ export const STABLECOINS_SERVER_URL =
 	(API_KEY ? `${PRO_API_BASE_URL}/${API_KEY}/stablecoins` : 'https://stablecoins.llama.fi')
 export const TRADFI_API =
 	getDirectUrlEnv('TRADFI_API') ?? (API_KEY ? `${PRO_API_BASE_URL}/${API_KEY}/dat` : 'https://api.llama.fi/dat')
-export const YIELDS_SERVER_URL =
-	getDirectUrlEnv('YIELDS_SERVER_URL') ??
-	(API_KEY ? `${PRO_API_BASE_URL}/${API_KEY}/yields` : 'https://yields.llama.fi')
 export const YIELDS_V2_SERVER_URL =
 	getDirectUrlEnv('YIELDS_V2_SERVER_URL') ??
 	(API_KEY ? `${PRO_API_BASE_URL}/${API_KEY}/yields` : 'https://yields-v2.llama.fi')
