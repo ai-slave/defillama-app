@@ -242,8 +242,9 @@ const SLIPPAGE_BANDS: Array<[MasterSlippageBand, string, number]> = [
 	['1m', '$1M', 100]
 ]
 
-function marketExecution(metrics: MasterPairExecution): ExchangeMarketExecution {
+function marketExecution(metrics: MasterPairExecution, rfq: boolean): ExchangeMarketExecution {
 	return {
+		...(rfq ? { rfq } : {}),
 		hoursCovered: metrics.hours_covered,
 		costToTradeBps: metrics.cost_to_trade_bps,
 		effectiveSpreadBps: metrics.effective_spread_bps,
@@ -611,7 +612,7 @@ export function mapExchangePair(
 						cap: pair.nvol.cap ?? null
 					}
 				: null,
-		execution: pair.execution ? marketExecution(pair.execution) : null
+		execution: pair.execution ? marketExecution(pair.execution, pair.extra?.rfq === true) : null
 	}
 }
 

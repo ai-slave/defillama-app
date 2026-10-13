@@ -186,7 +186,9 @@ export function buildPairColumns(
 			id: 'intraSpread',
 			header: definitions.intraSpread.label,
 			sortDescFirst: true,
-			cell: ({ row }) => <IntraSpread pct={row.original.execution?.insideSpreadPct} />,
+			cell: ({ row }) => (
+				<IntraSpread pct={row.original.execution?.insideSpreadPct} rfq={row.original.execution?.rfq} />
+			),
 			meta: { align: 'end', headerHelperText: definitions.intraSpread.description }
 		}),
 		columnHelper.accessor((row) => row.execution?.effectiveSpreadBps ?? undefined, {

@@ -89,10 +89,20 @@ export const INSIDE_WARN_PCT = 10
 export const insideShown = (pct: number | null | undefined): number | null =>
 	pct != null && pct >= INSIDE_MIN_PCT ? pct : null
 
-export function IntraSpread({ pct }: { pct: number | null | undefined }) {
+export function IntraSpread({ pct, rfq }: { pct: number | null | undefined; rfq?: boolean }) {
 	const shown = insideShown(pct)
 	if (shown == null) return null
 	const text = formatPercent(shown, { input: 'percent', maximumFractionDigits: shown >= 10 ? 0 : 1 })
+	if (rfq) {
+		return (
+			<Definition
+				content="RFQ market: fills can come from quotes requested off the book, so prints inside the shown spread are expected. Shown, not counted against the venue."
+				className="ms-auto w-fit text-tertiary"
+			>
+				{`${text} RFQ`}
+			</Definition>
+		)
+	}
 	if (shown >= INSIDE_WARN_PCT) {
 		return (
 			<Tooltip
@@ -334,8 +344,9 @@ function executionColumns(rows: Array<ExchangeMarketExecution>): Array<Execution
 		{
 			label: 'Intra-Spread Vol.',
 			help: 'Share of measured volume printed inside the spread the book showed. Blank below 2.5%, amber from 5%, a warning from 10%.',
-			value: (execution) => insideShown(execution.insideSpreadPct),
-			render: (execution) => <IntraSpread pct={execution.insideSpreadPct} />,
+			// an RFQ market is shown but not judged, so its cell gets no shade
+			value: (execution) => (execution.rfq ? null : insideShown(execution.insideSpreadPct)),
+			render: (execution) => <IntraSpread pct={execution.insideSpreadPct} rfq={execution.rfq} />,
 			shade: insideShade
 		},
 		...bands

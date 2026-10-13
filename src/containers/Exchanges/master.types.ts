@@ -574,6 +574,10 @@ export interface MasterExchangePair {
 	freshness: MasterFreshness
 	/** Absent on an older cache build. */
 	execution?: MasterPairExecution | null
+	/** Facts the venue publishes about the market that have no column of their own; only
+	 * present when it has a key. `rfq`: fills can come from quotes requested off the book,
+	 * so its intra-spread share is shown but not judged. */
+	extra?: { rfq?: boolean }
 }
 
 export interface MasterExchangeIndexSegment {

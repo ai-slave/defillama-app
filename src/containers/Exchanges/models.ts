@@ -221,6 +221,9 @@ export interface ExchangeMarketExecution extends Omit<ExchangeSegmentExecution, 
 	notionalUsd: number
 	/** Notional the intra-spread share is measured over, USD: what that share is pooled by. */
 	insideMeasuredUsd: number
+	/** Fills can come from quotes requested off the book (RFQ), so prints inside the shown
+	 * spread are expected: the share is shown but not judged. Absent = an ordinary book. */
+	rfq?: boolean
 	/** Every measured order size, smallest first: what the book predicted, then what fills
 	 *  paid, both in bps of the size (units = size ÷ $10k, to read them as dollars). */
 	slippage: Array<{ size: string; units: number; predictedBps: number | null; realizedBps: number | null }>
