@@ -31,7 +31,7 @@ const CHART_CACHE_CONTROL = 'public, s-maxage=3600, stale-while-revalidate=600'
 
 const VALID_ADAPTER_TYPES = new Set<string>(Object.values(ADAPTER_TYPES))
 const VALID_ADAPTER_DATA_TYPES = new Set<string>(Object.values(ADAPTER_DATA_TYPES))
-const VALID_ADAPTER_BREAKDOWN_TYPES = new Set<AdapterBreakdownType>(['chain', 'version'])
+const VALID_ADAPTER_BREAKDOWN_TYPES = new Set<AdapterBreakdownType>(['chain', 'version', 'label'])
 
 type AdapterBreakdownType = Parameters<typeof fetchAdapterProtocolChartDataByBreakdownType>[0]['type']
 type AdapterBreakdownRequest =

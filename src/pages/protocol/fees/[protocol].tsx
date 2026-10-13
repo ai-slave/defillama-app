@@ -9,6 +9,7 @@ import {
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { TokenLogo } from '~/components/TokenLogo'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
+import { fetchAdapterProtocolChartDataByBreakdownType } from '~/containers/AdapterMetrics/api'
 import type { IAdapterChart } from '~/containers/AdapterMetrics/api.types'
 import { DimensionProtocolChartByType } from '~/containers/AdapterMetrics/ProtocolChart'
 import { getAdapterProtocolOverview } from '~/containers/AdapterMetrics/queries'
@@ -22,7 +23,8 @@ import { KeyMetrics } from '~/containers/ProtocolOverview/KeyMetrics'
 import { ProtocolOverviewLayout } from '~/containers/ProtocolOverview/Layout'
 import {
 	buildProtocolFeeChartPresentation,
-	getProtocolFeeBreakdownPanels
+	getProtocolFeeBreakdownPanels,
+	rankBreakdownNames
 } from '~/containers/ProtocolOverview/protocolFeeCharts'
 import { getProtocolMetricFlags } from '~/containers/ProtocolOverview/queries'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
@@ -74,6 +76,8 @@ interface ProtocolFeesPageProps {
 	protocolRevenueChains: Array<string>
 	protocolFeesVersions: Array<string>
 	protocolRevenueVersions: Array<string>
+	protocolFeesLabels: Array<string>
+	protocolRevenueLabels: Array<string>
 	warningBanners: ReturnType<typeof getProtocolWarningBanners>
 	defaultChartView: LowercaseDwmcGrouping
 	hallmarks: Array<HallmarkPoint> | null
@@ -92,6 +96,21 @@ const fetchOptionalAdapterProtocolOverview = async (
 		return { data: await getAdapterProtocolOverview(params), failed: false }
 	} catch {
 		return { data: null, failed: true }
+	}
+}
+
+// The label names only decide whether a label panel shows; the panel fetches its own rows. A failed fetch hides
+// that panel until the next revalidation instead of failing the page.
+const fetchLabelBreakdownNames = async (
+	enabled: boolean,
+	params: Parameters<typeof fetchAdapterProtocolChartDataByBreakdownType>[0]
+): Promise<Array<string>> => {
+	if (!enabled) return []
+
+	try {
+		return rankBreakdownNames(await fetchAdapterProtocolChartDataByBreakdownType(params))
+	} catch {
+		return []
 	}
 }
 
@@ -146,6 +165,20 @@ export const getStaticProps = withPerformanceLogging<ProtocolFeesPageProps, { pr
 		])
 		const revenueData = revenueResult.data
 		const holdersRevenueData = holdersRevenueResult.data
+		// Each metric response says whether its own label breakdown exists; revenue can lack one while fees have it.
+		const [protocolFeesLabels, protocolRevenueLabels] = await Promise.all([
+			fetchLabelBreakdownNames(feesData.hasLabelBreakdown === true, {
+				adapterType: 'fees',
+				protocol: protocolDisplayName,
+				type: 'label'
+			}),
+			fetchLabelBreakdownNames(revenueData?.hasLabelBreakdown === true, {
+				adapterType: 'fees',
+				protocol: protocolDisplayName,
+				type: 'label',
+				dataType: 'dailyRevenue'
+			})
+		])
 		const failedMetrics: Array<OptionalProtocolFeeMetric> = []
 		if (revenueResult.failed) failedMetrics.push('Revenue')
 		if (holdersRevenueResult.failed) failedMetrics.push('Holders Revenue')
@@ -220,6 +253,8 @@ export const getStaticProps = withPerformanceLogging<ProtocolFeesPageProps, { pr
 				protocolRevenueChains: revenueData?.chains ?? [],
 				protocolFeesVersions: linkedProtocolsWithFeesData,
 				protocolRevenueVersions: linkedProtocolsWithRevenueData,
+				protocolFeesLabels,
+				protocolRevenueLabels,
 				warningBanners: getProtocolWarningBanners(protocolData),
 				defaultChartView:
 					fees.defaultChartView ?? revenue?.defaultChartView ?? holdersRevenue?.defaultChartView ?? 'daily',

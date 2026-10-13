@@ -137,7 +137,7 @@ export const buildAdapterProtocolBreakdownApiUrl = ({
 	adapterType: `${ADAPTER_TYPES}`
 	protocol: string
 	dataType?: `${ADAPTER_DATA_TYPES}`
-	type: 'chain' | 'version'
+	type: 'chain' | 'version' | 'label'
 }) => {
 	const searchParams = new URLSearchParams({
 		kind: 'adapter-breakdown',
@@ -167,7 +167,7 @@ export function DimensionProtocolChartByType({
 	protocolDisplayName?: string
 	adapterType: `${ADAPTER_TYPES}`
 	dataType?: `${ADAPTER_DATA_TYPES}`
-	chartType: 'chain' | 'version'
+	chartType: 'chain' | 'version' | 'label'
 	breakdownNames: Array<string>
 	hallmarks?: Array<[number, string]>
 	title: string
@@ -227,7 +227,7 @@ function ChartByType({
 	data: Array<[number, Record<string, number>]>
 	title?: string
 	breakdownNames: Array<string>
-	chartType: 'chain' | 'version'
+	chartType: 'chain' | 'version' | 'label'
 	protocolName: string
 	protocolDisplayName?: string
 	adapterType: string
@@ -249,7 +249,8 @@ function ChartByType({
 	const chartBuilderConfig = React.useMemo<ChartBuilderConfig | null>(() => {
 		const builderMetric = getAdapterBuilderMetric(adapterType)
 
-		if (!builderMetric || chartType === 'version') return null
+		// The chart builder splits a protocol only by chain.
+		if (!builderMetric || chartType !== 'chain') return null
 
 		let grouping: ChartBuilderConfig['grouping']
 		switch (chartInterval) {
@@ -307,7 +308,7 @@ function ChartByType({
 	)
 	const deferredMainChartData = React.useDeferredValue(mainChartData)
 	const exportProtocolName = protocolDisplayName ?? protocolName
-	const exportMetricTitle = title?.replace(/\s+by\s+(?:chain|protocol version)$/i, '')
+	const exportMetricTitle = title?.replace(/\s+by\s+(?:chain|protocol version|financial label)$/i, '')
 	const exportTitle = exportMetricTitle ? `${exportProtocolName} ${exportMetricTitle}` : exportProtocolName
 	const exportFilename = title ? title : `${protocolName}-${chartType}`
 
@@ -325,7 +326,7 @@ function ChartByType({
 						allValues={selectableSeries}
 						selectedValues={selectedTypes}
 						setSelectedValues={setSelectedTypes}
-						label={chartType === 'version' ? 'Versions' : 'Chains'}
+						label={chartType === 'chain' ? 'Chains' : chartType === 'version' ? 'Versions' : 'Labels'}
 						labelType="smol"
 						variant="filter"
 						size="md"

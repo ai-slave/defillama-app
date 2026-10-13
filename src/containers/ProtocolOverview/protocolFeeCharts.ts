@@ -4,6 +4,7 @@ import type {
 	MultiSeriesChartSeriesConfig
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_COLORS } from '~/constants/colors'
+import type { IAdapterBreakdownChartData } from '~/containers/AdapterMetrics/api.types'
 import { getGroupedTimestampSec } from './chartSeries.utils'
 
 export type ProtocolFeeChartSeries = Array<[number, number]>
@@ -90,20 +91,35 @@ export function buildProtocolFeeChartPresentation({
 	}
 }
 
-/** Each breakdown panel appears on its own once it has more than one chain or version to split by. */
+/** Breakdown series names ranked by their total over the whole history, largest first, so colors follow rank. */
+export function rankBreakdownNames(data: IAdapterBreakdownChartData): Array<string> {
+	const totals = new Map<string, number>()
+	for (const [, valuesByName] of data) {
+		for (const name in valuesByName) totals.set(name, (totals.get(name) ?? 0) + valuesByName[name])
+	}
+	return Array.from(totals)
+		.sort((a, b) => b[1] - a[1])
+		.map(([name]) => name)
+}
+
+/** Each breakdown panel appears on its own once it has more than one chain, version or label to split by. */
 export function getProtocolFeeBreakdownPanels({
 	protocolChains,
 	protocolFeesVersions,
+	protocolFeesLabels,
 	protocolRevenueChains,
-	protocolRevenueVersions
+	protocolRevenueVersions,
+	protocolRevenueLabels
 }: {
 	protocolChains: Array<string>
 	protocolFeesVersions: Array<string>
+	protocolFeesLabels: Array<string>
 	protocolRevenueChains: Array<string>
 	protocolRevenueVersions: Array<string>
+	protocolRevenueLabels: Array<string>
 }): Array<{
 	title: string
-	chartType: 'chain' | 'version'
+	chartType: 'chain' | 'version' | 'label'
 	dataType?: 'dailyRevenue'
 	breakdownNames: Array<string>
 }> {
@@ -112,6 +128,8 @@ export function getProtocolFeeBreakdownPanels({
 		panels.push({ title: 'Fees by chain', chartType: 'chain', breakdownNames: protocolChains })
 	if (protocolFeesVersions.length > 1)
 		panels.push({ title: 'Fees by protocol version', chartType: 'version', breakdownNames: protocolFeesVersions })
+	if (protocolFeesLabels.length > 1)
+		panels.push({ title: 'Fees by financial label', chartType: 'label', breakdownNames: protocolFeesLabels })
 	if (protocolRevenueChains.length > 1)
 		panels.push({
 			title: 'Revenue by chain',
@@ -125,6 +143,13 @@ export function getProtocolFeeBreakdownPanels({
 			chartType: 'version',
 			dataType: 'dailyRevenue',
 			breakdownNames: protocolRevenueVersions
+		})
+	if (protocolRevenueLabels.length > 1)
+		panels.push({
+			title: 'Revenue by financial label',
+			chartType: 'label',
+			dataType: 'dailyRevenue',
+			breakdownNames: protocolRevenueLabels
 		})
 	return panels
 }

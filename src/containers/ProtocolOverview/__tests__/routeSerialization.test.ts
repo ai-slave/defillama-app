@@ -115,6 +115,57 @@ test('keeps a zero revenue total and reports an unavailable holders revenue on t
 	})
 })
 
+const feesMetrics = `${V2_SERVER_URL}/metrics/fees/protocol/test-protocol`
+const feesChart = `${V2_SERVER_URL}/chart/fees/protocol/test-protocol`
+
+function serveFeesRoute({ feesLabels, revenueLabels }: { feesLabels: unknown; revenueLabels: unknown }) {
+	serveProtocol({ isParentProtocol: false, otherProtocols: null, deprecated: false, dimensions: null })
+	const overview = (hasLabelBreakdown: boolean) => ({
+		name: 'test-protocol',
+		displayName: 'Test Protocol',
+		chains: ['Ethereum'],
+		methodology: null,
+		methodologyURL: null,
+		hasLabelBreakdown
+	})
+	http.serve({
+		[feesMetrics]: overview(feesLabels !== null),
+		[feesChart]: [[1_700_000_000, 12]],
+		[`${feesMetrics}?dataType=dailyRevenue`]: overview(revenueLabels !== null),
+		[`${feesChart}?dataType=dailyRevenue`]: [[1_700_000_000, 6]],
+		[`${feesMetrics}?dataType=dailyHoldersRevenue`]: fixtureStatus(404),
+		[`${feesChart}?dataType=dailyHoldersRevenue`]: fixtureStatus(404),
+		...(feesLabels !== null ? { [`${feesChart}/label-breakdown`]: feesLabels } : {}),
+		...(revenueLabels !== null ? { [`${feesChart}/label-breakdown?dataType=dailyRevenue`]: revenueLabels } : {})
+	})
+}
+
+test('lists financial labels only for the fee metrics that report a label breakdown', async () => {
+	serveFeesRoute({ feesLabels: [[1_700_000_000, { 'Perp Fees': 10, 'Spot Fees': 2 }]], revenueLabels: null })
+
+	const result = await getProtocolFeesStaticProps({ params: { protocol: 'test-protocol' } })
+
+	expectJsonRoundTrip(result)
+	expect(result).toMatchObject({
+		props: { protocolFeesLabels: ['Perp Fees', 'Spot Fees'], protocolRevenueLabels: [] }
+	})
+	expect(http.urls()).not.toContain(`${feesChart}/label-breakdown?dataType=dailyRevenue`)
+})
+
+test('keeps the fees route when a financial label breakdown fails', async () => {
+	serveFeesRoute({
+		feesLabels: fixtureStatus(500),
+		revenueLabels: [[1_700_000_000, { 'Perp Fees': 5, 'Spot Fees': 1 }]]
+	})
+
+	const result = await getProtocolFeesStaticProps({ params: { protocol: 'test-protocol' } })
+
+	expectJsonRoundTrip(result)
+	expect(result).toMatchObject({
+		props: { protocolFeesLabels: [], protocolRevenueLabels: ['Perp Fees', 'Spot Fees'] }
+	})
+})
+
 test('serializes active-loans props without TVL toggle controls', async () => {
 	serveProtocol({
 		otherProtocols: null,

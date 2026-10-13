@@ -173,7 +173,7 @@ export async function fetchAdapterProtocolChartDataByBreakdownType({
 	adapterType: `${ADAPTER_TYPES}`
 	protocol: string
 	dataType?: `${ADAPTER_DATA_TYPES}` | 'dailyEarnings'
-	type: 'chain' | 'version'
+	type: 'chain' | 'version' | 'label'
 }): Promise<IAdapterBreakdownChartData> {
 	let totalDataChartUrl = `${V2_SERVER_URL}/chart/${adapterType}/protocol/${slug(protocol)}/${type}-breakdown`
 

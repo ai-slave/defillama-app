@@ -89,6 +89,20 @@ describe('/api/public/protocols/charts', () => {
 		})
 	})
 
+	test('serves a protocol metric split by financial label', async () => {
+		const labels = [[1_700_000_000, { 'Borrow Interest': 12, 'Liquidation Fees': 3 }]]
+		serve({ [`${V2_SERVER_URL}/chart/fees/protocol/aave/label-breakdown?dataType=dailyRevenue`]: labels })
+		expect(
+			await run({
+				kind: 'adapter-breakdown',
+				adapterType: 'fees',
+				protocol: 'aave',
+				type: 'label',
+				dataType: 'dailyRevenue'
+			})
+		).toEqual({ status: 200, body: labels })
+	})
+
 	test('returns 404 for unknown protocols', async () => {
 		expect(await run({ kind: 'treasury', protocol: 'missing' })).toEqual({
 			status: 404,
