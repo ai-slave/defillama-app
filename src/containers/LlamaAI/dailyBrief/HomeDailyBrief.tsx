@@ -42,7 +42,7 @@ function subscribeToDesktop(onChange: () => void) {
 const askStyles = 'text-ai-gold-deep'
 
 const questionCardStyles =
-	'hover-wash-card flex h-full w-full cursor-pointer flex-col gap-1.5 rounded-lg border border-subtle bg-surface px-3 py-2 text-left active:bg-surface-elevated-1'
+	'hover-wash-card flex h-full w-full cursor-pointer flex-col gap-1.5 rounded-lg border border-subtle bg-surface px-3 py-2 text-left'
 
 function tabsFade(canScrollLeft: boolean, canScrollRight: boolean): string | undefined {
 	if (canScrollLeft && canScrollRight)

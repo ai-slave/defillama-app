@@ -98,9 +98,9 @@ test('opening the metrics dialog on a page without a metric category focuses the
 	await waitForUi(() => expect(document.activeElement).toBe(searchInput()))
 })
 
-test('the metrics page focuses the search input on load', async () => {
+test('the metrics page leaves focus off the search input on load', async () => {
 	router.pathname = '/metrics'
 	await render(<Metrics />)
 
-	expect(document.activeElement).toBe(searchInput())
+	expect(document.activeElement).toBe(document.body)
 })

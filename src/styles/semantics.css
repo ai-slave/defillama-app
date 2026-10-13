@@ -145,6 +145,7 @@
 	--bg-hover-row: #090b0c0f; /* popover, menu and table rows */
 	--bg-pressed-row: #090b0c1a; /* the same wash while a control is held down */
 	--bg-hover-card: #090b0c08; /* interactive cards */
+	--bg-pressed-card: #090b0c0f; /* the card wash while a card is held down */
 
 	/* ------------------------------------------------------------------
 	   Chart tokens, read on canvas through
@@ -219,6 +220,7 @@ html.dark,
 	--bg-hover-row: #ffffff0f;
 	--bg-pressed-row: #ffffff1a;
 	--bg-hover-card: #ffffff08;
+	--bg-pressed-card: #ffffff0f;
 
 	/* Chart chrome */
 	--chart-text: rgba(255, 255, 255, 1);
@@ -526,7 +528,7 @@ html.dark,
 	background-image: linear-gradient(var(--bg-pressed-row), var(--bg-pressed-row));
 }
 
-/* Card-strength variant (--bg-hover-card) for interactive tiles. */
+/* Card-strength variant (--bg-hover-card) for interactive tiles; held down it deepens to --bg-pressed-card. */
 @media (hover: hover) {
 	.hover-wash-card:not(:disabled):not([aria-disabled='true']):hover {
 		background-image: linear-gradient(var(--bg-hover-card), var(--bg-hover-card));
@@ -534,6 +536,11 @@ html.dark,
 }
 .hover-wash-card:not(:disabled):not([aria-disabled='true']):focus-visible {
 	background-image: linear-gradient(var(--bg-hover-card), var(--bg-hover-card));
+}
+/* A card a button sits inside (a dashboard card's actions menu) is :active while that button is pressed, so the card
+   skips the wash then: the button shows its own press. */
+.hover-wash-card:not(:disabled):not([aria-disabled='true']):not(:has(button:active)):active {
+	background-image: linear-gradient(var(--bg-pressed-card), var(--bg-pressed-card));
 }
 
 /* Row-hover companion for cells that must keep an opaque bg (sticky table

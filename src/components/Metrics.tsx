@@ -135,8 +135,6 @@ export function Metrics({
 		<SearchField
 			label="Search pages"
 			ref={searchInputRef}
-			// The dialog moves focus itself when it opens; see MetricsAndTools.
-			autoFocus={!canDismiss}
 			placeholder="Search…"
 			value={searchValue}
 			onChange={setSearchValue}

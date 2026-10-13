@@ -22,9 +22,11 @@ import { tw } from './tw'
 
    Clearing moves focus back to the field, because the button that had it
    disappears. `autoFocus` goes through Ariakit, so a dialog starts on the
-   field instead of its ×; pickers pass `autoFocus={!isSmallScreen}`. Escape is
-   the host's: a combobox closes its list, and a field that closes itself
-   (a collapsible toolbar search) handles it in `onKeyDown`.
+   field instead of its ×; pickers pass `autoFocus={!isSmallScreen}`. A search
+   in the page flow never autofocuses: it would skip keyboard and screen-reader
+   users past the page above it and open a phone keyboard over the content.
+   Escape is the host's: a combobox closes its list, and a field that closes
+   itself (a collapsible toolbar search) handles it in `onKeyDown`.
 
    `width` places the field among toolbar controls; `className` is placement
    only (margins, flex), never colors, type or padding.

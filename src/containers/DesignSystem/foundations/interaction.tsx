@@ -83,7 +83,11 @@ function InteractionOverview() {
 										Card
 									</button>
 								</Cell>
-								<NotApplicable />
+								<Cell force="active">
+									<button type="button" className={`${FILLED} hover-wash-card`}>
+										Card
+									</button>
+								</Cell>
 								<NotApplicable />
 							</>
 						],
