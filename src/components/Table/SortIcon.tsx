@@ -6,12 +6,12 @@ export function SortIcon({ dir }: { dir: string | boolean }) {
 			<Icon
 				name="sort-up"
 				aria-hidden="true"
-				className={`relative top-0.5 block size-2.5 shrink-0 ${dir === 'asc' ? 'text-link' : 'text-tertiary'}`}
+				className={`relative top-0.5 block size-2.5 shrink-0 ${dir === 'asc' ? 'text-link' : 'text-sort-rest'}`}
 			/>
 			<Icon
 				name="sort-down"
 				aria-hidden="true"
-				className={`relative bottom-0.5 block size-2.5 shrink-0 ${dir === 'desc' ? 'text-link' : 'text-tertiary'}`}
+				className={`relative bottom-0.5 block size-2.5 shrink-0 ${dir === 'desc' ? 'text-link' : 'text-sort-rest'}`}
 			/>
 		</div>
 	)

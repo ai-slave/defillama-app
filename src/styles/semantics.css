@@ -54,6 +54,9 @@
 	--text-link: var(--blue-11);
 	/* A link's resting underline: the ramp's subtle-border step, so the underline marks the link without outweighing its text. */
 	--text-link-underline: var(--blue-7);
+	/* Resting sort carets: the 3:1 non-text step. Not text-tertiary: it sits at the same lightness as the
+	   active text-link caret, so the sorted column would differ by hue alone. */
+	--text-sort-rest: var(--border-strong);
 	--text-on-brand: #ffffff;
 	--text-data-up: var(--emerald-11);
 	--text-data-down: var(--crimson-11);
@@ -274,6 +277,7 @@ html.dark,
 	--color-tertiary: var(--text-tertiary);
 	--color-link: var(--text-link);
 	--color-link-underline: var(--text-link-underline);
+	--color-sort-rest: var(--text-sort-rest);
 	--color-data-up: var(--text-data-up);
 	--color-data-down: var(--text-data-down);
 	--color-verified: var(--text-verified);

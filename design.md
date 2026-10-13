@@ -82,6 +82,7 @@ Flex rows:
 | `text-disabled`                   | Disabled controls only                                                                        |
 | `text-link`                       | Links, selected labels on `bg-brand-muted`, active sort carets                                |
 | `text-link-underline`             | A link's resting underline, as `decoration-link-underline`                                    |
+| `text-sort-rest`                  | Resting sort carets only                                                                      |
 | `text-on-brand`                   | Text on `bg-brand`                                                                            |
 | `text-data-up` / `text-data-down` | Positive and negative movement                                                                |
 | `text-warning`                    | Warnings                                                                                      |
@@ -416,7 +417,8 @@ Icons:
 
 - Every interface icon is a symbol in the one sprite (`Icon`, `src/ui/Icon.tsx`), copied unchanged from lucide.dev: a 24px canvas, a 2px stroke, round caps and joins, `currentColor`. Never paste an export from Figma or another icon set, and never draw an icon inline in a component. A page's own illustrations (colored art, empty-state drawings) live in an art sprite owned by that page, as `ResearchArt` does for the research pages; charts and data-driven rings are drawn inline. A glyph Lucide lacks (the unlock schedules, the stop square, the sort carets, the chart types) is drawn on the same grid. A brand logo comes from simpleicons.org into the Brands group; DefiLlama's product marks (LlamaAI, Research, the token rating) sit in the DefiLlama group. `src/ui/__tests__/Icon.test.tsx` fails a symbol that breaks the grid, stroke or color rules. The `Icon` header lists the steps to add one.
 - Icons are outlines. A star, bookmark or pin shows its on state with `fill-current`, and a play or stop button is solid with it. The only solid icons are two status marks, the verified seal (`badge-check`) and the warning triangle (`alert-triangle-filled`), the sort carets, the filled parts of the chart-type glyphs, brand logos and DefiLlama's marks.
-- Affordance indicators (chevrons, resting sort carets, help circles, drag handles) are `text-tertiary`; never ship an icon that inherits whatever tier surrounds it.
+- Affordance indicators (chevrons, help circles, drag handles) are `text-tertiary`; never ship an icon that inherits whatever tier surrounds it.
+- Resting sort carets are `text-sort-rest`, the 3:1 non-text step, so the active `text-link` caret stands out by lightness and not by hue alone; `text-tertiary` sits at the same lightness as `text-link`.
 - An icon beside a label in the same control inherits `currentColor`, so it moves with its label on hover and active.
 - An icon-only action (copy, close, download, settings, pagination) rests on `text-secondary` and turns `text-primary` on hover and focus, never dimmed with opacity.
 - Status icons use the status tokens (`text-warning`, `text-error`); a good / caution / bad assessment (a flag, a rating, a compliance state) uses `success` / `warning` / `error`; empty-state illustrations are `text-tertiary` (EmptyState's neutral disc); the active sort caret is `text-link`.
