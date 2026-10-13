@@ -171,8 +171,8 @@ async function handler(
 		}
 		case 'perp-funding':
 		case 'lsd-rates': {
-			const { SERVER_URL, YIELDS_SERVER_URL } = await import('~/constants')
-			const upstreamUrl = datasetSlug === 'perp-funding' ? `${YIELDS_SERVER_URL}/perps` : `${SERVER_URL}/lstRates`
+			const { SERVER_URL } = await import('~/constants')
+			const upstreamUrl = datasetSlug === 'perp-funding' ? `${SERVER_URL}/perpFundingRates` : `${SERVER_URL}/lstRates`
 			const upstream = await fetchWithPoolingOnServer(upstreamUrl)
 			if (!upstream.ok) {
 				return res.status(502).json({ error: `Upstream API returned ${upstream.status}` })
