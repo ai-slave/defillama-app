@@ -13,6 +13,10 @@ import { LoadingSpinner } from './internal/Loaders'
    aria-disabled and keeps focus, so a control that is pending or gated does
    not drop the keyboard user; `isLoading` adds a spinner and the same activation guard.
    Enter toggles like Space, so a switch inside a form never submits it.
+   Forced colors (Windows High Contrast) drop every fill, so the track and knob
+   draw themselves in system colors there: an outlined track with a CanvasText
+   knob when off, a Highlight track when on, GrayText when disabled. The edge is
+   an outline, so the knob does not move; a focused switch's ring replaces it.
 ---------------------------------------------------------------------------- */
 
 export function Switch({
@@ -62,14 +66,14 @@ export function Switch({
 				className="peer absolute size-[1em] opacity-[0.00001]"
 			/>
 			<span
-				className={`relative h-6 w-10 shrink-0 rounded-full p-1 ${disabled ? 'bg-disabled' : checked ? 'bg-brand peer-focus-visible:focus-ring-on-brand' : 'bg-surface-elevated-2 peer-focus-visible:focus-ring'}`}
+				className={`relative h-6 w-10 shrink-0 rounded-full p-1 forced-colors:outline ${disabled ? 'bg-disabled forced-colors:bg-[Canvas] forced-colors:outline-[GrayText]' : checked ? 'bg-brand peer-focus-visible:focus-ring-on-brand forced-colors:bg-[Highlight] forced-colors:outline-[Highlight]' : 'bg-surface-elevated-2 peer-focus-visible:focus-ring forced-colors:bg-[Canvas] forced-colors:outline-[CanvasText]'} forced-colors:forced-color-adjust-none`}
 			>
 				<span
-					className={`block size-4 rounded-full shadow-raised motion-safe:transition-transform motion-safe:duration-150 ${disabled ? 'bg-current text-disabled' : 'bg-knob'} ${checked ? 'translate-x-4' : ''} ${isLoading ? 'invisible' : ''}`}
+					className={`block size-4 rounded-full shadow-raised motion-safe:transition-transform motion-safe:duration-150 ${disabled ? 'bg-current text-disabled forced-colors:bg-[GrayText]' : checked ? 'bg-knob forced-colors:bg-[HighlightText]' : 'bg-knob forced-colors:bg-[CanvasText]'} ${checked ? 'translate-x-4' : ''} ${isLoading ? 'invisible' : ''}`}
 				/>
 				{isLoading ? (
 					<span
-						className={`absolute inset-0 flex items-center justify-center ${checked ? 'text-on-brand' : 'text-primary'}`}
+						className={`absolute inset-0 flex items-center justify-center ${checked ? 'text-on-brand forced-colors:text-[HighlightText]' : 'text-primary forced-colors:text-[CanvasText]'}`}
 					>
 						<LoadingSpinner size={14} />
 					</span>

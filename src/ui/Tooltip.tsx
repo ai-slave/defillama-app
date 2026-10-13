@@ -27,7 +27,8 @@ interface ITooltip extends Ariakit.TooltipOptions {
    unreachable on touch and unstyled. An icon-only control has an `aria-label` plus a Tooltip.
 
    Touch has no hover, so a tap opens the tooltip whatever element `render` makes the anchor, except an anchor that
-   is, or sits inside, a link, button or other control, where the tap keeps that control's action.
+   is, or sits inside, a link, button or other control, where the tap keeps that control's action. Only a finished
+   tap counts: a scroll that starts on the anchor (a table's dotted headers) opens nothing.
 
    Focus opens it only when the reader moved focus there: Tab, or arrows, Home and End inside a composite (a
    SegmentedControl's radios). A control that code focused (a surface's first control on open, the lost-focus net,
@@ -138,9 +139,11 @@ export function Tooltip({
 				store={store}
 				className={props.render ? className : `${triggerBoxStyles} ${className ?? ''}`}
 				render={<span />}
-				// Touch has no hover, so a tap opens the tooltip. A `render` anchor that is, or sits in, a
-				// control leaves the tap to that control; plain anchors keep toggling as they always have.
-				onTouchStart={(event) => {
+				// Touch and pen have no hover, so a finished tap opens the tooltip. The browser cancels the pointer when
+				// a touch turns into a scroll, so no pointerup arrives and a scroll that starts on the anchor opens
+				// nothing. A `render` anchor that is, or sits in, a control leaves the tap to that control.
+				onPointerUp={(event) => {
+					if (event.pointerType === 'mouse') return
 					if (props.render && event.currentTarget.closest(TAP_ACTION_SELECTOR)) return
 					if (onlyWhenClipped && !isClipped(event.currentTarget)) return
 					store.toggle()

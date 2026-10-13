@@ -198,6 +198,36 @@ html[data-ab-group='b'] [data-ab-variant='b'] {
 	}
 }
 
+/* Windows High Contrast (forced colors) replaces every background with the system canvas, so a state drawn only
+   by a fill disappears: the selected tab, segment, chip or row (`data-active`, the repo's selected marker), the
+   current page link, and the keyboard-active row of a menu or listbox (Ariakit's `data-active-item`, whose ring is
+   a wash, not an outline). They take the system highlight instead. Only interactive elements count (a
+   SegmentedControl option is its label): a plain element with `data-active` is an animation stage
+   (AttestationLanding), not a selection. A new selected or active state uses these markers rather than a fill of
+   its own; a part whose state is not a selection draws its own fallback with `forced-colors:` classes (Switch).
+   Unlayered on purpose: a part's own `data-[active=true]:` utilities would beat a rule in @layer base. */
+@media (forced-colors: active) {
+	:is(button, a[href], label, [role])[data-active='true'],
+	a[aria-current='page'],
+	:is([role='option'], [role='menuitem'], [role='menuitemcheckbox'], [role='menuitemradio'])[data-active-item] {
+		forced-color-adjust: none;
+		background-color: Highlight;
+		border-color: Highlight;
+		color: HighlightText;
+	}
+
+	/* forced-color-adjust is inherited: without this, secondary text and counts inside keep their own colors on
+	   the highlight. */
+	:is(
+			:is(button, a[href], label, [role])[data-active='true'],
+			a[aria-current='page'],
+			:is([role='option'], [role='menuitem'], [role='menuitemcheckbox'], [role='menuitemradio'])[data-active-item]
+		)
+		* {
+		color: HighlightText;
+	}
+}
+
 @media (prefers-reduced-motion: reduce) {
 	*:not(.animate-spin, .animate-pulse, .animate-bounce),
 	*:not(.animate-spin, .animate-pulse, .animate-bounce)::before,

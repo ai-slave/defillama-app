@@ -22,6 +22,8 @@ afterEach(async () => {
 })
 
 const tooltipText = () => document.querySelector('[role="tooltip"]')?.textContent
+/** A finished touch tap: the browser sends pointerup only when the touch did not turn into a scroll. */
+const tap = () => new PointerEvent('pointerup', { bubbles: true, pointerType: 'touch' })
 
 test('opens on tap when the anchor renders as a heading', async () => {
 	await act(async () =>
@@ -31,8 +33,23 @@ test('opens on tap when the anchor renders as a heading', async () => {
 			</Tooltip>
 		)
 	)
-	await act(async () => container.querySelector('h2')!.dispatchEvent(new Event('touchstart', { bubbles: true })))
+	await act(async () => container.querySelector('h2')!.dispatchEvent(tap()))
 	await waitForUi(() => expect(tooltipText()).toBe('Sum of value locked in DeFi'))
+})
+
+test('a touch that turns into a scroll, or a mouse click, opens nothing', async () => {
+	await act(async () => root.render(<Definition content="Share of the pool's TVL">Weight</Definition>))
+	const anchor = container.querySelector('span')!
+	await act(async () => {
+		anchor.dispatchEvent(new Event('touchstart', { bubbles: true }))
+		anchor.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch' }))
+		anchor.dispatchEvent(new PointerEvent('pointercancel', { bubbles: true, pointerType: 'touch' }))
+	})
+	await act(async () => anchor.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerType: 'mouse' })))
+	await act(async () => new Promise((resolve) => setTimeout(resolve, 50)))
+	expect(tooltipText()).toBeUndefined()
+	await act(async () => anchor.dispatchEvent(tap()))
+	await waitForUi(() => expect(tooltipText()).toBe("Share of the pool's TVL"))
 })
 
 test('inside a row button, a tap opens only plain anchors and leaves rendered ones to the row', async () => {
@@ -46,15 +63,11 @@ test('inside a row button, a tap opens only plain anchors and leaves rendered on
 			</button>
 		)
 	)
-	await act(async () =>
-		container
-			.querySelector('[aria-label="Unseen completion"]')!
-			.dispatchEvent(new Event('touchstart', { bubbles: true }))
-	)
+	await act(async () => container.querySelector('[aria-label="Unseen completion"]')!.dispatchEvent(tap()))
 	await act(async () => new Promise((resolve) => setTimeout(resolve, 50)))
 	expect(tooltipText()).toBeUndefined()
 	const pinned = [...container.querySelectorAll('span')].find((el) => el.textContent === 'Pinned')!
-	await act(async () => pinned.dispatchEvent(new Event('touchstart', { bubbles: true })))
+	await act(async () => pinned.dispatchEvent(tap()))
 	await waitForUi(() => expect(tooltipText()).toBe('Pinned to the top'))
 })
 
@@ -67,7 +80,7 @@ test('leaves a tap on a link anchor to the link and still opens on focus', async
 		)
 	)
 	const link = container.querySelector('a')!
-	await act(async () => link.dispatchEvent(new Event('touchstart', { bubbles: true })))
+	await act(async () => link.dispatchEvent(tap()))
 	await act(async () => new Promise((resolve) => setTimeout(resolve, 50)))
 	expect(tooltipText()).toBeUndefined()
 	await tabTo(link)
@@ -183,10 +196,10 @@ function measureCells() {
 test('a tap shows the full value of clipped text and nothing for text that fits', async () => {
 	await act(async () => root.render(clippedCells()))
 	const { fits, clipped } = measureCells()
-	await act(async () => fits.dispatchEvent(new Event('touchstart', { bubbles: true })))
+	await act(async () => fits.dispatchEvent(tap()))
 	await act(async () => new Promise((resolve) => setTimeout(resolve, 50)))
 	expect(tooltipText()).toBeUndefined()
-	await act(async () => clipped.dispatchEvent(new Event('touchstart', { bubbles: true })))
+	await act(async () => clipped.dispatchEvent(tap()))
 	await waitForUi(() => expect(tooltipText()).toBe('Superstate Short Duration US Government Securities Fund'))
 })
 

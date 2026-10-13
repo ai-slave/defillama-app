@@ -33,7 +33,7 @@ describe('thorchain KPI definition tooltip', () => {
 		expect(document.body.textContent).not.toContain(DEF)
 
 		await act(async () => {
-			anchor.dispatchEvent(new TouchEvent('touchstart', { bubbles: true }))
+			anchor.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerType: 'touch' }))
 		})
 		expect(document.body.textContent).toContain(DEF)
 	})

@@ -37,7 +37,9 @@ async function openComparison(label: string, value: string) {
 		(row) => row.querySelector('th')?.textContent === label
 	)!
 	const cell = Array.from(row.querySelectorAll('td')).find((cell) => cell.textContent === value)!
-	await act(async () => cell.querySelector('span')!.dispatchEvent(new Event('touchstart', { bubbles: true })))
+	await act(async () =>
+		cell.querySelector('span')!.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerType: 'touch' }))
+	)
 	await waitForUi(() => expect(document.querySelector('[role="tooltip"]')).not.toBeNull())
 	return document.querySelector('[role="tooltip"]')!.textContent
 }

@@ -14,7 +14,6 @@ import type { OutgoingAttachment } from '~/containers/LlamaAI/mutationProtocol'
 import type { AgenticAnswerMode, FactCheckedUsage, FreeUsage, ResearchUsage } from '~/containers/LlamaAI/types'
 import { isSettingsTabId } from '~/containers/LlamaAI/utils/settingsIntent'
 import { useLlamaAIWelcome } from '~/contexts/LocalStorage'
-import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { MenuItem, MenuSurface, PopoverList } from '~/ui/PopoverSurface'
@@ -238,7 +237,6 @@ function Capability({
 	promptInputRef: RefObject<HTMLTextAreaElement | null>
 	getAnchorRect: () => { x: number; y: number; width: number; height: number } | null
 }) {
-	const isMobile = useMedia('(max-width: 640px)')
 	const menu = Ariakit.useMenuStore()
 	const open = Ariakit.useStoreState(menu, 'open')
 
@@ -269,15 +267,7 @@ function Capability({
 				{cap.name}
 				{cap.badge ? <PromoBadge>{cap.badge}</PromoBadge> : null}
 			</Ariakit.MenuButton>
-			<MenuSurface
-				variant="list"
-				modal={isMobile}
-				getAnchorRect={getAnchorRect}
-				gutter={14}
-				flip={false}
-				dismiss="own"
-				width="xl"
-			>
+			<MenuSurface variant="list" getAnchorRect={getAnchorRect} gutter={14} flip={false} dismiss="own" width="xl">
 				<div className="flex shrink-0 items-center gap-2 border-b border-subtle py-1 pr-2 pl-3">
 					<Icon name={cap.icon} className="size-3.5 text-link" />
 					<Ariakit.PopoverHeading className="label-md text-primary">{cap.name}</Ariakit.PopoverHeading>

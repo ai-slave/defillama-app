@@ -34,7 +34,9 @@ describe('uniswap KPI definition tooltip', () => {
 			)
 		)
 
-		await act(async () => wallets().dispatchEvent(new TouchEvent('touchstart', { bubbles: true })))
+		await act(async () =>
+			wallets().dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerType: 'touch' }))
+		)
 		expect(document.body.textContent).toContain(NOTE)
 	})
 
@@ -45,7 +47,9 @@ describe('uniswap KPI definition tooltip', () => {
 			)
 		)
 
-		await act(async () => wallets().dispatchEvent(new TouchEvent('touchstart', { bubbles: true })))
+		await act(async () =>
+			wallets().dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerType: 'touch' }))
+		)
 		expect(document.body.textContent).toContain(DEF)
 		expect(document.body.textContent).not.toContain(NOTE)
 	})

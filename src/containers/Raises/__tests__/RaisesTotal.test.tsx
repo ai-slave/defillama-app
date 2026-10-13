@@ -46,7 +46,10 @@ describe('fundraising totals', () => {
 			const trigger = container.querySelector<HTMLElement>('[tabindex="0"]')
 			expect(trigger?.textContent).toBe('$16.5m')
 			if (interaction === 'Tab') await tabTo(trigger!)
-			else await act(async () => trigger?.dispatchEvent(new Event('touchstart', { bubbles: true })))
+			else
+				await act(async () =>
+					trigger?.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerType: 'touch' }))
+				)
 			expect(document.querySelector('[role="tooltip"]')?.textContent).toContain(`Excludes ${undisclosedCount}`)
 			expect(document.querySelector('[role="tooltip"]')?.textContent).toContain('not the complete total')
 		} finally {

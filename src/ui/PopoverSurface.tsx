@@ -1,5 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { type ReactNode, useCallback } from 'react'
+import { useMedia } from '~/hooks/useMedia'
 import { Button } from './Button'
 import { catchLostFocus } from './focus'
 import { Icon } from './Icon'
@@ -50,7 +51,10 @@ import { tw } from './tw'
    src/tailwind.css: `list` and `nested` fill it, `actions` and `panel` cap
    at it, so a picker opened over a dialog sheet lines up with it. The
    drawer shape applies only below `sm`; from `sm` every surface stays
-   anchored to its trigger. A drawer's close or back button is the 32px
+   anchored to its trigger. A phone drawer is modal: the page under it
+   neither scrolls nor takes focus. Search results and anchored popovers
+   from `sm` stay non-modal. A call site passes `modal` only to keep one
+   behavior at every width. A drawer's close or back button is the 32px
    ghost Button with a 44px hit area, placed so its icon lands on the
    content edge (12px, 16px in nested menus). Drawer animations own their
    transform: never add `transform-none` to an animated drawer surface.
@@ -177,14 +181,8 @@ const menuSurfaceStyles = `z-50 flex min-w-[180px] flex-col overflow-x-hidden ov
 
 const nestedMenuSurfaceStyles = `z-50 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 sm:max-w-md shadow-overlay ${nestedMenuSurfaceHeightStyles} ${surfaceMotionStyles}`
 
-/* Mobile drawers dim the page behind them so a short sheet at the bottom is
-   still noticed. The scrim is a pseudo-element on the positioning wrapper:
-   Ariakit copies the surface z-index onto the wrapper, so the pseudo paints
-   under the surface, and a tap on it lands outside the surface and closes.
-   Hidden popovers keep their wrapper mounted, so only open scrims accept clicks. */
-const popoverMobileWrapperClassName = tw`max-sm:fixed! max-sm:top-auto! max-sm:right-0! max-sm:bottom-0! max-sm:left-0! max-sm:w-full! max-sm:transform-none! max-sm:before:pointer-events-none max-sm:before:fixed max-sm:before:inset-0 max-sm:before:bg-screen-dim max-sm:before:opacity-0 max-sm:before:transition-opacity max-sm:before:duration-200 max-sm:before:ease-out-quart max-sm:before:content-[''] max-sm:has-data-enter:before:pointer-events-auto max-sm:has-data-enter:before:opacity-100`
-
-const nestedPopoverMobileWrapperClassName = tw`max-sm:fixed! max-sm:top-auto! max-sm:right-0! max-sm:bottom-0! max-sm:left-0! max-sm:w-full! max-sm:transform-none!`
+/* Below sm the positioning wrapper pins every surface to the bottom as a drawer. */
+const drawerWrapperClassName = tw`max-sm:fixed! max-sm:top-auto! max-sm:right-0! max-sm:bottom-0! max-sm:left-0! max-sm:w-full! max-sm:transform-none!`
 
 // The row's 4px plus the close button's 8px inset puts the x on the 12px content edge.
 const drawerTitleRowStyles = tw`flex min-h-12 shrink-0 items-center gap-2 pt-2 pr-1 pl-3 sm:hidden`
@@ -196,13 +194,6 @@ const VARIANT_SURFACE_STYLES: Record<PopoverSurfaceVariant, string> = {
 	panel: menuSurfaceStyles,
 	list: popoverSurfaceStyles,
 	nested: `${nestedMenuSurfaceStyles} max-sm:drawer-to-left`
-}
-
-const VARIANT_WRAPPER_STYLES: Record<PopoverSurfaceVariant, string> = {
-	actions: popoverMobileWrapperClassName,
-	panel: popoverMobileWrapperClassName,
-	list: popoverMobileWrapperClassName,
-	nested: nestedPopoverMobileWrapperClassName
 }
 
 function join(recipe: string, layout?: string) {
@@ -301,11 +292,19 @@ type SurfaceChrome =
 
 type SurfaceOwnProps = SurfaceLayout & SurfaceChrome
 
+/* A phone drawer covers the page with its scrim, so it is modal there: the page under it does not scroll (a drag on
+   the scrim used to scroll it, collapsing Safari's toolbar and moving the drawer), and Tab and screen-reader swipes
+   stay inside. From `sm` a surface is an anchored popover and stays non-modal, so the page scrolls under it as before.
+   The scrim is Ariakit's backdrop, dimmed by the global `[data-backdrop]` rule like a dialog's: a real fixed element,
+   so iOS Safari tints the status bar from it rather than from the locked page. A `nested` flyout slides over its
+   parent sheet and adds no scrim. A submenu ignores `modal` (Ariakit), and a caller's own `modal` wins. */
+const PHONE_QUERY = '(max-width: 639px)'
+
 /** The three wired pieces, for the surface components in this file. */
 function surfaceProps(variant: PopoverSurfaceVariant, { width = 'fit', className }: SurfaceLayout) {
 	return {
 		className: join(`${VARIANT_SURFACE_STYLES[variant]} ${SURFACE_WIDTHS[width]}`, className),
-		wrapperProps: { className: VARIANT_WRAPPER_STYLES[variant] }
+		wrapperProps: { className: drawerWrapperClassName }
 	}
 }
 
@@ -336,6 +335,7 @@ export function PopoverSurface({
 	ref,
 	...props
 }: PopoverSurfaceProps) {
+	const phone = useMedia(PHONE_QUERY)
 	// Stable, so a render never resets the net in the commit that removes the focused control.
 	const surfaceRef = useCallback(
 		(node: HTMLDivElement | null) => {
@@ -352,6 +352,8 @@ export function PopoverSurface({
 	)
 	return (
 		<Ariakit.Popover
+			modal={phone}
+			backdrop={phone && variant !== 'nested'}
 			{...props}
 			ref={surfaceRef}
 			gutter={gutter}
@@ -397,8 +399,12 @@ export function ComboboxSurface({
 	unmountOnHide = true,
 	...props
 }: ComboboxSurfaceProps) {
+	// Search results sit under a field on the page, never in a drawer, so they stay non-modal at every width.
+	const phone = useMedia(PHONE_QUERY, variant !== 'search-results')
 	return (
 		<Ariakit.ComboboxPopover
+			modal={phone}
+			backdrop={phone && variant !== 'nested'}
 			{...props}
 			gutter={gutter}
 			portal={portal}
@@ -436,8 +442,11 @@ export function MenuSurface({
 	...props
 }: MenuSurfaceProps) {
 	const menu = Ariakit.useMenuContext()!
+	const phone = useMedia(PHONE_QUERY)
 	return (
 		<Ariakit.Menu
+			modal={phone}
+			backdrop={phone && variant !== 'nested'}
 			// Ariakit's Escape closes every open menu. A flyout closes alone and hands focus to its row, as ArrowLeft and
 			// the phone sheet's back button do, so a reader backs out one level at a time.
 			hideOnEscape={

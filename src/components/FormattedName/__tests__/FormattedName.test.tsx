@@ -20,7 +20,9 @@ afterEach(async () => {
 test('opens the full name on touch only when it exceeds the character limit', async () => {
 	const name = 'A very long protocol name'
 	await act(async () => root.render(<FormattedName text={name} maxCharacters={5} />))
-	await act(async () => container.firstElementChild!.dispatchEvent(new Event('touchstart', { bubbles: true })))
+	await act(async () =>
+		container.firstElementChild!.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerType: 'touch' }))
+	)
 	await waitForUi(() => expect(document.querySelector('[role="tooltip"]')?.textContent).toBe(name))
 	await act(async () => root.render(<FormattedName text={name} />))
 	expect(document.querySelector('[role="tooltip"]')).toBeNull()

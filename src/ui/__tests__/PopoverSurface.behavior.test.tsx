@@ -23,6 +23,7 @@ beforeEach(() => {
 afterEach(async () => {
 	await act(async () => root.unmount())
 	container.remove()
+	window.happyDOM.setViewport({ width: 1024, height: 768 })
 })
 
 function surfaceOf(role: string) {
@@ -314,4 +315,31 @@ test('a row without a render is a plain button that never submits the form aroun
 	await click(row)
 	expect(row.getAttribute('type')).toBe('button')
 	expect(submitted).toEqual([])
+})
+
+test.each([
+	[375, true],
+	[1024, false]
+] as const)('at %ipx a popover drawer is modal: %s', async (width, modal) => {
+	window.happyDOM.setViewport({ width, height: 800 })
+	await act(async () =>
+		root.render(
+			<>
+				<button type="button">Page control</button>
+				<Ariakit.PopoverProvider defaultOpen>
+					<Ariakit.PopoverDisclosure>APY view</Ariakit.PopoverDisclosure>
+					<PopoverSurface variant="panel" heading="APY view">
+						<button type="button">Reward</button>
+					</PopoverSurface>
+				</Ariakit.PopoverProvider>
+			</>
+		)
+	)
+	await act(async () => new Promise((resolve) => setTimeout(resolve, 50)))
+	const page = [...container.querySelectorAll('button')].find((button) => button.textContent === 'Page control')!
+	// A modal drawer locks the page under it: no scroll, and focus and screen readers stay in the drawer.
+	expect(document.documentElement.style.overflowY === 'hidden').toBe(modal)
+	expect(!!page.closest('[inert]')).toBe(modal)
+	// The scrim is Ariakit's backdrop, so it exists only where the drawer does.
+	expect(document.querySelectorAll('[data-backdrop]').length).toBe(modal ? 1 : 0)
 })

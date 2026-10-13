@@ -18,18 +18,8 @@ interface CapabilityBrowserProps {
 }
 
 export function CapabilityBrowser({ onPromptSelect }: CapabilityBrowserProps) {
-	const isMobile = useMedia('(max-width: 639px)')
-
 	return (
-		<PopoverSurface
-			variant="list"
-			aria-label="Explore AI capabilities"
-			modal={isMobile}
-			gutter={8}
-			flip
-			dismiss="own"
-			width="xl"
-		>
+		<PopoverSurface variant="list" aria-label="Explore AI capabilities" gutter={8} flip dismiss="own" width="xl">
 			<BrowserContent onPromptSelect={onPromptSelect} />
 		</PopoverSurface>
 	)
