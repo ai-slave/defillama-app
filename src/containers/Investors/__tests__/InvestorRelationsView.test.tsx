@@ -81,10 +81,13 @@ describe('InvestorRelationsView', () => {
 		return container.querySelector('h1')?.textContent ?? null
 	}
 
+	// Waits for the tab's lazy content too: a load still pending when a test moves on resolves outside act, in the
+	// next test.
 	async function clickTab(label: string) {
 		const button = Array.from(container.querySelectorAll('[role="tab"]')).find((b) => b.textContent?.trim() === label)
 		expect(button, `tab ${label}`).toBeDefined()
 		await act(async () => button!.dispatchEvent(new MouseEvent('click', { bubbles: true })))
+		await settle()
 	}
 
 	beforeEach(() => {
