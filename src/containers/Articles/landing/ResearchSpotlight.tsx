@@ -2,6 +2,7 @@ import clsx from 'clsx'
 import Link from 'next/link'
 import React from 'react'
 import { InViewAnalytics, pushResearchAnalyticsEvent } from '~/containers/Articles/landing/Analytics'
+import { ReadMoreLink } from '~/containers/Articles/landing/ReadMoreLink'
 import { TitleLine } from '~/containers/Articles/landing/TitleLine'
 import { articleHref, formatDate } from '~/containers/Articles/landing/utils'
 import { ResearchArt } from '~/containers/Articles/ResearchArt'
@@ -93,6 +94,9 @@ export function ResearchSpotlight({ title, articles }: ResearchSpotlightProps) {
 						</div>
 					</Link>
 				))}
+			</div>
+			<div className="pt-4.5 text-right">
+				<ReadMoreLink url="/research?section=spotlight" title="View all spotlights" />
 			</div>
 		</div>
 	)

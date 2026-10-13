@@ -76,7 +76,7 @@ export function ResearchSpotlightColumn({ title, articles }: ResearchSpotlightCo
 							</div>
 						</div>
 						<div className="mt-auto shrink-0 pt-4.5 text-right">
-							<ReadMoreLink url="/research?section=spotlight" title="View all spotlight" />
+							<ReadMoreLink url="/research?section=spotlight" title="View all spotlights" />
 						</div>
 					</div>
 				</div>
