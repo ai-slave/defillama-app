@@ -147,10 +147,13 @@ html[data-ab-group='b'] [data-ab-variant='b'] {
 
 @layer base {
 	/* Every phone sheet, dialog or popover drawer, shares one height: a content sheet caps at it, a full sheet fills
-	   it. It leaves the page's top showing (85dvh, Apple's large detent) and shrinks above the iOS keyboard through
-	   --visual-viewport-height, which useKeyboardInset sets on <html> while the keyboard is open. */
+	   it. It leaves the page's top showing (85dvh, Apple's large detent). While the iOS keyboard is open, useKeyboardInset
+	   sets --visual-viewport-height and --keyboard-inset on <html>: the visible part fits above the keyboard, and the box
+	   reaches down behind it. Every sheet stays pinned to the bottom and pads it by
+	   max(safe area, --keyboard-inset), so the strip behind the keyboard and Safari's floating bars is the sheet's own
+	   fill, never the page, including while the keyboard opens and closes. */
 	:root {
-		--sheet-height: min(85dvh, calc(var(--visual-viewport-height, 100dvh) - 3rem));
+		--sheet-height: calc(min(85dvh, calc(var(--visual-viewport-height, 100dvh) - 3rem)) + var(--keyboard-inset, 0px));
 	}
 
 	/* One focus ring everywhere. Replaces the UA default (Chrome's dual-tone

@@ -3,7 +3,7 @@ import { useEffect } from 'react'
 /* iOS Safari ignores `interactive-widget=resizes-content`: the keyboard shrinks only the visual
    viewport, so a sheet pinned to the layout viewport's bottom sits under the keyboard. Publish the
    covered height as --keyboard-inset and the visible height as --visual-viewport-height on <html>,
-   so the dialog surface can sit on top of the keyboard and fit above it. Without a keyboard both equal
+   so a sheet can pad its bottom by the keyboard and fit its content above it. Without a keyboard both equal
    their CSS fallbacks (0px, 100dvh), so they are set only while it covers the page: a first write to
    an inherited property on <html> restyles every element, and a dialog opening fires these events. */
 export function useKeyboardInset() {

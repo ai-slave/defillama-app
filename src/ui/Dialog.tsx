@@ -33,10 +33,11 @@ import { Tooltip } from '~/ui/Tooltip'
             sheet height when the content changes height in use (search
             results, lists that load, suggestions that appear as you type,
             filter rows you add); everything else hugs, forms included.
-            The sheet sits on top of the iOS keyboard: useKeyboardInset
-            (mounted once in _app) publishes --keyboard-inset and
-            --visual-viewport-height, which set its bottom offset and height
-            cap, so it shrinks above the keyboard and scrolls inside.
+            With the iOS keyboard open, the sheet stays pinned to the bottom
+            and pads it by --keyboard-inset, which useKeyboardInset (mounted
+            once in _app) publishes: its content shrinks above the keyboard
+            and scrolls inside, and its fill covers the strip behind the
+            keyboard and Safari's floating bars (see --sheet-height).
             From sm, a centered card that fits its content up to
             min(720px, 100% − 32px). Never patch sheet height per dialog.
    Mount:   pass `unmountOnHide`, so a closed dialog leaves the DOM. A dialog
@@ -62,7 +63,7 @@ import { Tooltip } from '~/ui/Tooltip'
 ---------------------------------------------------------------------------- */
 
 const dialogSurfaceBaseStyles =
-	'fixed inset-(--inset) right-0 bottom-0 left-0 z-50 m-auto mb-0 flex max-h-(--sheet-height) w-full max-w-full flex-col overflow-hidden rounded-t-xl border border-medium pb-[max(0px,calc(env(safe-area-inset-bottom)-var(--keyboard-inset,0px)))] shadow-dialog max-sm:bottom-(--keyboard-inset,0px) max-sm:drawer sm:top-0 sm:mb-auto sm:h-(--dialog-height,fit-content) sm:max-h-(--dialog-max-height,min(720px,calc(100%-32px))) sm:max-w-[min(calc(100%-32px),var(--dialog-width,600px))] sm:rounded-xl sm:pb-0  sm:scale-[.98] sm:opacity-0 sm:transition-[opacity,scale] sm:duration-260 sm:ease-out-quart sm:data-enter:scale-100 sm:data-enter:opacity-100 sm:data-leave:duration-200'
+	'fixed inset-(--inset) right-0 bottom-0 left-0 z-50 m-auto mb-0 flex max-h-(--sheet-height) w-full max-w-full flex-col overflow-hidden rounded-t-xl border border-medium pb-[max(env(safe-area-inset-bottom),var(--keyboard-inset,0px))] shadow-dialog max-sm:drawer sm:top-0 sm:mb-auto sm:h-(--dialog-height,fit-content) sm:max-h-(--dialog-max-height,min(720px,calc(100%-32px))) sm:max-w-[min(calc(100%-32px),var(--dialog-width,600px))] sm:rounded-xl sm:pb-0  sm:scale-[.98] sm:opacity-0 sm:transition-[opacity,scale] sm:duration-260 sm:ease-out-quart sm:data-enter:scale-100 sm:data-enter:opacity-100 sm:data-leave:duration-200'
 
 const dialogSurfaceStyles = `${dialogSurfaceBaseStyles} bg-overlay`
 
@@ -481,7 +482,7 @@ const SIDE_SHEET_WIDTH: Record<SideSheetSize, string> = {
 // Below sm: the same bottom sheet as a full-height Dialog. From sm: pinned to the right edge at full
 // height, sliding in with the dialog's timing.
 const sideSheetStyles =
-	'fixed inset-x-0 bottom-(--keyboard-inset,0px) z-50 flex h-(--sheet-height) w-full flex-col overflow-hidden rounded-t-xl border border-medium pb-[max(0px,calc(env(safe-area-inset-bottom)-var(--keyboard-inset,0px)))] shadow-dialog max-sm:drawer sm:inset-y-0 sm:right-0 sm:left-auto sm:h-auto sm:max-w-[min(var(--side-sheet-width),calc(100%-48px))] sm:translate-x-full sm:rounded-none sm:border-y-0 sm:border-r-0 sm:pb-0 sm:opacity-0 sm:transition-[translate,opacity] sm:duration-260 sm:ease-out-quart sm:data-enter:translate-x-0 sm:data-enter:opacity-100 sm:data-leave:duration-200 motion-reduce:transition-none '
+	'fixed inset-x-0 bottom-0 z-50 flex h-(--sheet-height) w-full flex-col overflow-hidden rounded-t-xl border border-medium pb-[max(env(safe-area-inset-bottom),var(--keyboard-inset,0px))] shadow-dialog max-sm:drawer sm:inset-y-0 sm:right-0 sm:left-auto sm:h-auto sm:max-w-[min(var(--side-sheet-width),calc(100%-48px))] sm:translate-x-full sm:rounded-none sm:border-y-0 sm:border-r-0 sm:pb-0 sm:opacity-0 sm:transition-[translate,opacity] sm:duration-260 sm:ease-out-quart sm:data-enter:translate-x-0 sm:data-enter:opacity-100 sm:data-leave:duration-200 motion-reduce:transition-none '
 
 export function SideSheet({
 	size,
