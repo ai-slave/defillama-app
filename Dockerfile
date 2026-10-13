@@ -31,13 +31,15 @@ FROM bun-base AS builder
 # rclone uploads .next/static to the R2 bucket that the load balancer serves missing chunks
 # from. Debian bookworm's apt rclone (1.60, from 2022) got 501 NotImplemented from R2 on its
 # first upload pass, so a current release is pinned. Update the version and both checksums together.
-ARG RCLONE_VERSION=v1.75.2
-RUN case "$(dpkg --print-architecture)" in \
+# The version stays a shell variable: rclone reads every RCLONE_* environment variable as a flag,
+# so an ARG or ENV named RCLONE_VERSION becomes --version and crashes every later rclone call.
+RUN version=v1.75.2 \
+  && case "$(dpkg --print-architecture)" in \
     amd64) arch=amd64; sha=349ac8fba6ff65d6247043f1750cdcb518ec5d500ef91463a10d37c0ccdf3702 ;; \
     arm64) arch=arm64; sha=7e1e8d69654941b7b7df84ee74c5f7fb09cce7d5496947fb7bf16b55ff427d10 ;; \
     *) echo "No pinned rclone for $(dpkg --print-architecture)" >&2; exit 1 ;; \
     esac \
-  && curl -fsSLo /tmp/rclone.zip "https://downloads.rclone.org/${RCLONE_VERSION}/rclone-${RCLONE_VERSION}-linux-${arch}.zip" \
+  && curl -fsSLo /tmp/rclone.zip "https://downloads.rclone.org/${version}/rclone-${version}-linux-${arch}.zip" \
   && echo "${sha}  /tmp/rclone.zip" | sha256sum -c - \
   && unzip -j /tmp/rclone.zip "*/rclone" -d /usr/local/bin \
   && rm /tmp/rclone.zip \
