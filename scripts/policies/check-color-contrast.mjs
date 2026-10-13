@@ -14,6 +14,10 @@ import { contrast } from '../generate-color-ramps.mjs'
  * 5. Every token copy in canvas code (MIRRORS: Monaco and ECharts cannot read var()) still equals its token in that
  *    mode, so a ramp or token change cannot leave a copy behind. A copy is written `cssVar: '--x', light: '…',
  *    dark: '…'` (one token in both modes) or `light: ['--x', '…']` / `dark: ['--y', '…']` (a token per mode).
+ * 6. Every surface that nests in another sits at least one ramp step from it (design.md → "Color ramps", after
+ *    https://stripe.com/blog/accessible-color-systems): a borderless box or trigger on its parent's step vanishes into
+ *    it (an elevated-1 box inside a dialog, for one). The same holds for the disabled fill on every surface, since a
+ *    disabled primary button and switch track have no border.
  *
  *   bun scripts/policies/check-color-contrast.mjs
  */
@@ -58,6 +62,18 @@ const TEXT = [
 	'text-error'
 ]
 const SURFACES = ['bg-page', 'bg-surface', 'bg-surface-elevated-1', 'bg-surface-elevated-2', 'bg-overlay']
+// One ramp step: the closest two steps in either mode are dark neutral-1 and neutral-2 (1.05:1), so a pair under this
+// shares a step.
+const NESTED_STEP = 1.04
+// [parent, child]: the ladder, and the steps an emphasis box or a trigger and its hover take inside an overlay.
+const NESTED_SURFACES = [
+	['bg-page', 'bg-surface'],
+	['bg-surface', 'bg-surface-elevated-1'],
+	['bg-surface-elevated-1', 'bg-surface-elevated-2'],
+	['bg-overlay', 'bg-surface-elevated-1'],
+	['bg-overlay', 'bg-surface-elevated-2'],
+	...SURFACES.map((surface) => [surface, 'bg-disabled'])
+]
 const RAMPS = ['neutral', 'blue', 'emerald', 'crimson', 'amber', 'violet']
 
 // Top-level declarations per selector. The token files hold only flat `:root` and `html.dark` blocks.
@@ -136,6 +152,11 @@ for (const mode of ['light', 'dark']) {
 		if (ratio < 3) failures.push(`${mode}: --border-strong on --${surface} is ${ratio.toFixed(2)}:1`)
 	}
 
+	for (const [parent, child] of NESTED_SURFACES) {
+		const ratio = contrast(color(child), color(parent))
+		if (ratio < NESTED_STEP) failures.push(`${mode}: --${child} on --${parent} is ${ratio.toFixed(3)}:1`)
+	}
+
 	for (const series of CHART_SERIES_COLORS) {
 		for (const surface of ['bg-page', 'bg-surface']) {
 			const ratio = contrast(series, color(surface))
@@ -193,8 +214,10 @@ if (mirrorFailures.length > 0) {
 }
 
 if (failures.length > 0) {
-	console.error('Color contrast below WCAG AA (design.md → "Color ramps"):')
+	console.error('Color contrast below WCAG AA or nested surfaces too close (design.md → "Color ramps"):')
 	for (const failure of failures) console.error(`  ${failure}`)
 	process.exit(1)
 }
-console.log('Color contrast policy: all text tokens, ramp pairs, chart colors and token copies pass in light and dark.')
+console.log(
+	'Color contrast policy: all text tokens, nested surfaces, ramp pairs, chart colors and token copies pass in light and dark.'
+)

@@ -28,7 +28,9 @@
 	/* Floating overlays: popovers, menus, tooltips, dialogs, toasts. A
 	   darker-than-surroundings overlay reads recessed in light mode, where
 	   shadow carries elevation; dark mode carries it with surface lift, so
-	   the dark value equals bg-surface-elevated-1. */
+	   the dark value sits one step above bg-surface-elevated-1. An
+	   elevated-1 box or picker trigger inside a dialog then reads as an inset
+	   well instead of matching the dialog (check-color-contrast rule 6). */
 	--bg-overlay: #ffffff;
 	--bg-brand: var(--blue-9);
 	/* Selection and the lightest brand wash, on the blue ramp. */
@@ -195,7 +197,10 @@ html.dark,
 	--bg-surface: #131516;
 	--bg-surface-elevated-1: #181a1b;
 	--bg-surface-elevated-2: var(--neutral-4);
-	--bg-overlay: #181a1b;
+	--bg-overlay: var(--neutral-3);
+	/* Two steps above the overlay: neutral-3 would match it, neutral-4 matches elevated-2, so a disabled fill on
+	   either would vanish (check-color-contrast rule 6). */
+	--bg-disabled: var(--neutral-5);
 
 	/* Text */
 	--text-primary: #ffffff;
@@ -215,7 +220,7 @@ html.dark,
 	--bg-status-dot: #c6c6c6;
 
 	/* Dark surfaces carry elevation with their lighter fill; every shadow deepens so it still shows on a near-black
-	   page. The overlay fill is one step above a card, so its shadow is what separates a menu from a busy chart. */
+	   page. The overlay fill is only two ramp steps above a card, so its shadow is what separates a menu from a busy chart. */
 	--elevation-raised: 0 1px 2px rgb(0 0 0 / 0.3), 0 2px 8px rgb(0 0 0 / 0.3);
 	--elevation-overlay: 0 12px 32px -12px rgb(0 0 0 / 0.5);
 	--elevation-dialog: 0 24px 64px -16px rgb(0 0 0 / 0.6);

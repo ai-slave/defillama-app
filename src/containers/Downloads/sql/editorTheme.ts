@@ -15,7 +15,7 @@ const SQL_COLORS = {
 	number: { light: ['--emerald-9', '#007b45'], dark: ['--emerald-12', '#abf0c2'] },
 	string: { light: ['--amber-9', '#9f5a00'], dark: ['--amber-12', '#ffdaba'] },
 	surface: { light: ['--bg-surface', '#ffffff'], dark: ['--bg-surface', '#131516'] },
-	overlay: { light: ['--bg-overlay', '#ffffff'], dark: ['--bg-overlay', '#181a1b'] },
+	overlay: { light: ['--bg-overlay', '#ffffff'], dark: ['--bg-overlay', '#1f2123'] },
 	lineNumber: { light: ['--neutral-7', '#b3b3b3'], dark: ['--neutral-7', '#414345'] },
 	brand: { light: ['--bg-brand', '#1f67d2'], dark: ['--bg-brand', '#1f67d2'] },
 	brandMuted: { light: ['--bg-brand-muted', '#d0def3'], dark: ['--bg-brand-muted', '#1c2636'] },

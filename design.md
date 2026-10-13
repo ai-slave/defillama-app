@@ -124,7 +124,7 @@ Elevation is picked by how far a surface sits from the page, not by how much sha
 Usage rules:
 
 - Surfaces step `page → surface → elevated-1 → elevated-2`. Cards sit on `bg-surface`; elevation steps are for nested emphasis, never page-level fills.
-- Floating overlays use `bg-overlay`, not a ladder step: light mode carries their elevation with shadow, dark mode mainly with surface lift.
+- Floating overlays use `bg-overlay`, not a ladder step: light mode carries their elevation with shadow, dark mode mainly with surface lift. In dark mode `bg-overlay` sits one ramp step above `bg-surface-elevated-1`, so an elevated-1 box or picker trigger inside a dialog reads as an inset well; never set the two equal.
 - Text tiers are text-only: never `bg-primary`.
 - Use solid colors for text, fills and tints, translucent ones for neutral borders, dividers, hover washes, glass, veils and seams. Translucency lives in a token; never put a `/NN` opacity modifier on a color utility (`opacity-color-modifier`): use the ramp step for that role.
 - The `opacity` utility is for imagery, decoration and show/hide motion, never for text or a control's state. Dimmed text takes the next text tier. A disabled control takes `text-disabled`, plus `bg-disabled` when filled and `border-disabled` when outlined, in every variant (`disabled-opacity`). Only a disabled composite whose children carry their own colors or imagery (an avatar picker, a logo row, a dataset card) keeps `opacity-60` on the whole.
@@ -163,7 +163,7 @@ Partner and border colors:
 
 ## Color ramps
 
-Every color role comes from a 12-step ramp per hue: neutral, blue (brand), emerald (up, success), crimson (down, error), amber (warning) and violet. [`scripts/generate-color-ramps.mjs`](scripts/generate-color-ramps.mjs) solves each step in OKLCH so it has the same WCAG contrast against the canvas in every hue, then writes hex into `primitives.css`, light on `:root` and dark under `html.dark`. Edit the generator's inputs and rerun it; never hand-edit the generated hex. The neutral surfaces and the brand fill are pinned to their shipped values.
+Every color role comes from a 12-step ramp per hue: neutral, blue (brand), emerald (up, success), crimson (down, error), amber (warning) and violet. [`scripts/generate-color-ramps.mjs`](scripts/generate-color-ramps.mjs) solves each step in OKLCH so it has the same WCAG contrast against the canvas in every hue, then writes hex into `primitives.css`, light on `:root` and dark under `html.dark`. The method follows Stripe's [accessible color systems](https://stripe.com/blog/accessible-color-systems): steps a fixed distance apart have a known contrast. Edit the generator's inputs and rerun it; never hand-edit the generated hex. The neutral surfaces and the brand fill are pinned to their shipped values.
 
 | Step | Role                                   | Step | Role                         |
 | ---- | -------------------------------------- | ---- | ---------------------------- |
@@ -176,7 +176,8 @@ Every color role comes from a 12-step ramp per hue: neutral, blue (brand), emera
 - Because steps line up across hues, the pairs are guaranteed: step 11 text passes AA on steps 1–4 of any hue, and white text passes on every step 9.
 - A semantic token maps to a step once (`--text-link: var(--blue-11)`) and needs no dark override: the ramp flips with the mode.
 - A tinted control uses its hue's steps: rest on 3, hover on 4, text on 11, border on 7. That is how `ProButton`, the row-link pills and the destructive states are built.
-- Disabled controls sit on the neutral ramp: `bg-disabled` is step 3, `border-disabled` step 5 and `text-disabled` step 8. Disabled text is exempt from AA; it has to read as unavailable, not pass.
+- Surfaces that nest sit at least one ramp step apart, the canvas counting as step 0. In dark mode the page is the canvas, the surface step 1, elevated-1 step 2, the overlay step 3, elevated-2 step 4 and the disabled fill step 5. Two surfaces on one step read as one color: the failure Stripe fixed in its badges by moving a step up. `check-color-contrast` rule 6 enforces it.
+- Disabled controls sit on the neutral ramp: `bg-disabled` is step 3 in light and step 5 in dark (step 3 is the dark overlay), `border-disabled` step 5 and `text-disabled` step 8. Disabled text is exempt from AA; it has to read as unavailable, not pass.
 - Colors ship as hex, so browsers, chart canvases and exports render the same value.
 - Crimson stays as generated, though step 9 is more saturated than emerald-9. The one off-ramp value is the light-mode falling chart fill `#a5464a` (`--chart-down`, `HEAT_DOWN`), matched to emerald-9's lightness and chroma; never retune the ramp or add a second off-ramp fill.
 
@@ -543,7 +544,7 @@ Controls that share a row must share a height and a center line, and only the re
 | Interaction       | `ungated-hover`, `click-focus-reveal`                                                                                                                                                                                                                                                                                                                                                                         |
 
 - After removing debt, run `bun scripts/policies/check-design-tokens.mjs --update` in the same change. Run it only when nothing fails and the counts dropped, because it rewrites rising counts too.
-- [`scripts/policies/check-color-contrast.mjs`](scripts/policies/check-color-contrast.mjs) resolves the semantic tokens through the ramps in both modes and fails when a text token drops below 4.5:1 on any surface, hover wash or tint, or a ramp breaks its pair rules.
+- [`scripts/policies/check-color-contrast.mjs`](scripts/policies/check-color-contrast.mjs) resolves the semantic tokens through the ramps in both modes and fails when a text token drops below 4.5:1 on any surface, hover wash or tint, a ramp breaks its pair rules, or a surface that nests in another (page → surface → elevated-1 → elevated-2, elevated-1 and elevated-2 on the overlay, the disabled fill on any surface) sits less than one ramp step from it (under 1.04:1).
 - [`scripts/policies/check-focus-handoff.ts`](scripts/policies/check-focus-handoff.ts) refuses the shapes that drop keyboard focus to the page when a control disables itself.
 - [`scripts/policies/check-status-parts.ts`](scripts/policies/check-status-parts.ts) refuses hand-built loading and error states outside `src/ui`: "Loading…" text, a Suspense or `dynamic()` fallback that renders a blank box, an error box or `role="alert"` line drawn by hand, a retry gated on a query's `isError` or `error` instead of `queryReadFailed`, banned error phrasings, and any error's own message shown raw.
 - `.oxlintrc.json` refuses two imports: `~/ui/internal/*` outside `src/ui`, so a loading state can only be a finished part, and `next/error`, whose page replaces the app's own not-found state (`EmptyState size="lg"`).
