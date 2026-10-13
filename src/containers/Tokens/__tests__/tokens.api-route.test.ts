@@ -8,7 +8,7 @@ import { installMetadataSeeder } from '~/utils/testing/metadataCache'
 import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/testing/nextApiMocks'
 
 vi.mock('~/containers/Markets/server/dataset.server', () => ({
-	fetchTokenMarketsList: async () => ({ last_updated: '', tokens: [] })
+	fetchTokenMarketSummaries: async () => ({})
 }))
 vi.mock('~/containers/TokenRights/server/dataset.server', () => ({ fetchTokenRightsEntries: async () => [] }))
 // An empty Redis: every snapshot read misses and every write succeeds.

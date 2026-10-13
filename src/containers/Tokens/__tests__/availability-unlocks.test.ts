@@ -22,7 +22,7 @@ const metadata = hydrateMetadataCache({
 const tokens = [{ id: 'sample', name: 'Sample', symbol: 's', market_cap: 100, current_price: 2 }]
 const base = {
 	tokens,
-	markets: { last_updated: '', tokens: [] },
+	markets: {},
 	tokenRightsEntries: [],
 	fees: [],
 	revenue: [],

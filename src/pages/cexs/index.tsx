@@ -1,5 +1,5 @@
 import { Cexs } from '~/containers/Cexs'
-import { attachExchangeProfileSlugs } from '~/containers/Cexs/exchangeProfile'
+import { attachExchangeMarkets } from '~/containers/Cexs/exchangeMarkets'
 import { getCexsPageData } from '~/containers/Cexs/queries'
 import type { ICex } from '~/containers/Cexs/types'
 import { ExchangesNav } from '~/containers/Exchanges/ExchangesNav'
@@ -11,7 +11,7 @@ export const getStaticProps = withPerformanceLogging('cexs/index', async () => {
 	const { fetchCexExchangeSlugIndex } = await import('~/containers/Markets/server/dataset.server')
 	const [data, cexIndex] = await Promise.all([getCexsPageData(), fetchCexExchangeSlugIndex()])
 	return {
-		props: { cexs: attachExchangeProfileSlugs(data.cexs, cexIndex) },
+		props: { cexs: attachExchangeMarkets(data.cexs, cexIndex) },
 		revalidate: maxAgeForNext([22])
 	}
 })

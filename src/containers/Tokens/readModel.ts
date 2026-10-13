@@ -1,5 +1,4 @@
 import type { IResponseCGTokenRankingsDatasetItem } from '~/api/coingecko.types'
-import type { TokenMarketsListResponse } from '~/containers/Markets/api.types'
 import type { TokenOverviewCurrentMetrics } from '~/containers/Token/tokenOverview'
 import { slug } from '~/utils'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
@@ -14,11 +13,6 @@ import type { TokenDirectoryRecord } from '~/utils/tokenDirectory'
 interface TokenDirectoryIndexes {
 	byGeckoId: Map<string, TokenDirectoryRecord>
 	protocolIdByGeckoId: Map<string, string>
-}
-
-export const EMPTY_MARKETS_LIST: TokenMarketsListResponse = {
-	last_updated: '',
-	tokens: []
 }
 
 function tokenRecordGeckoId(record: TokenDirectoryRecord): string | null {
@@ -52,33 +46,6 @@ export function buildTokenDirectoryIndexes(metadata: MetadataCache): TokenDirect
 	return { byGeckoId, protocolIdByGeckoId }
 }
 
-export function buildUniqueTokenSymbols(tokens: Array<IResponseCGTokenRankingsDatasetItem>): Set<string> {
-	const counts = new Map<string, number>()
-	for (const token of tokens) {
-		const symbol = token.symbol.toUpperCase()
-		counts.set(symbol, (counts.get(symbol) ?? 0) + 1)
-	}
-
-	const uniqueSymbols = new Set<string>()
-	for (const [symbol, count] of counts) {
-		if (count === 1) uniqueSymbols.add(symbol)
-	}
-	return uniqueSymbols
-}
-
-export function buildMarketsMap(
-	markets: TokenMarketsListResponse,
-	uniqueTokenSymbols: Set<string>
-): Map<string, TokenMarketsListResponse['tokens'][number]> {
-	const map = new Map<string, TokenMarketsListResponse['tokens'][number]>()
-	for (const entry of markets.tokens) {
-		const symbol = entry.symbol.toUpperCase()
-		// The markets dataset is symbol-keyed, so duplicate CoinGecko symbols would otherwise inherit each other's metrics.
-		if (uniqueTokenSymbols.has(symbol)) map.set(symbol, entry)
-	}
-	return map
-}
-
 export function resolveProtocolId(
 	geckoId: string,
 	record: TokenDirectoryRecord | undefined,
@@ -110,16 +77,13 @@ export function resolveEmissionsProtocolSlug(
 
 export function buildTokenOverviewCurrentMetricsById({
 	tokens,
-	markets,
 	metadata
 }: {
 	tokens: Array<IResponseCGTokenRankingsDatasetItem>
-	markets: TokenMarketsListResponse
 	metadata: MetadataCache
 }): Record<string, TokenOverviewCurrentMetrics> {
 	const currentMetricsById: Record<string, TokenOverviewCurrentMetrics> = {}
 	const indexes = buildTokenDirectoryIndexes(metadata)
-	const marketsBySymbol = buildMarketsMap(markets, buildUniqueTokenSymbols(tokens))
 
 	for (const token of tokens) {
 		const geckoId = token.id.toLowerCase()
@@ -130,11 +94,9 @@ export function buildTokenOverviewCurrentMetricsById({
 		const adjustedSupply = emissionsProtocolSlug
 			? (metadata.emissionsSupplyMetrics[emissionsProtocolSlug]?.supplyMetrics.adjustedSupply ?? null)
 			: null
-		const currentPrice =
-			token.current_price ?? marketsBySymbol.get(token.symbol.toUpperCase())?.segments.spot?.price ?? null
 
 		currentMetricsById[geckoId] = {
-			currentPrice,
+			currentPrice: token.current_price ?? null,
 			percentChange24h: token.price_change_percentage_24h_in_currency ?? token.price_change_percentage_24h ?? null,
 			circulatingSupply: token.circulating_supply ?? null,
 			totalSupply: token.total_supply ?? null,

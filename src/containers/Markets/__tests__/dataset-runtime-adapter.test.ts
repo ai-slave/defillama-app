@@ -24,7 +24,6 @@ function marketsGeneration(summaries: Record<string, TokenMarketSummary>): Datas
 	return async (writer) => {
 		const geckoIds: Record<string, true> = {}
 		for (const geckoId in summaries) geckoIds[geckoId] = true
-		await writer.writeJson(MARKET_FILES.tokensList, { tokens: [] })
 		await writer.writeJson(MARKET_FILES.exchangeDirectory, { venues: [] })
 		await writer.writeJson(MARKET_FILES.cexByDefillamaSlug, {})
 		await writer.writeJson(MARKET_FILES.tokenSummaries, summaries)
@@ -34,7 +33,6 @@ function marketsGeneration(summaries: Record<string, TokenMarketSummary>): Datas
 
 test('publishes token and exchange indexes where regional arms never take a DefiLlama slug', async () => {
 	http.serve({
-		[`${MARKETS_SERVER_URL}/tokens/list.json`]: { tokens: [] },
 		[`${MARKETS_SERVER_URL}/tokens/exchange-listings.json`]: {
 			last_updated: '2026-09-07',
 			tokens: [{ coingecko_id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', venues: [] }]
@@ -45,15 +43,30 @@ test('publishes token and exchange indexes where regional arms never take a Defi
 					slug: 'crypto-com-eu',
 					type: 'cex',
 					secondary: true,
+					segments: {},
 					links: { defillama: { type: 'cex', slug: 'crypto-com' } }
 				},
 				{
 					slug: 'crypto-com',
 					display_name: 'Crypto.com',
 					type: 'cex',
+					rank: { tier: 'A', score: 72, rank: 3 },
+					segments: {
+						spot: { volume_24h: 40, volume_prev_24h: 50 },
+						linear_perp: { volume_24h: 90, volume_prev_24h: 60, oi_usd: 30 },
+						inverse_perp: { oi_usd: 5 }
+					},
+					sparks: { spot: [1, 2, 3, 4, 5, 6, 7, 8, 9], linear_perp: [10, 20, 30] },
 					links: { defillama: { type: 'cex', slug: 'crypto-com', url: 'https://defillama.com/cex/crypto-com' } }
 				},
-				{ slug: 'uniswap', type: 'dex', links: { defillama: { type: 'protocol', slug: 'Uniswap' } } }
+				{
+					slug: 'uniswap',
+					type: 'dex',
+					rank: null,
+					segments: {},
+					sparks: {},
+					links: { defillama: { type: 'protocol', slug: 'Uniswap' } }
+				}
 			]
 		}
 	})
@@ -65,11 +78,22 @@ test('publishes token and exchange indexes where regional arms never take a Defi
 	expect(await api.getTokenMarkets('missing')).toEqual({ summary: null, hasMarkets: false })
 	expect(await api.resolveExchangeByDefillamaCexSlug('Crypto-com')).toEqual({
 		exchange: 'crypto-com',
-		defillama_slug: 'crypto-com'
+		defillama_slug: 'crypto-com',
+		rank: { tier: 'A', score: 72, rank: 3 },
+		spot_volume_24h: 40,
+		usd_perp_volume_24h: 90,
+		usd_perp_oi_usd: 30,
+		// Spot and USD perp days line up from the latest one.
+		volume_7d: [3, 4, 5, 6, 17, 28, 39]
 	})
 	expect(await api.resolveExchangeByDefillamaCexSlug('Uniswap')).toEqual({
 		exchange: 'uniswap',
-		defillama_slug: 'Uniswap'
+		defillama_slug: 'Uniswap',
+		rank: null,
+		spot_volume_24h: null,
+		usd_perp_volume_24h: null,
+		usd_perp_oi_usd: null,
+		volume_7d: []
 	})
 	expect(await api.resolveExchangeByDefillamaCexSlug('missing')).toBeNull()
 })

@@ -37,7 +37,7 @@ describe('CEX page data', () => {
 			tokensToExclude: ['BNB', 'BUSD']
 		})
 		expect(cexs[0]).not.toHaveProperty('slug')
-		expect(cexs[0]).not.toHaveProperty('exchangeProfileSlug')
+		expect(cexs[0]).not.toHaveProperty('exchange')
 		expect(cexs[1]).toMatchObject({ name: 'OKX', cexProtocolSlug: 'okx', tokensToExclude: ['OKB'] })
 	})
 

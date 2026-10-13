@@ -3,12 +3,17 @@ import { createColumnHelper } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { useMemo } from 'react'
 import { useAuthContext } from '~/auth'
+import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
 import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
 import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { TokenLogo } from '~/components/TokenLogo'
+import { exchangeDefinitions } from '~/containers/Exchanges/definitions'
+import { QualityHover, TierBadge } from '~/containers/Exchanges/directoryColumns'
+import { MiniSparkline } from '~/containers/Exchanges/MiniSparkline'
+import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
@@ -166,11 +171,21 @@ const columns = columnHelper.columns([
 		cell: ({ getValue, row }) => {
 			const name = getValue()
 			const cexProtocolSlug = row.original.cexProtocolSlug
+			const rank = row.original.exchange?.rank
 			return (
 				<span className="relative flex items-center gap-2">
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
+					{/* Fixed slot, as on /exchanges: untiered rows keep the badge's width so every logo and name lines up. */}
+					<span className="flex w-[22px] shrink-0 justify-center">
+						{rank ? (
+							// data-fullwidth lifts the tooltip surface's max-w-56 cap for the ~280px REAL card.
+							<Tooltip content={<QualityHover quality={rank} kind="cex" />} className="shrink-0" data-fullwidth>
+								<TierBadge tier={rank.tier} />
+							</Tooltip>
+						) : null}
+					</span>
 					<TokenLogo
-						name={row.original.exchangeProfileSlug ?? slug(name)}
+						name={row.original.exchange?.exchange ?? slug(name)}
 						kind="exchange"
 						fallbackSrc={letterLogoDataUri(name)}
 						alt={`${name} logo`}
@@ -271,7 +286,7 @@ const columns = columnHelper.columns([
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor((row) => row.spotVolume ?? undefined, {
+	columnHelper.accessor((row) => row.exchange?.spot_volume_24h ?? undefined, {
 		id: 'spotVolume',
 		header: 'Spot Volume',
 		cell: (info) =>
@@ -279,18 +294,32 @@ const columns = columnHelper.columns([
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			align: 'end'
+			align: 'end',
+			headerHelperText: exchangeDefinitions.summary.spot.description
 		}
 	}),
-	columnHelper.accessor((row) => row.oi ?? undefined, {
-		id: 'oi',
-		header: '24h Open Interest',
+	columnHelper.accessor((row) => row.exchange?.usd_perp_volume_24h ?? undefined, {
+		id: 'perpVolume',
+		header: 'USD Perp Volume',
 		cell: (info) =>
 			info.getValue() != null
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			align: 'end'
+			align: 'end',
+			headerHelperText: exchangeDefinitions.summary.linearPerp.description
+		}
+	}),
+	columnHelper.accessor((row) => row.exchange?.usd_perp_oi_usd ?? undefined, {
+		id: 'oi',
+		header: exchangeDefinitions.directory.perpOpenInterest.label,
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
+		meta: {
+			align: 'end',
+			headerHelperText: exchangeDefinitions.directory.perpOpenInterest.description
 		}
 	}),
 	columnHelper.accessor((row) => row.leverage ?? undefined, {
@@ -302,7 +331,40 @@ const columns = columnHelper.columns([
 		},
 		meta: {
 			align: 'end',
-			headerHelperText: 'Open Interest / Clean Assets'
+			headerHelperText: 'USD perp open interest / Clean Assets'
+		}
+	}),
+	columnHelper.accessor((row) => row.exchange?.volume_7d, {
+		id: 'volume7d',
+		header: '7d Volume',
+		enableSorting: false,
+		cell: ({ row, getValue }) => {
+			const values = getValue()
+			return values ? (
+				<MiniSparkline values={values} label={`${row.original.name} spot and USD perp volume, last 7 days`} />
+			) : null
+		},
+		meta: {
+			align: 'end',
+			headerHelperText: 'Daily spot plus USD perp volume over the last 7 days.',
+			csvValue: (row) => row.exchange?.volume_7d.join(' ') ?? ''
+		}
+	}),
+	columnHelper.accessor((row) => row.exchange?.exchange, {
+		id: 'exchangeStats',
+		header: 'Exchange',
+		enableSorting: false,
+		cell: ({ getValue }) => {
+			const exchange = getValue()
+			return exchange ? (
+				<Button as={BasicLink} href={`/exchange/${exchange}`} variant="link">
+					Stats
+				</Button>
+			) : null
+		},
+		meta: {
+			align: 'end',
+			headerHelperText: 'Volume, liquidity, execution and fees on the exchange page.'
 		}
 	}),
 	columnHelper.accessor((row) => row.customRange ?? undefined, {

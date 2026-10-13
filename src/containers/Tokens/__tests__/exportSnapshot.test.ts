@@ -38,7 +38,7 @@ vi.mock('~/utils/cache-client', () => ({
 	setObjectCache: async (key: string, value: unknown, ttlSeconds: number) => redis.write(key, value, ttlSeconds)
 }))
 vi.mock('~/containers/Markets/server/dataset.server', () => ({
-	fetchTokenMarketsList: async () => ({ last_updated: '', tokens: [] })
+	fetchTokenMarketSummaries: async () => ({})
 }))
 vi.mock('~/containers/TokenRights/server/dataset.server', () => ({ fetchTokenRightsEntries: async () => [] }))
 

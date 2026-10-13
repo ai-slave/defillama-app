@@ -1,6 +1,6 @@
 /** Typed Markets reads and pure lookups over the current immutable snapshot. */
 import type { MasterDirectoryResponse } from '~/containers/Exchanges/master.types'
-import type { TokenMarketsListResponse, TokenMarketSummary } from '~/containers/Markets/api.types'
+import type { TokenMarketSummary } from '~/containers/Markets/api.types'
 import { DATASET_SNAPSHOT_CONTRACT } from '~/server/datasetSnapshots/contract'
 import { acquireDatasetSnapshot } from '~/server/datasetSnapshots/refresh.server'
 import type { DatasetSnapshotHandle } from '~/server/datasetSnapshots/store'
@@ -23,8 +23,9 @@ export async function fetchExchangeDirectory(): Promise<MasterDirectoryResponse>
 	return (await acquireMarketsSnapshot()).readJson<MasterDirectoryResponse>(MARKET_FILES.exchangeDirectory)
 }
 
-export async function fetchTokenMarketsList(): Promise<TokenMarketsListResponse> {
-	return (await acquireMarketsSnapshot()).readJson<TokenMarketsListResponse>(MARKET_FILES.tokensList)
+/** Lowercase CoinGecko ID → that token's market totals. */
+export async function fetchTokenMarketSummaries(): Promise<Record<string, TokenMarketSummary>> {
+	return (await acquireMarketsSnapshot()).readJson<Record<string, TokenMarketSummary>>(MARKET_FILES.tokenSummaries)
 }
 
 export async function fetchCexExchangeSlugIndex(): Promise<CexExchangeSlugIndex> {

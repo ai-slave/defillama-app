@@ -13,6 +13,7 @@ const DEFAULT_VISIBLE_COLUMN_IDS = new Set([
 	'marketCap',
 	'fdv',
 	'spotVolume24h',
+	'perpsVolume24h',
 	'revenue24h'
 ])
 

@@ -41,7 +41,7 @@ vi.mock('next/router', () => ({
 }))
 vi.mock('~/containers/Markets/server/dataset.server', () => ({
 	getTokenMarkets: vi.fn(),
-	fetchTokenMarketsList: async () => ({ last_updated: '', tokens: [] })
+	fetchTokenMarketSummaries: async () => ({})
 }))
 vi.mock('~/containers/LiquidationsV2/server/dataset.server', () => ({ hasTokenLiquidationsData: vi.fn() }))
 vi.mock('~/containers/Raises/server/dataset.server', () => ({ fetchRaisesByDefillamaId: vi.fn() }))

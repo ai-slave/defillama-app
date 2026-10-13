@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest'
 import type { IResponseCGTokenRankingsDatasetItem } from '~/api/coingecko.types'
 import type { IAdapterChainMetrics } from '~/containers/AdapterMetrics/api.types'
-import type { MarketSegmentSummary, TokenMarketsListResponse } from '~/containers/Markets/api.types'
+import type { MarketCategoryTotals, TokenMarketSummary } from '~/containers/Markets/api.types'
+import type { Segment } from '~/containers/Markets/segments'
 import type { IRawTokenRightsEntry } from '~/containers/TokenRights/api.types'
 import type { EnrichedProtocolEmission } from '~/containers/Unlocks/queries'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
@@ -101,20 +102,19 @@ describe('buildTokenFilterOptions', () => {
 	})
 })
 
-function marketSegment(overrides: Partial<MarketSegmentSummary>): MarketSegmentSummary {
+const NO_PAIRS: MarketCategoryTotals = { pair_count: 0, total_volume_24h: 0, total_oi_usd: null }
+
+function marketSummary(
+	cex: Partial<Record<Segment, MarketCategoryTotals>>,
+	dex: Partial<Record<Segment, MarketCategoryTotals>> = {}
+): TokenMarketSummary {
 	return {
-		exchange_count: 1,
-		funding_rate_8h: null,
-		leverage_max: null,
-		leverage_min: null,
-		market_count: 1,
-		oi_prev_usd: null,
-		oi_usd: null,
-		price: null,
-		price_change_24h: null,
-		volume_24h: 0,
-		volume_prev_24h: null,
-		...overrides
+		total_volume_24h: 0,
+		total_oi_usd: null,
+		totals: {
+			cex: { spot: NO_PAIRS, linear_perp: NO_PAIRS, inverse_perp: NO_PAIRS, ...cex },
+			dex: { spot: NO_PAIRS, linear_perp: NO_PAIRS, inverse_perp: NO_PAIRS, ...dex }
+		}
 	}
 }
 
@@ -175,7 +175,7 @@ describe('buildTokensChartDataset', () => {
 				{ id: 'small', name: 'Small', symbol: 's', market_cap: 50 },
 				{ id: 'missing', name: 'Missing', symbol: 'm', market_cap: null }
 			],
-			markets: { last_updated: '', tokens: [] },
+			markets: {},
 			tokenRightsEntries: [],
 			fees: [],
 			revenue: [],
@@ -278,23 +278,8 @@ describe('buildTokenOverviewCurrentMetricsById', () => {
 			total_supply: 900,
 			max_supply: 1000,
 			total_volume: 777
-		},
-		{ id: 'spot-priced', name: 'Spot Priced', symbol: 'spt', current_price: null, market_cap: 50 }
+		}
 	]
-	const markets: TokenMarketsListResponse = {
-		last_updated: '2026-06-29T01:00:00Z',
-		tokens: [
-			{
-				symbol: 'SPT',
-				exchange_count: 1,
-				market_count: 1,
-				tags: [],
-				total_oi_usd: 0,
-				total_volume_24h: 0,
-				segments: { spot: marketSegment({ price: 3 }) }
-			}
-		]
-	}
 	const metadata = {
 		tokenDirectory: {},
 		protocolMetadata: { ethena: { name: 'Ethena', displayName: 'Ethena', gecko_id: 'ethena' } },
@@ -313,7 +298,7 @@ describe('buildTokenOverviewCurrentMetricsById', () => {
 	} as unknown as MetadataCache
 
 	test('keys current metrics by lowercase CoinGecko id and values outstanding FDV at adjusted supply', () => {
-		expect(buildTokenOverviewCurrentMetricsById({ tokens, markets, metadata }).ethena).toEqual({
+		expect(buildTokenOverviewCurrentMetricsById({ tokens, metadata }).ethena).toEqual({
 			currentPrice: 2,
 			percentChange24h: -2.5,
 			circulatingSupply: 500,
@@ -324,10 +309,6 @@ describe('buildTokenOverviewCurrentMetricsById', () => {
 			volume24h: 777,
 			outstandingFDV: 1200
 		})
-	})
-
-	test('prices a token from its spot market when CoinGecko has no price', () => {
-		expect(buildTokenOverviewCurrentMetricsById({ tokens, markets, metadata })['spot-priced']?.currentPrice).toBe(3)
 	})
 })
 
@@ -361,23 +342,15 @@ describe('buildTokensSourceRows', () => {
 				market_cap: 50
 			}
 		]
-		const markets: TokenMarketsListResponse = {
-			last_updated: '2026-06-29T01:00:00Z',
-			tokens: [
+		const markets = {
+			ethena: marketSummary(
 				{
-					symbol: 'ENA',
-					exchange_count: 3,
-					market_count: 4,
-					tags: [],
-					total_oi_usd: 325,
-					total_volume_24h: 350,
-					segments: {
-						spot: marketSegment({ price: 2.1, volume_24h: 100 }),
-						linear_perp: marketSegment({ volume_24h: 200, oi_usd: 300 }),
-						inverse_perp: marketSegment({ volume_24h: 50, oi_usd: 25 })
-					}
-				}
-			]
+					spot: { pair_count: 3, total_volume_24h: 90, total_oi_usd: null },
+					linear_perp: { pair_count: 2, total_volume_24h: 200, total_oi_usd: 300 },
+					inverse_perp: { pair_count: 1, total_volume_24h: 50, total_oi_usd: 25 }
+				},
+				{ spot: { pair_count: 1, total_volume_24h: 10, total_oi_usd: null } }
+			)
 		}
 		const metadata = {
 			tokenDirectory: {
@@ -513,13 +486,13 @@ describe('buildTokensSourceRows', () => {
 			nowSec
 		})
 
-		expect(result.updatedAt).toBe('2026-06-29T01:00:00Z')
+		expect(result.updatedAt).toBe('2026-06-29T00:00:00Z')
 		expect(result.stats).toMatchObject({
 			totalMarketCap: 1050,
 			marketCapWeightedChange24h: expect.closeTo(-2.5, 10),
 			spotVolume24h: 100,
-			perpsVolume24h: 250,
-			openInterest24h: 325,
+			perpsVolume24h: 200,
+			openInterest24h: 300,
 			unlock30dUsd: 20 + ((10 * 10) / 604_800) * 2,
 			upcomingUnlockUsd: 200 + ((10 * (604_800 - 10)) / 604_800) * 2
 		})
@@ -536,8 +509,8 @@ describe('buildTokensSourceRows', () => {
 			outstandingFdv: 1200,
 			unlockedPercent: 60,
 			spotVolume24h: 100,
-			perpsVolume24h: 250,
-			openInterest24h: 325,
+			perpsVolume24h: 200,
+			openInterest24h: 300,
 			fees24h: 11,
 			revenue24h: 22,
 			holdersRevenue24h: 5.5,
@@ -595,7 +568,7 @@ describe('buildTokensSourceRows', () => {
 					]
 			const result = buildTokensSourceRows({
 				tokens,
-				markets: { last_updated: '', tokens: [] },
+				markets: {},
 				tokenRightsEntries: [],
 				fees: [],
 				revenue: [],
@@ -642,7 +615,7 @@ describe('buildTokensSourceRows', () => {
 				},
 				{ id: 'dead', name: 'Dead', symbol: 'ded', current_price: 0, market_cap: 0, price_change_percentage_24h: -100 }
 			],
-			markets: { last_updated: '', tokens: [] },
+			markets: {},
 			tokenRightsEntries: [],
 			fees: [],
 			revenue: [],
@@ -663,7 +636,7 @@ describe('buildTokensSourceRows', () => {
 	test('uses the shared snapshot metrics even when local metadata would derive another value', () => {
 		const result = buildTokensSourceRows({
 			tokens: [{ id: 'shared', name: 'Shared', symbol: 'shr', current_price: 1, market_cap: 100 }],
-			markets: { last_updated: '', tokens: [] },
+			markets: {},
 			currentMetricsById: {
 				shared: {
 					currentPrice: 2,
@@ -706,7 +679,7 @@ describe('buildTokensSourceRows', () => {
 			{ id: 'ethena', name: 'Ethena', symbol: 'ena', current_price: 1, market_cap: 50 }
 		]
 		const base = {
-			markets: { last_updated: '', tokens: [] },
+			markets: {},
 			tokenRightsEntries: [],
 			fees: [],
 			revenue: [],
@@ -739,7 +712,7 @@ describe('buildTokensSourceRows', () => {
 					market_cap: 100
 				}
 			],
-			markets: { last_updated: '', tokens: [] },
+			markets: {},
 			tokenRightsEntries: [
 				tokenRightsEntry({
 					'Protocol Name': 'Metadata Only',
@@ -792,7 +765,7 @@ describe('buildTokensSourceRows', () => {
 					market_cap: 200
 				}
 			],
-			markets: { last_updated: '', tokens: [] },
+			markets: {},
 			tokenRightsEntries: [],
 			fees: [],
 			revenue: [],
@@ -834,7 +807,7 @@ describe('buildTokensSourceRows', () => {
 					market_cap: 100
 				}
 			],
-			markets: { last_updated: '', tokens: [] },
+			markets: {},
 			tokenRightsEntries: [],
 			fees: [
 				adapterMetric('hyperliquid-perps', 10, 'parent#hyperliquid'),
@@ -879,7 +852,7 @@ describe('buildTokensSourceRows', () => {
 		})
 	})
 
-	test('does not join symbol-only market metrics when multiple tokens share the symbol', () => {
+	test('joins market metrics by CoinGecko id when tokens share a symbol', () => {
 		const result = buildTokensSourceRows({
 			tokens: [
 				{
@@ -898,21 +871,10 @@ describe('buildTokensSourceRows', () => {
 				}
 			],
 			markets: {
-				last_updated: '',
-				tokens: [
-					{
-						symbol: 'DUP',
-						exchange_count: 1,
-						market_count: 1,
-						tags: [],
-						total_oi_usd: 50,
-						total_volume_24h: 100,
-						segments: {
-							spot: marketSegment({ price: 10, volume_24h: 100 }),
-							linear_perp: marketSegment({ volume_24h: 200, oi_usd: 50 })
-						}
-					}
-				]
+				'second-duplicate': marketSummary({
+					spot: { pair_count: 1, total_volume_24h: 100, total_oi_usd: null },
+					linear_perp: { pair_count: 1, total_volume_24h: 200, total_oi_usd: 50 }
+				})
 			},
 			tokenRightsEntries: [],
 			fees: [],
@@ -928,13 +890,9 @@ describe('buildTokensSourceRows', () => {
 			nowSec: 1_800_000_000
 		})
 
-		expect(result.rows.map((row) => row.spotVolume24h)).toEqual([null, null])
-		expect(result.rows.map((row) => row.perpsVolume24h)).toEqual([null, null])
-		expect(result.rows.map((row) => row.openInterest24h)).toEqual([null, null])
-		expect(result.stats).toMatchObject({
-			spotVolume24h: 0,
-			perpsVolume24h: 0,
-			openInterest24h: 0
-		})
+		expect(result.rows.map((row) => [row.id, row.spotVolume24h, row.perpsVolume24h, row.openInterest24h])).toEqual([
+			['first-duplicate', null, null, null],
+			['second-duplicate', 100, 200, 50]
+		])
 	})
 })

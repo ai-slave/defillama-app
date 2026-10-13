@@ -15,6 +15,8 @@
  * - A failed source makes only its own measurements unavailable (`unavailableSources`); a successful measured zero
  *   stays zero.
  * - `openInterest24h` is current open interest. Spot and perp volume are trailing 24h flows.
+ * - `perpsVolume24h` and `openInterest24h` are USD perps only, as on `/exchanges`: COIN perps settle in the coin and
+ *   are never added in. The fields keep their old ids so saved sorts and filters still resolve.
  * - A CSV export pins rows, filter metadata and source availability to one saved snapshot version. If the snapshot
  *   cannot be saved or read back, the export fails rather than continuing on a newer version, and the API answers 503
  *   because storage cannot tell expiry from an outage.
@@ -27,7 +29,8 @@ import type { IResponseCGTokenRankingsDatasetItem } from '~/api/coingecko.types'
 import { fetchAdapterChainMetrics } from '~/containers/AdapterMetrics/api'
 import type { IAdapterChainMetrics } from '~/containers/AdapterMetrics/api.types'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
-import type { TokenMarketsListResponse } from '~/containers/Markets/api.types'
+import type { TokenMarketSummary as ExchangeTokenSummary } from '~/containers/Markets/api.types'
+import type { Segment } from '~/containers/Markets/segments'
 import type { TokenOverviewCurrentMetrics } from '~/containers/Token/tokenOverview'
 import { TOKEN_RIGHTS_SECTION_ID } from '~/containers/Token/types'
 import type { IRawTokenRightsEntry } from '~/containers/TokenRights/api.types'
@@ -44,14 +47,7 @@ import { geckoTokenIconUrl } from '~/utils/icons'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
 import { getCanonicalTokenRoute, type TokenDirectoryRecord } from '~/utils/tokenDirectory'
 import { TOKENS_SOURCE_CACHE_TTL_MS, tokensCacheWindow } from './cache.server'
-import {
-	buildMarketsMap,
-	buildTokenDirectoryIndexes,
-	buildUniqueTokenSymbols,
-	EMPTY_MARKETS_LIST,
-	resolveEmissionsProtocolSlug,
-	resolveProtocolId
-} from './readModel'
+import { buildTokenDirectoryIndexes, resolveEmissionsProtocolSlug, resolveProtocolId } from './readModel'
 import { getTokensMarketSnapshot, type TokensMarketSnapshot } from './server/tableData.server'
 import type {
 	TokenMarketSummary,
@@ -74,6 +70,8 @@ import {
 } from './utils'
 
 const THIRTY_DAYS_SECONDS = 30 * 24 * 60 * 60
+const SPOT_SEGMENTS: ReadonlyArray<Segment> = ['spot']
+const USD_PERP_SEGMENTS: ReadonlyArray<Segment> = ['linear_perp']
 
 type AdapterProtocolMetric = IAdapterChainMetrics['protocols'][number]
 
@@ -189,22 +187,23 @@ function resolveTokenRightsPreview(
 	return protocolId ? (rightsByDefillamaId.get(protocolId) ?? null) : null
 }
 
-function sumSegments(
-	entry: TokenMarketsListResponse['tokens'][number] | undefined,
-	key: 'volume_24h' | 'oi_usd'
+/** Sums one metric over the CEX and DEX buckets of `segments`. A bucket with no listed
+ *  pair counts as untracked, so a token with none in any of them reads null, not zero. */
+function sumMarketTotals(
+	summary: ExchangeTokenSummary | undefined,
+	segments: ReadonlyArray<Segment>,
+	key: 'total_volume_24h' | 'total_oi_usd'
 ): number | null {
-	if (!entry) return null
+	if (!summary) return null
 	let total = 0
 	let hasValue = false
-	const linear = entry.segments.linear_perp?.[key]
-	const inverse = entry.segments.inverse_perp?.[key]
-	if (linear != null) {
-		total += linear
-		hasValue = true
-	}
-	if (inverse != null) {
-		total += inverse
-		hasValue = true
+	for (const venue of [summary.totals.cex, summary.totals.dex]) {
+		for (const segment of segments) {
+			const bucket = venue[segment]
+			if (bucket.pair_count === 0 || bucket[key] == null) continue
+			total += bucket[key]
+			hasValue = true
+		}
 	}
 	return hasValue ? total : null
 }
@@ -232,11 +231,7 @@ function getUnlockedPercentFromSupplyMetrics(
 	return Math.max(0, Math.min(100, (adjustedSupply / maxSupply) * 100))
 }
 
-function firstUpdatedAt(
-	tokens: Array<IResponseCGTokenRankingsDatasetItem>,
-	markets: TokenMarketsListResponse | null
-): string | null {
-	if (markets?.last_updated) return markets.last_updated
+function firstUpdatedAt(tokens: Array<IResponseCGTokenRankingsDatasetItem>): string | null {
 	for (const token of tokens) {
 		if (token.last_updated) return token.last_updated
 	}
@@ -331,7 +326,7 @@ export function buildTokensSourceRows({
 	nowSec
 }: {
 	tokens: Array<IResponseCGTokenRankingsDatasetItem>
-	markets: TokenMarketsListResponse | null
+	markets: Record<string, ExchangeTokenSummary> | null
 	currentMetricsById?: Record<string, TokenOverviewCurrentMetrics>
 	tokenRightsEntries: Array<IRawTokenRightsEntry> | null
 	fees: Array<AdapterProtocolMetric> | null
@@ -342,7 +337,6 @@ export function buildTokensSourceRows({
 	nowSec: number
 }): TokensSourceRows {
 	const indexes = buildTokenDirectoryIndexes(metadata)
-	const marketsBySymbol = buildMarketsMap(markets ?? EMPTY_MARKETS_LIST, buildUniqueTokenSymbols(tokens))
 	const rightsByDefillamaId = buildTokenRightsMap(tokenRightsEntries ?? [])
 	const feeByDefillamaId = buildMetricMap(fees ?? [])
 	const revenueByDefillamaId = buildMetricMap(revenue ?? [])
@@ -375,7 +369,7 @@ export function buildTokensSourceRows({
 		const record = indexes.byGeckoId.get(geckoId)
 		const protocolId = resolveProtocolId(geckoId, record, indexes)
 		const protocolMetadata = protocolId ? metadata.protocolMetadata[protocolId] : undefined
-		const marketsEntry = marketsBySymbol.get(token.symbol.toUpperCase())
+		const marketSummary = markets?.[geckoId]
 		const revenue24h = protocolId ? (revenueByDefillamaId.get(protocolId) ?? null) : null
 		const holdersRevenue24h = protocolId ? (holdersRevenueByDefillamaId.get(protocolId) ?? null) : null
 		const emissionsProtocolSlug = resolveEmissionsProtocolSlug(record, protocolId, protocolMetadata, metadata)
@@ -383,9 +377,9 @@ export function buildTokensSourceRows({
 			? (metadata.emissionsSupplyMetrics[emissionsProtocolSlug]?.supplyMetrics.adjustedSupply ?? null)
 			: null
 		const unlockMetrics = unlocksByGeckoId.get(geckoId)
-		const spotVolume24h = marketsEntry?.segments.spot?.volume_24h ?? null
-		const perpsVolume24h = sumSegments(marketsEntry, 'volume_24h')
-		const openInterest24h = sumSegments(marketsEntry, 'oi_usd')
+		const spotVolume24h = sumMarketTotals(marketSummary, SPOT_SEGMENTS, 'total_volume_24h')
+		const perpsVolume24h = sumMarketTotals(marketSummary, USD_PERP_SEGMENTS, 'total_volume_24h')
+		const openInterest24h = sumMarketTotals(marketSummary, USD_PERP_SEGMENTS, 'total_oi_usd')
 		const href = record ? getCanonicalTokenRoute(record) : null
 		const rights = resolveTokenRightsPreview(record, protocolId, rightsByDefillamaId)
 		const protocolTokenRightsSlug =
@@ -410,9 +404,7 @@ export function buildTokensSourceRows({
 						? `/protocol/token-rights/${protocolTokenRightsSlug}`
 						: null
 				: null,
-			price: currentMetrics
-				? currentMetrics.currentPrice
-				: (token.current_price ?? marketsEntry?.segments.spot?.price ?? null),
+			price: currentMetrics ? currentMetrics.currentPrice : (token.current_price ?? null),
 			priceChange1h: token.price_change_percentage_1h_in_currency ?? null,
 			priceChange24h: currentMetrics
 				? currentMetrics.percentChange24h
@@ -470,7 +462,7 @@ export function buildTokensSourceRows({
 		rows,
 		sortIndexes: buildTokensSortIndexes(rows),
 		stats,
-		updatedAt: firstUpdatedAt(tokens, markets),
+		updatedAt: firstUpdatedAt(tokens),
 		chainOptions,
 		categoryOptions
 	}

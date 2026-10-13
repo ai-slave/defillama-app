@@ -379,14 +379,16 @@ function TokensStats({ stats, display }: { stats: TokensPageStats; display: Toke
 			tooltip: 'Spot trading volume over the last 24 hours across tracked markets.'
 		},
 		{
-			label: '24h Perps Vol',
+			label: '24h USD Perps Vol',
 			value: display.perpsVolume24h ?? '—',
-			tooltip: 'Perpetual futures trading volume over the last 24 hours across tracked markets.'
+			tooltip:
+				'USD-margined perpetual futures volume over the last 24 hours across tracked markets. COIN-margined perps are not included.'
 		},
 		{
-			label: 'OI',
+			label: 'USD Perps OI',
 			value: display.openInterest24h ?? '—',
-			tooltip: 'Current USD value of outstanding perpetual futures positions across tracked markets.'
+			tooltip:
+				'Current USD value of outstanding USD-margined perpetual futures positions across tracked markets. COIN-margined perps are not included.'
 		},
 		{
 			label: 'Past 30d Unlocks',

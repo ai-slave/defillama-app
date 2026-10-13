@@ -96,14 +96,14 @@ export const TOKENS_HIDEABLE_COLUMN_SPECS: Array<TokensColumnSpec> = [
 	},
 	{
 		id: 'perpsVolume24h',
-		header: '24h Perps Vol',
+		header: '24h USD Perps Vol',
 		format: 'currency',
 		filterCategory: 'activity',
 		csvValue: (row) => row.perpsVolume24h ?? ''
 	},
 	{
 		id: 'openInterest24h',
-		header: 'OI',
+		header: 'USD Perps OI',
 		format: 'currency',
 		filterCategory: 'activity',
 		csvValue: (row) => row.openInterest24h ?? ''

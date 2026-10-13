@@ -1,7 +1,8 @@
+import type { CexExchangeSlugIndexEntry } from '~/containers/Markets/server/dataset.index'
+
 export interface ICex {
 	name: string
 	cexProtocolSlug?: string
-	exchangeProfileSlug?: string
 	tokensToExclude: Array<string>
 	coin?: string
 	coinSymbol?: string
@@ -16,11 +17,13 @@ export interface ICex {
 	inflows_24h: number | null
 	inflows_1w: number | null
 	inflows_1m: number | null
-	spotVolume: number | null
-	oi: number | null
-	derivVolume: number | null
+	/** The mapped exchange venue: profile slug, REAL tier and market figures. Null when no venue maps to this CEX. */
+	exchange: CexExchangeSlugIndexEntry | null
+	/** USD perp OI / clean assets. */
 	leverage: number | null
 }
+
+export type CexReservesRow = Omit<ICex, 'exchange' | 'leverage'>
 
 export interface CexInflowsRequest {
 	cexProtocolSlug: string

@@ -13,10 +13,10 @@ const cacheMocks = vi.hoisted(() => ({
 }))
 vi.mock('~/utils/cache-client', () => cacheMocks)
 const upstreamMocks = vi.hoisted(() => ({
-	fetchTokenMarketsList: vi.fn()
+	fetchTokenMarketSummaries: vi.fn()
 }))
 vi.mock('~/containers/Markets/server/dataset.server', () => ({
-	fetchTokenMarketsList: upstreamMocks.fetchTokenMarketsList
+	fetchTokenMarketSummaries: upstreamMocks.fetchTokenMarketSummaries
 }))
 import { getTokensMarketSnapshot } from '../server/tableData.server'
 
@@ -56,7 +56,7 @@ function storedSnapshot(version: string, generatedAt: number): SharedTokensMarke
 		version,
 		generatedAt,
 		tokens: [],
-		markets: { last_updated: '', tokens: [] },
+		markets: {},
 		currentMetricsById: {}
 	}
 }
@@ -90,13 +90,13 @@ describe('getTokensMarketSnapshot window freshness', () => {
 		cacheMocks.getObjectCache.mockResolvedValue({ version: stale.version, publishedAt: stale.generatedAt })
 		cacheMocks.getCache.mockResolvedValue(await blobFor(stale))
 		http.serve({ '/tokenlist/rankings.json': [] })
-		upstreamMocks.fetchTokenMarketsList.mockResolvedValue({ last_updated: '', tokens: [] })
+		upstreamMocks.fetchTokenMarketSummaries.mockResolvedValue({})
 
 		const snapshot = await getTokensMarketSnapshot()
 
 		expect(http.requests).toHaveLength(1)
 		expect(snapshot.generatedAt).toBe(Date.now())
-		expect(published.get('tokens-market:v4:all:latest')).toMatchObject({ version: snapshot.version })
+		expect(published.get('tokens-market:v5:all:latest')).toMatchObject({ version: snapshot.version })
 	})
 
 	test('adopts a concurrent winner published for this window instead of double-publishing', async () => {
@@ -108,12 +108,12 @@ describe('getTokensMarketSnapshot window freshness', () => {
 			.mockResolvedValueOnce(null)
 			.mockResolvedValue({ version: winner.version, publishedAt: winner.generatedAt })
 		const winnerBlob = await blobFor(winner)
-		published.set('tokens-market:v4:all:latest', { version: winner.version, publishedAt: winner.generatedAt })
-		published.set(`tokens-market:v4:all:${winner.version}`, winnerBlob.Body)
+		published.set('tokens-market:v5:all:latest', { version: winner.version, publishedAt: winner.generatedAt })
+		published.set(`tokens-market:v5:all:${winner.version}`, winnerBlob.Body)
 		const existing = new Map(published)
 		cacheMocks.getCache.mockResolvedValue(winnerBlob)
 		http.serve({ '/tokenlist/rankings.json': [{ id: 'own-sample', name: 'Own Sample', symbol: 'own' }] })
-		upstreamMocks.fetchTokenMarketsList.mockResolvedValue({ last_updated: '', tokens: [] })
+		upstreamMocks.fetchTokenMarketSummaries.mockResolvedValue({})
 
 		const snapshot = await getTokensMarketSnapshot()
 
@@ -129,11 +129,11 @@ describe('getTokensMarketSnapshot window freshness', () => {
 		)
 		cacheMocks.getCache.mockResolvedValue(await blobFor(old))
 		http.serve({ '/tokenlist/rankings.json': [] })
-		upstreamMocks.fetchTokenMarketsList.mockRejectedValue(new Error('Markets unavailable'))
+		upstreamMocks.fetchTokenMarketSummaries.mockRejectedValue(new Error('Markets unavailable'))
 		const snapshot = await getTokensMarketSnapshot()
 		expect(snapshot.markets).toBeNull()
 		expect(snapshot.version).not.toBe(old.version)
-		const saved = published.get(`tokens-market:v4:all:${snapshot.version}`) as Buffer
+		const saved = published.get(`tokens-market:v5:all:${snapshot.version}`) as Buffer
 		expect(JSON.parse((await gunzipAsync(saved)).toString()).markets).toBeNull()
 	})
 })

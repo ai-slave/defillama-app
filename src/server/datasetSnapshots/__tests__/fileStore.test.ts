@@ -33,17 +33,17 @@ describe('filesystem dataset snapshot store', () => {
 		const second = await store.publish('markets', (writer) => writeMarketsArtifacts(writer, 2))
 
 		expect(first.ref.snapshotId).not.toBe(second.ref.snapshotId)
-		const firstRead = await first.readJson('tokens-list.json')
-		expect(await first.readJson('tokens-list.json')).toBe(firstRead)
+		const firstRead = await first.readJson('token-summaries.json')
+		expect(await first.readJson('token-summaries.json')).toBe(firstRead)
 		expect(firstRead).toEqual({
 			version: 1,
-			relativePath: 'tokens-list.json'
+			relativePath: 'token-summaries.json'
 		})
-		const currentRead = await (await store.getCurrent('markets'))?.readJson('tokens-list.json')
+		const currentRead = await (await store.getCurrent('markets'))?.readJson('token-summaries.json')
 		expect(currentRead).not.toBe(firstRead)
 		expect(currentRead).toEqual({
 			version: 2,
-			relativePath: 'tokens-list.json'
+			relativePath: 'token-summaries.json'
 		})
 	})
 
@@ -59,7 +59,7 @@ describe('filesystem dataset snapshot store', () => {
 				throw new Error('upstream failed')
 			})
 		).rejects.toThrow('upstream failed')
-		await expect(store.publish('markets', (writer) => writer.writeJson('tokens-list.json', {}))).rejects.toThrow(
+		await expect(store.publish('markets', (writer) => writer.writeJson('token-summaries.json', {}))).rejects.toThrow(
 			'exchange-directory.json'
 		)
 		await expect(readFile(pointerPath, 'utf8')).resolves.toBe(before)
@@ -82,9 +82,9 @@ describe('filesystem dataset snapshot store', () => {
 		const versions = (await readdir(versionsDir)).sort()
 		expect(versions).toEqual([current.ref.snapshotId, previous.ref.snapshotId].sort())
 		expect(versions).not.toContain(first.ref.snapshotId)
-		await expect(previous.readJson('tokens-list.json')).resolves.toEqual({
+		await expect(previous.readJson('token-summaries.json')).resolves.toEqual({
 			version: 2,
-			relativePath: 'tokens-list.json'
+			relativePath: 'token-summaries.json'
 		})
 		await expect(store.getStats('markets')).resolves.toMatchObject({ versionCount: 2 })
 	})

@@ -5,6 +5,10 @@ import { YIELDS_SNAPSHOT_FILES } from '~/containers/Yields/data/snapshot.contrac
  *
  * The version is bumped only when the on-storage layout or manifest shape is
  * incompatible. Domain schema versions change independently.
+ *
+ * Bump a domain's `schemaVersion` with every change to its files or their shape, even
+ * when the branch already bumped it: a snapshot built at the same version stays current
+ * and keeps serving the old shape until it expires.
  */
 export const DATASET_SNAPSHOT_FORMAT_VERSION = 2
 
@@ -61,9 +65,8 @@ export const DATASET_SNAPSHOT_CONTRACT = {
 		}
 	},
 	markets: {
-		schemaVersion: 4,
+		schemaVersion: 8,
 		files: {
-			tokensList: 'tokens-list.json',
 			exchangeDirectory: 'exchange-directory.json',
 			tokenGeckoIds: 'token-gecko-ids.json',
 			tokenSummaries: 'token-summaries.json',

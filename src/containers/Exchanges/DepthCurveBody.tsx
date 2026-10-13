@@ -4,7 +4,8 @@
  *
  * Superimposed rather than stacked because the question is which venue is deeper, not
  * what they sum to. One series per entry rather than one per side, so the legend lists
- * exchanges rather than exchange-and-side pairs.
+ * exchanges rather than exchange-and-side pairs. The zoom slider narrows the book to a
+ * distance range, such as the books within 1% of mid.
  */
 import * as React from 'react'
 import type { ChartExportHandle } from '~/components/ChartExport/types'
@@ -56,7 +57,6 @@ export function DepthCurveBody({
 					dataset={{ source: dataset.source, dimensions: dataset.dimensions }}
 					charts={charts}
 					valueSymbol="$"
-					hideDataZoom
 					showLegend
 					exportButtons={exportButtons}
 					// Category options bring a tooltip formatter built for a labeled axis;
@@ -64,7 +64,9 @@ export function DepthCurveBody({
 					// a date for every band.
 					chartOptions={{
 						...categoryOptions,
-						xAxis: { type: 'category', boundaryGap: false, axisLabel: { interval: 0, rotate: 45 } }
+						xAxis: { type: 'category', boundaryGap: false, axisLabel: { interval: 0, rotate: 45 } },
+						// The slider narrows the book to a band around mid; its handles name the distance, not a date.
+						dataZoom: [{}, { labelFormatter: (_index: number, distance: string) => distance }]
 					}}
 				/>
 			</React.Suspense>

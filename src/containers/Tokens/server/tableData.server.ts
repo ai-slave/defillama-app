@@ -1,12 +1,12 @@
 import { fetchCoinGeckoTokensListFromDataset } from '~/api/coingecko'
 import type { IResponseCGTokenRankingsDatasetItem } from '~/api/coingecko.types'
-import type { TokenMarketsListResponse } from '~/containers/Markets/api.types'
-import { fetchTokenMarketsList } from '~/containers/Markets/server/dataset.server'
+import type { TokenMarketSummary } from '~/containers/Markets/api.types'
+import { fetchTokenMarketSummaries } from '~/containers/Markets/server/dataset.server'
 import type { TokenOverviewCurrentMetrics } from '~/containers/Token/tokenOverview'
 import { cachedResult } from '~/server/api/resultCache'
 import { contentHashVersion, createRedisBlobStore } from '~/server/datasetSnapshots/redisBlobStore.server'
 import { isCurrentTokensWindow, tokensCacheWindow } from '../cache.server'
-import { buildTokenIndexById, buildTokenOverviewCurrentMetricsById, EMPTY_MARKETS_LIST } from '../readModel'
+import { buildTokenIndexById, buildTokenOverviewCurrentMetricsById } from '../readModel'
 
 /**
  * The shared token market snapshot: one content-hashed, pointer-fresh dataset
@@ -18,7 +18,8 @@ interface SharedTokensMarketSnapshot {
 	version: string
 	generatedAt: number
 	tokens: Array<IResponseCGTokenRankingsDatasetItem>
-	markets: TokenMarketsListResponse | null
+	/** Exchange market totals by lowercase CoinGecko ID. */
+	markets: Record<string, TokenMarketSummary> | null
 	currentMetricsById: Record<string, TokenOverviewCurrentMetrics>
 }
 
@@ -27,7 +28,7 @@ interface TokensMarketSnapshot extends SharedTokensMarketSnapshot {
 }
 
 const tokensMarketStore = createRedisBlobStore<SharedTokensMarketSnapshot>({
-	prefix: 'tokens-market:v4',
+	prefix: 'tokens-market:v5',
 	versionTtlSeconds: 30 * 60,
 	pointerTtlSeconds: 5 * 60,
 	lastGoodTtlSeconds: 60 * 60,
@@ -38,15 +39,11 @@ const tokensMarketStore = createRedisBlobStore<SharedTokensMarketSnapshot>({
 async function buildSharedTokensMarketSnapshot(): Promise<SharedTokensMarketSnapshot> {
 	const [tokens, markets, metadataModule] = await Promise.all([
 		fetchCoinGeckoTokensListFromDataset(),
-		fetchTokenMarketsList().catch(() => null),
+		fetchTokenMarketSummaries().catch(() => null),
 		import('~/utils/metadata')
 	])
 	metadataModule.refreshMetadataInBackgroundIfStale('tokens')
-	const currentMetricsById = buildTokenOverviewCurrentMetricsById({
-		tokens,
-		markets: markets ?? EMPTY_MARKETS_LIST,
-		metadata: metadataModule.default
-	})
+	const currentMetricsById = buildTokenOverviewCurrentMetricsById({ tokens, metadata: metadataModule.default })
 	return {
 		// Content-addressed: an unchanged upstream republishes the same blob and
 		// only refreshes the freshness pointer.

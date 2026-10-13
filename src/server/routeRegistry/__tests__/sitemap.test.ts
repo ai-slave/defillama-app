@@ -120,7 +120,15 @@ vi.mock('~/containers/Raises/server/dataset.server', () => ({
 vi.mock('~/containers/Markets/server/dataset.server', () => ({
 	fetchExchangeDirectory: async () => ({ venues: [{ slug: 'binance' }, { slug: 'coinbase' }] }),
 	fetchCexExchangeSlugIndex: async () => ({
-		'binance-cex': { exchange: 'binance', defillama_slug: 'binance-cex' }
+		'binance-cex': {
+			exchange: 'binance',
+			defillama_slug: 'binance-cex',
+			rank: null,
+			spot_volume_24h: null,
+			usd_perp_volume_24h: null,
+			usd_perp_oi_usd: null,
+			volume_7d: []
+		}
 	})
 }))
 
