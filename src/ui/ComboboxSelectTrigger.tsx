@@ -81,24 +81,15 @@ export function DisclosureArrow() {
 }
 
 /** Ariakit's ComboboxSelect, for every picker trigger. A list without a search field keeps focus on its trigger, inside
-    any dialog around it. Ariakit closes the list on Escape and lets the key go on to that dialog, which closes too and
-    drops its draft. While the list is open, the trigger takes Escape for the list alone, before Ariakit's own handler. */
+    any dialog around it; Ariakit's Escape closes that list alone and keeps the key from the dialog, so the dialog and
+    its draft stay until a second Escape. */
 export function ComboboxSelectTrigger({
 	arrow = true,
 	children,
 	...props
 }: Ariakit.ComboboxSelectProps & { arrow?: boolean }) {
-	const store = Ariakit.useComboboxContext()!
 	return (
-		<Ariakit.ComboboxSelect
-			{...props}
-			onKeyDownCapture={(event) => {
-				props.onKeyDownCapture?.(event)
-				if (event.key !== 'Escape' || !store.getState().open) return
-				event.stopPropagation()
-				store.hide()
-			}}
-		>
+		<Ariakit.ComboboxSelect {...props}>
 			{children}
 			{!arrow ? null : props['aria-busy'] ? (
 				<span className="ml-auto text-tertiary">

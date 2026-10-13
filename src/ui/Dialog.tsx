@@ -133,8 +133,9 @@ const dialogScrollableBodyStyles = 'min-h-0 flex-auto overflow-y-auto overscroll
      (`Ariakit.Focusable autoFocus render={<Input />}`); otherwise it starts
      on the ×. A picker's search autofocuses on desktop only, so a phone
      does not open its keyboard over the list.
-   - Escape on an open picker closes only the picker: every picker trigger
-     is ComboboxSelectTrigger, so a second Escape closes the dialog.
+   - Escape on an open picker closes only the picker, and a second Escape
+     closes the dialog: Ariakit stops the key at the list, so no picker adds
+     its own Escape handler.
    - Pending buttons, errors, focus handoff and success steps follow
      docs/focus-and-errors.md.
 ---------------------------------------------------------------------------- */
