@@ -13,7 +13,7 @@ interface TurnstileProps {
 export function Turnstile({ onVerify, onError, onExpire, action, ref }: TurnstileProps) {
 	const [isDarkMode] = useDarkModeManager()
 	const theme: 'light' | 'dark' = isDarkMode ? 'dark' : 'light'
-	const siteKey = '0x4AAAAAABjeuAHi7HNPyGmv'
+	const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '0x4AAAAAABjeuAHi7HNPyGmv'
 
 	return (
 		<div className="flex justify-center">

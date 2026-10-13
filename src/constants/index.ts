@@ -14,7 +14,7 @@ export const GOOGLE_WEB_CLIENT_ID =
 	'137607440574-52q46ue3f50ciegcdq6do2h50esah040.apps.googleusercontent.com'
 
 // Base servers
-export const AUTH_SERVER = 'https://features.llama.fi'
+export const AUTH_SERVER = process.env.NEXT_PUBLIC_AUTH_SERVER_URL || 'https://features.llama.fi'
 export const AI_SERVER = process.env.NEXT_PUBLIC_AI_SERVER_URL ?? 'https://ai.llama.fi'
 export const FEATURES_SERVER = process.env.NEXT_PUBLIC_FEATURES_SERVER_URL ?? 'https://features.llama.fi'
 export const DATASETS_SERVER_URL =
@@ -85,5 +85,5 @@ export const TOTAL_TRACKED_BY_METRIC_API = `${getDirectUrlEnv('SERVER_URL') ?? '
 export const TOKEN_DIRECTORY_API = `${getDirectUrlEnv('SERVER_URL') ?? 'https://api.llama.fi'}/config/smol/token.json`
 
 // External services
-export const POCKETBASE_URL = 'https://pb.llama.fi'
+export const POCKETBASE_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'https://pb.llama.fi'
 export const SEARCH_API_URL = 'https://search-core.defillama.com/multi-search'
