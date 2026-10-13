@@ -655,7 +655,11 @@ export const getProtocolOverviewPageData = async ({
 			...r,
 			investors: r.leadInvestors.concat(r.otherInvestors)
 		}))
-	const currentTvlByChain = currentProtocolMetadata.tvl ? protocolData.currentChainTvls : null
+	// Dead adapters keep tvl metadata but report no current values; null hides the hero instead of summing {} to $0.
+	const currentTvlByChain =
+		currentProtocolMetadata.tvl && Object.keys(protocolData.currentChainTvls).length > 0
+			? protocolData.currentChainTvls
+			: null
 	const hasIncentiveMetrics =
 		incentives != null &&
 		(incentives.emissions1y != null ||

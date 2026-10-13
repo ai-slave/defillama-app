@@ -295,12 +295,12 @@ describe('getProtocolOverviewPageData', () => {
 		expect(faqPeers).toEqual(['Arbitrum Rates', 'Rho X'])
 	})
 
-	test('distinguishes absent TVL capability from successful empty and explicit-zero TVL responses', async () => {
+	test('treats an empty current TVL response as no TVL and keeps an explicit zero', async () => {
 		const absent = await pageData({ currentProtocolMetadata: { displayName: 'Test Protocol', tvl: false } })
 		expect(absent.currentTvlByChain).toBeNull()
 
 		const empty = await pageData({ currentProtocolMetadata: { displayName: 'Test Protocol', tvl: true } })
-		expect(empty.currentTvlByChain).toStrictEqual({})
+		expect(empty.currentTvlByChain).toBeNull()
 
 		serveProtocol('test-protocol', { ...protocolDetails, gecko_id: null, currentChainTvls: { Ethereum: 0 } })
 		const zero = await pageData({ currentProtocolMetadata: { displayName: 'Test Protocol', tvl: true } })
