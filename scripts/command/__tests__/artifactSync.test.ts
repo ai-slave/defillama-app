@@ -77,7 +77,16 @@ describe('artifact sync adapter', () => {
 		expect(runCommand).toHaveBeenCalledOnce()
 		expect(runCommand).toHaveBeenCalledWith(
 			'rclone',
-			['--config', 'scripts/rclone.conf', 'copy', '.next/static', 'artifacts:defillama-app-artifacts'],
+			[
+				'--config',
+				'scripts/rclone.conf',
+				'copy',
+				'.next/static',
+				'artifacts:defillama-app-artifacts',
+				'--no-check-dest',
+				'--transfers',
+				'32'
+			],
 			expect.objectContaining({ env: artifactSyncEnv })
 		)
 	})

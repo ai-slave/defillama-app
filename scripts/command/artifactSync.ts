@@ -61,12 +61,20 @@ export async function syncBuildArtifacts({
 	const configPath = path.join('scripts', 'rclone.conf')
 	const staticPath = path.join('.', '.next', 'static')
 	const remotePath = 'artifacts:defillama-app-artifacts'
-	const upload = await runCommand('rclone', ['--config', configPath, 'copy', staticPath, remotePath], {
-		activeChildren,
-		cwd: projectDir,
-		env,
-		logger
-	})
+	// Every file under .next/static is named by its content hash, so overwriting one writes the same
+	// bytes. Skipping the bucket check saves listing the ~140k files the bucket holds (about a month
+	// of uploads), and re-uploading refreshes the upload date of chunks the live build still uses.
+	// One build is ~2k small files, hence the wider parallel upload.
+	const upload = await runCommand(
+		'rclone',
+		['--config', configPath, 'copy', staticPath, remotePath, '--no-check-dest', '--transfers', '32'],
+		{
+			activeChildren,
+			cwd: projectDir,
+			env,
+			logger
+		}
+	)
 	if (upload.exitCode !== 0) {
 		logger.log('rclone artifact upload failed')
 		return { result: upload, status: 'failed', step: 'upload' }
