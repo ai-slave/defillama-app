@@ -626,7 +626,9 @@ function MessageBubbleContent({
 							// Branch arrows show which version is on screen, so only the edit action hides.
 							<span
 								className={
-									isLatest ? 'flex' : 'flex opacity-0 group-focus-within/msg:opacity-100 group-hover/msg:opacity-100'
+									isLatest
+										? 'flex'
+										: 'flex opacity-0 group-hover/msg:opacity-100 group-has-focus-visible/msg:opacity-100 pointer-coarse:group-focus-within/msg:opacity-100'
 								}
 							>
 								<Tooltip

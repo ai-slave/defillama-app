@@ -35,7 +35,7 @@ const DISPLAY_AS_OPTIONS = [
 ]
 
 const SECTION_CONTROLS_CLASS =
-	'flex shrink-0 flex-wrap items-center gap-1 opacity-0 transition-opacity group-focus-within/section:opacity-100 group-hover/section:opacity-100 group-data-[arrived=true]/dashboard-section:opacity-100 has-[[aria-expanded=true]]:opacity-100 motion-reduce:transition-none pointer-coarse:opacity-100'
+	'flex shrink-0 flex-wrap items-center gap-1 opacity-0 transition-opacity group-has-focus-visible/section:opacity-100 group-hover/section:opacity-100 group-data-[arrived=true]/dashboard-section:opacity-100 has-[[aria-expanded=true]]:opacity-100 motion-reduce:transition-none pointer-coarse:opacity-100'
 
 export interface SectionCardProps {
 	section: SectionConfig

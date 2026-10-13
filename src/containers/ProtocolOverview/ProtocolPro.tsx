@@ -61,7 +61,7 @@ export function SortableItem({
 }
 
 /** The grip in a dashboard card's header. It shows with the card's other edit controls (ProCardEditControls): on
-    hover, focus inside the card, a card that just arrived, and always on touch screens. */
+    hover, keyboard focus on or inside the card, a card that just arrived, and always on touch screens. */
 export function SortableDragHandle({
 	label = 'Drag to reorder',
 	className
@@ -80,7 +80,7 @@ export function SortableDragHandle({
 			{...attributes}
 			{...listeners}
 			aria-label={label}
-			className={`flex cursor-grab items-center text-tertiary opacity-0 transition-opacity group-focus-within/dashboard-card:opacity-100 group-hover/dashboard-card:opacity-100 group-data-[arrived=true]/dashboard-card:opacity-100 hover:text-primary active:cursor-grabbing md:pointer-coarse:opacity-100 ${className ?? ''}`}
+			className={`flex cursor-grab items-center text-tertiary opacity-0 transition-opacity group-hover/dashboard-card:opacity-100 group-focus-visible/dashboard-card:opacity-100 group-has-focus-visible/dashboard-card:opacity-100 group-data-[arrived=true]/dashboard-card:opacity-100 hover:text-primary active:cursor-grabbing md:pointer-coarse:opacity-100 ${className ?? ''}`}
 		>
 			<Icon name="grip-vertical" className="size-3.5" />
 		</button>

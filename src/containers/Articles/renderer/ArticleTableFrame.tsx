@@ -24,7 +24,7 @@ export function ArticleTableFrame({ children, rowCount }: { children: ReactNode;
 
 	return (
 		<div className="group relative mt-9 mb-6">
-			<div className="pointer-events-none absolute -top-8 right-0 z-20 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100">
+			<div className="pointer-events-none absolute -top-8 right-0 z-20 opacity-0 transition-opacity group-hover:opacity-100 group-has-focus-visible:opacity-100 [@media(hover:none)]:opacity-100">
 				<div className="pointer-events-auto">
 					<TableImageButtons
 						getSource={getSource}

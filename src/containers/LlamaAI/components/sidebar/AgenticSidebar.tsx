@@ -44,7 +44,7 @@ import { formatUsd } from '~/utils/numberFormat'
    Not RailItem: a session row is a container holding its link and hover actions, which one RailItem element cannot
    hold, and every other sidebar row shares this recipe so the list reads as one. */
 export const SIDEBAR_ROW_SURFACE =
-	'flex items-center gap-1.5 rounded-md body-sm text-primary not-disabled:not-aria-disabled:hover:bg-hover-row focus-within:bg-hover-row data-[active=true]:bg-brand-muted data-[active=true]:text-link'
+	'flex items-center gap-1.5 rounded-md body-sm text-primary not-disabled:not-aria-disabled:hover:bg-hover-row focus-visible:bg-hover-row has-focus-visible:bg-hover-row data-[active=true]:bg-brand-muted data-[active=true]:text-link'
 export const SIDEBAR_ROW = `${SIDEBAR_ROW_SURFACE} px-2 py-1.5`
 
 interface AgenticSidebarProps {

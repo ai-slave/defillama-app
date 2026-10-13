@@ -1298,7 +1298,7 @@ function SavedQueriesTab({
 								</span>
 							</Ariakit.Button>
 							{/* A touch screen cannot hover, so it always shows the actions. */}
-							<div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100 pointer-coarse:opacity-100">
+							<div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 has-focus-visible:opacity-100 pointer-coarse:opacity-100">
 								<Tooltip
 									content="Rename"
 									render={

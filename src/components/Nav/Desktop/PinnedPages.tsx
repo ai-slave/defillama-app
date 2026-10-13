@@ -29,7 +29,11 @@ export function PinnedPages({ pinnedPages, asPath }: { pinnedPages: Array<TNavLi
 					<Button
 						variant="ghost"
 						size="sm"
-						className={isReordering ? '' : 'invisible group-focus-within/pinned:visible group-hover/pinned:visible'}
+						className={
+							isReordering
+								? ''
+								: 'invisible group-hover/pinned:visible group-has-focus-visible/pinned:visible pointer-coarse:group-focus-within/pinned:visible'
+						}
 						onClick={() => setIsReordering((value) => !value)}
 					>
 						<StableLabel labels={['Reorder', 'Done']} current={isReordering ? 'Done' : 'Reorder'} />
@@ -81,7 +85,7 @@ export function PinnedPages({ pinnedPages, asPath }: { pinnedPages: Array<TNavLi
 										}}
 									/>
 								}
-								className="absolute top-1/2 right-1 -translate-y-1/2 not-group-focus-within:not-group-hover:hidden"
+								className="invisible absolute top-1/2 right-1 -translate-y-1/2 group-hover:visible group-has-focus-visible:visible pointer-coarse:group-focus-within:visible"
 							>
 								<Icon name="x" className="size-4" />
 							</Tooltip>

@@ -48,8 +48,6 @@ export function SavedQueriesPanel({ queries, busyTaskId, onApply }: SavedQueries
 						key={query.id}
 						ref={isRenaming ? renamingRowRef : undefined}
 						data-row
-						// A tap focuses the row, which reveals its actions on screens that cannot hover.
-						tabIndex={-1}
 						className={`group/row flex items-center gap-1 border-b border-subtle last:border-b-0 ${
 							isDisabled ? 'opacity-60' : ''
 						}`}
@@ -102,7 +100,7 @@ export function SavedQueriesPanel({ queries, busyTaskId, onApply }: SavedQueries
 								</span>
 							</Tooltip>
 						)}
-						<span className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-focus-within/row:opacity-100 group-hover/row:opacity-100 pointer-coarse:opacity-100">
+						<span className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover/row:opacity-100 group-has-focus-visible/row:opacity-100 pointer-coarse:opacity-100">
 							<Tooltip
 								content="Rename"
 								render={

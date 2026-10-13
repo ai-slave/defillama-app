@@ -187,7 +187,9 @@ function ChartNodeView({ node, selected, deleteNode, getPos, updateAttributes, e
 			<span
 				aria-hidden
 				className={`pointer-events-none absolute top-2 bottom-2 left-0 w-px transition-colors duration-150 ${
-					selected ? 'bg-link' : 'bg-border-medium group-focus-within:bg-border-strong group-hover:bg-border-strong'
+					selected
+						? 'bg-link'
+						: 'bg-border-medium group-hover:bg-border-strong group-has-focus-visible:bg-border-strong'
 				}`}
 			/>
 
@@ -196,7 +198,9 @@ function ChartNodeView({ node, selected, deleteNode, getPos, updateAttributes, e
 				contentEditable={false}
 				onMouseDown={(e) => e.stopPropagation()}
 				className={`pointer-events-none absolute -top-2 right-0 left-4 z-10 flex items-center justify-between gap-2 transition-opacity duration-150 sm:left-6 ${
-					selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100'
+					selected
+						? 'opacity-100'
+						: 'opacity-0 group-hover:opacity-100 has-focus-visible:opacity-100 pointer-coarse:opacity-100'
 				}`}
 			>
 				<span className="pointer-events-auto inline-flex items-center gap-1.5 rounded-xs border border-medium bg-surface px-2 py-1 label-xs tracking-[0.22em] text-tertiary uppercase shadow-raised">

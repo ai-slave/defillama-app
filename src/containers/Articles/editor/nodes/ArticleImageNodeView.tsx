@@ -246,7 +246,7 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 				{isEditable && !isUploading ? (
 					<div
 						contentEditable={false}
-						className={`absolute top-3 right-3 left-3 flex w-fit max-w-[calc(100%-24px)] flex-wrap items-center gap-1 rounded-md border border-medium bg-overlay p-1 shadow-overlay ${selected ? '' : 'opacity-0 group-focus-within/image:opacity-100 group-hover/image:opacity-100 pointer-coarse:opacity-100'}`}
+						className={`absolute top-3 right-3 left-3 flex w-fit max-w-[calc(100%-24px)] flex-wrap items-center gap-1 rounded-md border border-medium bg-overlay p-1 shadow-overlay ${selected ? '' : 'opacity-0 group-hover/image:opacity-100 group-has-focus-visible/image:opacity-100 pointer-coarse:opacity-100'}`}
 					>
 						<ImageDetailsPopover label="Alt" title="Image alt text" hasValue={Boolean(attrs.alt)}>
 							<AltForm key={attrs.alt} alt={attrs.alt} save={(alt) => updateAttributes({ alt })} />

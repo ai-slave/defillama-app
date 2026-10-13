@@ -739,7 +739,7 @@ function SavedDownloadRow({
 	return (
 		<li className="group relative flex items-center gap-3 border-t border-subtle py-3.5 pr-3 pl-4 transition-colors first:border-t-0 hover:bg-hover-row">
 			<span
-				className={`absolute top-2 bottom-2 left-1 w-0.5 rounded-full ${style.accent} opacity-30 transition-all group-focus-within:opacity-100 group-hover:opacity-100`}
+				className={`absolute top-2 bottom-2 left-1 w-0.5 rounded-full ${style.accent} opacity-30 transition-all group-hover:opacity-100 group-has-focus-visible:opacity-100`}
 				aria-hidden="true"
 			/>
 
@@ -762,12 +762,12 @@ function SavedDownloadRow({
 
 			{/* Clicks between the actions fall through to the run button. A touch screen cannot hover, so it always shows them. */}
 			<div className="pointer-events-none relative flex h-8 shrink-0 items-center justify-end gap-2 pl-2 sm:min-w-[12rem]">
-				<span className="label-sm text-tertiary tabular-nums transition-opacity pointer-fine:group-focus-within:opacity-0 pointer-fine:group-hover:opacity-0">
+				<span className="label-sm text-tertiary tabular-nums transition-opacity pointer-fine:group-hover:opacity-0 pointer-fine:group-has-focus-visible:opacity-0">
 					<span className="hidden text-tertiary sm:inline">{timestamp.prefix} </span>
 					<RelativeTime value={timestamp.value} input="milliseconds" />
 				</span>
 
-				<div className="flex items-center gap-0.5 transition-opacity pointer-fine:absolute pointer-fine:inset-y-0 pointer-fine:right-0 pointer-fine:pl-2 pointer-fine:opacity-0 pointer-fine:group-focus-within:opacity-100 pointer-fine:group-hover:opacity-100">
+				<div className="flex items-center gap-0.5 transition-opacity pointer-fine:absolute pointer-fine:inset-y-0 pointer-fine:right-0 pointer-fine:pl-2 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 pointer-fine:group-has-focus-visible:opacity-100">
 					<Tooltip
 						content="Rename"
 						render={

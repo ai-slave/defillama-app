@@ -114,7 +114,7 @@ function PinnedPageRow({ page }: { page: TNavLink }) {
 						}}
 					/>
 				}
-				className="absolute top-1/2 right-1 -translate-y-1/2 not-group-focus-within:not-group-hover:hidden"
+				className="invisible absolute top-1/2 right-1 -translate-y-1/2 group-hover:visible group-has-focus-visible:visible pointer-coarse:group-focus-within:visible"
 			>
 				<Icon name="x" className="size-4" />
 			</Tooltip>

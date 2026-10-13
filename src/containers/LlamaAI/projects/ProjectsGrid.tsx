@@ -222,7 +222,7 @@ export function ProjectsGrid() {
 											<RelativeTime value={p.updated_at} prefix="Updated" />
 										</p>
 									</div>
-									<div className="relative z-10 -mr-1 flex shrink-0 items-center gap-0.5 opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 max-sm:opacity-100">
+									<div className="relative z-10 -mr-1 flex shrink-0 items-center gap-0.5 opacity-0 group-hover:opacity-100 group-has-focus-visible:opacity-100 pointer-coarse:opacity-100">
 										<Tooltip
 											content="Rename project"
 											render={

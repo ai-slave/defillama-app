@@ -272,10 +272,10 @@ export function LinkToMetricOrToolPage({
 			>
 				<span className="flex w-full flex-wrap items-center gap-1">
 					<span className="label-md">{page.name}</span>
-					{/* The pin shows in this corner on hover, focus, touch and once pinned; the arrow steps aside for it. */}
+					{/* The pin shows in this corner on hover, keyboard focus, touch and once pinned; the arrow steps aside for it. */}
 					<Icon
 						name="arrow-right"
-						className="ml-auto size-4 group-focus-within:invisible group-hover:invisible group-data-[pinned=true]:invisible pointer-coarse:invisible"
+						className="ml-auto size-4 group-hover:invisible group-has-focus-visible:invisible group-data-[pinned=true]:invisible pointer-coarse:invisible"
 					/>
 				</span>
 				{totalTrackedByMetric && page.totalTrackedKey ? (
@@ -293,7 +293,7 @@ export function LinkToMetricOrToolPage({
 						variant={isPinned ? 'primary' : 'ghost'}
 						size="sm"
 						square
-						className="invisible absolute top-1 right-1 group-focus-within:visible group-hover:visible group-data-[pinned=true]:visible pointer-coarse:visible"
+						className="invisible absolute top-1 right-1 group-hover:visible group-has-focus-visible:visible group-data-[pinned=true]:visible pointer-coarse:visible"
 						aria-label={isPinned ? 'Unpin from navigation' : 'Pin to navigation'}
 						onClick={(e) => {
 							const currentPinnedMetrics = JSON.parse(window.localStorage.getItem('pinned-metrics') || '[]')

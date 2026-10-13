@@ -306,7 +306,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 				}}
 				disabled={deletion.isPending || isRestoring}
 				accessibleWhenDisabled
-				className="flex min-h-8 flex-1 items-center gap-1.5 overflow-hidden px-2 py-1.5 text-left group-focus-within:pr-16 group-hover:pr-16 aria-disabled:pointer-events-none aria-disabled:text-disabled"
+				className="flex min-h-8 flex-1 items-center gap-1.5 overflow-hidden px-2 py-1.5 text-left group-hover:pr-16 group-has-focus-visible:pr-16 aria-disabled:pointer-events-none aria-disabled:text-disabled pointer-coarse:group-focus-within:pr-16"
 			>
 				{session.isPinned ? <Icon name="pin" className="size-3.5 shrink-0 text-tertiary" /> : null}
 				{terminalSymbol ? (
@@ -329,7 +329,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 				<span className="truncate">{session.title}</span>
 			</Ariakit.Button>
 			{/* The actions strip takes its row's fill, the active row's brand tint included, so it covers the title. */}
-			<div className="pointer-events-none absolute inset-y-0 right-0 flex items-center justify-center gap-0.5 rounded-r-md bg-surface-elevated-1 px-1 opacity-0 group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100 group-data-[active=true]:bg-brand-muted">
+			<div className="pointer-events-none absolute inset-y-0 right-0 flex items-center justify-center gap-0.5 rounded-r-md bg-surface-elevated-1 px-1 opacity-0 group-hover:pointer-events-auto group-hover:opacity-100 group-has-focus-visible:pointer-events-auto group-has-focus-visible:opacity-100 group-data-[active=true]:bg-brand-muted pointer-coarse:group-focus-within:pointer-events-auto pointer-coarse:group-focus-within:opacity-100">
 				<Tooltip
 					content="Edit session title"
 					render={

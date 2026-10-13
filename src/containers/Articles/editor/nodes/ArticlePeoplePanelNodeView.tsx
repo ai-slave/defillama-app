@@ -41,7 +41,7 @@ export function ArticlePeoplePanelNodeView({ node, selected, deleteNode, getPos,
 				<div
 					contentEditable={false}
 					onMouseDown={(e) => e.stopPropagation()}
-					className={`absolute top-3 right-3 inline-flex items-center gap-1 rounded-md border border-medium bg-overlay p-1 shadow-overlay ${selected ? '' : 'opacity-0 group-focus-within/people:opacity-100 group-hover/people:opacity-100 pointer-coarse:opacity-100'}`}
+					className={`absolute top-3 right-3 inline-flex items-center gap-1 rounded-md border border-medium bg-overlay p-1 shadow-overlay ${selected ? '' : 'opacity-0 group-hover/people:opacity-100 group-has-focus-visible/people:opacity-100 pointer-coarse:opacity-100'}`}
 				>
 					<Button variant="ghost" size="sm" onClick={handleEdit}>
 						Edit

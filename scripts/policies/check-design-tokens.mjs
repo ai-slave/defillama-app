@@ -764,6 +764,25 @@ const RULES = [
 		match: matchUngatedHover
 	},
 	{
+		id: 'click-focus-reveal',
+		description:
+			'a focus-within: utility outside pointer-coarse: and on anything but a border (a field frame): a mouse click focuses the link or button it lands on, so the state stays after the pointer leaves. Use has-focus-visible: (group-has-focus-visible/x:), or pointer-coarse:group-focus-within: for a tap reveal (design.md → Forms and controls)',
+		// Allowed: a field frame's border (its not-focus-within: hover gate included) and a tap reveal under pointer-coarse:.
+		// A bare :focus-within selector in a string (no utility after it) is CSS, not a class.
+		match: (content) => {
+			const hits = []
+			for (const [token] of withoutComments(content).matchAll(/[\w:/[\]=.!,-]*focus-within[\w:/[\]=.!,-]*/g)) {
+				const segments = token.split(':')
+				const at = segments.findIndex((s) => /^(?:not-)?(?:group-|peer-|in-|has-)?focus-within(?:\/[\w-]+)?$/.test(s))
+				if (at < 0 || at === segments.length - 1) continue
+				if (segments.slice(0, -1).includes('pointer-coarse')) continue
+				if (segments.at(-1).replace(/^!/, '').startsWith('border-')) continue
+				hits.push(token)
+			}
+			return hits.length > 0 ? hits : null
+		}
+	},
+	{
 		id: 'per-field-color-scheme',
 		description:
 			'color-scheme follows the mode globally (src/tailwind.css), so native controls are already dark in dark mode; remove the scheme-* class',

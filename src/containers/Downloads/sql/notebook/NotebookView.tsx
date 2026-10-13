@@ -418,7 +418,7 @@ function AddCellBar({
 		<div className="group/rail relative flex items-center justify-center py-1">
 			<span
 				aria-hidden
-				className="pointer-events-none absolute inset-x-2 top-1/2 h-px -translate-y-1/2 bg-transparent transition-colors group-focus-within/rail:bg-border-subtle group-hover/rail:bg-border-subtle"
+				className="pointer-events-none absolute inset-x-2 top-1/2 h-px -translate-y-1/2 bg-transparent transition-colors group-hover/rail:bg-border-subtle group-has-focus-visible/rail:bg-border-subtle"
 			/>
 			<AddMenu onAdd={onAdd} variant="between" />
 		</div>

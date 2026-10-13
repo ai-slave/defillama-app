@@ -100,7 +100,7 @@ export function ProjectSidebarRow({
 						kind="tree"
 						size="sm"
 						open={isExpanded}
-						className={`-mr-1 ${isExpanded ? '' : 'lg:opacity-0 lg:group-focus-within/project:opacity-100 lg:group-hover/project:opacity-100'}`}
+						className={`-mr-1 ${isExpanded ? '' : 'pointer-fine:opacity-0 pointer-fine:group-hover/project:opacity-100 pointer-fine:group-has-focus-visible/project:opacity-100'}`}
 					/>
 					<Icon
 						name="folder"
@@ -109,7 +109,7 @@ export function ProjectSidebarRow({
 					/>
 					<span className="min-w-0 flex-1 truncate">{project.name}</span>
 				</button>
-				<span className="flex items-center has-aria-expanded:opacity-100 lg:opacity-0 lg:group-focus-within/project:opacity-100 lg:group-hover/project:opacity-100">
+				<span className="flex items-center pointer-fine:opacity-0 pointer-fine:group-hover/project:opacity-100 pointer-fine:group-has-focus-visible/project:opacity-100 pointer-fine:has-aria-expanded:opacity-100">
 					<Tooltip
 						content={`New chat in ${project.name}`}
 						render={

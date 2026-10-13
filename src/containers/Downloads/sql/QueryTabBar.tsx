@@ -390,7 +390,7 @@ function TabPill({
 					tabIndex={focused ? 0 : -1}
 					aria-label={`Close ${tab.title}`}
 					onClick={() => onClose(true)}
-					className={`flex size-5 shrink-0 items-center justify-center rounded-sm text-tertiary transition-opacity hover:bg-hover-row hover:text-primary ${active ? 'opacity-60 hover:opacity-100' : 'opacity-0 group-focus-within:opacity-60 group-hover:opacity-60 hover:opacity-100!'}`}
+					className={`flex size-5 shrink-0 items-center justify-center rounded-sm text-tertiary transition-opacity hover:bg-hover-row hover:text-primary ${active ? 'opacity-60 hover:opacity-100' : 'opacity-0 group-hover:opacity-60 group-has-focus-visible:opacity-60 hover:opacity-100!'}`}
 				>
 					<Icon name="x" className="size-3" />
 				</button>

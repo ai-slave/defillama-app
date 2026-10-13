@@ -53,7 +53,7 @@ export function ProCardEditControls({ children }: { children: ReactNode }) {
 		<div
 			role="presentation"
 			onKeyDown={keepKeyboardEventsInsideCard}
-			className="flex min-w-0 flex-wrap items-center justify-end gap-2 opacity-0 transition-opacity group-focus-within/dashboard-card:opacity-100 group-hover/dashboard-card:opacity-100 group-data-[arrived=true]/dashboard-card:opacity-100 has-[[aria-expanded=true]]:opacity-100 motion-reduce:transition-none pointer-coarse:opacity-100"
+			className="flex min-w-0 flex-wrap items-center justify-end gap-2 opacity-0 transition-opacity group-hover/dashboard-card:opacity-100 group-focus-visible/dashboard-card:opacity-100 group-has-focus-visible/dashboard-card:opacity-100 group-data-[arrived=true]/dashboard-card:opacity-100 has-[[aria-expanded=true]]:opacity-100 motion-reduce:transition-none pointer-coarse:opacity-100"
 		>
 			{children}
 		</div>

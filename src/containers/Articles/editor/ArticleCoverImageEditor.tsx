@@ -53,7 +53,7 @@ export function ArticleCoverImageEditor({
 							className={`pointer-events-none absolute inset-0 flex items-end justify-end gap-2 bg-linear-to-t from-research-backdrop-soft to-transparent p-3 transition-opacity ${
 								isUploadingCover
 									? 'opacity-100'
-									: 'opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 pointer-coarse:opacity-100'
+									: 'opacity-0 group-hover:opacity-100 group-has-focus-visible:opacity-100 pointer-coarse:opacity-100'
 							}`}
 						>
 							<Button variant="onMedia" size="md" onClick={onOpenCoverDetails} className="pointer-events-auto">

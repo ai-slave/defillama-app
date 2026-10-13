@@ -116,7 +116,7 @@ export function ProjectSessionItem({
 	}
 	return (
 		<li key={s.sessionId}>
-			<div className="group/row relative -mx-2 flex w-[calc(100%+1rem)] items-center gap-1 rounded-md pr-1 body-md text-primary focus-within:bg-hover-row hover:bg-hover-row">
+			<div className="group/row relative -mx-2 flex w-[calc(100%+1rem)] items-center gap-1 rounded-md pr-1 body-md text-primary hover:bg-hover-row has-focus-visible:bg-hover-row">
 				<button
 					type="button"
 					onClick={() => onSelect()}
@@ -135,11 +135,11 @@ export function ProjectSessionItem({
 				</button>
 				<RelativeTime
 					value={s.lastActivity ?? s.createdAt}
-					className="shrink-0 body-sm text-tertiary tabular-nums group-focus-within/row:hidden group-hover/row:hidden max-sm:hidden"
+					className="shrink-0 body-sm text-tertiary tabular-nums group-hover/row:hidden group-has-focus-visible/row:hidden max-sm:hidden pointer-coarse:group-focus-within/row:hidden"
 				/>
 				{/* Collapsed, not hidden, until the row is hovered or focused: a hidden button cannot take focus back from
 				    the rename form or the delete confirmation. */}
-				<div className="flex shrink-0 items-center gap-0.5 overflow-hidden sm:w-0 sm:group-focus-within/row:w-auto sm:group-hover/row:w-auto">
+				<div className="flex shrink-0 items-center gap-0.5 overflow-hidden sm:w-0 sm:group-hover/row:w-auto sm:group-has-focus-visible/row:w-auto sm:pointer-coarse:group-focus-within/row:w-auto">
 					<Tooltip
 						content="Rename chat"
 						render={
