@@ -117,6 +117,40 @@ describe('chart adapters', () => {
 		])
 	})
 
+	test('orders naturally ordered category labels even when the first series lacks the earliest one', () => {
+		const venueSeries = (venue: string) => ({
+			...baseSeries,
+			name: venue,
+			type: 'bar' as const,
+			dataMapping: { xField: 'quarter', yField: 'fees', entityFilter: { field: 'venue', value: venue } }
+		})
+		const config = {
+			...baseConfig,
+			type: 'bar',
+			axes: { ...baseConfig.axes, x: { field: 'quarter', label: 'Quarter', type: 'category' as const } },
+			series: [venueSeries('PancakeSwap'), venueSeries('Uniswap')]
+		} satisfies ChartConfiguration
+		const xLabels = (rows: Array<Record<string, string | number>>) =>
+			adaptCartesianChartData(config, rows).props.dataset.source.map((row) => row[0])
+
+		expect(
+			xLabels([
+				{ quarter: '2021-Q1', venue: 'Uniswap', fees: 5 },
+				{ quarter: '2021-Q2', venue: 'PancakeSwap', fees: 1 },
+				{ quarter: '2021-Q2', venue: 'Uniswap', fees: 2 },
+				{ quarter: '2021-Q3', venue: 'PancakeSwap', fees: 3 }
+			])
+		).toEqual(['2021-Q1', '2021-Q2', '2021-Q3'])
+
+		expect(
+			xLabels([
+				{ quarter: 7, venue: 'PancakeSwap', fees: 1 },
+				{ quarter: 3, venue: 'PancakeSwap', fees: 2 },
+				{ quarter: 0, venue: 'PancakeSwap', fees: 3 }
+			])
+		).toEqual(['7', '3', '0'])
+	})
+
 	test('preserves falsy category labels in cartesian, pie, hbar, and scatter adapters', () => {
 		const categoryConfig = {
 			...baseConfig,

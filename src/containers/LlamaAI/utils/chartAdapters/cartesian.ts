@@ -175,6 +175,20 @@ const normalizeCategoryXValue = (rawValue: unknown) => {
 	return String(rawValue)
 }
 
+const naturalCategoryKey = (category: string | number): number | null => {
+	const label = String(category).trim()
+	const quarter = /^(\d{4})-?Q([1-4])$/i.exec(label)
+	if (quarter) return Number(quarter[1]) * 10 + Number(quarter[2])
+	const days = /^(\d+)d$/i.exec(label)
+	if (days) return Number(days[1])
+	const number = label === '' ? NaN : Number(label)
+	return Number.isFinite(number) ? number : null
+}
+
+const isMonotonic = (keys: Array<number>) =>
+	keys.every((key, index) => index === 0 || key >= keys[index - 1]) ||
+	keys.every((key, index) => index === 0 || key <= keys[index - 1])
+
 function inferTimeSeriesAxis(
 	config: ChartConfiguration,
 	rawData: ChartDataSeries
@@ -468,6 +482,12 @@ export function adaptCartesianChartData(
 						return aOrder - bOrder
 					})
 				: []
+		const naturalKeys = categoryOrder.map(naturalCategoryKey)
+		if (naturalKeys.every((key): key is number => key != null) && !isMonotonic(naturalKeys)) {
+			const keyed = categoryOrder.map((category, index) => ({ category, key: naturalKeys[index] }))
+			keyed.sort((a, b) => a.key - b.key)
+			categoryOrder.splice(0, categoryOrder.length, ...keyed.map(({ category }) => category))
+		}
 		const datasetSource: Array<LlamaAICartesianDatasetRow> = []
 		if (axisType !== 'category') {
 			const entries = Array.from(rowsByX.entries()).sort(([a], [b]) => Number(a) - Number(b))
