@@ -67,3 +67,12 @@ test('the example showcase marks its current example and holds it while hovered 
 	await act(async () => vi.advanceTimersByTime(6200))
 	expect(currentDot()).toBe('Show example 3')
 })
+
+test('a click on an example keeps the showcase rotating', async () => {
+	// happy-dom matches :focus-visible on any focus; a click in Chrome or Firefox focuses the link without it.
+	const link = dots()[0].closest('div')!.parentElement!.querySelector('a')!
+	vi.spyOn(link, 'matches').mockImplementation((selector) => selector !== ':focus-visible')
+	await act(async () => link.focus())
+	await act(async () => vi.advanceTimersByTime(6200))
+	expect(currentDot()).toBe('Show example 2')
+})

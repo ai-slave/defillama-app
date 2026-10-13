@@ -321,7 +321,8 @@ function CTAButton() {
 function ExampleShowcase() {
 	const [current, setCurrent] = useState(0)
 	const [isTransitioning, setIsTransitioning] = useState(false)
-	// Hovering or focusing the showcase holds its example, so it never changes under the reader.
+	// Hovering the showcase or keyboard focus inside it holds its example, so it never changes under the reader. A click's
+	// focus does not: the clicked example link keeps focus, which would hold it after the reader returns from its tab.
 	const [hovered, setHovered] = useState(false)
 	const [focused, setFocused] = useState(false)
 	const paused = hovered || focused
@@ -353,7 +354,7 @@ function ExampleShowcase() {
 		<div
 			onMouseEnter={() => setHovered(true)}
 			onMouseLeave={() => setHovered(false)}
-			onFocus={() => setFocused(true)}
+			onFocus={(event) => setFocused(event.target.matches(':focus-visible'))}
 			onBlur={(event) => {
 				if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false)
 			}}
