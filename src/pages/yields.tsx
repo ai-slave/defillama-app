@@ -3,6 +3,7 @@ import { Announcement } from '~/components/Announcement'
 import { disclaimer } from '~/containers/Yields/constants'
 import { loadEarnPageProps } from '~/containers/Yields/server/earnPage.server'
 import YieldPage, { type EarnViewProps } from '~/containers/Yields/views/EarnView'
+import { YieldsV2ApiAnnouncement } from '~/containers/Yields/YieldsV2ApiAnnouncement'
 import Layout from '~/layout'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 
@@ -23,6 +24,7 @@ export default function ApyHomePage(data: InferGetServerSidePropsType<typeof get
 			<Announcement announcementId="yields-disclaimer" version="2026-03">
 				{disclaimer}
 			</Announcement>
+			<YieldsV2ApiAnnouncement />
 			<YieldPage {...data} />
 		</Layout>
 	)
