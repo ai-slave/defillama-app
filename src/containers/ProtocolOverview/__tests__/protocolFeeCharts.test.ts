@@ -1,9 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-	buildProtocolFeeChartPresentation,
-	getProtocolFeeBreakdownPanels,
-	rankBreakdownNames
-} from '../protocolFeeCharts'
+import { buildProtocolFeeChartPresentation, rankBreakdownNames } from '../protocolFeeCharts'
 
 describe('buildProtocolFeeChartPresentation', () => {
 	test('builds only the selected base fee series', () => {
@@ -52,34 +48,4 @@ test('ranks breakdown names by their total over the whole history', () => {
 			[2, { 'Perp Fees': 4, 'Builder Code Fees': 1 }]
 		])
 	).toEqual(['Perp Fees', 'Spot Fees', 'Builder Code Fees'])
-})
-
-test('shows each fee and revenue breakdown once it has more than one chain, version or label, independently', () => {
-	const panels = getProtocolFeeBreakdownPanels({
-		protocolChains: ['Ethereum'],
-		protocolFeesVersions: ['V1', 'V2'],
-		protocolFeesLabels: ['Perp Fees', 'Spot Fees'],
-		protocolRevenueChains: ['Arbitrum', 'Base'],
-		protocolRevenueVersions: ['Standalone'],
-		protocolRevenueLabels: ['Perp Fees']
-	})
-	expect(panels.map((panel) => [panel.title, panel.dataType ?? null, panel.breakdownNames])).toEqual([
-		['Fees by protocol version', null, ['V1', 'V2']],
-		['Fees by financial label', null, ['Perp Fees', 'Spot Fees']],
-		['Revenue by chain', 'dailyRevenue', ['Arbitrum', 'Base']]
-	])
-
-	const swapped = getProtocolFeeBreakdownPanels({
-		protocolChains: ['Ethereum', 'Base'],
-		protocolFeesVersions: ['V1'],
-		protocolFeesLabels: ['Perp Fees'],
-		protocolRevenueChains: ['Arbitrum'],
-		protocolRevenueVersions: ['V1', 'V2'],
-		protocolRevenueLabels: ['Perp Fees', 'Spot Fees']
-	})
-	expect(swapped.map((panel) => [panel.title, panel.chartType, panel.dataType ?? null])).toEqual([
-		['Fees by chain', 'chain', null],
-		['Revenue by protocol version', 'version', 'dailyRevenue'],
-		['Revenue by financial label', 'label', 'dailyRevenue']
-	])
 })

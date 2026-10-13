@@ -11,7 +11,7 @@ import {
 import { TokenLogo } from '~/components/TokenLogo'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { CHART_COLORS } from '~/constants/colors'
-import { DimensionProtocolChartByType } from '~/containers/AdapterMetrics/ProtocolChart'
+import { DimensionProtocolBreakdownPanel } from '~/containers/AdapterMetrics/ProtocolChart'
 import { getAdapterProtocolOverview } from '~/containers/AdapterMetrics/queries'
 import {
 	getLinkedAdapterProtocolVersionNames,
@@ -233,6 +233,7 @@ export default function Protocols(props: BridgeAggregatorProtocolPageProps) {
 							exportButtons={chartExport}
 							dataset={deferredFinalCharts.dataset}
 							charts={deferredFinalCharts.charts}
+							showLegend={deferredFinalCharts.charts.length > 1}
 							groupBy={deferredFinalCharts.groupBy}
 							valueSymbol="$"
 							{...(props.hallmarks ? { hallmarks: props.hallmarks } : {})}
@@ -240,34 +241,18 @@ export default function Protocols(props: BridgeAggregatorProtocolPageProps) {
 					</Suspense>
 				</Panel>
 			</SummaryCardGrid>
-			<div className="grid grid-cols-2 gap-2">
-				{props.protocolChains.length > 1 ? (
-					<Panel className="col-span-full xl:col-span-1 xl:only:col-span-full">
-						<DimensionProtocolChartByType
-							chartType="chain"
-							protocolName={slug(props.name)}
-							protocolDisplayName={props.name}
-							adapterType="bridge-aggregators"
-							breakdownNames={props.protocolChains}
-							{...(props.hallmarks ? { hallmarks: props.hallmarks } : {})}
-							title="Bridge Aggregator Volume by chain"
-						/>
-					</Panel>
-				) : null}
-				{props.protocolVersions.length > 1 ? (
-					<Panel className="col-span-full xl:col-span-1 xl:only:col-span-full">
-						<DimensionProtocolChartByType
-							chartType="version"
-							protocolName={slug(props.name)}
-							protocolDisplayName={props.name}
-							adapterType="bridge-aggregators"
-							breakdownNames={props.protocolVersions}
-							{...(props.hallmarks ? { hallmarks: props.hallmarks } : {})}
-							title="Bridge Aggregator Volume by protocol version"
-						/>
-					</Panel>
-				) : null}
-			</div>
+			<DimensionProtocolBreakdownPanel
+				metric="Bridge Aggregator Volume"
+				splitParam="split"
+				splits={[
+					{ type: 'chain', names: props.protocolChains },
+					{ type: 'version', names: props.protocolVersions }
+				]}
+				protocolName={slug(props.name)}
+				protocolDisplayName={props.name}
+				adapterType="bridge-aggregators"
+				{...(props.hallmarks ? { hallmarks: props.hallmarks } : {})}
+			/>
 		</ProtocolOverviewLayout>
 	)
 }

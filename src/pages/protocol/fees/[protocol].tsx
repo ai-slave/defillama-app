@@ -11,7 +11,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { fetchAdapterProtocolChartDataByBreakdownType } from '~/containers/AdapterMetrics/api'
 import type { IAdapterChart } from '~/containers/AdapterMetrics/api.types'
-import { DimensionProtocolChartByType } from '~/containers/AdapterMetrics/ProtocolChart'
+import { DimensionProtocolBreakdownPanel } from '~/containers/AdapterMetrics/ProtocolChart'
 import { getAdapterProtocolOverview } from '~/containers/AdapterMetrics/queries'
 import {
 	getLinkedAdapterProtocolVersionNames,
@@ -21,11 +21,7 @@ import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
 import { formatAdapterData } from '~/containers/ProtocolOverview/formatAdapterData'
 import { KeyMetrics } from '~/containers/ProtocolOverview/KeyMetrics'
 import { ProtocolOverviewLayout } from '~/containers/ProtocolOverview/Layout'
-import {
-	buildProtocolFeeChartPresentation,
-	getProtocolFeeBreakdownPanels,
-	rankBreakdownNames
-} from '~/containers/ProtocolOverview/protocolFeeCharts'
+import { buildProtocolFeeChartPresentation, rankBreakdownNames } from '~/containers/ProtocolOverview/protocolFeeCharts'
 import { getProtocolMetricFlags } from '~/containers/ProtocolOverview/queries'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
@@ -360,6 +356,7 @@ export default function Protocols(props: ProtocolFeesPageProps) {
 							exportButtons={chartExport}
 							dataset={deferredFinalCharts.dataset}
 							charts={deferredFinalCharts.charts}
+							showLegend={deferredFinalCharts.charts.length > 1}
 							groupBy={deferredFinalCharts.groupBy}
 							valueSymbol="$"
 							{...(props.hallmarks ? { hallmarks: props.hallmarks } : {})}
@@ -368,20 +365,33 @@ export default function Protocols(props: ProtocolFeesPageProps) {
 				</Panel>
 			</SummaryCardGrid>
 			<div className="grid grid-cols-2 gap-2">
-				{getProtocolFeeBreakdownPanels(props).map((panel) => (
-					<Panel key={panel.title} className="col-span-full xl:col-span-1 xl:only:col-span-full">
-						<DimensionProtocolChartByType
-							chartType={panel.chartType}
-							protocolName={slug(props.name)}
-							protocolDisplayName={props.name}
-							adapterType="fees"
-							{...(panel.dataType ? { dataType: panel.dataType } : {})}
-							breakdownNames={panel.breakdownNames}
-							{...(props.hallmarks ? { hallmarks: props.hallmarks } : {})}
-							title={panel.title}
-						/>
-					</Panel>
-				))}
+				<DimensionProtocolBreakdownPanel
+					metric="Fees"
+					splitParam="split"
+					splits={[
+						{ type: 'chain', names: props.protocolChains },
+						{ type: 'version', names: props.protocolFeesVersions },
+						{ type: 'label', names: props.protocolFeesLabels }
+					]}
+					protocolName={slug(props.name)}
+					protocolDisplayName={props.name}
+					adapterType="fees"
+					{...(props.hallmarks ? { hallmarks: props.hallmarks } : {})}
+				/>
+				<DimensionProtocolBreakdownPanel
+					metric="Revenue"
+					splitParam="revenueSplit"
+					splits={[
+						{ type: 'chain', names: props.protocolRevenueChains },
+						{ type: 'version', names: props.protocolRevenueVersions },
+						{ type: 'label', names: props.protocolRevenueLabels }
+					]}
+					protocolName={slug(props.name)}
+					protocolDisplayName={props.name}
+					adapterType="fees"
+					dataType="dailyRevenue"
+					{...(props.hallmarks ? { hallmarks: props.hallmarks } : {})}
+				/>
 			</div>
 		</ProtocolOverviewLayout>
 	)

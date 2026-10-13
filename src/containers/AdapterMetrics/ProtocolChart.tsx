@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { useRouter } from 'next/router'
 import * as React from 'react'
 import { AddToDashboardButton } from '~/components/AddToDashboard/AddToDashboardButton'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
@@ -20,13 +21,16 @@ import type { ChartBuilderConfig } from '~/containers/ProDashboard/types'
 import { getAdapterBuilderMetric } from '~/containers/ProDashboard/utils/adapterChartMapping'
 import { generateItemId } from '~/containers/ProDashboard/utils/dashboardUtils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { ChartPanelExportShellLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Panel } from '~/ui/Panel'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { tokenIconUrl } from '~/utils/icons'
 import { queryReadFailed } from '~/utils/query'
+import { pushShallowQuery } from '~/utils/routerQuery'
 import type { IAdapterBreakdownChartData } from './api.types'
 import type { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from './constants'
 
@@ -137,7 +141,7 @@ export const buildAdapterProtocolBreakdownApiUrl = ({
 	adapterType: `${ADAPTER_TYPES}`
 	protocol: string
 	dataType?: `${ADAPTER_DATA_TYPES}`
-	type: 'chain' | 'version' | 'label'
+	type: ProtocolBreakdownSplit
 }) => {
 	const searchParams = new URLSearchParams({
 		kind: 'adapter-breakdown',
@@ -153,104 +157,135 @@ export const buildAdapterProtocolBreakdownApiUrl = ({
 	return `/api/public/protocols/charts?${searchParams.toString()}`
 }
 
-export function DimensionProtocolChartByType({
+export type ProtocolBreakdownSplit = 'chain' | 'version' | 'label'
+
+const SPLIT_LABELS = {
+	chain: { option: 'Chain', title: 'chain', filter: 'Chains' },
+	// The API calls these versions, but most are a parent protocol's separate products (Jupiter Lend, Hyperliquid Perps);
+	// only a few are true versions (Uniswap V3).
+	version: { option: 'Product', title: 'product', filter: 'Products' },
+	// The API calls these financial labels; readers know them as where the money comes from.
+	label: { option: 'Source', title: 'source', filter: 'Sources' }
+} as const satisfies Record<ProtocolBreakdownSplit, { option: string; title: string; filter: string }>
+
+type BreakdownSplitOption = { type: ProtocolBreakdownSplit; names: Array<string> }
+
+/** A split is offered only when it has more than one series; the first offered split is the default. */
+export function resolveBreakdownSplit(
+	splits: Array<BreakdownSplitOption>,
+	queryValue: string | Array<string> | undefined
+) {
+	const options = splits.filter((split) => split.names.length > 1)
+	return { options, split: options.find((option) => option.type === queryValue) ?? options[0] }
+}
+
+/** The URL value that opens `type`: the default split writes nothing, so the plain route stays the default view. */
+export function breakdownSplitQueryValue(options: Array<BreakdownSplitOption>, type: ProtocolBreakdownSplit) {
+	return type === options[0]?.type ? undefined : type
+}
+
+/* One panel per metric, split by chain, product (the API's version) or source (the API's financial label) from a
+   switch in its header, so a page shows one breakdown per metric instead of one panel per split. The split decides
+   which data the panel shows, so it lives in the URL under `splitParam`. The panel renders nothing when no split has
+   more than one series. */
+export function DimensionProtocolBreakdownPanel({
+	metric,
+	splitParam,
+	splits,
 	protocolName,
 	protocolDisplayName,
 	adapterType,
 	dataType,
-	chartType,
-	breakdownNames,
-	hallmarks,
-	title
+	hallmarks
 }: {
+	metric: string
+	splitParam: string
+	splits: Array<BreakdownSplitOption>
 	protocolName: string
-	protocolDisplayName?: string
+	protocolDisplayName: string
 	adapterType: `${ADAPTER_TYPES}`
 	dataType?: `${ADAPTER_DATA_TYPES}`
-	chartType: 'chain' | 'version' | 'label'
-	breakdownNames: Array<string>
 	hallmarks?: Array<[number, string]>
-	title: string
+}) {
+	const router = useRouter()
+	const { options, split } = resolveBreakdownSplit(splits, router.query[splitParam])
+	if (!split) return null
+
+	return (
+		<Panel className="col-span-full xl:col-span-1 xl:only:col-span-full">
+			<BreakdownChart
+				metric={metric}
+				options={options}
+				split={split}
+				onSplitChange={(type) =>
+					void pushShallowQuery(router, { [splitParam]: breakdownSplitQueryValue(options, type) })
+				}
+				protocolName={protocolName}
+				protocolDisplayName={protocolDisplayName}
+				adapterType={adapterType}
+				{...(dataType !== undefined ? { dataType } : {})}
+				{...(hallmarks !== undefined ? { hallmarks } : {})}
+			/>
+		</Panel>
+	)
+}
+
+function BreakdownChart({
+	metric,
+	options,
+	split,
+	onSplitChange,
+	protocolName,
+	protocolDisplayName,
+	adapterType,
+	dataType,
+	hallmarks
+}: {
+	metric: string
+	options: Array<BreakdownSplitOption>
+	split: BreakdownSplitOption
+	onSplitChange: (type: ProtocolBreakdownSplit) => void
+	protocolName: string
+	protocolDisplayName: string
+	adapterType: `${ADAPTER_TYPES}`
+	dataType?: `${ADAPTER_DATA_TYPES}`
+	hallmarks?: Array<[number, string]>
 }) {
 	const query = useQuery({
-		queryKey: ['dimension-adapter-chart-breakdown', protocolName, adapterType, dataType ?? null, chartType],
+		queryKey: ['dimension-adapter-chart-breakdown', protocolName, adapterType, dataType ?? null, split.type],
 		queryFn: () =>
-			fetchJson<Array<[number, Record<string, number>]>>(
+			fetchJson<IAdapterBreakdownChartData>(
 				buildAdapterProtocolBreakdownApiUrl({
 					adapterType,
 					protocol: protocolName,
 					...(dataType !== undefined ? { dataType } : {}),
-					type: chartType
+					type: split.type
 				})
 			),
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false,
 		retry: 0
 	})
-
-	if (queryReadFailed(query)) {
-		return (
-			<SurfaceBodyStatus variant="error" retry={query}>
-				Couldn&apos;t load the {title} chart.
-			</SurfaceBodyStatus>
-		)
-	}
-
-	if (query.isLoading) {
-		return <ChartPanelExportShellLoading label="Loading chart data" className="col-span-2" />
-	}
-
-	return (
-		<ChartByType
-			data={query.data ?? []}
-			breakdownNames={breakdownNames}
-			title={title}
-			chartType={chartType}
-			protocolName={protocolName}
-			adapterType={adapterType}
-			{...(protocolDisplayName !== undefined ? { protocolDisplayName } : {})}
-			{...(hallmarks !== undefined ? { hallmarks } : {})}
-		/>
-	)
-}
-
-function ChartByType({
-	data,
-	title,
-	breakdownNames,
-	chartType,
-	protocolName,
-	protocolDisplayName,
-	adapterType,
-	hallmarks
-}: {
-	data: Array<[number, Record<string, number>]>
-	title?: string
-	breakdownNames: Array<string>
-	chartType: 'chain' | 'version' | 'label'
-	protocolName: string
-	protocolDisplayName?: string
-	adapterType: string
-	hallmarks?: Array<[number, string]>
-}) {
 	const [chartInterval, setChartInterval] = React.useState<LowercaseDwmcGrouping>('daily')
-	const uniqueBreakdownNames = React.useMemo(() => Array.from(new Set(breakdownNames)), [breakdownNames])
+	const uniqueBreakdownNames = React.useMemo(() => Array.from(new Set(split.names)), [split.names])
 	const {
 		activeSeries: selectedTypes,
 		selectableSeries,
 		renderedCharts,
 		setSelectedSeries: setSelectedTypes
 	} = useLocalSelectionWithRemainder({
-		scope: `${protocolName}:${adapterType}:${chartType}`,
+		scope: `${protocolName}:${adapterType}:${split.type}`,
 		availableSeries: uniqueBreakdownNames
 	})
 	const exportChartExport = useGetChartInstance()
+	const title = `${metric} by ${SPLIT_LABELS[split.type].title}`
 
 	const chartBuilderConfig = React.useMemo<ChartBuilderConfig | null>(() => {
-		const builderMetric = getAdapterBuilderMetric(adapterType)
+		// Revenue is a fees adapter metric with its own builder metric.
+		const builderMetric = dataType === 'dailyRevenue' ? 'revenue' : getAdapterBuilderMetric(adapterType)
 
 		// The chart builder splits a protocol only by chain.
-		if (!builderMetric || chartType !== 'chain') return null
+		if (!builderMetric || split.type !== 'chain') return null
 
 		let grouping: ChartBuilderConfig['grouping']
 		switch (chartInterval) {
@@ -274,7 +309,7 @@ function ChartByType({
 		return {
 			id: generateItemId('builder', `${protocolName}-${adapterType}`),
 			kind: 'builder',
-			name: title || `${protocolName} – ${adapterType}`,
+			name: title,
 			config: {
 				metric: builderMetric,
 				mode: 'protocol',
@@ -292,12 +327,13 @@ function ChartByType({
 			},
 			grouping
 		}
-	}, [protocolName, adapterType, chartInterval, title, chartType])
+	}, [protocolName, adapterType, dataType, chartInterval, title, split.type])
 
+	const data = query.data
 	const mainChartData = React.useMemo(
 		() => ({
 			...buildProtocolBreakdownChartPresentation({
-				data,
+				data: data ?? [],
 				seriesNames: uniqueBreakdownNames,
 				chartInterval
 			}),
@@ -307,15 +343,32 @@ function ChartByType({
 		[uniqueBreakdownNames, chartInterval, data]
 	)
 	const deferredMainChartData = React.useDeferredValue(mainChartData)
-	const exportProtocolName = protocolDisplayName ?? protocolName
-	const exportMetricTitle = title?.replace(/\s+by\s+(?:chain|protocol version|financial label)$/i, '')
-	const exportTitle = exportMetricTitle ? `${exportProtocolName} ${exportMetricTitle}` : exportProtocolName
-	const exportFilename = title ? title : `${protocolName}-${chartType}`
 
 	return (
 		<>
-			<ChartPanelToolbar>
-				{title ? <h2 className="mr-auto heading-xs">{title}</h2> : null}
+			{/* The toolbar stays mounted while a new split loads, so the split switch keeps focus. */}
+			<ChartPanelToolbar
+				leading={
+					options.length > 1 ? (
+						<>
+							{/* The switch names the split on screen; the heading names it for a screen reader's heading list. */}
+							<ChartPanelTitle headingAs="h2">
+								{metric} by<span className="sr-only"> {SPLIT_LABELS[split.type].title}</span>
+							</ChartPanelTitle>
+							<SegmentedControl<ProtocolBreakdownSplit>
+								options={options.map((option) => ({ value: option.type, label: SPLIT_LABELS[option.type].option }))}
+								value={split.type}
+								onValueChange={onSplitChange}
+								label={`${metric} by`}
+								variant="default"
+								size="md"
+							/>
+						</>
+					) : (
+						<ChartPanelTitle headingAs="h2">{title}</ChartPanelTitle>
+					)
+				}
+			>
 				<ChartGroupingSelector
 					value={chartInterval}
 					setValue={setChartInterval}
@@ -326,42 +379,53 @@ function ChartByType({
 						allValues={selectableSeries}
 						selectedValues={selectedTypes}
 						setSelectedValues={setSelectedTypes}
-						label={chartType === 'chain' ? 'Chains' : chartType === 'version' ? 'Versions' : 'Labels'}
+						label={SPLIT_LABELS[split.type].filter}
 						labelType="smol"
 						variant="filter"
 						size="md"
 					/>
 				) : null}
 				{chartBuilderConfig ? <AddToDashboardButton chartConfig={chartBuilderConfig} smol /> : null}
-				<ChartExportButtons
-					chart={exportChartExport}
-					filename={exportFilename}
-					title={exportTitle}
-					iconUrl={tokenIconUrl(exportProtocolName)}
-					csvSource={{
-						type: 'dataset',
-						prepare: () => ({
-							...selectChartDatasetColumns(
-								deferredMainChartData.dataset,
-								deferredMainChartData.charts.filter((chart) => renderedCharts.has(chart.name))
-							),
-							groupBy: deferredMainChartData.groupBy
-						})
-					}}
-				/>
+				{data ? (
+					<ChartExportButtons
+						chart={exportChartExport}
+						filename={title}
+						title={`${protocolDisplayName} ${metric}`}
+						iconUrl={tokenIconUrl(protocolDisplayName)}
+						csvSource={{
+							type: 'dataset',
+							prepare: () => ({
+								...selectChartDatasetColumns(
+									deferredMainChartData.dataset,
+									deferredMainChartData.charts.filter((chart) => renderedCharts.has(chart.name))
+								),
+								groupBy: deferredMainChartData.groupBy
+							})
+						}}
+					/>
+				) : null}
 			</ChartPanelToolbar>
-			<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
-				<MultiSeriesChart
-					exportButtons={exportChartExport}
-					dataset={deferredMainChartData.dataset}
-					charts={deferredMainChartData.charts}
-					selectedCharts={renderedCharts}
-					groupBy={deferredMainChartData.groupBy}
-					valueSymbol="$"
-					showTotalInTooltip
-					{...(hallmarks !== undefined ? { hallmarks } : {})}
-				/>
-			</React.Suspense>
+			{queryReadFailed(query) ? (
+				<SurfaceBodyStatus variant="error" retry={query}>
+					Couldn&apos;t load the {title} chart.
+				</SurfaceBodyStatus>
+			) : !data ? (
+				<SurfaceBodyLoadingStatus label="Loading chart data" />
+			) : (
+				<React.Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
+					<MultiSeriesChart
+						exportButtons={exportChartExport}
+						dataset={deferredMainChartData.dataset}
+						charts={deferredMainChartData.charts}
+						selectedCharts={renderedCharts}
+						showLegend={renderedCharts.size > 1}
+						groupBy={deferredMainChartData.groupBy}
+						valueSymbol="$"
+						showTotalInTooltip
+						{...(hallmarks !== undefined ? { hallmarks } : {})}
+					/>
+				</React.Suspense>
+			)}
 		</>
 	)
 }
