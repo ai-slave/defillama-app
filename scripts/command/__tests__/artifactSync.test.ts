@@ -35,6 +35,20 @@ describe('artifact sync adapter', () => {
 		expect(runCommand).not.toHaveBeenCalled()
 	})
 
+	test('skips failed builds', async () => {
+		const runCommand = vi.fn()
+
+		const result = await syncBuildArtifacts({
+			env: artifactSyncEnv,
+			logger: createMemoryLogger(),
+			result: { ...successfulBuild, exitCode: 1, status: 'failure' },
+			runCommand
+		})
+
+		expect(result).toEqual({ reason: 'build failed', status: 'skipped' })
+		expect(runCommand).not.toHaveBeenCalled()
+	})
+
 	test('skips when the artifact remote is not configured', async () => {
 		const runCommand = vi.fn()
 

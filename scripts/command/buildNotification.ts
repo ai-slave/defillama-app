@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises'
+import type { ArtifactSyncResult } from './artifactSync'
 import type { BuildResult } from './buildResult'
 import { formatDurationMs } from './buildResult'
 import type { LogLike } from './logger'
@@ -6,6 +7,7 @@ import type { LogLike } from './logger'
 type Fetch = typeof fetch
 
 type SendBuildNotificationOptions = {
+	artifactSync: ArtifactSyncResult
 	env?: NodeJS.ProcessEnv
 	fetchImpl?: Fetch
 	logger?: LogLike
@@ -52,7 +54,11 @@ function resolveDeploymentUrl(env: NodeJS.ProcessEnv): string {
 	return firstEnvValue(env, ['COOLIFY_URL', 'COOLIFY_FQDN', 'VERCEL_URL'])
 }
 
-function formatBuildNotificationSummary(result: BuildResult, env: NodeJS.ProcessEnv): string {
+function formatBuildNotificationSummary(
+	result: BuildResult,
+	artifactSync: ArtifactSyncResult,
+	env: NodeJS.ProcessEnv
+): string {
 	let summary =
 		result.status === 'success'
 			? `🎉 Build succeeded in ${formatDurationMs(result.durationMs)}`
@@ -72,6 +78,9 @@ function formatBuildNotificationSummary(result: BuildResult, env: NodeJS.Process
 	summary += `\n📅 Build started at ${result.startedAt}`
 	if (result.buildId) {
 		summary += `\n📦 Build ID: ${result.buildId}`
+	}
+	if (artifactSync.status === 'failed') {
+		summary += "\n⚠️ R2 static upload failed: the load balancer has no R2 fallback for this build's chunks"
 	}
 	return summary
 }
@@ -141,6 +150,7 @@ async function uploadBuildLog({
 }
 
 export async function sendBuildNotification({
+	artifactSync,
 	env = process.env,
 	fetchImpl = fetch,
 	logger = console,
@@ -163,7 +173,7 @@ export async function sendBuildNotification({
 		webhookUrl,
 		{
 			allowed_mentions: { parse: ['users', 'roles'] },
-			content: `\`\`\`${`===== BUILD SUMMARY =====\n${formatBuildNotificationSummary(result, env)}`}\`\`\``
+			content: `\`\`\`${`===== BUILD SUMMARY =====\n${formatBuildNotificationSummary(result, artifactSync, env)}`}\`\`\``
 		},
 		logger
 	)
@@ -179,7 +189,7 @@ export async function sendBuildNotification({
 	}
 
 	const userMentions = formatUserMentions(env.BUILD_NOTIFY_USERS)
-	if (result.exitCode !== 0 && userMentions) {
+	if ((result.exitCode !== 0 || artifactSync.status === 'failed') && userMentions) {
 		await postWebhook(
 			fetchImpl,
 			webhookUrl,

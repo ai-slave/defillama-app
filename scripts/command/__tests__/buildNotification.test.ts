@@ -13,11 +13,14 @@ const failedBuild: BuildResult = {
 	status: 'failure'
 }
 
+const skippedUpload = { reason: 'build failed', status: 'skipped' } as const
+
 describe('build notification adapter', () => {
 	test('skips when requested by env', async () => {
 		const fetchImpl = vi.fn()
 
 		const result = await sendBuildNotification({
+			artifactSync: skippedUpload,
 			env: testEnv({ SKIP_BUILD_NOTIFY: '1' }),
 			fetchImpl,
 			logger: { log: vi.fn() },
@@ -37,6 +40,7 @@ describe('build notification adapter', () => {
 			.mockResolvedValueOnce(new Response('', { status: 200 }))
 
 		const result = await sendBuildNotification({
+			artifactSync: skippedUpload,
 			env: testEnv({
 				BUILD_NOTIFY_USERS: '1,2',
 				BUILD_STATUS_WEBHOOK: 'https://discord.example/webhook',
@@ -61,6 +65,7 @@ describe('build notification adapter', () => {
 		const fetchImpl = vi.fn().mockResolvedValue(new Response('', { status: 200 }))
 
 		await sendBuildNotification({
+			artifactSync: skippedUpload,
 			env: testEnv({
 				BUILD_STATUS_WEBHOOK: 'https://discord.example/webhook',
 				COOLIFY_CONTAINER_NAME: 'defillama-app-core'
@@ -81,6 +86,7 @@ describe('build notification adapter', () => {
 			.mockResolvedValueOnce(new Response('', { status: 200 }))
 
 		const result = await sendBuildNotification({
+			artifactSync: skippedUpload,
 			env: testEnv({
 				BUILD_NOTIFY_USERS: '1',
 				BUILD_STATUS_WEBHOOK: 'https://discord.example/webhook',
@@ -96,10 +102,42 @@ describe('build notification adapter', () => {
 		expect(fetchImpl).toHaveBeenCalledTimes(3)
 	})
 
+	test('warns and mentions users when the R2 upload fails after a successful build', async () => {
+		const fetchImpl = vi.fn().mockResolvedValue(new Response('', { status: 200 }))
+
+		await sendBuildNotification({
+			artifactSync: { result: { exitCode: 1, signal: null, stdoutTail: '' }, status: 'failed', step: 'upload' },
+			env: testEnv({ BUILD_NOTIFY_USERS: '1', BUILD_STATUS_WEBHOOK: 'https://discord.example/webhook' }),
+			fetchImpl,
+			logger: { log: vi.fn() },
+			result: { ...failedBuild, exitCode: 0, status: 'success' }
+		})
+
+		expect(fetchImpl).toHaveBeenCalledTimes(2)
+		expect(fetchImpl.mock.calls[0][1]?.body).toContain('R2 static upload failed')
+		expect(JSON.parse(fetchImpl.mock.calls[1][1]?.body).content).toBe('<@1>')
+	})
+
+	test('keeps a successful build quiet when the R2 upload succeeds', async () => {
+		const fetchImpl = vi.fn().mockResolvedValue(new Response('', { status: 200 }))
+
+		await sendBuildNotification({
+			artifactSync: { status: 'success' },
+			env: testEnv({ BUILD_NOTIFY_USERS: '1', BUILD_STATUS_WEBHOOK: 'https://discord.example/webhook' }),
+			fetchImpl,
+			logger: { log: vi.fn() },
+			result: { ...failedBuild, exitCode: 0, status: 'success' }
+		})
+
+		expect(fetchImpl).toHaveBeenCalledOnce()
+		expect(fetchImpl.mock.calls[0][1]?.body).not.toContain('R2 static upload failed')
+	})
+
 	test('keeps notification successful when webhook posting throws', async () => {
 		const fetchImpl = vi.fn().mockRejectedValueOnce(new Error('network down'))
 
 		const result = await sendBuildNotification({
+			artifactSync: skippedUpload,
 			env: testEnv({ BUILD_STATUS_WEBHOOK: 'https://discord.example/webhook' }),
 			fetchImpl,
 			logger: { log: vi.fn() },

@@ -83,7 +83,6 @@ describe('deploy build pipeline', () => {
 
 	test('stops before Next when preparation fails', async () => {
 		const runNextBuild = vi.fn()
-		const syncArtifacts = vi.fn()
 		const notify = vi.fn()
 
 		const result = await runDeployBuildTest({
@@ -93,14 +92,12 @@ describe('deploy build pipeline', () => {
 			now: createNow(),
 			notify,
 			runNextBuild,
-			runPrepare: vi.fn().mockResolvedValue(1),
-			syncArtifacts
+			runPrepare: vi.fn().mockResolvedValue(1)
 		})
 
 		expect(result.exitCode).toBe(1)
 		expect(runNextBuild).not.toHaveBeenCalled()
-		expect(syncArtifacts).not.toHaveBeenCalled()
-		expect(notify).toHaveBeenCalledWith(result)
+		expect(notify).toHaveBeenCalledWith(result, { reason: 'build failed', status: 'skipped' })
 	})
 
 	test('uploads the build log URL and mentions users after failed builds', async () => {
@@ -214,34 +211,40 @@ describe('deploy build pipeline', () => {
 			notify,
 			runNextBuild: vi.fn().mockResolvedValue({ exitCode: 0, signal: null, stdoutTail: '' }),
 			runPrepare: vi.fn().mockResolvedValue(0),
-			syncArtifacts: vi.fn()
+			syncArtifacts: vi.fn().mockResolvedValue({ status: 'success' })
 		})
 
 		expect(result.buildId).toBe('')
 		expect(result.status).toBe('success')
-		expect(notify).toHaveBeenCalledWith(result)
+		expect(notify).toHaveBeenCalledWith(result, { status: 'success' })
 		expect(logger.output.join('')).toContain('Failed to resolve Next.js build ID: manifest unreadable')
 	})
 
 	test('skips artifact sync when Next fails', async () => {
-		const syncArtifacts = vi.fn()
+		const logger = createMemoryLogger()
+		const notify = vi.fn()
 
 		const result = await runDeployBuildTest({
 			findBuildId: vi.fn().mockResolvedValue(''),
-			logger: createMemoryLogger(),
+			logger,
 			now: createNow(),
-			notify: vi.fn(),
+			notify,
 			runNextBuild: vi.fn().mockResolvedValue({ exitCode: 2, signal: null, stdoutTail: '' }),
-			runPrepare: vi.fn().mockResolvedValue(0),
-			syncArtifacts
+			runPrepare: vi.fn().mockResolvedValue(0)
 		})
 
 		expect(result.exitCode).toBe(2)
-		expect(syncArtifacts).not.toHaveBeenCalled()
+		expect(logger.output.join('')).toContain('Build failed, skipping .next artifact sync')
+		expect(notify).toHaveBeenCalledWith(result, { reason: 'build failed', status: 'skipped' })
 	})
 
-	test('syncs artifacts and notifies after a successful build', async () => {
-		const syncArtifacts = vi.fn()
+	test('syncs artifacts and passes the upload result to the notification', async () => {
+		const failedUpload = {
+			result: { exitCode: 1, signal: null, stdoutTail: '' },
+			status: 'failed',
+			step: 'upload'
+		} as const
+		const syncArtifacts = vi.fn().mockResolvedValue(failedUpload)
 		const notify = vi.fn()
 
 		const result = await runDeployBuildTest({
@@ -260,7 +263,8 @@ describe('deploy build pipeline', () => {
 			status: 'success'
 		})
 		expect(syncArtifacts).toHaveBeenCalledWith(result)
-		expect(notify).toHaveBeenCalledWith(result)
+		expect(result.status).toBe('success')
+		expect(notify).toHaveBeenCalledWith(result, failedUpload)
 	})
 
 	test('records a build complete telemetry marker after artifact sync', async () => {

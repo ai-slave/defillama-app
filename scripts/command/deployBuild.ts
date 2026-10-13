@@ -1,6 +1,6 @@
 import path from 'node:path'
 import { flushTelemetry, recordDomainEvent } from '~/utils/telemetry'
-import { syncBuildArtifacts } from './artifactSync'
+import { syncBuildArtifacts, type ArtifactSyncResult } from './artifactSync'
 import { detectBranchName } from './branch'
 import { commitShaFromEnv, createBuildCommitEnv } from './buildIdentity'
 import { sendBuildNotification } from './buildNotification'
@@ -19,12 +19,12 @@ type DeployBuildOptions = {
 	logger?: CommandLogger
 	logPath?: string
 	now?: () => Date
-	notify?: (result: BuildResult) => Promise<unknown>
+	notify?: (result: BuildResult, artifactSync: ArtifactSyncResult) => Promise<unknown>
 	projectDir?: string
 	readGitCommitSha?: (projectDir: string) => string
 	runNextBuild?: (logger: CommandLogger) => Promise<RunChildResult>
 	runPrepare?: () => Promise<number>
-	syncArtifacts?: (result: BuildResult) => Promise<unknown>
+	syncArtifacts?: (result: BuildResult) => Promise<ArtifactSyncResult>
 }
 
 // Every key the deploy build looks for. A missing optional key only costs the pages that need it.
@@ -193,21 +193,17 @@ export async function runDeployBuild({
 	buildLogger.log('=======================')
 	buildLogger.log('')
 
-	if (result.exitCode === 0) {
-		const syncArtifactsStep =
-			syncArtifacts ??
-			((buildResult: BuildResult) =>
-				syncBuildArtifacts({
-					activeChildren,
-					env: buildEnv,
-					logger: buildLogger,
-					projectDir,
-					result: buildResult
-				}))
-		await syncArtifactsStep(result)
-	} else {
-		buildLogger.log('Build failed, skipping .next artifact sync')
-	}
+	const syncArtifactsStep =
+		syncArtifacts ??
+		((buildResult: BuildResult) =>
+			syncBuildArtifacts({
+				activeChildren,
+				env: buildEnv,
+				logger: buildLogger,
+				projectDir,
+				result: buildResult
+			}))
+	const artifactSync = await syncArtifactsStep(result)
 	await recordBuildCompleteTelemetry(result, buildEnv)
 
 	buildLogger.flush()
@@ -216,9 +212,14 @@ export async function runDeployBuild({
 	try {
 		const notifyStep =
 			notify ??
-			((buildResult: BuildResult) =>
-				sendBuildNotification({ env: buildEnv, logger: notificationLogger, result: buildResult }))
-		await notifyStep(result)
+			((buildResult: BuildResult, buildArtifactSync: ArtifactSyncResult) =>
+				sendBuildNotification({
+					artifactSync: buildArtifactSync,
+					env: buildEnv,
+					logger: notificationLogger,
+					result: buildResult
+				}))
+		await notifyStep(result, artifactSync)
 	} catch (error) {
 		notificationLogger.log('Build notification failed:', error)
 	}

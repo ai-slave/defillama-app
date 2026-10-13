@@ -12,7 +12,7 @@ type ArtifactSyncOptions = {
 	runCommand?: typeof runChild
 }
 
-type ArtifactSyncResult =
+export type ArtifactSyncResult =
 	| { status: 'failed'; step: 'upload'; result: RunChildResult }
 	| { status: 'skipped'; reason: string }
 	| { status: 'success' }
@@ -31,6 +31,9 @@ function getMissingArtifactRemoteEnv(env: NodeJS.ProcessEnv): Array<string> {
 	return missing
 }
 
+// defillama-app-lb serves a /_next/static request from R2 when the node it hit lacks that build:
+// an old tab after a deploy, or a mid-rollout request. A failed upload still ships the build, so
+// the Discord summary reports it instead of failing the deploy.
 export async function syncBuildArtifacts({
 	activeChildren,
 	env = process.env,
