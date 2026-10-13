@@ -30,7 +30,11 @@ export const venueTypeColumn = columnHelper.accessor(
 				</span>
 			)
 		},
-		meta: textColumnMeta('Whether the contract trades on a decentralized or a centralized venue.')
+		// A group row spanning both venue types shows two tags ("DEX" "CEX").
+		meta: {
+			headerClassName: 'min-w-[113px]',
+			...textColumnMeta('Whether the contract trades on a decentralized or a centralized venue.')
+		}
 	}
 )
 

@@ -54,6 +54,7 @@ The shared renderers lay tables out with `table-layout: auto`, and a column is a
 
 - Never size a column for its header. A long-label numeric column ("Reported Volume 24h") declares no width.
 - Declare `min-w-[N]` for what the body shows: a name or text column, which truncates at that width, or a column whose values are wider than its label (`P/E`, `Price`). N is the widest value plus the cell's horizontal padding (24px, or 40px in compact tables).
+- When a cell renders extra parts on some rows only (a "?" helper, a badge, a logo), size it for those parts beside the widest value, read from the cell renderer. The rows on screen rarely include them, so the measurement below misses them. A part that fills its cell (a stacked bar) has no width of its own, and an SVG shrinks to its cell (preflight caps it at `max-width: 100%`), so both columns declare a width: the SVG's own width plus padding, or one that keeps the bar readable.
 - Use `min-w-*`, never `w-*`: auto layout shrinks a column below its `width` as soon as the table overflows.
 - Variants and viewport caps work as usual: `sm:min-w-[240px]`, `min-w-[min(180px,40vw)]`.
 - A truncated cell does not show its full value on hover. When the value must be readable, widen the column or give the cell a `Tooltip onlyWhenClipped` (`src/ui/Tooltip.tsx`), which shows the full value only while it is cut off.

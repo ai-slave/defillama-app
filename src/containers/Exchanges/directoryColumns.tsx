@@ -279,8 +279,6 @@ function segmentColumn(spec: {
 	suffix?: (row: ExchangeDirectoryRowModel) => string
 	/** Muted text after the value, e.g. the normalized-volume gap to reported. */
 	annotation?: (row: ExchangeDirectoryRowModel) => string | undefined
-	/** For values wider than the default 112px column; a longer label widens it on its own ("Column widths" in src/components/Table/README.md). */
-	headerClassName?: string
 }) {
 	return columnHelper.accessor(spec.value, {
 		id: spec.id,
@@ -296,7 +294,8 @@ function segmentColumn(spec: {
 			)
 		},
 		meta: {
-			headerClassName: spec.headerClassName ?? 'min-w-[112px]',
+			// The widest value with its gap annotation ("$999.99m 99.9%").
+			headerClassName: 'min-w-[131px]',
 			align: 'end',
 			headerHelperText: spec.definition.description
 		}
@@ -633,6 +632,8 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 			sortDescFirst: false,
 			cell: ({ row }) => <SlippageLadder execution={scopedExec(row.original)} />,
 			meta: {
+				// Fits the ladder's predicted-to-realized rungs, as in the merged slippage columns.
+				headerClassName: 'min-w-[204px]',
 				align: 'end',
 				headerHelperText: `${definitions.execSlippage10k.description} ${EXECUTION_SCOPE_NOTE}`,
 				csvValue: (row) => {
@@ -661,6 +662,8 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 			sortDescFirst: false,
 			cell: ({ row }) => <MarkoutHorizons execution={scopedExec(row.original)} />,
 			meta: {
+				// Fits a two-digit markout on both rungs ("5m +$12.34").
+				headerClassName: 'min-w-[107px]',
 				align: 'end',
 				headerHelperText: `${definitions.execMarkout1m.description} ${EXECUTION_SCOPE_NOTE}`,
 				csvValue: (row) => {
@@ -891,6 +894,8 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 				)
 			},
 			meta: {
+				// The widest value with its gap annotation ("$999.99m 99.9%").
+				headerClassName: 'min-w-[131px]',
 				align: 'end',
 				headerHelperText: definitions.normalizedVolume.description
 			}
@@ -959,6 +964,8 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 				/>
 			),
 			meta: {
+				// MiniSparkline's 112px plus padding; a narrower column squeezes the SVG.
+				headerClassName: 'min-w-[136px]',
 				align: 'end',
 				headerHelperText: definitions.sparkline.description
 			}
@@ -1082,7 +1089,8 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 			header: definitions.spotFee.label,
 			cell: ({ row }) => <FeeValue fee={row.original.fees?.spot} kind="spot" />,
 			meta: {
-				headerClassName: 'min-w-[129px] whitespace-nowrap',
+				// A negative maker fee makes the widest badge ("-0.0001% / 0.045%").
+				headerClassName: 'min-w-[161px] whitespace-nowrap',
 				align: 'end',
 				headerHelperText: definitions.spotFee.description,
 				csvValue: (row) => (row.fees?.spot ? feeLabel(row.fees.spot) : '–')
@@ -1093,7 +1101,8 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 			header: definitions.linearPerpFee.label,
 			cell: ({ row }) => <FeeValue fee={row.original.fees?.linearPerp} kind="perp" />,
 			meta: {
-				headerClassName: 'min-w-[139px] whitespace-nowrap',
+				// A negative maker fee makes the widest badge ("-0.0001% / 0.045%").
+				headerClassName: 'min-w-[161px] whitespace-nowrap',
 				align: 'end',
 				headerHelperText: definitions.linearPerpFee.description,
 				csvValue: (row) => (row.fees?.linearPerp ? feeLabel(row.fees.linearPerp) : '–')
@@ -1104,7 +1113,8 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 			header: definitions.inversePerpFee.label,
 			cell: ({ row }) => <FeeValue fee={row.original.fees?.inversePerp} kind="perp" />,
 			meta: {
-				headerClassName: 'min-w-[139px] whitespace-nowrap',
+				// A negative maker fee makes the widest badge ("-0.0001% / 0.045%").
+				headerClassName: 'min-w-[161px] whitespace-nowrap',
 				align: 'end',
 				headerHelperText: definitions.inversePerpFee.description,
 				csvValue: (row) => (row.fees?.inversePerp ? feeLabel(row.fees.inversePerp) : '–')

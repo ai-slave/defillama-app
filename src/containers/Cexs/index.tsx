@@ -345,6 +345,8 @@ const columns = columnHelper.columns([
 			) : null
 		},
 		meta: {
+			// MiniSparkline's 112px plus padding; a narrower column squeezes the SVG.
+			headerClassName: 'min-w-[136px]',
 			align: 'end',
 			headerHelperText: 'Daily spot plus USD perp volume over the last 7 days.',
 			csvValue: (row) => row.exchange?.volume_7d.join(' ') ?? ''

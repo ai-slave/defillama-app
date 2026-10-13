@@ -425,7 +425,8 @@ export function buildCardsColumns(
 			enableSorting: false,
 			cell: ({ row }) => <TextValue row={row.original} field="atmFee" value={row.original.atmFee} />,
 			meta: {
-				headerClassName: 'whitespace-nowrap',
+				// Fits the "Varies by tier" button (87px).
+				headerClassName: 'min-w-[111px] whitespace-nowrap',
 				align: 'end',
 				headerHelperText: 'Fee on ATM withdrawals.'
 			}
@@ -467,7 +468,8 @@ export function buildCardsColumns(
 			header: 'Network',
 			cell: ({ row }) => <TextValue row={row.original} field="network" value={capitalize(row.original.network)} />,
 			meta: {
-				headerClassName: 'min-w-[104px] whitespace-nowrap',
+				// Fits the "Varies by tier" button (87px).
+				headerClassName: 'min-w-[111px] whitespace-nowrap',
 				headerHelperText: 'Payment network the card runs on.',
 				csvValue: (row) => capitalize(row.network) ?? ''
 			}
@@ -570,7 +572,8 @@ export function buildCardsColumns(
 			header: 'IBAN',
 			cell: ({ row }) => <BooleanValue row={row.original} field="iban" value={row.original.iban} />,
 			meta: {
-				headerClassName: 'whitespace-nowrap',
+				// Fits the "Varies by tier" button (87px).
+				headerClassName: 'min-w-[111px] whitespace-nowrap',
 				align: 'end',
 				headerHelperText: 'Whether the card account comes with an IBAN for bank transfers.',
 				csvValue: (row) => booleanCsv(row.iban)

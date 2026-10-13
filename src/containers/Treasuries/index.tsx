@@ -117,6 +117,8 @@ const columns = columnHelper.columns([
 			)
 		},
 		meta: {
+			// The bar has no width of its own and fills the column.
+			headerClassName: 'min-w-[120px]',
 			align: 'end'
 		}
 	}),

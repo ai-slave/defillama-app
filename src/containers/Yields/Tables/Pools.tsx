@@ -211,6 +211,9 @@ function createEarnColumns(query: ApiQuery, median?: EarnApyMedian, defaultColum
 			enableSorting: true,
 			cell: ({ row }) => <ExitCell row={row.original} />,
 			meta: {
+				// The longest label with its fee warning ("Queued ~14d" and the alert icon). A three-digit ETA with
+				// the icon wraps to a second line, which stays readable, so the column is not sized for it.
+				headerClassName: 'min-w-[154px]',
 				align: 'end',
 				headerTrail: () => <MeasuredExitColumnHint />,
 				headerHelperText:
@@ -236,7 +239,8 @@ function createEarnColumns(query: ApiQuery, median?: EarnApyMedian, defaultColum
 					tokens={info.row.original.rewardTokens}
 				/>
 			),
-			meta: { align: 'end' }
+			// Three reward-token icons beside "123.45%"; without a window suffix the header is narrower.
+			meta: { headerClassName: 'min-w-[143px]', align: 'end' }
 		}),
 		columnHelper.accessor((row) => row.apyMean30d ?? undefined, {
 			id: 'apyMean30d',
@@ -268,7 +272,8 @@ function createEarnColumns(query: ApiQuery, median?: EarnApyMedian, defaultColum
 					<EmptyCell />
 				),
 			meta: {
-				headerClassName: 'min-w-[124px] whitespace-nowrap',
+				// The link's 24px inset plus the 84px sparkline.
+				headerClassName: 'min-w-[132px] whitespace-nowrap',
 				align: 'center',
 				headerHelperText: 'Follows the APY composition toggled above (+Reward / +Intrinsic)'
 			}

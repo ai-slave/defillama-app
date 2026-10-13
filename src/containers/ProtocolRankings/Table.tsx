@@ -1327,7 +1327,8 @@ const columns = columnHelper.columns([
 						)
 					) : null,
 				meta: {
-					headerClassName: 'min-w-[120px]',
+					// Two 16px "?" helpers and their gaps (40px) beside the widest value ("$999.99m", 70.4px), plus padding.
+					headerClassName: 'min-w-[135px]',
 					align: 'end',
 					headerHelperText: 'Value of all coins held in smart contracts of the protocol'
 				}

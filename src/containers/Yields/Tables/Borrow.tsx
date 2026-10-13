@@ -154,7 +154,8 @@ const marketColumns = marketHelper.columns([
 		header: 'LTV',
 		enableSorting: true,
 		cell: ({ row }) => <LtvCell value={row.original.ltv} />,
-		meta: { headerClassName: 'min-w-[55px]', align: 'end' }
+		// The widest value ("88.88%") is wider than the "LTV" header.
+		meta: { headerClassName: 'min-w-[78px]', align: 'end' }
 	})
 ])
 
@@ -280,7 +281,8 @@ const routeColumns = routeHelper.columns([
 		header: 'LTV',
 		enableSorting: true,
 		cell: ({ row }) => <LtvCell value={row.original.ltv} />,
-		meta: { align: 'end' }
+		// The widest value ("88.88%") is wider than the "LTV" header.
+		meta: { headerClassName: 'min-w-[78px]', align: 'end' }
 	})
 ])
 
