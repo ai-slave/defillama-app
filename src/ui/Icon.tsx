@@ -249,7 +249,7 @@ export const ICON_GROUPS = [
 export const ICON_NAMES: ReadonlyArray<Name> = ICON_GROUPS.flatMap(([, names]) => names)
 
 /** The one place the sprite version lives; _document.tsx prefetches the same file. */
-export const ICON_SPRITE = '/icons/v52.svg'
+export const ICON_SPRITE = '/icons/v53.svg'
 
 type Name = (typeof ICON_GROUPS)[number][1][number]
 

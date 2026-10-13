@@ -30,8 +30,9 @@ test('the sprite lists every icon once, in ICON_GROUPS order, under its group co
 // follow their control's color. Brand logos keep their own shapes and colors, and DefiLlama's product marks their own
 // art on a square canvas.
 const OWN_ART = new Set<string>(['DefiLlama', 'Brands'])
-// Two status marks are solid so they read at a glance: the verified seal, and the warning triangle, whose knockout
-// mark is white because the triangle is only ever drawn in a status color.
+// Two status marks are solid so they read at a glance: the verified seal and the warning triangle. Their inner mark is
+// white, not a hole that shows the page, because both are only ever drawn in a status color, so the mark stays the
+// same in both themes.
 const STYLE_EXCEPTIONS = new Set(['badge-check', 'alert-triangle-filled'])
 // These leave fill off the symbol so `fill-current` on the Icon can fill them (an on state, a solid play or stop
 // button); a fill on the symbol would win.
