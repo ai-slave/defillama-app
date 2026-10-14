@@ -159,15 +159,21 @@ function EarnView({
 	)
 	const questions = filteredQuestionsData?.questions?.length ? filteredQuestionsData.questions : baseQuestions
 
-	// Must follow the same endpoint choice the table made, or a paying reader silently exports the
-	// locked numbers.
+	// The pool is taken from the rows on screen, so filters, paging, and a new APY window change it.
+	// A placeholder page has no fetch time of its own, so the sentence names no date until that page lands.
 	const yieldLead = lockedQuery
 		? null
 		: yieldFarmingIntro({
-				generatedAtMs: initialEarnPageGeneratedAt,
-				rows: initialEarnPage?.rows ?? []
+				generatedAtMs: rowsQuery.isPlaceholderData
+					? null
+					: rowsQuery.dataUpdatedAt > 0
+						? rowsQuery.dataUpdatedAt
+						: initialEarnPageGeneratedAt,
+				rows: serverRows
 			})
 
+	// Must follow the same endpoint choice the table made, or a paying reader silently exports the
+	// locked numbers.
 	const prepareCsv = async () => {
 		const query = buildAllRowsQueryString()
 		const csvData = effectiveVerifiedAccess

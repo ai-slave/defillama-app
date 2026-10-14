@@ -825,12 +825,6 @@ export function getProtocolCategoryChartMetricLabel(
 
 const CATEGORY_DESCRIPTION_CAP = 155
 
-function joinCategoryDescription(categoryDesc: string | undefined, rankingsDesc: string): string {
-	if (!categoryDesc) return rankingsDesc
-	const combined = categoryDesc.endsWith('.') ? `${categoryDesc} ${rankingsDesc}` : `${categoryDesc}. ${rankingsDesc}`
-	return combined.length <= CATEGORY_DESCRIPTION_CAP ? combined : categoryDesc
-}
-
 export function getProtocolCategoryPresentation({
 	label,
 	effectiveCategory,
@@ -897,10 +891,18 @@ export function getProtocolCategoryPresentation({
 		effectiveCategory === 'Lending' && !hasChain && hasProtocolCount
 			? `Compare ${protocolCount} of them by TVL, borrows, and fees.`
 			: baseDesc
-	const categoryDesc = effectiveCategory === 'Lending' ? LENDING_DEFINITION : config?.description
-	// The snippet quotes the start of the description, so the definition leads and stays when the rankings clause
-	// would push the pair past the cap.
-	const seoDescription = joinCategoryDescription(categoryDesc, rankingsDesc)
+	const categoryDesc = config?.description
+	// Only the unscoped lending page leads with the definition and may drop the rankings clause.
+	// Every other category, including lending on a chain, keeps the rankings and chain clause.
+	const lendingCombined = `${LENDING_DEFINITION} ${rankingsDesc}`
+	const seoDescription =
+		effectiveCategory === 'Lending' && !hasChain
+			? lendingCombined.length <= CATEGORY_DESCRIPTION_CAP
+				? lendingCombined
+				: LENDING_DEFINITION
+			: categoryDesc && `${baseDesc} ${categoryDesc}`.length <= CATEGORY_DESCRIPTION_CAP
+				? `${baseDesc} ${categoryDesc}`
+				: baseDesc
 
 	return {
 		headingLabel: config?.headingLabel ?? defaultHeadingLabel,

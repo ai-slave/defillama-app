@@ -62,7 +62,7 @@ export const getStaticProps = withPerformanceLogging(
 		const named = `${displayName}${resolvedTokenSymbol ? ` (${resolvedTokenSymbol})` : ''}`
 		const seoTitle = `${named} Unlock Schedule & Circulating Supply`
 		const seoDescription = `See ${named} unlock cliffs, circulating supply, and the next unlock date on one vesting chart.`
-		const unlockLead = nextUnlockIntro({ symbol: resolvedTokenSymbol, event: emissions.upcomingEvent[0] })
+		const unlockLead = nextUnlockIntro({ symbol: resolvedTokenSymbol, events: emissions.upcomingEvent })
 
 		return {
 			props: {

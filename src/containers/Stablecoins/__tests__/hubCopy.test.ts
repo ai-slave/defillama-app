@@ -17,7 +17,7 @@ describe('stablecoinDominanceIntro', () => {
 				]
 			})
 		).toBe(
-			"USDT is 60.13% of the stablecoin market on Oct 14, 2026: $184b of a $306b total, ahead of USDC at $73.1b and DAI at $4.7b. This is each coin's share of stablecoin market cap. It is not TradingView's USDT.D index, which measures USDT against the whole crypto market."
+			"USDT's share of stablecoin market cap is 60.13% on Oct 14, 2026: $184b of a $306b total, ahead of USDC at $73.1b and DAI at $4.7b. It is not TradingView's USDT.D index, which measures USDT against the whole crypto market."
 		)
 	})
 

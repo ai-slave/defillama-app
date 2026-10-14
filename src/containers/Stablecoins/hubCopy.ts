@@ -10,7 +10,7 @@ export const STABLECOIN_DEFINITION =
 	'Stablecoins are crypto tokens that target a peg, usually one US dollar. This list ranks them by market cap, with circulating supply and how far each coin sits from its peg.'
 
 export const STABLECOIN_QUESTION = 'What are stablecoins?'
-export const USDT_DOMINANCE_QUESTION = 'What is USDT dominance?'
+export const USDT_DOMINANCE_QUESTION = "What is USDT's share of stablecoin market cap?"
 
 /** The visible FAQ. The dominance question is omitted when the share sentence is missing. */
 export function stablecoinHubQuestions(intro: string | null): Array<{ question: string; answer: string }> {
@@ -51,5 +51,5 @@ export function stablecoinDominanceIntro(input: {
 	const usdcUsd = formatUsd(usdc, USD_LOWERCASE_MILLIONS_OPTIONS)
 	const daiUsd = formatUsd(dai, USD_LOWERCASE_MILLIONS_OPTIONS)
 	if (!share || !usdtUsd || !total || !usdcUsd || !daiUsd) return null
-	return `USDT is ${share} of the stablecoin market on ${date}: ${usdtUsd} of a ${total} total, ahead of USDC at ${usdcUsd} and DAI at ${daiUsd}. This is each coin's share of stablecoin market cap. It is not TradingView's USDT.D index, which measures USDT against the whole crypto market.`
+	return `USDT's share of stablecoin market cap is ${share} on ${date}: ${usdtUsd} of a ${total} total, ahead of USDC at ${usdcUsd} and DAI at ${daiUsd}. It is not TradingView's USDT.D index, which measures USDT against the whole crypto market.`
 }

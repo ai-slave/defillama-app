@@ -2,8 +2,9 @@ import { formatDate } from '~/utils/dateFormat'
 import { formatNumber, formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import type { ProtocolTaxonomyCharts } from './types'
 
-export const LENDING_DEFINITION = 'Lending protocols let users borrow and lend assets.'
-export const LENDING_QUESTION = 'What are DeFi lending protocols?'
+export const LENDING_DEFINITION =
+	'Lending protocols let users deposit assets and borrow against collateral. Borrowers pay interest and can be liquidated if that collateral falls short.'
+export const LENDING_QUESTION = 'How do DeFi lending and borrowing protocols work?'
 
 export function categoryChartTvl(charts: ProtocolTaxonomyCharts): number | null {
 	const index = charts.dataset.dimensions.indexOf('TVL')

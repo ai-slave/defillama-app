@@ -94,8 +94,8 @@ export default function StablecoinsPage({
 	const questions = stablecoinHubQuestions(dominanceIntro)
 	return (
 		<Layout
-			title="Top Stablecoins by Market Cap - List, Chart & Peg - DefiLlama"
-			description="Top stablecoins by market cap, with supply, peg, and USDT, USDC, and DAI share of that market."
+			title="Stablecoin Market Cap Chart, Supply & Peg Data - DefiLlama"
+			description="Track the total stablecoin market cap, circulating supply, prices, inflows, and peg stability across all stablecoins. Explore stablecoin market charts and analytics with transparent data from DefiLlama."
 			canonicalUrl="/stablecoins"
 			pageName={pageName}
 			jsonLd={jsonLdDocument([
