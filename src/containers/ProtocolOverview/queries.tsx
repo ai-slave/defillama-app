@@ -42,6 +42,8 @@ import { buildAvailableCharts, buildDefaultToggledCharts } from './defaultCharts
 import { buildProtocolFaq, buildProtocolFaqRelationship } from './faq'
 import { formatAdapterData } from './formatAdapterData'
 import { selectOpenInterestProtocols } from './openInterestSplit'
+import { getProtocolPrimaryMetricOverride } from './primaryMetricOverrides'
+import { buildProtocolMetaDescription, protocolMetaMetricClause } from './protocolSeo'
 import { fetchProtocolRwaAumChart } from './rwa'
 import type { IProtocolOverviewPageData, IProtocolPageMetrics } from './types'
 import { getProtocolWarningBanners } from './utils'
@@ -862,6 +864,37 @@ export const getProtocolOverviewPageData = async ({
 		}
 	}
 
+	const chainTvl = protocolData.currentChainTvls
+	const hasCurrentChainTvl = resolvedProtocolChains.some((chain) => chainTvl[chain] != null)
+	const currentTvlFromChains = hasCurrentChainTvl
+		? resolvedProtocolChains.reduce((total, chain) => total + (chainTvl[chain] ?? 0), 0)
+		: null
+	const tvlSummary = getProtocolFaqTvlSummary(
+		protocolTvlChartData,
+		currentProtocolMetadata.tvl ? currentTvlFromChains : null
+	)
+	const primaryMetricOverride = getProtocolPrimaryMetricOverride({
+		name,
+		metrics: protocolMetrics,
+		...(perpVolumeData ? { perpVolume: perpVolumeData } : {}),
+		...(rwaActiveAum != null ? { rwaActiveAum } : {})
+	})
+	seoDescription = buildProtocolMetaDescription({
+		description: protocolData.description,
+		fallback: seoDescription,
+		metricClause: protocolMetaMetricClause({
+			tvl: tvlSummary.current,
+			tvlIsHero:
+				!isCEX &&
+				!isOracleProtocol &&
+				currentTvlByChain !== null &&
+				primaryMetricOverride == null &&
+				tvlSummary.current != null,
+			volume30d: dexVolumeData?.total30d ?? perpVolumeData?.total30d ?? null,
+			fees30d: feesData?.total30d ?? null
+		})
+	})
+
 	const titleMetricSegment =
 		titleMetrics.length === 0
 			? 'Stats & Charts'
@@ -1034,17 +1067,10 @@ export const getProtocolOverviewPageData = async ({
 
 	if (isCEX || !includeFaq) return pageData
 
-	const chainTvl = protocolData.currentChainTvls
-	const hasCurrentChainTvl = resolvedProtocolChains.some((chain) => chainTvl[chain] != null)
-	const currentTvlFromChains = hasCurrentChainTvl
-		? resolvedProtocolChains.reduce((total, chain) => total + (chainTvl[chain] ?? 0), 0)
-		: null
-	const tvlSummary = getProtocolFaqTvlSummary(
-		protocolTvlChartData,
-		currentProtocolMetadata.tvl ? currentTvlFromChains : null
-	)
 	pageData.faqItems = buildProtocolFaq({
 		name,
+		description: protocolData.description,
+		volumeLeads: titleMetrics[0] === 'Volume',
 		tvl: tvlSummary,
 		chains: resolvedProtocolChains.map((chain) => ({
 			name: chain,

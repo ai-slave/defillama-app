@@ -1,6 +1,7 @@
 import { slug } from '~/utils'
 import { formatDate } from '~/utils/dateFormat'
 import { formatUsd, formatCompactNumber, formatNumber, formatPercent } from '~/utils/numberFormat'
+import { protocolDescriptionSentence } from './protocolSeo'
 import type { IProtocolFaqAnswerPart, IProtocolFaqItem } from './types'
 
 const MAX_LINKED_CHAINS = 5
@@ -48,6 +49,10 @@ interface ProtocolFaqToken {
 
 export interface ProtocolFaqContext {
 	name: string
+	/** Stored protocol description. Empty omits "What is {name}?". */
+	description: string | null
+	/** The page title leads with volume, so that answer opens right after the definition. */
+	volumeLeads: boolean
 	tvl: {
 		current: number | null
 		change30d: number | null
@@ -236,19 +241,51 @@ export function buildProtocolFaqRelationship({
 }
 
 export function buildProtocolFaq(context: ProtocolFaqContext): Array<IProtocolFaqItem> {
-	const candidates = [
-		buildTvlQuestion(context),
-		buildChainsQuestion(context),
-		buildFeesQuestion(context),
-		buildTokenValuationQuestion(context),
-		buildTokenPerformanceQuestion(context),
-		buildRelationshipQuestion(context),
-		buildMetricSpecificQuestion(context),
-		buildTreasuryQuestion(context),
-		buildSecurityQuestion(context)
-	]
+	const whatIs = buildWhatIsQuestion(context)
+	const tvl = buildTvlQuestion(context)
+	const fees = buildFeesQuestion(context)
+	const metric = buildMetricSpecificQuestion(context)
+	const volumeLeads = context.volumeLeads && (metric?.id === 'dex-volume' || metric?.id === 'perp-volume')
+	// Search quotes the open answers in order. The definition and the dollar figures lead;
+	// chains and token price stay later so they are not the default quote.
+	const candidates = volumeLeads
+		? [
+				whatIs,
+				metric,
+				tvl,
+				fees,
+				buildRelationshipQuestion(context),
+				buildChainsQuestion(context),
+				buildTokenValuationQuestion(context),
+				buildTokenPerformanceQuestion(context),
+				buildTreasuryQuestion(context),
+				buildSecurityQuestion(context)
+			]
+		: [
+				whatIs,
+				tvl,
+				fees,
+				metric,
+				buildRelationshipQuestion(context),
+				buildChainsQuestion(context),
+				buildTokenValuationQuestion(context),
+				buildTokenPerformanceQuestion(context),
+				buildTreasuryQuestion(context),
+				buildSecurityQuestion(context)
+			]
 
 	return candidates.filter((item): item is IProtocolFaqItem => item != null)
+}
+
+function buildWhatIsQuestion(context: ProtocolFaqContext): IProtocolFaqItem | null {
+	const sentence = protocolDescriptionSentence(context.description)
+	if (!sentence) return null
+
+	return {
+		id: 'what-is',
+		question: `What is ${context.name}?`,
+		answer: [text(sentence)]
+	}
 }
 
 function text(value: string): IProtocolFaqAnswerPart {
