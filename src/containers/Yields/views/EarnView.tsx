@@ -25,6 +25,7 @@ import { useLegacyYieldsUrlNormalizer } from '../useLegacyYieldsUrlNormalizer'
 import { useVerifiedAccess } from '../useVerifiedAccess'
 import { useYieldsServerTable } from '../useYieldsServerTable'
 import { VerifiedApyAnnouncement } from '../VerifiedApyAnnouncement'
+import { yieldFarmingIntro } from '../yieldFarmingIntro'
 import type { YieldsPaginatedTableResponse } from '../yieldsTableQuery'
 import { YieldsTabs } from '../YieldsTabs'
 
@@ -160,6 +161,13 @@ function EarnView({
 
 	// Must follow the same endpoint choice the table made, or a paying reader silently exports the
 	// locked numbers.
+	const yieldLead = lockedQuery
+		? null
+		: yieldFarmingIntro({
+				generatedAtMs: initialEarnPageGeneratedAt,
+				rows: initialEarnPage?.rows ?? []
+			})
+
 	const prepareCsv = async () => {
 		const query = buildAllRowsQueryString()
 		const csvData = effectiveVerifiedAccess
@@ -174,6 +182,8 @@ function EarnView({
 		<>
 			<YieldsTabs
 				active="earn"
+				heading={yieldLead ? 'Yield farming rankings' : undefined}
+				lead={yieldLead ? <p className="body-sm text-secondary">{yieldLead}</p> : undefined}
 				rightSlot={
 					<p
 						className={`hidden body-md text-secondary sm:block ${

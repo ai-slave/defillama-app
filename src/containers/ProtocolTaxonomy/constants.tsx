@@ -1,5 +1,6 @@
 import type { ProtocolChartsQueryParams } from '~/containers/ProtocolOverview/constants'
 import { capitalizeFirstLetter } from '~/utils'
+import { LENDING_DEFINITION } from './lendingLead'
 import type { ProtocolTaxonomyBreakdownKey } from './types'
 
 export type ProtocolCategoryChartMetric =
@@ -151,7 +152,8 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 	},
 	Lending: {
 		description: 'Protocols that allow users to borrow and lend assets',
-		seoBaseTitle: 'DeFi Lending Protocols - TVL, Fees, & Revenue',
+		seoBaseTitle: 'DeFi Lending & Borrowing Protocols - TVL, Fees, & Revenue',
+		headingLabel: 'DeFi lending and borrowing protocols',
 		metrics: { borrowed: true },
 		columns: [
 			'name',
@@ -821,6 +823,14 @@ export function getProtocolCategoryChartMetricLabel(
 	}
 }
 
+const CATEGORY_DESCRIPTION_CAP = 155
+
+function joinCategoryDescription(categoryDesc: string | undefined, rankingsDesc: string): string {
+	if (!categoryDesc) return rankingsDesc
+	const combined = categoryDesc.endsWith('.') ? `${categoryDesc} ${rankingsDesc}` : `${categoryDesc}. ${rankingsDesc}`
+	return combined.length <= CATEGORY_DESCRIPTION_CAP ? combined : categoryDesc
+}
+
 export function getProtocolCategoryPresentation({
 	label,
 	effectiveCategory,
@@ -874,7 +884,6 @@ export function getProtocolCategoryPresentation({
 					? `${normalizedChain} ${capitalizeFirstLetter(resolvedSeoLabel)} Rankings`
 					: `${capitalizeFirstLetter(resolvedSeoLabel)} Rankings`
 
-	const MAX_DESC_LENGTH = 155
 	const baseDesc =
 		config?.directorySubject && config.directoryListingLabel
 			? `Find ${directoryCount}alternatives, competitors, and apps like ${config.directorySubject} from a list of ${config.directoryListingLabel}${directorySourceSuffix} in the DefiLlama directory.`
@@ -883,9 +892,15 @@ export function getProtocolCategoryPresentation({
 				: hasChain
 					? `Track top ${resolvedSeoLabel} on ${normalizedChain} by TVL, volume, and more on DefiLlama.`
 					: `Track top ${resolvedSeoLabel} across all chains by TVL, volume, and more on DefiLlama.`
-	const categoryDesc = config?.description
-	const seoDescription =
-		categoryDesc && `${baseDesc} ${categoryDesc}`.length <= MAX_DESC_LENGTH ? `${baseDesc} ${categoryDesc}` : baseDesc
+	// Lending names borrows in place of the shared rankings clause. The eight-word table cell stays `description`.
+	const rankingsDesc =
+		effectiveCategory === 'Lending' && !hasChain && hasProtocolCount
+			? `Compare ${protocolCount} of them by TVL, borrows, and fees.`
+			: baseDesc
+	const categoryDesc = effectiveCategory === 'Lending' ? LENDING_DEFINITION : config?.description
+	// The snippet quotes the start of the description, so the definition leads and stays when the rankings clause
+	// would push the pair past the cap.
+	const seoDescription = joinCategoryDescription(categoryDesc, rankingsDesc)
 
 	return {
 		headingLabel: config?.headingLabel ?? defaultHeadingLabel,

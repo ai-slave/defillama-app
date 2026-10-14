@@ -32,6 +32,7 @@ import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
 import { TokenRightsPieHovercard } from '~/containers/TokenRights/TokenRightsPopover'
 import { UtrGradeHovercard } from '~/containers/TokenRights/UtrPopover'
 import { setStorageItem } from '~/contexts/localStorageStore'
+import { usePageClockSec } from '~/hooks/usePageClock'
 import { definitions } from '~/public/definitions'
 import { Change } from '~/ui/Change'
 import { RowExpandButton } from '~/ui/DisclosureChevron'
@@ -47,8 +48,9 @@ import { TextLink } from '~/ui/TextLink'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
-import { formatRatio, formatUsd } from '~/utils/numberFormat'
+import { formatRatio, formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { AdapterByChainChart } from './ChainChart'
+import { dexAggregatorFaq, dexAggregatorIntro, dexVolumeIntro, perpIntro } from './hubCopy'
 import { getRatio, HIGH_RATIO_MULTIPLE, type OptionsRatioKey } from './optionsRatios'
 import type { IAdapterByChainPageData } from './types'
 import { filterProtocolsByCategoryQuery } from './utils'
@@ -203,6 +205,21 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 		if (col.getIsVisible()) selectedColumns.push(col.id)
 	}
 	const showChartPanel = props.adapterType !== 'fees' || FEES_CHART_PAGE_TYPES.has(props.type)
+	const pageClockSec = usePageClockSec()
+	const aggregatorCopy =
+		props.chain === 'All' && props.type === 'DEX Aggregator Volume'
+			? dexAggregatorIntro({ dateSec: pageClockSec, total24h: props.total24h, protocols: props.protocols })
+			: null
+	const perpLead =
+		props.chain === 'All' && props.type === 'Perp Volume'
+			? perpIntro({ dateSec: pageClockSec, protocols: props.protocols })
+			: null
+	const dexLead =
+		props.chain === 'All' && props.type === 'DEX Volume'
+			? dexVolumeIntro({ dateSec: pageClockSec, protocols: props.protocols })
+			: null
+	const volumeLabel = props.type === 'DEX Volume' ? 'Top DEX volume (24h)' : `${metricName} (24h)`
+	const aggregatorQuestions = aggregatorCopy ? dexAggregatorFaq(aggregatorCopy.volumeAnswer) : []
 
 	return (
 		<>
@@ -229,9 +246,23 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 								<span className="heading-sm">{props.chain}</span>
 								{props.deprecated ? <DeprecatedEntityText /> : null}
 							</h1>
+						) : props.type === 'DEX Aggregator Volume' ? (
+							<>
+								<div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-1">
+									<h1 className="heading-sm">Top DEX aggregators</h1>
+									{props.total24h != null ? (
+										<StatItem
+											label="Volume (24h)"
+											value={formatUsd(props.total24h, USD_LOWERCASE_MILLIONS_OPTIONS)}
+											truncate
+										/>
+									) : null}
+								</div>
+								<p className="body-sm text-secondary">{aggregatorCopy?.intro}</p>
+							</>
 						) : props.total24h != null ? (
 							<StatItem
-								label={`${metricName} (24h)`}
+								label={volumeLabel}
 								labelAs="h1"
 								value={formatUsd(props.total24h, {
 									compact: true,
@@ -241,8 +272,12 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 								truncate
 							/>
 						) : (
-							<h1 className="text-secondary">{metricName}</h1>
+							<h1 className={props.type === 'DEX Volume' ? 'heading-sm' : 'text-secondary'}>
+								{props.type === 'DEX Volume' ? 'Top DEX volume (24h)' : metricName}
+							</h1>
 						)}
+						{perpLead ? <p className="body-sm text-secondary">{perpLead}</p> : null}
+						{dexLead ? <p className="body-sm text-secondary">{dexLead}</p> : null}
 
 						{props.chain !== 'All' && props.total24h != null ? (
 							<StatItem
@@ -350,6 +385,16 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 						isCategoryFiltered={isCategoryFiltered}
 					/>
 				</SummaryCardGrid>
+			) : null}
+			{aggregatorQuestions.length > 0 ? (
+				<div className="flex flex-col gap-3">
+					{aggregatorQuestions.map((item) => (
+						<div key={item.question} className="flex flex-col gap-1">
+							<h2 className="heading-xs">{item.question}</h2>
+							<p className="body-sm text-secondary">{item.answer}</p>
+						</div>
+					))}
+				</div>
 			) : null}
 			{children}
 			{props.chain === 'All' ? <NewsletterSignup layout="strip" /> : null}

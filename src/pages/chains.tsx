@@ -43,8 +43,8 @@ export const getStaticProps = withPerformanceLogging('chains', async () => {
 export default function Chains(props: InferGetStaticPropsType<typeof getStaticProps>) {
 	return (
 		<Layout
-			title="Chain Rankings by TVL - DeFi Analytics - DefiLlama"
-			description="Compare 500+ blockchains by Total Value Locked (TVL), fees, and DeFi activity. Track chain rankings, protocol counts, and cross-chain analytics. Real-time layer-1 and layer-2 blockchain metrics."
+			title="Total Value Locked (TVL) by Chain - DefiLlama"
+			description="TVL is the dollar value locked in DeFi. Compare total value locked on Ethereum, Solana, and 500+ chains."
 			canonicalUrl="/chains"
 			tvlOptions={tvlOptions}
 			pageName={pageName}

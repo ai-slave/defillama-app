@@ -67,6 +67,7 @@ import { queryReadFailed, type QueryRetry } from '~/utils/query'
 import { isTruthyQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import { stablecoinBrandColors } from './brandColors'
 import { fetchStablecoinSeriesCsvDataset, fetchStablecoinVolumeCsvDataset } from './csvDataset'
+import { stablecoinDominanceIntro, stablecoinHubQuestions } from './hubCopy'
 import {
 	buildStablecoinMarketCapCsvDataset,
 	buildStablecoinMarketCapPresentation,
@@ -472,6 +473,15 @@ export function StablecoinsByChain({
 				: undefined,
 		[chartType, chartView, inflowsTooltipFormatter, selectedChartsWithHelpers.size]
 	)
+	const isHub = selectedChain === 'All'
+	const dominanceIntro = isHub
+		? stablecoinDominanceIntro({
+				dateSec: defaultChartData.summary?.dataTimestamp ?? null,
+				totalMcap: defaultChartData.summary?.totalMcapCurrent ?? null,
+				assets: filteredPeggedAssets
+			})
+		: null
+	const hubQuestions = isHub ? stablecoinHubQuestions(dominanceIntro) : []
 	const csvSource: ChartCsvSource | null = marketCapSeries
 		? {
 				type: 'dataset',
@@ -502,6 +512,13 @@ export function StablecoinsByChain({
 				mcapQuickPicks={mcapQuickPicks}
 			/>
 
+			{isHub ? (
+				<div className="flex flex-col gap-1">
+					<h1 className="heading-sm">Top stablecoins by market cap</h1>
+					{dominanceIntro ? <p className="body-sm text-secondary">{dominanceIntro}</p> : null}
+				</div>
+			) : null}
+
 			<SummaryCardGrid>
 				<SummaryStatsCard>
 					<StablecoinChangeStats
@@ -511,6 +528,7 @@ export function StablecoinsByChain({
 								{deprecated ? <DeprecatedEntityText /> : null}
 							</span>
 						}
+						labelAs={isHub ? 'span' : 'h1'}
 						value={mcapToDisplay}
 						changes={chartSummary}
 					/>
@@ -629,6 +647,17 @@ export function StablecoinsByChain({
 					)}
 				</Panel>
 			</SummaryCardGrid>
+
+			{hubQuestions.length > 0 ? (
+				<div className="flex flex-col gap-3">
+					{hubQuestions.map((item) => (
+						<div key={item.question} className="flex flex-col gap-1">
+							<h2 className="heading-xs">{item.question}</h2>
+							<p className="body-sm text-secondary">{item.answer}</p>
+						</div>
+					))}
+				</div>
+			) : null}
 
 			<NewsletterSignup layout="strip" />
 

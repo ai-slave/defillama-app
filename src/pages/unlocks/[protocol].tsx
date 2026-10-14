@@ -7,6 +7,7 @@ import {
 	getEventCountdown,
 	getProtocolUnlocksStaticPropsData
 } from '~/containers/Unlocks/protocolUnlocksStaticProps'
+import { nextUnlockIntro } from '~/containers/Unlocks/unlockIntro'
 import Layout from '~/layout'
 import { slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
@@ -58,8 +59,10 @@ export const getStaticProps = withPerformanceLogging(
 		}
 		const resolvedTokenSymbol = tokenSymbol ?? emissions.tokenPrice.symbol ?? null
 		const displayName = emissions.name
-		const seoTitle = `${displayName} Token Unlocks & Vesting Schedule`
-		const seoDescription = `View ${displayName}${resolvedTokenSymbol ? ` (${resolvedTokenSymbol})` : ''} token unlock schedule, vesting charts, and cliff events. Track upcoming emissions on DefiLlama.`
+		const named = `${displayName}${resolvedTokenSymbol ? ` (${resolvedTokenSymbol})` : ''}`
+		const seoTitle = `${named} Unlock Schedule & Circulating Supply`
+		const seoDescription = `See ${named} unlock cliffs, circulating supply, and the next unlock date on one vesting chart.`
+		const unlockLead = nextUnlockIntro({ symbol: resolvedTokenSymbol, event: emissions.upcomingEvent[0] })
 
 		return {
 			props: {
@@ -71,7 +74,8 @@ export const getStaticProps = withPerformanceLogging(
 				generatedAtSec,
 				canonicalProtocol,
 				seoTitle,
-				seoDescription
+				seoDescription,
+				unlockLead
 			},
 			revalidate: maxAgeForNext([22])
 		}
@@ -101,7 +105,8 @@ export default function Protocol({
 	generatedAtSec,
 	canonicalProtocol,
 	seoTitle,
-	seoDescription
+	seoDescription,
+	unlockLead
 }: InferGetStaticPropsType<typeof getStaticProps>) {
 	return (
 		<Layout title={seoTitle} description={seoDescription} canonicalUrl={`/unlocks/${canonicalProtocol}`}>
@@ -126,6 +131,7 @@ export default function Protocol({
 				initialTokenMarketData={initialTokenMarketData}
 				generatedAtSec={generatedAtSec}
 				disableClientTokenStatsFetch
+				lead={unlockLead}
 			/>
 		</Layout>
 	)

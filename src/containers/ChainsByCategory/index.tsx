@@ -23,6 +23,7 @@ import {
 	type TvlSettingsKey
 } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { usePageClockSec } from '~/hooks/usePageClock'
 import { ChartPanelExportShellLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { ScopeNote, ignoredFiltersPhrase } from '~/ui/ScopeNote'
@@ -32,6 +33,7 @@ import { getPercentChange } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { queryReadFailed } from '~/utils/query'
 import { aggregateGroupedChainRows, getTopLevelGroupedChains } from './grouping'
+import { chainsIntro } from './lead'
 import { ChainsByCategoryTable } from './Table'
 import { applyChainsTvlSettings, getChainMcapTvlRatio } from './tvl'
 import type { IChain, IChainsByCategoryData, IFormattedDataWithExtraTvl } from './types'
@@ -157,9 +159,16 @@ export function ChainsByCategory({
 		chartIgnoredFilters.length > 0 ? (
 			<ScopeNote>This chart ignores {ignoredFiltersPhrase(chartIgnoredFilters)} and shows every chain.</ScopeNote>
 		) : null
+	const pageClockSec = usePageClockSec()
 
 	return (
 		<>
+			{categoryName === 'All' ? (
+				<div className="flex flex-col gap-1">
+					<h1 className="heading-sm">Total value locked (TVL) by chain</h1>
+					<p className="body-sm text-secondary">{chainsIntro(pageClockSec, chains)}</p>
+				</div>
+			) : null}
 			<RowLinksWithDropdown heading="Categories" links={allCategories} activeLink={categoryName} />
 			{entityQuestions && entityQuestions.length > 0 ? (
 				<EntityQuestionsStrip questions={entityQuestions} entitySlug="chains" entityType="page" entityName="Chains" />

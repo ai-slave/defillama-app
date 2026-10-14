@@ -11,6 +11,7 @@ import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { usePageClockSec } from '~/hooks/usePageClock'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
 import { ChartPanelToolbar } from '~/ui/ChartPanel'
@@ -24,6 +25,7 @@ import { slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { formatUsd } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
+import { categoryIntro } from './categoryLead'
 import { getCategoryRoute } from './categoryRoutes'
 import {
 	applyProtocolsCategoriesTvlSettings,
@@ -182,12 +184,16 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 	const finalCategoriesList = React.useMemo(() => {
 		return applyProtocolsCategoriesTvlSettings({ tableData, enabledTvls })
 	}, [enabledTvls, tableData])
+	const intro = categoryIntro(usePageClockSec(), tableData)
 
 	return (
 		<>
 			<Panel>
 				<ChartPanelToolbar>
-					<h1 className="mr-auto heading-xs">TVL by category</h1>
+					<div className="mr-auto flex min-w-0 flex-col gap-1">
+						<h1 className="heading-xs">Protocol categories by TVL and revenue</h1>
+						<p className="body-sm text-secondary">{intro}</p>
+					</div>
 					{categories.length > 1 ? (
 						<SelectWithCombobox
 							allValues={categories}

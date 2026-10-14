@@ -58,13 +58,15 @@ export function RWAKpiCard({
 	headline,
 	rows,
 	csvName,
-	csvLead
+	csvLead,
+	lead
 }: {
 	identity?: ReactNode
 	headline: RwaKpiHeadline
 	rows: Array<RwaKpiRow>
 	csvName: string
 	csvLead?: CsvPayload['rows']
+	lead?: ReactNode
 }) {
 	const percent = percentChange(headline.change.current, headline.change.prior)
 	return (
@@ -80,6 +82,7 @@ export function RWAKpiCard({
 				/>
 				{percent != null ? <SummaryChange value={percent} comparison={`over ${RWA_KPI_PERIOD_LABEL}`} /> : null}
 			</div>
+			{lead}
 			<KeyMetricsPanel
 				footer={
 					<CSVDownloadButton

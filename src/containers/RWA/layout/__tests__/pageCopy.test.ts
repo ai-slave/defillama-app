@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { getRwaPageHeadline, getRwaPageMeta } from '../pageCopy'
+import { getRwaOverviewIntro, getRwaPageHeadline, getRwaPageMeta } from '../pageCopy'
 import type { RWAPageKind } from '../pageLayout'
 
 describe('getRwaPageMeta', () => {
@@ -41,13 +41,26 @@ describe('getRwaPageMeta', () => {
 })
 
 describe('getRwaPageHeadline', () => {
-	test('an overview or scope page heads with its metric, an entity page with its name', () => {
-		expect(getRwaPageHeadline('overview', null)).toBe('Total RWA Active AUM')
+	test('an overview heads with the asset list, a scope page with its metric, an entity page with its name', () => {
+		expect(getRwaPageHeadline('overview', null)).toBe('Top real world assets by onchain value')
+		expect(getRwaPageMeta('overview', null).title).toBe('Top Real World Assets (RWA) by Onchain Value - DefiLlama')
 		expect(getRwaPageHeadline('chain', 'Ethereum')).toBe('Ethereum RWA Active AUM')
 		expect(getRwaPageHeadline('perpsOverview', null)).toBe('Total RWA Perps Open Interest')
 		expect(getRwaPageHeadline('perpsAssetGroup', 'Stocks')).toBe('Stocks Perps Open Interest')
 		expect(getRwaPageHeadline('perpsAsset', 'NVDA')).toBe('NVDA Perps Open Interest')
 		expect(getRwaPageHeadline('platform', 'Ondo')).toBeNull()
 		expect(getRwaPageHeadline('venue', 'QFEX')).toBeNull()
+	})
+})
+
+describe('getRwaOverviewIntro', () => {
+	test('states the active AUM on the page date', () => {
+		expect(getRwaOverviewIntro(Date.UTC(2026, 9, 14) / 1000, 12.4e9)).toBe(
+			'Real world assets ranked by onchain value. On Oct 14, 2026 total active AUM is $12.4b.'
+		)
+	})
+
+	test('keeps the ranking sentence when active AUM is missing', () => {
+		expect(getRwaOverviewIntro(Date.UTC(2026, 9, 14) / 1000, null)).toBe('Real world assets ranked by onchain value.')
 	})
 })

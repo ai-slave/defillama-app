@@ -19,6 +19,7 @@ import { PastUnlockPriceImpact } from '~/containers/Unlocks/PastUnlockPriceImpac
 import { getAllProtocolEmissions, type EnrichedProtocolEmission } from '~/containers/Unlocks/queries'
 import { getUnlockTypes, hasActiveUnlockTableFilters, UnlocksTable } from '~/containers/Unlocks/Table'
 import { TopUnlocks } from '~/containers/Unlocks/TopUnlocks'
+import { unlockIndexIntro } from '~/containers/Unlocks/unlockIntro'
 import {
 	buildUpcomingUnlockChart,
 	buildUpcomingUnlockSeries,
@@ -324,7 +325,8 @@ export default function Protocols({
 
 			<SummaryCardGrid>
 				<SummaryStatsCard>
-					<h1 className="heading-sm">Unlock statistics</h1>
+					<h1 className="heading-sm">Token unlocks</h1>
+					<p className="body-sm text-secondary">{unlockIndexIntro(generatedAtSec, upcomingUnlocks7d.total)}</p>
 					<div className="flex flex-col">
 						<UpcomingUnlockMetric days={7} values={upcomingUnlocks7d} />
 						<UpcomingUnlockMetric days={30} values={upcomingUnlocks30d} />
