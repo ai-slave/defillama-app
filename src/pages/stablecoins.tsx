@@ -1,14 +1,14 @@
 import type { GetStaticProps, InferGetStaticPropsType } from 'next'
-import { datasetNode, faqPageNode, jsonLdDocument } from '~/components/SEO/jsonLd'
+import { datasetNode, faqPageNode, jsonLdDocument } from '~/components/SEO'
 import { fetchEntityQuestions } from '~/containers/LlamaAI/api'
 import { stablecoinBackingOptions, stablecoinPegTypeOptions } from '~/containers/Stablecoins/filterPolicy'
+import { getStablecoinsByChainPageData } from '~/containers/Stablecoins/queries.server'
 import {
 	STABLECOIN_DEFINITION,
 	stablecoinDominanceIntro,
-	stablecoinHubQuestions
-} from '~/containers/Stablecoins/hubCopy'
-import { getStablecoinsByChainPageData } from '~/containers/Stablecoins/queries.server'
-import { StablecoinsByChain } from '~/containers/Stablecoins/StablecoinsByChain'
+	stablecoinHubQuestions,
+	StablecoinsByChain
+} from '~/containers/Stablecoins/StablecoinsByChain'
 import type { PeggedOverviewPageData } from '~/containers/Stablecoins/types'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'

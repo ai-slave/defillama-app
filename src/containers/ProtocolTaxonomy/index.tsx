@@ -41,9 +41,11 @@ import {
 	getProtocolCategoryDefaultSort,
 	getProtocolCategoryDexVolumeLabel,
 	getProtocolCategoryPresentation,
+	LENDING_QUESTION,
+	lendingIntro,
+	categoryChartTvl,
 	type ProtocolCategoryColumn
 } from './constants'
-import { categoryChartTvl, LENDING_QUESTION, lendingIntro } from './lendingLead'
 import { applyProtocolTaxonomyTvlSettings } from './tvl'
 import type { IProtocolTaxonomyPageData, ProtocolTaxonomyBreakdownKey } from './types'
 

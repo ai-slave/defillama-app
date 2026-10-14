@@ -31,9 +31,10 @@ import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { getPercentChange } from '~/utils'
 import { fetchJson } from '~/utils/async'
+import { formatDate } from '~/utils/dateFormat'
+import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
 import { aggregateGroupedChainRows, getTopLevelGroupedChains } from './grouping'
-import { chainsIntro } from './lead'
 import { ChainsByCategoryTable } from './Table'
 import { applyChainsTvlSettings, getChainMcapTvlRatio } from './tvl'
 import type { IChain, IChainsByCategoryData, IFormattedDataWithExtraTvl } from './types'
@@ -75,6 +76,26 @@ const getChainRowExtraValues = ({
 		values[key] = chain.extraTvl[key]?.[metric] ?? null
 	}
 	return values
+}
+
+const CHAIN_TVL_DEFINITION = 'Total value locked (TVL) is the dollar value of crypto deposited in DeFi protocols.'
+
+function chainsIntro(dateSec: number, chains: ReadonlyArray<{ name: string; tvl: number | null }>): string {
+	const date = formatDate(dateSec, { input: 'seconds' })
+	const ranked: Array<{ name: string; tvl: number }> = []
+	for (const row of chains) {
+		if (row.tvl == null) continue
+		ranked.push({ name: row.name, tvl: row.tvl })
+	}
+	ranked.sort((a, b) => b.tvl - a.tvl || a.name.localeCompare(b.name))
+	const first = ranked[0]
+	const second = ranked[1]
+	const third = ranked[2]
+	const firstTvl = first ? formatUsd(first.tvl, USD_LOWERCASE_MILLIONS_OPTIONS) : null
+	const secondTvl = second ? formatUsd(second.tvl, USD_LOWERCASE_MILLIONS_OPTIONS) : null
+	const thirdTvl = third ? formatUsd(third.tvl, USD_LOWERCASE_MILLIONS_OPTIONS) : null
+	if (!date || !first || !second || !third || !firstTvl || !secondTvl || !thirdTvl) return CHAIN_TVL_DEFINITION
+	return `${CHAIN_TVL_DEFINITION} On ${date} ${first.name} led with ${firstTvl}, ahead of ${second.name} at ${secondTvl} and ${third.name} at ${thirdTvl}.`
 }
 
 export function ChainsByCategory({

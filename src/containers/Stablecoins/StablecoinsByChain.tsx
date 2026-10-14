@@ -61,13 +61,18 @@ import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { slug } from '~/utils'
+import { formatDate } from '~/utils/dateFormat'
 import { chainIconUrl } from '~/utils/icons'
-import { formatPercent, formatUsd } from '~/utils/numberFormat'
+import {
+	formatPercent,
+	formatUsd,
+	PERCENT_POINTS_TWO_DECIMALS_OPTIONS,
+	USD_LOWERCASE_MILLIONS_OPTIONS
+} from '~/utils/numberFormat'
 import { queryReadFailed, type QueryRetry } from '~/utils/query'
 import { isTruthyQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import { stablecoinBrandColors } from './brandColors'
 import { fetchStablecoinSeriesCsvDataset, fetchStablecoinVolumeCsvDataset } from './csvDataset'
-import { stablecoinDominanceIntro, stablecoinHubQuestions } from './hubCopy'
 import {
 	buildStablecoinMarketCapCsvDataset,
 	buildStablecoinMarketCapPresentation,
@@ -730,4 +735,43 @@ function handleRouting(selectedChain: string, queryParams: Record<string, string
 
 	if (selectedChain === 'All') return `/stablecoins${query}`
 	return `/stablecoins/${slug(selectedChain)}${query}`
+}
+
+export const STABLECOIN_DEFINITION =
+	'Stablecoins are crypto tokens that target a peg, usually one US dollar. This list ranks them by market cap, with circulating supply and how far each coin sits from its peg.'
+
+const STABLECOIN_QUESTION = 'What are stablecoins?'
+const USDT_DOMINANCE_QUESTION = "What is USDT's share of stablecoin market cap?"
+
+export function stablecoinHubQuestions(intro: string | null): Array<{ question: string; answer: string }> {
+	const questions = [{ question: STABLECOIN_QUESTION, answer: STABLECOIN_DEFINITION }]
+	if (intro) questions.push({ question: USDT_DOMINANCE_QUESTION, answer: intro })
+	return questions
+}
+
+export function stablecoinDominanceIntro(input: {
+	dateSec: number | null
+	totalMcap: number | null
+	assets: ReadonlyArray<{ symbol: string; mcap: number | null }>
+}): string | null {
+	if (input.dateSec == null || input.totalMcap == null || input.totalMcap <= 0) return null
+	const date = formatDate(input.dateSec, { input: 'seconds' })
+	let usdt: number | null = null
+	let usdc: number | null = null
+	let dai: number | null = null
+	for (const asset of input.assets) {
+		const symbol = asset.symbol.toUpperCase()
+		if (asset.mcap == null) continue
+		if (symbol === 'USDT' && (usdt == null || asset.mcap > usdt)) usdt = asset.mcap
+		if (symbol === 'USDC' && (usdc == null || asset.mcap > usdc)) usdc = asset.mcap
+		if (symbol === 'DAI' && (dai == null || asset.mcap > dai)) dai = asset.mcap
+	}
+	if (!date || usdt == null || usdc == null || dai == null) return null
+	const share = formatPercent((usdt / input.totalMcap) * 100, PERCENT_POINTS_TWO_DECIMALS_OPTIONS)
+	const usdtUsd = formatUsd(usdt, USD_LOWERCASE_MILLIONS_OPTIONS)
+	const total = formatUsd(input.totalMcap, USD_LOWERCASE_MILLIONS_OPTIONS)
+	const usdcUsd = formatUsd(usdc, USD_LOWERCASE_MILLIONS_OPTIONS)
+	const daiUsd = formatUsd(dai, USD_LOWERCASE_MILLIONS_OPTIONS)
+	if (!share || !usdtUsd || !total || !usdcUsd || !daiUsd) return null
+	return `USDT's share of stablecoin market cap is ${share} on ${date}: ${usdtUsd} of a ${total} total, ahead of USDC at ${usdcUsd} and DAI at ${daiUsd}. It is not TradingView's USDT.D index, which measures USDT against the whole crypto market.`
 }

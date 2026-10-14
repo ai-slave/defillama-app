@@ -1,5 +1,5 @@
 import { tvlOptions } from '~/components/Filters/options'
-import { datasetNode, jsonLdDocument } from '~/components/SEO/jsonLd'
+import { datasetNode, jsonLdDocument } from '~/components/SEO'
 import { isProtocolListTvlKey } from '~/containers/ProtocolLists/api.types'
 import { ProtocolsCategoriesPage } from '~/containers/ProtocolTaxonomy/CategoriesPage'
 import { getProtocolsCategoriesPageData } from '~/containers/ProtocolTaxonomy/queries'

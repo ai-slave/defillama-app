@@ -1,11 +1,15 @@
 import type { GetStaticPropsContext, InferGetStaticPropsType } from 'next'
 import { tvlOptions } from '~/components/Filters/options'
-import { faqPageNode, jsonLdDocument } from '~/components/SEO/jsonLd'
+import { faqPageNode, jsonLdDocument } from '~/components/SEO'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { isProtocolListTvlKey } from '~/containers/ProtocolLists/api.types'
 import { ProtocolTaxonomyPage } from '~/containers/ProtocolTaxonomy'
-import { getProtocolCategoryPresentation } from '~/containers/ProtocolTaxonomy/constants'
-import { categoryChartTvl, LENDING_QUESTION, lendingIntro } from '~/containers/ProtocolTaxonomy/lendingLead'
+import {
+	categoryChartTvl,
+	getProtocolCategoryPresentation,
+	LENDING_QUESTION,
+	lendingIntro
+} from '~/containers/ProtocolTaxonomy/constants'
 import { getProtocolTaxonomyPageData } from '~/containers/ProtocolTaxonomy/queries'
 import { usePageClockSec } from '~/hooks/usePageClock'
 import Layout from '~/layout'

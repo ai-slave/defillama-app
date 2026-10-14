@@ -19,7 +19,6 @@ import { PastUnlockPriceImpact } from '~/containers/Unlocks/PastUnlockPriceImpac
 import { getAllProtocolEmissions, type EnrichedProtocolEmission } from '~/containers/Unlocks/queries'
 import { getUnlockTypes, hasActiveUnlockTableFilters, UnlocksTable } from '~/containers/Unlocks/Table'
 import { TopUnlocks } from '~/containers/Unlocks/TopUnlocks'
-import { unlockIndexIntro } from '~/containers/Unlocks/unlockIntro'
 import {
 	buildUpcomingUnlockChart,
 	buildUpcomingUnlockSeries,
@@ -54,6 +53,7 @@ import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'
+import { formatDate } from '~/utils/dateFormat'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -63,6 +63,14 @@ const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChar
 
 const SECONDS_PER_DAY = 24 * 60 * 60
 const UPCOMING_WINDOW_DAYS = 30
+const UNLOCK_DEFINITION = 'Token unlocks are the scheduled release of vested tokens.'
+
+function unlockIndexIntro(dateSec: number, amountUsd: number): string {
+	const date = formatDate(dateSec, { input: 'seconds' })
+	const amount = formatUsd(amountUsd, USD_LOWERCASE_MILLIONS_OPTIONS)
+	if (!date || !amount) return UNLOCK_DEFINITION
+	return `${UNLOCK_DEFINITION} On ${date} upcoming unlocks over the next 7 days total ${amount}.`
+}
 
 export const getStaticProps = withPerformanceLogging('unlocks', async () => {
 	const requestedAtSec = Math.floor(Date.now() / 1000)

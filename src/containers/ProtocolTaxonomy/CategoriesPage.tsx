@@ -182,6 +182,7 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 	const finalCategoriesList = React.useMemo(() => {
 		return applyProtocolsCategoriesTvlSettings({ tableData, enabledTvls })
 	}, [enabledTvls, tableData])
+
 	return (
 		<>
 			<Panel>
