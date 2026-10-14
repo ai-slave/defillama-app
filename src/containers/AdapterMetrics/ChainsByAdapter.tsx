@@ -76,6 +76,7 @@ export function ChainsByAdapter(props: IProps) {
 	})
 	return (
 		<>
+			{props.type === 'Perp Volume' ? <h1 className="heading-sm">Perp volume by chain</h1> : null}
 			{props.type === 'Fees' ? (
 				<Announcement notCancellable>
 					<span>Are we missing any protocol?</span>{' '}

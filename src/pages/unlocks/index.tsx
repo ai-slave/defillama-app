@@ -53,6 +53,7 @@ import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'
+import { formatDate } from '~/utils/dateFormat'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -62,6 +63,14 @@ const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChar
 
 const SECONDS_PER_DAY = 24 * 60 * 60
 const UPCOMING_WINDOW_DAYS = 30
+const UNLOCK_DEFINITION = 'Token unlocks are the scheduled release of vested tokens.'
+
+function unlockIndexIntro(dateSec: number, amountUsd: number): string {
+	const date = formatDate(dateSec, { input: 'seconds' })
+	const amount = formatUsd(amountUsd, USD_LOWERCASE_MILLIONS_OPTIONS)
+	if (!date || !amount) return UNLOCK_DEFINITION
+	return `${UNLOCK_DEFINITION} On ${date} upcoming unlocks over the next 7 days total ${amount}.`
+}
 
 export const getStaticProps = withPerformanceLogging('unlocks', async () => {
 	const requestedAtSec = Math.floor(Date.now() / 1000)
@@ -324,7 +333,8 @@ export default function Protocols({
 
 			<SummaryCardGrid>
 				<SummaryStatsCard>
-					<h1 className="heading-sm">Unlock statistics</h1>
+					<h1 className="heading-sm">Token unlocks</h1>
+					<p className="body-sm text-secondary">{unlockIndexIntro(generatedAtSec, upcomingUnlocks7d.total)}</p>
 					<div className="flex flex-col">
 						<UpcomingUnlockMetric days={7} values={upcomingUnlocks7d} />
 						<UpcomingUnlockMetric days={30} values={upcomingUnlocks30d} />

@@ -14,16 +14,18 @@ type StablecoinMcapChanges = Pick<
 export function StablecoinChangeStats({
 	label,
 	value,
-	changes
+	changes,
+	labelAs = 'h1'
 }: {
 	label: ReactNode
 	value: ReactNode
 	changes: StablecoinMcapChanges | null
+	labelAs?: 'span' | 'h1' | 'h2'
 }) {
 	return (
 		<>
 			<div className="flex flex-nowrap items-end justify-between gap-8">
-				<StatItem label={label} labelAs="h1" value={value} truncate />
+				<StatItem label={label} labelAs={labelAs} value={value} truncate />
 				{changes?.change7d != null ? (
 					<SummaryChange
 						value={changes.change7d}

@@ -16,8 +16,8 @@ const pageName = ['Yields: Earn']
 export default function ApyHomePage(data: InferGetServerSidePropsType<typeof getServerSideProps>) {
 	return (
 		<Layout
-			title="Yield Farming Rankings - Best DeFi APY Pools - DefiLlama"
-			description="Find the best DeFi yield farming opportunities across all chains. Compare APY rates, TVL, and pool metrics for 10,000+ yield pools on Ethereum, Solana, Base, and 500+ networks. Real-time yield analytics."
+			title="High Yield Farming Rankings - Best DeFi APY Pools - DefiLlama"
+			description="Find the best high yield farming opportunities across all chains. Compare APY rates, TVL, and pool metrics for 10,000+ yield pools on Ethereum, Solana, Base, and 500+ networks. Real-time yield analytics."
 			canonicalUrl="/yields"
 			pageName={pageName}
 		>

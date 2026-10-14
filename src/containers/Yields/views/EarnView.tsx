@@ -5,6 +5,7 @@ import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
 import { useEntityQuestions } from '~/containers/LlamaAI/hooks/useEntityQuestions'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { fetchJson, handleSimpleFetchResponse } from '~/utils/async'
+import { formatDate } from '~/utils/dateFormat'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
 import { YIELD_EARN_DATASET_API, YIELD_EARN_PRIVATE_API } from '../constants'
@@ -31,6 +32,31 @@ import { YieldsTabs } from '../YieldsTabs'
 const EMPTY_POOL_ROWS: Array<IYieldTableRow> = []
 const EMPTY_STRINGS: Array<string> = []
 type EarnRowsResponse = { rows: Array<IYieldTableRow> }
+const YIELD_FARMING_DEFINITION = 'Yield farming is depositing crypto to earn a high yield.'
+
+/** A locked row keeps the reported APY and withholds the measurement, so only `verifiedApy` counts. */
+function yieldFarmingIntro(input: {
+	generatedAtMs: number | null
+	rows: ReadonlyArray<{
+		pool: string
+		poolMeta: string | null
+		stablecoin: boolean | null
+		verifiedApy?: number | null
+		verifiedLocked?: boolean
+	}>
+}): string {
+	let best: { apy: number; label: string } | null = null
+	for (const row of input.rows) {
+		if (row.stablecoin !== true || row.verifiedLocked === true || typeof row.verifiedApy !== 'number') continue
+		if (best != null && row.verifiedApy <= best.apy) continue
+		best = { apy: row.verifiedApy, label: row.poolMeta ? `${row.pool} (${row.poolMeta})` : row.pool }
+	}
+	const apy = best ? formatPercent(best.apy, YIELD_PERCENT_OPTIONS) : null
+	if (!best || !apy) return YIELD_FARMING_DEFINITION
+	const date = input.generatedAtMs == null ? null : formatDate(input.generatedAtMs, { input: 'milliseconds' })
+	const dated = date ? `On ${date}, the` : 'The'
+	return `${YIELD_FARMING_DEFINITION} ${dated} highest verified stablecoin APY in this table is ${apy} on ${best.label}.`
+}
 
 export type EarnViewProps = EarnPageMeta & {
 	entityQuestions: Array<string>
@@ -158,6 +184,19 @@ function EarnView({
 	)
 	const questions = filteredQuestionsData?.questions?.length ? filteredQuestionsData.questions : baseQuestions
 
+	// The pool is taken from the rows on screen, so filters, paging, and a new APY window change it.
+	// A placeholder page has no fetch time of its own, so the sentence names no date until that page lands.
+	const yieldLead = lockedQuery
+		? null
+		: yieldFarmingIntro({
+				generatedAtMs: rowsQuery.isPlaceholderData
+					? null
+					: rowsQuery.dataUpdatedAt > 0
+						? rowsQuery.dataUpdatedAt
+						: initialEarnPageGeneratedAt,
+				rows: serverRows
+			})
+
 	// Must follow the same endpoint choice the table made, or a paying reader silently exports the
 	// locked numbers.
 	const prepareCsv = async () => {
@@ -174,6 +213,8 @@ function EarnView({
 		<>
 			<YieldsTabs
 				active="earn"
+				heading={yieldLead ? 'Yield farming rankings' : undefined}
+				lead={yieldLead ? <p className="body-sm text-secondary">{yieldLead}</p> : undefined}
 				rightSlot={
 					<p
 						className={`hidden body-md text-secondary sm:block ${

@@ -32,6 +32,7 @@ import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
 import { TokenRightsPieHovercard } from '~/containers/TokenRights/TokenRightsPopover'
 import { UtrGradeHovercard } from '~/containers/TokenRights/UtrPopover'
 import { setStorageItem } from '~/contexts/localStorageStore'
+import { usePageClockSec } from '~/hooks/usePageClock'
 import { definitions } from '~/public/definitions'
 import { Change } from '~/ui/Change'
 import { RowExpandButton } from '~/ui/DisclosureChevron'
@@ -47,7 +48,8 @@ import { TextLink } from '~/ui/TextLink'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
-import { formatRatio, formatUsd } from '~/utils/numberFormat'
+import { formatDate } from '~/utils/dateFormat'
+import { formatRatio, formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { AdapterByChainChart } from './ChainChart'
 import { getRatio, HIGH_RATIO_MULTIPLE, type OptionsRatioKey } from './optionsRatios'
 import type { IAdapterByChainPageData } from './types'
@@ -203,6 +205,21 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 		if (col.getIsVisible()) selectedColumns.push(col.id)
 	}
 	const showChartPanel = props.adapterType !== 'fees' || FEES_CHART_PAGE_TYPES.has(props.type)
+	const pageClockSec = usePageClockSec()
+	const aggregatorCopy =
+		props.chain === 'All' && props.type === 'DEX Aggregator Volume'
+			? dexAggregatorIntro({ dateSec: pageClockSec, total24h: props.total24h, protocols: props.protocols })
+			: null
+	const perpLead =
+		props.chain === 'All' && props.type === 'Perp Volume'
+			? perpIntro({ dateSec: pageClockSec, protocols: props.protocols })
+			: null
+	const dexLead =
+		props.chain === 'All' && props.type === 'DEX Volume'
+			? dexVolumeIntro({ dateSec: pageClockSec, protocols: props.protocols })
+			: null
+	const volumeLabel = props.type === 'DEX Volume' ? 'Top DEX volume (24h)' : `${metricName} (24h)`
+	const aggregatorQuestions = aggregatorCopy ? dexAggregatorFaq(aggregatorCopy.volumeAnswer) : []
 
 	return (
 		<>
@@ -229,9 +246,23 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 								<span className="heading-sm">{props.chain}</span>
 								{props.deprecated ? <DeprecatedEntityText /> : null}
 							</h1>
+						) : props.type === 'DEX Aggregator Volume' ? (
+							<>
+								<div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-1">
+									<h1 className="heading-sm">Top DEX aggregators</h1>
+									{props.total24h != null ? (
+										<StatItem
+											label="Volume (24h)"
+											value={formatUsd(props.total24h, USD_LOWERCASE_MILLIONS_OPTIONS)}
+											truncate
+										/>
+									) : null}
+								</div>
+								<p className="body-sm text-secondary">{aggregatorCopy?.intro}</p>
+							</>
 						) : props.total24h != null ? (
 							<StatItem
-								label={`${metricName} (24h)`}
+								label={volumeLabel}
 								labelAs="h1"
 								value={formatUsd(props.total24h, {
 									compact: true,
@@ -241,8 +272,12 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 								truncate
 							/>
 						) : (
-							<h1 className="text-secondary">{metricName}</h1>
+							<h1 className={props.type === 'DEX Volume' ? 'heading-sm' : 'text-secondary'}>
+								{props.type === 'DEX Volume' ? 'Top DEX volume (24h)' : metricName}
+							</h1>
 						)}
+						{perpLead ? <p className="body-sm text-secondary">{perpLead}</p> : null}
+						{dexLead ? <p className="body-sm text-secondary">{dexLead}</p> : null}
 
 						{props.chain !== 'All' && props.total24h != null ? (
 							<StatItem
@@ -350,6 +385,16 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 						isCategoryFiltered={isCategoryFiltered}
 					/>
 				</SummaryCardGrid>
+			) : null}
+			{aggregatorQuestions.length > 0 ? (
+				<div className="flex flex-col gap-3">
+					{aggregatorQuestions.map((item) => (
+						<div key={item.question} className="flex flex-col gap-1">
+							<h2 className="heading-xs">{item.question}</h2>
+							<p className="body-sm text-secondary">{item.answer}</p>
+						</div>
+					))}
+				</div>
 			) : null}
 			{children}
 			{props.chain === 'All' ? <NewsletterSignup layout="strip" /> : null}
@@ -1155,4 +1200,71 @@ const COLUMNS_BY_TYPE = {
 	],
 	'P/F': [NameColumn('Fees'), categoryColumn('center'), pfOrPsColumn('P/F', definitions.fees.protocol['pf'])],
 	'P/S': [NameColumn('Revenue'), categoryColumn('center'), pfOrPsColumn('P/S', definitions.revenue.protocol['ps'])]
+}
+
+const DEX_AGGREGATOR_DEFINITION = 'A DEX aggregator routes swaps across exchanges for a better price.'
+const DEX_AGGREGATOR_QUESTION = 'What is a DEX aggregator?'
+const DEX_AGGREGATOR_VOLUME_QUESTION = 'Which aggregators have the most 24h volume?'
+const PERP_DEFINITION = 'A perpetual DEX lists perpetual futures markets.'
+
+type ProtocolVolume = { name: string; total24h: number | null }
+
+export function dexAggregatorFaq(volumeAnswer: string | null): Array<{ question: string; answer: string }> {
+	const questions = [{ question: DEX_AGGREGATOR_QUESTION, answer: DEX_AGGREGATOR_DEFINITION }]
+	if (volumeAnswer) questions.push({ question: DEX_AGGREGATOR_VOLUME_QUESTION, answer: volumeAnswer })
+	return questions
+}
+
+function topByVolume(
+	protocols: ReadonlyArray<ProtocolVolume>,
+	count: number
+): Array<{ name: string; total24h: number }> | null {
+	const ranked: Array<{ name: string; total24h: number }> = []
+	for (const protocol of protocols) {
+		if (protocol.total24h == null) continue
+		ranked.push({ name: protocol.name, total24h: protocol.total24h })
+	}
+	ranked.sort((a, b) => b.total24h - a.total24h || a.name.localeCompare(b.name))
+	if (ranked.length < count) return null
+	return ranked.slice(0, count)
+}
+
+export function dexAggregatorIntro(input: {
+	dateSec: number
+	total24h: number | null
+	protocols: ReadonlyArray<ProtocolVolume>
+}): { intro: string; volumeAnswer: string | null } {
+	const date = formatDate(input.dateSec, { input: 'seconds' })
+	const leaders = topByVolume(input.protocols, 3)
+	const total = input.total24h == null ? null : formatUsd(input.total24h, USD_LOWERCASE_MILLIONS_OPTIONS)
+	const first = leaders?.[0]
+	const second = leaders?.[1]
+	const third = leaders?.[2]
+	const firstUsd = first ? formatUsd(first.total24h, USD_LOWERCASE_MILLIONS_OPTIONS) : null
+	const secondUsd = second ? formatUsd(second.total24h, USD_LOWERCASE_MILLIONS_OPTIONS) : null
+	const thirdUsd = third ? formatUsd(third.total24h, USD_LOWERCASE_MILLIONS_OPTIONS) : null
+	if (!date || !total || !first || !second || !third || !firstUsd || !secondUsd || !thirdUsd) {
+		return { intro: DEX_AGGREGATOR_DEFINITION, volumeAnswer: null }
+	}
+	const volumeAnswer = `On ${date}, tracked DEX aggregator volume was ${total} in 24 hours. ${first.name} led at ${firstUsd}, then ${second.name} at ${secondUsd} and ${third.name} at ${thirdUsd}.`
+	return { intro: `${DEX_AGGREGATOR_DEFINITION} ${volumeAnswer}`, volumeAnswer }
+}
+
+function perpIntro(input: { dateSec: number; protocols: ReadonlyArray<ProtocolVolume> }): string {
+	const date = formatDate(input.dateSec, { input: 'seconds' })
+	const leader = topByVolume(input.protocols, 1)?.[0]
+	const amount = leader ? formatUsd(leader.total24h, USD_LOWERCASE_MILLIONS_OPTIONS) : null
+	if (!date || !leader || !amount) return PERP_DEFINITION
+	return `${PERP_DEFINITION} On ${date} ${leader.name} led 24h volume at ${amount}.`
+}
+
+function dexVolumeIntro(input: { dateSec: number; protocols: ReadonlyArray<ProtocolVolume> }): string | null {
+	const date = formatDate(input.dateSec, { input: 'seconds' })
+	const leaders = topByVolume(input.protocols, 3)
+	const first = leaders?.[0]
+	const second = leaders?.[1]
+	const third = leaders?.[2]
+	const amount = first ? formatUsd(first.total24h, USD_LOWERCASE_MILLIONS_OPTIONS) : null
+	if (!date || !first || !second || !third || !amount) return null
+	return `On ${date} ${first.name} led DEX volume at ${amount}, ahead of ${second.name} and ${third.name}.`
 }

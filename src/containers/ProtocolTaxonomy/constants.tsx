@@ -1,6 +1,27 @@
 import type { ProtocolChartsQueryParams } from '~/containers/ProtocolOverview/constants'
 import { capitalizeFirstLetter } from '~/utils'
-import type { ProtocolTaxonomyBreakdownKey } from './types'
+import { formatDate } from '~/utils/dateFormat'
+import { formatNumber, formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
+import type { ProtocolTaxonomyBreakdownKey, ProtocolTaxonomyCharts } from './types'
+
+const LENDING_DEFINITION =
+	'Lending protocols let users deposit assets and borrow against collateral. Borrowers pay interest and can be liquidated if that collateral falls short.'
+export const LENDING_QUESTION = 'How do DeFi lending and borrowing protocols work?'
+
+export function categoryChartTvl(charts: ProtocolTaxonomyCharts): number | null {
+	const index = charts.dataset.dimensions.indexOf('TVL')
+	if (index < 0) return null
+	const value = charts.dataset.source[charts.dataset.source.length - 1]?.[index]
+	return typeof value === 'number' ? value : null
+}
+
+export function lendingIntro(input: { dateSec: number; tvl: number | null; protocolCount: number }): string {
+	const date = formatDate(input.dateSec, { input: 'seconds' })
+	const tvl = input.tvl == null ? null : formatUsd(input.tvl, USD_LOWERCASE_MILLIONS_OPTIONS)
+	const count = formatNumber(input.protocolCount)
+	if (!date || !tvl || !count || input.protocolCount <= 0) return LENDING_DEFINITION
+	return `${LENDING_DEFINITION} On ${date} the lending category held ${tvl} across ${count} protocols.`
+}
 
 export type ProtocolCategoryChartMetric =
 	| 'tvl'
@@ -151,7 +172,8 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 	},
 	Lending: {
 		description: 'Protocols that allow users to borrow and lend assets',
-		seoBaseTitle: 'DeFi Lending Protocols - TVL, Fees, & Revenue',
+		seoBaseTitle: 'DeFi Lending & Borrowing Protocols - TVL, Fees, & Revenue',
+		headingLabel: 'DeFi lending and borrowing protocols',
 		metrics: { borrowed: true },
 		columns: [
 			'name',
@@ -821,6 +843,8 @@ export function getProtocolCategoryChartMetricLabel(
 	}
 }
 
+const CATEGORY_DESCRIPTION_CAP = 155
+
 export function getProtocolCategoryPresentation({
 	label,
 	effectiveCategory,
@@ -874,7 +898,6 @@ export function getProtocolCategoryPresentation({
 					? `${normalizedChain} ${capitalizeFirstLetter(resolvedSeoLabel)} Rankings`
 					: `${capitalizeFirstLetter(resolvedSeoLabel)} Rankings`
 
-	const MAX_DESC_LENGTH = 155
 	const baseDesc =
 		config?.directorySubject && config.directoryListingLabel
 			? `Find ${directoryCount}alternatives, competitors, and apps like ${config.directorySubject} from a list of ${config.directoryListingLabel}${directorySourceSuffix} in the DefiLlama directory.`
@@ -883,9 +906,23 @@ export function getProtocolCategoryPresentation({
 				: hasChain
 					? `Track top ${resolvedSeoLabel} on ${normalizedChain} by TVL, volume, and more on DefiLlama.`
 					: `Track top ${resolvedSeoLabel} across all chains by TVL, volume, and more on DefiLlama.`
+	// Lending names borrows in place of the shared rankings clause. The eight-word table cell stays `description`.
+	const rankingsDesc =
+		effectiveCategory === 'Lending' && !hasChain && hasProtocolCount
+			? `Compare ${protocolCount} of them by TVL, borrows, and fees.`
+			: baseDesc
 	const categoryDesc = config?.description
+	// Only the unscoped lending page leads with the definition and may drop the rankings clause.
+	// Every other category, including lending on a chain, keeps the rankings and chain clause.
+	const lendingCombined = `${LENDING_DEFINITION} ${rankingsDesc}`
 	const seoDescription =
-		categoryDesc && `${baseDesc} ${categoryDesc}`.length <= MAX_DESC_LENGTH ? `${baseDesc} ${categoryDesc}` : baseDesc
+		effectiveCategory === 'Lending' && !hasChain
+			? lendingCombined.length <= CATEGORY_DESCRIPTION_CAP
+				? lendingCombined
+				: LENDING_DEFINITION
+			: categoryDesc && `${baseDesc} ${categoryDesc}`.length <= CATEGORY_DESCRIPTION_CAP
+				? `${baseDesc} ${categoryDesc}`
+				: baseDesc
 
 	return {
 		headingLabel: config?.headingLabel ?? defaultHeadingLabel,

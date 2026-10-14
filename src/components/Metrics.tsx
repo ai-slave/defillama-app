@@ -221,7 +221,7 @@ export function Metrics({
 		<>
 			<Card padding="base" className="flex flex-col gap-3">
 				<div className="flex items-center gap-2">
-					<h2 className="heading-sm">Metrics</h2>
+					<h1 className="heading-sm">Metrics</h1>
 					{tabs}
 				</div>
 				{search}

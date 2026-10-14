@@ -1,8 +1,14 @@
 import type { GetStaticProps, InferGetStaticPropsType } from 'next'
+import { datasetNode, faqPageNode, jsonLdDocument } from '~/components/SEO'
 import { fetchEntityQuestions } from '~/containers/LlamaAI/api'
 import { stablecoinBackingOptions, stablecoinPegTypeOptions } from '~/containers/Stablecoins/filterPolicy'
 import { getStablecoinsByChainPageData } from '~/containers/Stablecoins/queries.server'
-import { StablecoinsByChain } from '~/containers/Stablecoins/StablecoinsByChain'
+import {
+	STABLECOIN_DEFINITION,
+	stablecoinDominanceIntro,
+	stablecoinHubQuestions,
+	StablecoinsByChain
+} from '~/containers/Stablecoins/StablecoinsByChain'
 import type { PeggedOverviewPageData } from '~/containers/Stablecoins/types'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -80,12 +86,26 @@ export default function StablecoinsPage({
 	defaultChartData,
 	entityQuestions
 }: InferGetStaticPropsType<typeof getStaticProps>) {
+	const dominanceIntro = stablecoinDominanceIntro({
+		dateSec: defaultChartData.summary?.dataTimestamp ?? null,
+		totalMcap: defaultChartData.summary?.totalMcapCurrent ?? null,
+		assets: filteredPeggedAssets
+	})
+	const questions = stablecoinHubQuestions(dominanceIntro)
 	return (
 		<Layout
 			title="Stablecoin Market Cap Chart, Supply & Peg Data - DefiLlama"
 			description="Track the total stablecoin market cap, circulating supply, prices, inflows, and peg stability across all stablecoins. Explore stablecoin market charts and analytics with transparent data from DefiLlama."
 			canonicalUrl="/stablecoins"
 			pageName={pageName}
+			jsonLd={jsonLdDocument([
+				datasetNode({
+					name: 'Top stablecoins by market cap',
+					description: dominanceIntro ?? STABLECOIN_DEFINITION,
+					url: 'https://defillama.com/stablecoins'
+				}),
+				faqPageNode(questions)
+			])}
 		>
 			<StablecoinsByChain
 				chains={chains}

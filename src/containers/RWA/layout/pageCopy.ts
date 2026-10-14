@@ -1,10 +1,12 @@
-import { definitions } from '../definitions'
+import { formatDate } from '~/utils/dateFormat'
+import { formatRwaKpiUsd } from '../kpi/format'
 import type { RWAPageKind } from './pageLayout'
 
 /**
  * What each /rwa page calls itself: its title, description and canonical (one per page kind), and its h1. The titles
- * and descriptions are the ones search has indexed and the SEO work builds on: change one only on purpose. An overview
- * or scope page heads with its headline metric, an entity page with its name (the platform page pattern).
+ * and descriptions are the ones search has indexed and the SEO work builds on: change one only on purpose. The overview
+ * heads with the asset list and keeps active AUM as the stat. A scope page heads with its headline metric, an entity
+ * page with its name (the platform page pattern).
  */
 
 type RWAPageScope = { name: string; slug: string }
@@ -25,7 +27,7 @@ export function getRwaPageMeta(
 	switch (kind) {
 		case 'overview':
 			return {
-				title: `Real World Assets (RWA)${DASHBOARD}`,
+				title: `Top Real World Assets (RWA) by Onchain Value${SUFFIX}`,
 				description:
 					'Track Real World Assets (RWA) tokenization on-chain. View tokenized treasuries, private credit, real estate, and commodities. RWA AUM, yields, and adoption analytics across all blockchains.',
 				canonicalUrl: '/rwa'
@@ -84,11 +86,11 @@ export function getRwaPageMeta(
 	}
 }
 
-/** The h1 of an overview or scope page: its headline metric. Null on an entity page, whose h1 is its name. */
+/** The h1 of an overview or scope page. Null on an entity page, whose h1 is its name. */
 export function getRwaPageHeadline(kind: RWAPageKind, scopeName: string | null): string | null {
 	switch (kind) {
 		case 'overview':
-			return definitions.totalActiveMcap.label
+			return 'Top real world assets by onchain value'
 		case 'chain':
 		case 'category':
 		case 'assetGroup':
@@ -102,4 +104,14 @@ export function getRwaPageHeadline(kind: RWAPageKind, scopeName: string | null):
 		case 'venue':
 			return null
 	}
+}
+
+const RWA_OVERVIEW_DEFINITION = 'Real world assets ranked by onchain value.'
+
+/** Definition first. The dated total is the same active AUM the overview stat shows. */
+export function getRwaOverviewIntro(dateSec: number, activeMcap: number | null): string {
+	const date = formatDate(dateSec, { input: 'seconds' })
+	const aum = activeMcap == null ? null : formatRwaKpiUsd(activeMcap)
+	if (!date || activeMcap == null || !aum) return RWA_OVERVIEW_DEFINITION
+	return `${RWA_OVERVIEW_DEFINITION} On ${date} total active AUM is ${aum}.`
 }

@@ -1,9 +1,15 @@
 import type { GetStaticPropsContext, InferGetStaticPropsType } from 'next'
 import { tvlOptions } from '~/components/Filters/options'
+import { faqPageNode, jsonLdDocument } from '~/components/SEO'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { isProtocolListTvlKey } from '~/containers/ProtocolLists/api.types'
 import { ProtocolTaxonomyPage } from '~/containers/ProtocolTaxonomy'
-import { getProtocolCategoryPresentation } from '~/containers/ProtocolTaxonomy/constants'
+import {
+	categoryChartTvl,
+	getProtocolCategoryPresentation,
+	LENDING_QUESTION,
+	lendingIntro
+} from '~/containers/ProtocolTaxonomy/constants'
 import { getProtocolTaxonomyPageData } from '~/containers/ProtocolTaxonomy/queries'
 import { usePageClockSec } from '~/hooks/usePageClock'
 import Layout from '~/layout'
@@ -97,12 +103,25 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 	})
 	const title = presentation.seoTitle
 	const description = presentation.seoDescription
+	const lendingAnswer =
+		props.chain === 'All' && props.effectiveCategory === 'Lending'
+			? lendingIntro({
+					dateSec: pageClockSec,
+					tvl: categoryChartTvl(props.charts),
+					protocolCount: props.protocols.length
+				})
+			: null
 	return (
 		<Layout
 			title={title}
 			description={description}
 			canonicalUrl={`/protocols/${slug(props.category ? props.category : props.tag)}`}
 			tvlOptions={toggleOptions}
+			{...(lendingAnswer
+				? {
+						jsonLd: jsonLdDocument([faqPageNode([{ question: LENDING_QUESTION, answer: lendingAnswer }])])
+					}
+				: {})}
 		>
 			<ProtocolTaxonomyPage {...props} />
 		</Layout>

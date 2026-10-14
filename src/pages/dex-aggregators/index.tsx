@@ -1,7 +1,9 @@
-import { AdapterByChain } from '~/containers/AdapterMetrics/AdapterByChain'
+import { faqPageNode, jsonLdDocument } from '~/components/SEO'
+import { AdapterByChain, dexAggregatorFaq, dexAggregatorIntro } from '~/containers/AdapterMetrics/AdapterByChain'
 import { ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { getAdapterByChainPageData } from '~/containers/AdapterMetrics/queries'
 import type { IAdapterByChainPageData } from '~/containers/AdapterMetrics/types'
+import { usePageClockSec } from '~/hooks/usePageClock'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -28,12 +30,18 @@ export const getStaticProps = withPerformanceLogging(`${type}/index`, async () =
 const pageName = ['Protocols', 'ranked by', type]
 
 function DexAggregatorsVolumeOnAllChains(props: IAdapterByChainPageData) {
+	const copy = dexAggregatorIntro({
+		dateSec: usePageClockSec(),
+		total24h: props.total24h,
+		protocols: props.protocols
+	})
 	return (
 		<Layout
-			title="DEX Aggregator Rankings - Swap Routing Analytics - DefiLlama"
-			description="Track DEX aggregator volume and swap routing activity. Compare swap volume across 1inch, CowSwap, OpenOcean, and 100+ DEX aggregators. Real-time swap routing analytics with best price execution data."
+			title="Top DEX Aggregators: 1inch, Jupiter & CowSwap - DefiLlama"
+			description="A DEX aggregator routes swaps across exchanges for a better price. Rank 1inch, Jupiter, CowSwap, and 100+ by volume."
 			canonicalUrl="/dex-aggregators"
 			pageName={pageName}
+			jsonLd={jsonLdDocument([faqPageNode(dexAggregatorFaq(copy.volumeAnswer))])}
 		>
 			<AdapterByChain {...props} type={type} />
 		</Layout>

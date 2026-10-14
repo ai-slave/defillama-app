@@ -99,7 +99,8 @@ export function EmissionsByProtocol({
 	initialTokenMarketData = null,
 	generatedAtSec,
 	disableClientTokenStatsFetch = false,
-	hideTokenStats = false
+	hideTokenStats = false,
+	lead = null
 }: {
 	data: ResolvedProtocolEmissionResult
 	isEmissionsPage?: boolean
@@ -108,6 +109,7 @@ export function EmissionsByProtocol({
 	generatedAtSec: number
 	disableClientTokenStatsFetch?: boolean
 	hideTokenStats?: boolean
+	lead?: string | null
 }) {
 	return (
 		<div className="col-span-full flex flex-col gap-2 xl:col-span-1">
@@ -119,6 +121,7 @@ export function EmissionsByProtocol({
 				generatedAtSec={generatedAtSec}
 				disableClientTokenStatsFetch={disableClientTokenStatsFetch}
 				hideTokenStats={hideTokenStats}
+				lead={lead}
 			/>
 		</div>
 	)
@@ -263,12 +266,14 @@ function TokenHeader({
 	name,
 	tokenPrice,
 	percentChange,
-	geckoId
+	geckoId,
+	lead
 }: {
 	name: string
 	tokenPrice: number | undefined
 	percentChange: number | null
 	geckoId: string | null
+	lead: string | null
 }) {
 	return (
 		<Card padding="base" className="flex w-full flex-wrap items-center gap-3">
@@ -279,6 +284,7 @@ function TokenHeader({
 				alt={`Logo of ${name}`}
 			/>
 			<h1 className="heading-sm">{name}</h1>
+			{lead ? <p className="w-full body-sm text-secondary">{lead}</p> : null}
 
 			{tokenPrice != null ? (
 				<>
@@ -451,7 +457,8 @@ function ChartContainer({
 	initialTokenMarketData,
 	generatedAtSec,
 	disableClientTokenStatsFetch,
-	hideTokenStats
+	hideTokenStats,
+	lead
 }: {
 	data: ResolvedProtocolEmissionResult
 	isEmissionsPage: boolean
@@ -459,6 +466,7 @@ function ChartContainer({
 	generatedAtSec: number
 	disableClientTokenStatsFetch: boolean
 	hideTokenStats: boolean
+	lead: string | null
 }) {
 	const width = useBreakpointWidth()
 	const router = useRouter()
@@ -899,7 +907,13 @@ function ChartContainer({
 	return (
 		<>
 			{isEmissionsPage && data.name ? (
-				<TokenHeader name={data.name} tokenPrice={tokenPrice} percentChange={percentChange} geckoId={data.geckoId} />
+				<TokenHeader
+					name={data.name}
+					tokenPrice={tokenPrice}
+					percentChange={percentChange}
+					geckoId={data.geckoId}
+					lead={lead}
+				/>
 			) : null}
 
 			{hideTokenStats ? null : (
@@ -1147,6 +1161,7 @@ export function UnlocksCharts({
 			generatedAtSec={generatedAtSec}
 			disableClientTokenStatsFetch={disableClientTokenStatsFetch}
 			hideTokenStats={hideTokenStats}
+			lead={null}
 		/>
 	)
 }

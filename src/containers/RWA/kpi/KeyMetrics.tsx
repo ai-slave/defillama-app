@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import type { RwaNamedBar, RwaPerpsTotals } from '../cards/cardData'
 import type { RWAPageKind } from '../layout/pageLayout'
 import type { RWATableMetrics } from '../table/rows'
@@ -16,15 +17,26 @@ export type RWAKeyMetricsProps = {
 	pageKind: RWAPageKind
 	/** The page's scope (a chain, a category), for the csv name. */
 	scopeName?: string | null
+	/** The overview sentence under the headline. Other pages leave it off. */
+	lead?: ReactNode
 }
 
 /** The Assets Key Metrics card: active AUM heads it, the AUM sections and the perps totals open under it. */
-export function RWAKeyMetrics({ metrics, perps, largestProtocol, headline, pageKind, scopeName }: RWAKeyMetricsProps) {
+export function RWAKeyMetrics({
+	metrics,
+	perps,
+	largestProtocol,
+	headline,
+	pageKind,
+	scopeName,
+	lead
+}: RWAKeyMetricsProps) {
 	return (
 		<RWAKpiCard
 			headline={getRwaAssetsKpiHeadline(metrics, RWA_OVERVIEW_KPI_LABEL, headline)}
 			rows={getRwaOverviewKpiRows(metrics, perps, largestProtocol)}
 			csvName={getRwaKpiCsvName(pageKind, scopeName)}
+			lead={lead}
 		/>
 	)
 }

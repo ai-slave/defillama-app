@@ -2,6 +2,7 @@ import { useRouter } from 'next/router'
 import { useMemo } from 'react'
 import { EntityQuestionsStrip } from '~/components/EntityQuestionsStrip'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
+import { usePageClockSec } from '~/hooks/usePageClock'
 import { SummaryCardGrid } from '~/ui/SummaryStats'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import type { IRWAAssetsOverview, RWAOverviewFrame, RWASpotFilterKey } from './api.types'
@@ -21,7 +22,7 @@ import { foldRwaPerpsKpi } from './kpi/perpsKpi'
 import { RWAPlatformKeyMetrics } from './kpi/PlatformKeyMetrics'
 import { foldRwaPlatformKpi, getRwaPlatformFold } from './kpi/platformKpi'
 import { getRwaAssetsInlineFilters } from './layout/inlineFilters'
-import { getRwaPageHeadline } from './layout/pageCopy'
+import { getRwaOverviewIntro, getRwaPageHeadline } from './layout/pageCopy'
 import { getRwaPageLayout, type RWAPageKind } from './layout/pageLayout'
 import type { RWAAssetsPageKind } from './layout/pageNav'
 import { RWA_QUERY_ZONE } from './layout/QueryZoneGuard'
@@ -277,6 +278,7 @@ export function RWAOverview(props: RWAOverviewProps) {
 			headline={headline}
 			pageKind={pageKind}
 			scopeName={scopeName}
+			lead={pageKind === 'overview' ? <RwaOverviewIntro activeMcap={kpiTotals.activeMcap} /> : undefined}
 		/>
 	) : null
 	/* The cards fold the page's filtered rows; where a card needs a history, a filter swaps the server split for the
@@ -539,4 +541,9 @@ function getRwaScopeName(props: RWAOverviewProps): string | null {
 		default:
 			return null
 	}
+}
+
+/** Mounted only on the overview, so a platform render without a page clock does not call the clock. */
+function RwaOverviewIntro({ activeMcap }: { activeMcap: number | null }) {
+	return <p className="body-sm text-secondary">{getRwaOverviewIntro(usePageClockSec(), activeMcap)}</p>
 }

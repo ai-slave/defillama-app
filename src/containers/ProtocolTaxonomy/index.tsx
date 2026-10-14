@@ -41,6 +41,9 @@ import {
 	getProtocolCategoryDefaultSort,
 	getProtocolCategoryDexVolumeLabel,
 	getProtocolCategoryPresentation,
+	LENDING_QUESTION,
+	lendingIntro,
+	categoryChartTvl,
 	type ProtocolCategoryColumn
 } from './constants'
 import { applyProtocolTaxonomyTvlSettings } from './tvl'
@@ -74,7 +77,8 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 	const namePrefix = name ? `${name}-` : ''
 	const [groupBy, setGroupBy] = useState<LowercaseDwmcGrouping>('daily')
 	const chartExport = useGetChartInstance()
-	const year = new Date(usePageClockSec() * 1000).getUTCFullYear()
+	const pageClockSec = usePageClockSec()
+	const year = new Date(pageClockSec * 1000).getUTCFullYear()
 	const categoryPresentation = useMemo(
 		() =>
 			getProtocolCategoryPresentation({
@@ -133,6 +137,14 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 	const deferredGroupedChartResult = useDeferredValue(groupedChartResult)
 	const deferredGroupedCharts = deferredGroupedChartResult.charts
 	const chartGroupBy = deferredGroupedChartResult.groupBy
+	const lendingAnswer =
+		props.chain === 'All' && props.effectiveCategory === 'Lending'
+			? lendingIntro({
+					dateSec: pageClockSec,
+					tvl: categoryChartTvl(props.charts),
+					protocolCount: props.protocols.length
+				})
+			: null
 
 	return (
 		<>
@@ -141,11 +153,17 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 			) : null}
 			<SummaryCardGrid>
 				<SummaryStatsCard>
-					{props.chain === 'All' ? (
-						<h1 className="heading-xs">{categoryPresentation.headingLabel}</h1>
-					) : (
-						<h1 className="heading-xs">{`${categoryPresentation.headingLabel} on ${props.chain}`}</h1>
-					)}
+					<h1 className={lendingAnswer ? 'heading-sm' : 'heading-xs'}>
+						{props.chain === 'All'
+							? categoryPresentation.headingLabel
+							: `${categoryPresentation.headingLabel} on ${props.chain}`}
+					</h1>
+					{lendingAnswer ? (
+						<>
+							<h2 className="heading-xs">{LENDING_QUESTION}</h2>
+							<p className="body-sm text-secondary">{lendingAnswer}</p>
+						</>
+					) : null}
 					<div className="mb-auto flex flex-1 flex-col">
 						{charts.dataset.source.length > 0 && charts.dataset.dimensions.includes('TVL') ? (
 							<MetricRow

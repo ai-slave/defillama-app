@@ -23,6 +23,7 @@ import {
 	type TvlSettingsKey
 } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { usePageClockSec } from '~/hooks/usePageClock'
 import { ChartPanelExportShellLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { ScopeNote, ignoredFiltersPhrase } from '~/ui/ScopeNote'
@@ -30,6 +31,8 @@ import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { getPercentChange } from '~/utils'
 import { fetchJson } from '~/utils/async'
+import { formatDate } from '~/utils/dateFormat'
+import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
 import { aggregateGroupedChainRows, getTopLevelGroupedChains } from './grouping'
 import { ChainsByCategoryTable } from './Table'
@@ -73,6 +76,26 @@ const getChainRowExtraValues = ({
 		values[key] = chain.extraTvl[key]?.[metric] ?? null
 	}
 	return values
+}
+
+const CHAIN_TVL_DEFINITION = 'Total value locked (TVL) is the dollar value of crypto deposited in DeFi protocols.'
+
+function chainsIntro(dateSec: number, chains: ReadonlyArray<{ name: string; tvl: number | null }>): string {
+	const date = formatDate(dateSec, { input: 'seconds' })
+	const ranked: Array<{ name: string; tvl: number }> = []
+	for (const row of chains) {
+		if (row.tvl == null) continue
+		ranked.push({ name: row.name, tvl: row.tvl })
+	}
+	ranked.sort((a, b) => b.tvl - a.tvl || a.name.localeCompare(b.name))
+	const first = ranked[0]
+	const second = ranked[1]
+	const third = ranked[2]
+	const firstTvl = first ? formatUsd(first.tvl, USD_LOWERCASE_MILLIONS_OPTIONS) : null
+	const secondTvl = second ? formatUsd(second.tvl, USD_LOWERCASE_MILLIONS_OPTIONS) : null
+	const thirdTvl = third ? formatUsd(third.tvl, USD_LOWERCASE_MILLIONS_OPTIONS) : null
+	if (!date || !first || !second || !third || !firstTvl || !secondTvl || !thirdTvl) return CHAIN_TVL_DEFINITION
+	return `${CHAIN_TVL_DEFINITION} On ${date} ${first.name} led with ${firstTvl}, ahead of ${second.name} at ${secondTvl} and ${third.name} at ${thirdTvl}.`
 }
 
 export function ChainsByCategory({
@@ -157,9 +180,16 @@ export function ChainsByCategory({
 		chartIgnoredFilters.length > 0 ? (
 			<ScopeNote>This chart ignores {ignoredFiltersPhrase(chartIgnoredFilters)} and shows every chain.</ScopeNote>
 		) : null
+	const pageClockSec = usePageClockSec()
 
 	return (
 		<>
+			{categoryName === 'All' ? (
+				<div className="flex flex-col gap-1">
+					<h1 className="heading-sm">Total value locked (TVL) by chain</h1>
+					<p className="body-sm text-secondary">{chainsIntro(pageClockSec, chains)}</p>
+				</div>
+			) : null}
 			<RowLinksWithDropdown heading="Categories" links={allCategories} activeLink={categoryName} />
 			{entityQuestions && entityQuestions.length > 0 ? (
 				<EntityQuestionsStrip questions={entityQuestions} entitySlug="chains" entityType="page" entityName="Chains" />

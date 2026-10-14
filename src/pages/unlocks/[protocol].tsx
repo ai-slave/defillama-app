@@ -1,7 +1,9 @@
 import type { GetStaticPropsContext, InferGetStaticPropsType } from 'next'
 import { LinkPreviewCard } from '~/components/SEO'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
+import type { EmissionEvent } from '~/containers/Unlocks/api.types'
 import { EmissionsByProtocol } from '~/containers/Unlocks/EmissionsByProtocol'
+import { getEmissionEventAmount } from '~/containers/Unlocks/eventAmount'
 import {
 	calculateTotalUnlockValue,
 	getEventCountdown,
@@ -9,11 +11,54 @@ import {
 } from '~/containers/Unlocks/protocolUnlocksStaticProps'
 import Layout from '~/layout'
 import { slug } from '~/utils'
+import { formatDate } from '~/utils/dateFormat'
 import { tokenIconUrl } from '~/utils/icons'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
-import { formatUsd } from '~/utils/numberFormat'
+import { formatCompactNumber, formatUsd } from '~/utils/numberFormat'
 import { withPerformanceLogging } from '~/utils/perf'
 import { canonicalRouteRedirect } from '~/utils/route'
+
+function nextUnlockIntro(input: { symbol: string | null; events: ReadonlyArray<EmissionEvent> }): string | null {
+	const { symbol, events } = input
+	if (!symbol || events.length === 0) return null
+	const date = formatDate(events[0].timestamp, { input: 'seconds' })
+	if (!date) return null
+
+	let cliffTotal = 0
+	let cliffKnown = false
+	let weeklyTotal = 0
+	let linearKnown = false
+	let unknown = false
+	for (const event of events) {
+		const amount = getEmissionEventAmount(event)
+		if (amount == null) {
+			unknown = true
+			continue
+		}
+		if (event.unlockType === 'cliff') {
+			cliffTotal += amount
+			cliffKnown = true
+		} else {
+			weeklyTotal += amount
+			linearKnown = true
+		}
+	}
+	if (!cliffKnown && !linearKnown) return null
+
+	const cliff = cliffKnown ? formatCompactNumber(cliffTotal, { compactSuffix: 'lowercase' }) : null
+	const weekly = linearKnown ? formatCompactNumber(weeklyTotal, { compactSuffix: 'lowercase' }) : null
+	if (cliffKnown && !cliff) return null
+	if (linearKnown && !weekly) return null
+
+	const release =
+		cliff && weekly
+			? `releasing ${cliff} ${symbol} on that date and ${weekly} ${symbol} per week`
+			: cliff
+				? `releasing ${cliff} ${symbol}`
+				: `releasing ${weekly} ${symbol} per week`
+	const caveat = unknown ? ' Some of the amount is not published.' : ''
+	return `The next ${symbol} unlock is ${date}, ${release}.${caveat}`
+}
 
 export const getStaticProps = withPerformanceLogging(
 	'unlocks/[protocol]',
@@ -58,8 +103,10 @@ export const getStaticProps = withPerformanceLogging(
 		}
 		const resolvedTokenSymbol = tokenSymbol ?? emissions.tokenPrice.symbol ?? null
 		const displayName = emissions.name
-		const seoTitle = `${displayName} Token Unlocks & Vesting Schedule`
-		const seoDescription = `View ${displayName}${resolvedTokenSymbol ? ` (${resolvedTokenSymbol})` : ''} token unlock schedule, vesting charts, and cliff events. Track upcoming emissions on DefiLlama.`
+		const named = `${displayName}${resolvedTokenSymbol ? ` (${resolvedTokenSymbol})` : ''}`
+		const seoTitle = `${named} Unlock Schedule & Circulating Supply`
+		const seoDescription = `See ${named} unlock cliffs, circulating supply, and the next unlock date on one vesting chart.`
+		const unlockLead = nextUnlockIntro({ symbol: resolvedTokenSymbol, events: emissions.upcomingEvent })
 
 		return {
 			props: {
@@ -71,7 +118,8 @@ export const getStaticProps = withPerformanceLogging(
 				generatedAtSec,
 				canonicalProtocol,
 				seoTitle,
-				seoDescription
+				seoDescription,
+				unlockLead
 			},
 			revalidate: maxAgeForNext([22])
 		}
@@ -101,7 +149,8 @@ export default function Protocol({
 	generatedAtSec,
 	canonicalProtocol,
 	seoTitle,
-	seoDescription
+	seoDescription,
+	unlockLead
 }: InferGetStaticPropsType<typeof getStaticProps>) {
 	return (
 		<Layout title={seoTitle} description={seoDescription} canonicalUrl={`/unlocks/${canonicalProtocol}`}>
@@ -126,6 +175,7 @@ export default function Protocol({
 				initialTokenMarketData={initialTokenMarketData}
 				generatedAtSec={generatedAtSec}
 				disableClientTokenStatsFetch
+				lead={unlockLead}
 			/>
 		</Layout>
 	)
