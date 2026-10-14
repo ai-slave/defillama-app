@@ -16,16 +16,16 @@ Queries are the top non-brand rows from Search Console for that exact URL, 2026-
 
 Competitor URLs are the ones those two reports already named, three per page. Live Google, Perplexity, and ChatGPT calls were made only where those reports did not give a URL: categories, RWA, perp DEX definition, yield farming, lending, the unlocks index, and the three protocol pages. Nine queries, United States, English, 14 Oct 2026.
 
-| Call | What it returned | Charged |
-| --- | --- | --- |
-| 9 | `dataforseo.x.serp-google-organic-live-advanced`, desktop, location 2840, `load_async_ai_overview: true` | $0.036 |
-| 9 | `dataforseo.x.ai-optimization-perplexity-llm-responses-live`, Sonar, US | $0.053 |
-| 9 | `cloro.ai-search.chatgpt.scrape`, US, web search on | $0.025 |
-| 9 | `cloro.ai-search.perplexity.answer` | $0. The provider returned `MODEL_UNAVAILABLE`. DataForSEO Sonar is the Perplexity source. |
-| 1 | `crawl4ai.google.serp.ai_mode` on “what are dex aggregators” | $0.00015. Text only, no source URLs, not used for the URL list. |
-| 53 | `crawl4ai.web.scrape`, format HTML, to read JSON-LD. Tinyfish strips `<script>`. | $0.008 |
-| 6 batches | `tinyfish.web.fetch`, format HTML, `ttl: 0`, our pages and the cited pages | $0 |
-| 13 | Google Search Console `searchAnalytics/query`, page equals the URL | $0 |
+| Call      | What it returned                                                                                         | Charged                                                                                   |
+| --------- | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| 9         | `dataforseo.x.serp-google-organic-live-advanced`, desktop, location 2840, `load_async_ai_overview: true` | $0.036                                                                                    |
+| 9         | `dataforseo.x.ai-optimization-perplexity-llm-responses-live`, Sonar, US                                  | $0.053                                                                                    |
+| 9         | `cloro.ai-search.chatgpt.scrape`, US, web search on                                                      | $0.025                                                                                    |
+| 9         | `cloro.ai-search.perplexity.answer`                                                                      | $0. The provider returned `MODEL_UNAVAILABLE`. DataForSEO Sonar is the Perplexity source. |
+| 1         | `crawl4ai.google.serp.ai_mode` on “what are dex aggregators”                                             | $0.00015. Text only, no source URLs, not used for the URL list.                           |
+| 53        | `crawl4ai.web.scrape`, format HTML, to read JSON-LD. Tinyfish strips `<script>`.                         | $0.008                                                                                    |
+| 6 batches | `tinyfish.web.fetch`, format HTML, `ttl: 0`, our pages and the cited pages                               | $0                                                                                        |
+| 13        | Google Search Console `searchAnalytics/query`, page equals the URL                                       | $0                                                                                        |
 
 Itemized spend on this angle: **$0.12**. Team balance was $9.27 before the first paid call and $9.15 after the last.
 
@@ -39,58 +39,58 @@ Investing.com’s category article and both Binance Academy articles were blocke
 
 Each criterion is 0 to 5. The weighted total is `score / 5 × weight`. Weights sum to 100. Answer-first, the list or table in the server HTML, and the number in a sentence weigh 16 each. The other eight weigh 6, except H1/title and the definition, which weigh 8.
 
-| Criterion | Weight | 0 | 1 | 2 | 3 | 4 | 5 |
-| --- | ---: | --- | --- | --- | --- | --- | --- |
-| Answer-first | 16 | First block is a table, a loading state, or chrome with no sentence | A sentence exists only after the table or in a later card | First block is a heading plus a figure, not a sentence | A sentence is in the first screen and does not answer the query | First sentence answers part of the query | First sentence answers the query before any table |
-| H1 and title | 8 | Neither contains the query’s words | A related word only | One of title or H1 has the head term; the other is missing or a different label | Both name the topic as a dashboard or a ranking | H1 or title is the question or the exact head term | H1 and title both use the query’s words |
-| Date | 6 | No date in the text or the metadata | Older than 18 months | Within 18 months, not beside the figure | Within 12 months, not in the same block as the figure | Within 90 days, or “today” | A calendar date within 14 days in the same block as the number |
-| Number in text | 16 | No figure | Figures only in table cells | A figure in a stat label or an H1, not in a sentence | A sentence contains a figure that is not the query’s figure | The query’s figure is in a sentence, without a date or without saying what the ratio is | The figure is in a sentence with its unit and what it measures |
-| SSR list or table | 16 | No list or table | The list exists only after JavaScript | Names without figures, or a placeholder count | A real list or a short table, missing the column the query asks for | A table or named list with figures is in the HTML | That list is also introduced by a sentence that names rows |
-| Definition | 8 | The term is not defined | The term is used and never defined | Definition only in a tooltip or a title attribute | A one-line definition in a table cell or a later card | A definition is visible and is not the opening sentence | “X is …” or “X measures …” is in the opening block |
-| FAQ | 6 | No question and answer | Questions are buttons that open another tool | A question heading without an answer on the page | One visible answer that matches a head query | Two or more visible answers in the query family | Those answers repeat the lead sentence and the key number |
-| JSON-LD | 6 | None | Only WebSite, Organization, or BreadcrumbList | WebPage that does not describe the metric | Article, BlogPosting, or Product whose headline matches | Article or FinancialProduct that matches the visible page | FAQPage, Dataset, or ItemList whose text matches what is visible |
-| Depth | 6 | Under 100 words | 100–249 | 250–499 | 500–999 | 1,000–1,799 | 1,800 or more |
-| E-E-A-T | 6 | No author, source, methodology, or in-body link | Site chrome only | In-body links, no methodology | A methodology note or source links | Named author or organization, plus methodology or a source list | Named author, a date, and a methodology a reader can check |
-| Crawlable without JS | 6 | Loading shell | Title and H1 only | Some figures in the HTML; the primary table needs JavaScript | Primary table is in the HTML; a chart or a secondary module needs JavaScript | Lead, figure, and table or FAQ are in the HTML | Those, plus JSON-LD, are in the HTML |
+| Criterion            | Weight | 0                                                                   | 1                                                         | 2                                                                               | 3                                                                            | 4                                                                                       | 5                                                                |
+| -------------------- | -----: | ------------------------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Answer-first         |     16 | First block is a table, a loading state, or chrome with no sentence | A sentence exists only after the table or in a later card | First block is a heading plus a figure, not a sentence                          | A sentence is in the first screen and does not answer the query              | First sentence answers part of the query                                                | First sentence answers the query before any table                |
+| H1 and title         |      8 | Neither contains the query’s words                                  | A related word only                                       | One of title or H1 has the head term; the other is missing or a different label | Both name the topic as a dashboard or a ranking                              | H1 or title is the question or the exact head term                                      | H1 and title both use the query’s words                          |
+| Date                 |      6 | No date in the text or the metadata                                 | Older than 18 months                                      | Within 18 months, not beside the figure                                         | Within 12 months, not in the same block as the figure                        | Within 90 days, or “today”                                                              | A calendar date within 14 days in the same block as the number   |
+| Number in text       |     16 | No figure                                                           | Figures only in table cells                               | A figure in a stat label or an H1, not in a sentence                            | A sentence contains a figure that is not the query’s figure                  | The query’s figure is in a sentence, without a date or without saying what the ratio is | The figure is in a sentence with its unit and what it measures   |
+| SSR list or table    |     16 | No list or table                                                    | The list exists only after JavaScript                     | Names without figures, or a placeholder count                                   | A real list or a short table, missing the column the query asks for          | A table or named list with figures is in the HTML                                       | That list is also introduced by a sentence that names rows       |
+| Definition           |      8 | The term is not defined                                             | The term is used and never defined                        | Definition only in a tooltip or a title attribute                               | A one-line definition in a table cell or a later card                        | A definition is visible and is not the opening sentence                                 | “X is …” or “X measures …” is in the opening block               |
+| FAQ                  |      6 | No question and answer                                              | Questions are buttons that open another tool              | A question heading without an answer on the page                                | One visible answer that matches a head query                                 | Two or more visible answers in the query family                                         | Those answers repeat the lead sentence and the key number        |
+| JSON-LD              |      6 | None                                                                | Only WebSite, Organization, or BreadcrumbList             | WebPage that does not describe the metric                                       | Article, BlogPosting, or Product whose headline matches                      | Article or FinancialProduct that matches the visible page                               | FAQPage, Dataset, or ItemList whose text matches what is visible |
+| Depth                |      6 | Under 100 words                                                     | 100–249                                                   | 250–499                                                                         | 500–999                                                                      | 1,000–1,799                                                                             | 1,800 or more                                                    |
+| E-E-A-T              |      6 | No author, source, methodology, or in-body link                     | Site chrome only                                          | In-body links, no methodology                                                   | A methodology note or source links                                           | Named author or organization, plus methodology or a source list                         | Named author, a date, and a methodology a reader can check       |
+| Crawlable without JS |      6 | Loading shell                                                       | Title and H1 only                                         | Some figures in the HTML; the primary table needs JavaScript                    | Primary table is in the HTML; a chart or a secondary module needs JavaScript | Lead, figure, and table or FAQ are in the HTML                                          | Those, plus JSON-LD, are in the HTML                             |
 
 Token Terminal’s TVL page is 333 words and is still cited. Depth is weighted 6 because length is not what the overview quotes. A page can score 2 on depth and win the citation when the first sentence is the definition.
 
 ## Queries and the pages cited for them
 
-| Our page | Queries the score is judged against | Cited pages scored |
-| --- | --- | --- |
-| `/chains` | `tvl` (8,279 impr, pos 5.7, 137 clicks), `tvl crypto` (713, pos 1.7, 183), `crypto tvl` (374, pos 1.5, 224). The last two already convert. `tvl` does not. | [CMC Academy](https://coinmarketcap.com/academy/glossary/total-value-locked-tvl), [Investopedia](https://www.investopedia.com/total-value-locked-7486821), [Token Terminal](https://tokenterminal.com/explorer/metrics/tvl). PR #8 and PR #2. |
-| `/stablecoins` | `stablecoin market cap` already converts (753 impr, pos 1.3, 256 clicks on this URL). The citation miss is `usdt dominance`, `usdt dominance chart`, and `top stablecoins`. | [TradingView USDT.D](https://www.tradingview.com/symbols/USDT.D/), [CoinGecko stablecoins](https://www.coingecko.com/en/categories/stablecoins), [CMC stablecoins](https://coinmarketcap.com/view/stablecoin/). PR #8 and PR #2. |
-| `/categories` | Search Console demand on this URL is brand typos. The citation query is “What are the main DeFi protocol categories by TVL?” ChatGPT cites this URL as the dashboard. The overview’s sentence comes from explainers. | [1inch, types of DeFi platforms](https://1inch.com/blog/post/what-are-the-main-types-of-defi-platforms), [Coinmonks](https://medium.com/coinmonks/defi-protocol-categories-you-never-knew-existed-d0d2c0b08e7c), [CoinTracker, what’s TVL](https://www.cointracker.com/blog/tvl-in-crypto). Live overview, 14 Oct. Investing.com’s “top 8 categories” article was unreachable. |
-| `/dex-aggregators` | `dex aggregator` (671 impr, pos 4.0, 20 clicks). The zero-click queries in PR #2 are `top defi aggregators`, `what are dex aggregators`, `what are defi aggregators`. | [Eco](https://eco.com/support/en/articles/15284400-what-is-a-dex-aggregator), [1inch Learn](https://1inch.com/learn/dex-aggregator), [Chainlink](https://chain.link/article/what-is-dex-aggregator). All three engines in PR #8. |
-| `/yields` | `defi yield farming` converts on this URL (264 impr, 14 clicks). `yield farming` does not (412 impr, pos 11.1, 0 clicks in the attached export). | [CoinGecko](https://www.coingecko.com/learn/what-is-yield-farming), [Kraken](https://www.kraken.com/learn/what-is-yield-farming), [Investopedia](https://www.investopedia.com/what-is-yield-farming-7098519). PR #2 named CoinGecko, Investopedia, Coinbase, and Binance. Binance Academy was blocked. Kraken is the overview’s first source on the live refetch. |
-| `/protocols/lending` | `defi lending` (299 impr, pos 6.5, 6 clicks). `defi lending and borrowing protocols explained` is the PR #2 query, about 1,360 impr and 0 clicks. | [Chainlink](https://chain.link/article/decentralized-lending-protocol), [Stellar](https://stellar.org/learn/lending-and-borrowing-markets), [Aave intro](https://aave.com/help/aave-101/introduction-to-aave). Overview plus Perplexity and ChatGPT. |
-| `/data-definitions` | Almost no non-brand query in the top 40. The citation queries are “what is TVL” and “fees vs revenue”. Sonar cites `docs.llama.fi` for the first. | [docs.llama.fi](https://docs.llama.fi/analysts/data-definitions), [Chainnarrative](https://chainnarrative.com/analysis/protocol-revenue-vs-total-fees-in-defi-explained), [CMC Academy](https://coinmarketcap.com/academy/glossary/total-value-locked-tvl). PR #2. |
-| `/rwa` | `rwa crypto` (139 impr, pos 9.7), `rwa league table` (157, pos 4.7), `rwa tvl` (73, pos 1.1, 45 clicks). The export’s head term `rwa` is 453 impr and 2 clicks. | [CoinGecko RWA category](https://www.coingecko.com/en/categories/real-world-assets-rwa), [CoinGecko RWA guide](https://www.coingecko.com/learn/what-are-real-world-assets-exploring-rwa-protocols), [RWA.xyz](https://app.rwa.xyz/). Live overview and Perplexity. |
-| `/perps` | `perp dex volume` already converts (635 impr, pos 1.2, 327 clicks). `perp dex` is 643 impr and 83 clicks. The citation miss is “what is a perp DEX”. | [CoinGecko perpetuals](https://www.coingecko.com/learn/what-are-crypto-perpetuals-perp-dexs), [CoinGecko perp DEX growth](https://www.coingecko.com/learn/decentralized-derivatives-perpetual-future-dexs), [crypto.news](https://crypto.news/what-is-a-perp-dex/). The growth URL is the one in the live overview. Binance Academy was blocked. |
-| `/unlocks` | `token unlocks` (1,347 impr, pos 7.3, 39 clicks), `token unlock` (514, pos 7.7, 26), `token unlock schedule` (228, pos 6.6, 5). The live overview had no AI Overview. Organic #1 is Tokenomist. This URL was organic #8. | [Tokenomist](https://tokenomist.ai/), [CoinGecko incoming unlocks](https://www.coingecko.com/en/highlights/incoming-token-unlocks), [Streamflow](https://streamflow.finance/blog/what-is-token-unlock). |
-| `/protocol/rhea-finance` | `rhea finance` (3,134 impr, pos 7.2, 12 clicks), `rhea finance crypto`, `rhea token`. The name query is navigational for sizing. The overview still answers it from the docs. | [White paper](https://guide.rhea.finance/docs/rhea-finance-white-paper), [Rhea docs](https://guide.rhea.finance/), [CMC](https://coinmarketcap.com/currencies/rhea-finance/). |
-| `/protocol/pons` | `pons` is a bare name (184,652 impr) and is not sized. Non-name: `pons launchpad` (3,851 impr, pos 6.4, 50 clicks), `pons revenue` (converts), `pons robinhood`. | [Messari](https://messari.io/project/pons-launchpad/profile), [Datawallet](https://www.datawallet.com/crypto/pons-explained), [CoinGecko](https://www.coingecko.com/en/coins/pons). The overview’s sentence matches Messari: a non-custodial launchpad for Robinhood Chain. |
-| `/protocol/vest-markets` | `vest markets` (30,710 impr, pos 4.5, 15 clicks), `vest market`, `vest exchange`. Navigational for sizing. The overview answers with a product description. | [Vest docs, about](https://docs.vestmarkets.com/welcome/about-vest-markets), [docs home](https://docs.vestmarkets.com/), [vestmarkets.com](https://www.vestmarkets.com/). |
+| Our page                 | Queries the score is judged against                                                                                                                                                                                      | Cited pages scored                                                                                                                                                                                                                                                                                                                                                             |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `/chains`                | `tvl` (8,279 impr, pos 5.7, 137 clicks), `tvl crypto` (713, pos 1.7, 183), `crypto tvl` (374, pos 1.5, 224). The last two already convert. `tvl` does not.                                                               | [CMC Academy](https://coinmarketcap.com/academy/glossary/total-value-locked-tvl), [Investopedia](https://www.investopedia.com/total-value-locked-7486821), [Token Terminal](https://tokenterminal.com/explorer/metrics/tvl). PR #8 and PR #2.                                                                                                                                  |
+| `/stablecoins`           | `stablecoin market cap` already converts (753 impr, pos 1.3, 256 clicks on this URL). The citation miss is `usdt dominance`, `usdt dominance chart`, and `top stablecoins`.                                              | [TradingView USDT.D](https://www.tradingview.com/symbols/USDT.D/), [CoinGecko stablecoins](https://www.coingecko.com/en/categories/stablecoins), [CMC stablecoins](https://coinmarketcap.com/view/stablecoin/). PR #8 and PR #2.                                                                                                                                               |
+| `/categories`            | Search Console demand on this URL is brand typos. The citation query is “What are the main DeFi protocol categories by TVL?” ChatGPT cites this URL as the dashboard. The overview’s sentence comes from explainers.     | [1inch, types of DeFi platforms](https://1inch.com/blog/post/what-are-the-main-types-of-defi-platforms), [Coinmonks](https://medium.com/coinmonks/defi-protocol-categories-you-never-knew-existed-d0d2c0b08e7c), [CoinTracker, what’s TVL](https://www.cointracker.com/blog/tvl-in-crypto). Live overview, 14 Oct. Investing.com’s “top 8 categories” article was unreachable. |
+| `/dex-aggregators`       | `dex aggregator` (671 impr, pos 4.0, 20 clicks). The zero-click queries in PR #2 are `top defi aggregators`, `what are dex aggregators`, `what are defi aggregators`.                                                    | [Eco](https://eco.com/support/en/articles/15284400-what-is-a-dex-aggregator), [1inch Learn](https://1inch.com/learn/dex-aggregator), [Chainlink](https://chain.link/article/what-is-dex-aggregator). All three engines in PR #8.                                                                                                                                               |
+| `/yields`                | `defi yield farming` converts on this URL (264 impr, 14 clicks). `yield farming` does not (412 impr, pos 11.1, 0 clicks in the attached export).                                                                         | [CoinGecko](https://www.coingecko.com/learn/what-is-yield-farming), [Kraken](https://www.kraken.com/learn/what-is-yield-farming), [Investopedia](https://www.investopedia.com/what-is-yield-farming-7098519). PR #2 named CoinGecko, Investopedia, Coinbase, and Binance. Binance Academy was blocked. Kraken is the overview’s first source on the live refetch.              |
+| `/protocols/lending`     | `defi lending` (299 impr, pos 6.5, 6 clicks). `defi lending and borrowing protocols explained` is the PR #2 query, about 1,360 impr and 0 clicks.                                                                        | [Chainlink](https://chain.link/article/decentralized-lending-protocol), [Stellar](https://stellar.org/learn/lending-and-borrowing-markets), [Aave intro](https://aave.com/help/aave-101/introduction-to-aave). Overview plus Perplexity and ChatGPT.                                                                                                                           |
+| `/data-definitions`      | Almost no non-brand query in the top 40. The citation queries are “what is TVL” and “fees vs revenue”. Sonar cites `docs.llama.fi` for the first.                                                                        | [docs.llama.fi](https://docs.llama.fi/analysts/data-definitions), [Chainnarrative](https://chainnarrative.com/analysis/protocol-revenue-vs-total-fees-in-defi-explained), [CMC Academy](https://coinmarketcap.com/academy/glossary/total-value-locked-tvl). PR #2.                                                                                                             |
+| `/rwa`                   | `rwa crypto` (139 impr, pos 9.7), `rwa league table` (157, pos 4.7), `rwa tvl` (73, pos 1.1, 45 clicks). The export’s head term `rwa` is 453 impr and 2 clicks.                                                          | [CoinGecko RWA category](https://www.coingecko.com/en/categories/real-world-assets-rwa), [CoinGecko RWA guide](https://www.coingecko.com/learn/what-are-real-world-assets-exploring-rwa-protocols), [RWA.xyz](https://app.rwa.xyz/). Live overview and Perplexity.                                                                                                             |
+| `/perps`                 | `perp dex volume` already converts (635 impr, pos 1.2, 327 clicks). `perp dex` is 643 impr and 83 clicks. The citation miss is “what is a perp DEX”.                                                                     | [CoinGecko perpetuals](https://www.coingecko.com/learn/what-are-crypto-perpetuals-perp-dexs), [CoinGecko perp DEX growth](https://www.coingecko.com/learn/decentralized-derivatives-perpetual-future-dexs), [crypto.news](https://crypto.news/what-is-a-perp-dex/). The growth URL is the one in the live overview. Binance Academy was blocked.                               |
+| `/unlocks`               | `token unlocks` (1,347 impr, pos 7.3, 39 clicks), `token unlock` (514, pos 7.7, 26), `token unlock schedule` (228, pos 6.6, 5). The live overview had no AI Overview. Organic #1 is Tokenomist. This URL was organic #8. | [Tokenomist](https://tokenomist.ai/), [CoinGecko incoming unlocks](https://www.coingecko.com/en/highlights/incoming-token-unlocks), [Streamflow](https://streamflow.finance/blog/what-is-token-unlock).                                                                                                                                                                        |
+| `/protocol/rhea-finance` | `rhea finance` (3,134 impr, pos 7.2, 12 clicks), `rhea finance crypto`, `rhea token`. The name query is navigational for sizing. The overview still answers it from the docs.                                            | [White paper](https://guide.rhea.finance/docs/rhea-finance-white-paper), [Rhea docs](https://guide.rhea.finance/), [CMC](https://coinmarketcap.com/currencies/rhea-finance/).                                                                                                                                                                                                  |
+| `/protocol/pons`         | `pons` is a bare name (184,652 impr) and is not sized. Non-name: `pons launchpad` (3,851 impr, pos 6.4, 50 clicks), `pons revenue` (converts), `pons robinhood`.                                                         | [Messari](https://messari.io/project/pons-launchpad/profile), [Datawallet](https://www.datawallet.com/crypto/pons-explained), [CoinGecko](https://www.coingecko.com/en/coins/pons). The overview’s sentence matches Messari: a non-custodial launchpad for Robinhood Chain.                                                                                                    |
+| `/protocol/vest-markets` | `vest markets` (30,710 impr, pos 4.5, 15 clicks), `vest market`, `vest exchange`. Navigational for sizing. The overview answers with a product description.                                                              | [Vest docs, about](https://docs.vestmarkets.com/welcome/about-vest-markets), [docs home](https://docs.vestmarkets.com/), [vestmarkets.com](https://www.vestmarkets.com/).                                                                                                                                                                                                      |
 
 ## Where the points go
 
 Averages across the 13 pages and the 39 cited pages. “Best” is the average of each page’s highest competitor on that criterion. Points are the 0–5 score scaled by the weight.
 
-| Criterion | Weight | Our avg | Cited avg | Best avg | Our points | Cited points | Best points |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Answer-first | 16 | 1.77 | 4.26 | 4.92 | 5.7 | 13.6 | 15.8 |
-| Number in text | 16 | 2.15 | 1.97 | 2.62 | 6.9 | 6.3 | 8.4 |
-| SSR list or table | 16 | 3.38 | 3.23 | 3.77 | 10.8 | 10.3 | 12.1 |
-| H1 and title | 8 | 2.46 | 4.08 | 4.77 | 3.9 | 6.5 | 7.6 |
-| Definition | 8 | 1.62 | 4.33 | 5.00 | 2.6 | 6.9 | 8.0 |
-| Date | 6 | 1.00 | 2.03 | 3.31 | 1.2 | 2.4 | 4.0 |
-| FAQ | 6 | 1.54 | 2.08 | 2.85 | 1.8 | 2.5 | 3.4 |
-| JSON-LD | 6 | 0.00 | 2.23 | 3.69 | 0.0 | 2.7 | 4.4 |
-| Depth | 6 | 1.46 | 3.77 | 4.46 | 1.8 | 4.5 | 5.4 |
-| E-E-A-T | 6 | 2.00 | 3.59 | 4.15 | 2.4 | 4.3 | 5.0 |
-| Crawlable without JS | 6 | 3.15 | 4.15 | 4.46 | 3.8 | 5.0 | 5.4 |
-| **Total** | **100** |  |  |  | **40.9** | **65.1** |  |
+| Criterion            |  Weight | Our avg | Cited avg | Best avg | Our points | Cited points | Best points |
+| -------------------- | ------: | ------: | --------: | -------: | ---------: | -----------: | ----------: |
+| Answer-first         |      16 |    1.77 |      4.26 |     4.92 |        5.7 |         13.6 |        15.8 |
+| Number in text       |      16 |    2.15 |      1.97 |     2.62 |        6.9 |          6.3 |         8.4 |
+| SSR list or table    |      16 |    3.38 |      3.23 |     3.77 |       10.8 |         10.3 |        12.1 |
+| H1 and title         |       8 |    2.46 |      4.08 |     4.77 |        3.9 |          6.5 |         7.6 |
+| Definition           |       8 |    1.62 |      4.33 |     5.00 |        2.6 |          6.9 |         8.0 |
+| Date                 |       6 |    1.00 |      2.03 |     3.31 |        1.2 |          2.4 |         4.0 |
+| FAQ                  |       6 |    1.54 |      2.08 |     2.85 |        1.8 |          2.5 |         3.4 |
+| JSON-LD              |       6 |    0.00 |      2.23 |     3.69 |        0.0 |          2.7 |         4.4 |
+| Depth                |       6 |    1.46 |      3.77 |     4.46 |        1.8 |          4.5 |         5.4 |
+| E-E-A-T              |       6 |    2.00 |      3.59 |     4.15 |        2.4 |          4.3 |         5.0 |
+| Crawlable without JS |       6 |    3.15 |      4.15 |     4.46 |        3.8 |          5.0 |         5.4 |
+| **Total**            | **100** |         |           |          |   **40.9** |     **65.1** |             |
 
 Two of the three heavy criteria are not where the points are lost. The server HTML of the hubs already contains the ranking table (our SSR average 3.38, cited pages 3.23). The figures are on the page (2.15 vs 1.97). CMC’s TVL glossary, Investopedia, and Chainlink’s DEX article do not state today’s number at all. They still get cited, because the first sentence defines the term.
 
@@ -102,47 +102,47 @@ The heavy criterion we lose is answer-first: 1.77 against 4.26. That is about 8 
 
 “Comp avg” is the mean of the three cited pages. “Best” on a criterion is the highest of the three. The Total on the Best row is the highest weighted total among the three pages. It is not the sum of the best cells.
 
-| Page | | Answer-first | H1 and title | Date | Number in text | SSR list/table | Definition | FAQ | JSON-LD | Depth | E-E-A-T | No JS | Total |
-| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `/chains` | Ours | 0 | 2 | 0 | 1 | 4 | 0 | 1 | 0 | 0 | 1 | 3 | 25.2 |
-| `/chains` | Comp avg | 5.0 | 4.3 | 0.7 | 1.0 | 3.3 | 5.0 | 2.0 | 2.0 | 3.0 | 4.3 | 4.3 | 64.4 |
-| `/chains` | Best | 5 | 5 | 1 | 1 | 4 | 5 | 3 | 4 | 4 | 5 | 5 | 68.8 |
-| `/stablecoins` | Ours | 2 | 3 | 0 | 2 | 4 | 0 | 1 | 0 | 1 | 1 | 3 | 37.6 |
-| `/stablecoins` | Comp avg | 4.3 | 4.3 | 3.0 | 4.7 | 4.0 | 4.3 | 4.0 | 3.7 | 4.0 | 3.0 | 4.7 | 82.3 |
-| `/stablecoins` | Best | 5 | 5 | 5 | 5 | 5 | 5 | 4 | 5 | 5 | 3 | 5 | 87.6 |
-| `/categories` | Ours | 1 | 3 | 0 | 1 | 4 | 3 | 1 | 0 | 3 | 2 | 3 | 39.6 |
-| `/categories` | Comp avg | 3.0 | 4.3 | 2.0 | 1.3 | 2.7 | 4.0 | 0.7 | 3.3 | 4.0 | 4.0 | 4.0 | 57.3 |
-| `/categories` | Best | 4 | 5 | 3 | 2 | 3 | 5 | 2 | 4 | 4 | 5 | 4 | 62.0 |
-| `/dex-aggregators` | Ours | 2 | 2 | 0 | 2 | 4 | 0 | 1 | 0 | 0 | 1 | 3 | 34.8 |
-| `/dex-aggregators` | Comp avg | 5.0 | 4.7 | 2.7 | 1.7 | 3.3 | 5.0 | 3.0 | 2.3 | 4.3 | 4.0 | 4.3 | 72.3 |
-| `/dex-aggregators` | Best | 5 | 5 | 4 | 2 | 4 | 5 | 4 | 4 | 5 | 5 | 5 | 82.4 |
-| `/yields` | Ours | 0 | 2 | 0 | 2 | 1 | 0 | 1 | 0 | 0 | 1 | 1 | 16.4 |
-| `/yields` | Comp avg | 5.0 | 4.7 | 1.7 | 1.7 | 3.0 | 5.0 | 3.0 | 2.7 | 4.7 | 4.7 | 4.0 | 71.2 |
-| `/yields` | Best | 5 | 5 | 2 | 2 | 3 | 5 | 3 | 4 | 5 | 5 | 4 | 72.4 |
-| `/protocols/lending` | Ours | 2 | 3 | 0 | 2 | 4 | 1 | 1 | 0 | 1 | 1 | 3 | 39.2 |
-| `/protocols/lending` | Comp avg | 4.3 | 3.7 | 0.0 | 1.0 | 2.3 | 4.3 | 2.0 | 0.0 | 4.0 | 3.0 | 4.0 | 52.9 |
-| `/protocols/lending` | Best | 5 | 4 | 0 | 1 | 3 | 5 | 2 | 0 | 5 | 3 | 4 | 56.8 |
-| `/data-definitions` | Ours | 4 | 2 | 0 | 0 | 2 | 5 | 0 | 0 | 4 | 3 | 4 | 43.6 |
-| `/data-definitions` | Comp avg | 4.7 | 4.0 | 1.7 | 1.0 | 3.0 | 5.0 | 1.7 | 2.7 | 4.0 | 3.3 | 4.7 | 63.7 |
-| `/data-definitions` | Best | 5 | 5 | 4 | 2 | 3 | 5 | 3 | 4 | 5 | 4 | 5 | 69.6 |
-| `/rwa` | Ours | 2 | 2 | 3 | 2 | 4 | 1 | 1 | 0 | 1 | 2 | 3 | 42.4 |
-| `/rwa` | Comp avg | 4.0 | 4.3 | 4.0 | 3.7 | 4.0 | 4.3 | 2.0 | 2.3 | 4.7 | 3.3 | 4.0 | 75.6 |
-| `/rwa` | Best | 5 | 5 | 4 | 5 | 5 | 5 | 3 | 4 | 5 | 4 | 4 | 88.0 |
-| `/perps` | Ours | 2 | 3 | 0 | 2 | 4 | 0 | 1 | 0 | 0 | 1 | 3 | 36.4 |
-| `/perps` | Comp avg | 4.3 | 4.3 | 2.7 | 1.3 | 3.3 | 5.0 | 2.7 | 3.3 | 5.0 | 5.0 | 4.0 | 70.9 |
-| `/perps` | Best | 5 | 5 | 4 | 2 | 4 | 5 | 3 | 4 | 5 | 5 | 4 | 80.0 |
-| `/unlocks` | Ours | 2 | 3 | 0 | 2 | 4 | 0 | 1 | 0 | 2 | 2 | 3 | 40.0 |
-| `/unlocks` | Comp avg | 4.3 | 4.0 | 1.3 | 3.0 | 4.0 | 3.7 | 1.3 | 2.0 | 3.3 | 2.7 | 4.3 | 66.5 |
-| `/unlocks` | Best | 5 | 5 | 3 | 5 | 4 | 5 | 2 | 5 | 4 | 3 | 5 | 76.8 |
-| `/protocol/rhea-finance` | Ours | 2 | 3 | 3 | 4 | 3 | 3 | 4 | 0 | 3 | 4 | 4 | 60.0 |
-| `/protocol/rhea-finance` | Comp avg | 3.7 | 3.3 | 2.3 | 1.0 | 3.0 | 3.3 | 1.3 | 0.3 | 2.3 | 2.7 | 3.3 | 50.0 |
-| `/protocol/rhea-finance` | Best | 5 | 4 | 4 | 2 | 4 | 5 | 2 | 1 | 4 | 3 | 4 | 62.4 |
-| `/protocol/pons` | Ours | 2 | 2 | 3 | 4 | 3 | 4 | 4 | 0 | 2 | 3 | 4 | 57.6 |
-| `/protocol/pons` | Comp avg | 3.7 | 4.0 | 1.3 | 2.3 | 3.7 | 3.7 | 2.3 | 2.7 | 3.7 | 3.3 | 4.0 | 64.0 |
-| `/protocol/pons` | Best | 5 | 5 | 4 | 3 | 4 | 5 | 3 | 4 | 5 | 5 | 4 | 79.6 |
-| `/protocol/vest-markets` | Ours | 2 | 2 | 4 | 4 | 3 | 4 | 3 | 0 | 2 | 4 | 4 | 58.8 |
-| `/protocol/vest-markets` | Comp avg | 4.0 | 3.0 | 3.0 | 2.0 | 2.3 | 3.7 | 1.0 | 1.7 | 2.0 | 3.3 | 4.3 | 55.7 |
-| `/protocol/vest-markets` | Best | 5 | 4 | 5 | 2 | 3 | 5 | 3 | 5 | 2 | 4 | 5 | 62.0 |
+| Page                     |          | Answer-first | H1 and title | Date | Number in text | SSR list/table | Definition | FAQ | JSON-LD | Depth | E-E-A-T | No JS | Total |
+| ------------------------ | -------- | -----------: | -----------: | ---: | -------------: | -------------: | ---------: | --: | ------: | ----: | ------: | ----: | ----: |
+| `/chains`                | Ours     |            0 |            2 |    0 |              1 |              4 |          0 |   1 |       0 |     0 |       1 |     3 |  25.2 |
+| `/chains`                | Comp avg |          5.0 |          4.3 |  0.7 |            1.0 |            3.3 |        5.0 | 2.0 |     2.0 |   3.0 |     4.3 |   4.3 |  64.4 |
+| `/chains`                | Best     |            5 |            5 |    1 |              1 |              4 |          5 |   3 |       4 |     4 |       5 |     5 |  68.8 |
+| `/stablecoins`           | Ours     |            2 |            3 |    0 |              2 |              4 |          0 |   1 |       0 |     1 |       1 |     3 |  37.6 |
+| `/stablecoins`           | Comp avg |          4.3 |          4.3 |  3.0 |            4.7 |            4.0 |        4.3 | 4.0 |     3.7 |   4.0 |     3.0 |   4.7 |  82.3 |
+| `/stablecoins`           | Best     |            5 |            5 |    5 |              5 |              5 |          5 |   4 |       5 |     5 |       3 |     5 |  87.6 |
+| `/categories`            | Ours     |            1 |            3 |    0 |              1 |              4 |          3 |   1 |       0 |     3 |       2 |     3 |  39.6 |
+| `/categories`            | Comp avg |          3.0 |          4.3 |  2.0 |            1.3 |            2.7 |        4.0 | 0.7 |     3.3 |   4.0 |     4.0 |   4.0 |  57.3 |
+| `/categories`            | Best     |            4 |            5 |    3 |              2 |              3 |          5 |   2 |       4 |     4 |       5 |     4 |  62.0 |
+| `/dex-aggregators`       | Ours     |            2 |            2 |    0 |              2 |              4 |          0 |   1 |       0 |     0 |       1 |     3 |  34.8 |
+| `/dex-aggregators`       | Comp avg |          5.0 |          4.7 |  2.7 |            1.7 |            3.3 |        5.0 | 3.0 |     2.3 |   4.3 |     4.0 |   4.3 |  72.3 |
+| `/dex-aggregators`       | Best     |            5 |            5 |    4 |              2 |              4 |          5 |   4 |       4 |     5 |       5 |     5 |  82.4 |
+| `/yields`                | Ours     |            0 |            2 |    0 |              2 |              1 |          0 |   1 |       0 |     0 |       1 |     1 |  16.4 |
+| `/yields`                | Comp avg |          5.0 |          4.7 |  1.7 |            1.7 |            3.0 |        5.0 | 3.0 |     2.7 |   4.7 |     4.7 |   4.0 |  71.2 |
+| `/yields`                | Best     |            5 |            5 |    2 |              2 |              3 |          5 |   3 |       4 |     5 |       5 |     4 |  72.4 |
+| `/protocols/lending`     | Ours     |            2 |            3 |    0 |              2 |              4 |          1 |   1 |       0 |     1 |       1 |     3 |  39.2 |
+| `/protocols/lending`     | Comp avg |          4.3 |          3.7 |  0.0 |            1.0 |            2.3 |        4.3 | 2.0 |     0.0 |   4.0 |     3.0 |   4.0 |  52.9 |
+| `/protocols/lending`     | Best     |            5 |            4 |    0 |              1 |              3 |          5 |   2 |       0 |     5 |       3 |     4 |  56.8 |
+| `/data-definitions`      | Ours     |            4 |            2 |    0 |              0 |              2 |          5 |   0 |       0 |     4 |       3 |     4 |  43.6 |
+| `/data-definitions`      | Comp avg |          4.7 |          4.0 |  1.7 |            1.0 |            3.0 |        5.0 | 1.7 |     2.7 |   4.0 |     3.3 |   4.7 |  63.7 |
+| `/data-definitions`      | Best     |            5 |            5 |    4 |              2 |              3 |          5 |   3 |       4 |     5 |       4 |     5 |  69.6 |
+| `/rwa`                   | Ours     |            2 |            2 |    3 |              2 |              4 |          1 |   1 |       0 |     1 |       2 |     3 |  42.4 |
+| `/rwa`                   | Comp avg |          4.0 |          4.3 |  4.0 |            3.7 |            4.0 |        4.3 | 2.0 |     2.3 |   4.7 |     3.3 |   4.0 |  75.6 |
+| `/rwa`                   | Best     |            5 |            5 |    4 |              5 |              5 |          5 |   3 |       4 |     5 |       4 |     4 |  88.0 |
+| `/perps`                 | Ours     |            2 |            3 |    0 |              2 |              4 |          0 |   1 |       0 |     0 |       1 |     3 |  36.4 |
+| `/perps`                 | Comp avg |          4.3 |          4.3 |  2.7 |            1.3 |            3.3 |        5.0 | 2.7 |     3.3 |   5.0 |     5.0 |   4.0 |  70.9 |
+| `/perps`                 | Best     |            5 |            5 |    4 |              2 |              4 |          5 |   3 |       4 |     5 |       5 |     4 |  80.0 |
+| `/unlocks`               | Ours     |            2 |            3 |    0 |              2 |              4 |          0 |   1 |       0 |     2 |       2 |     3 |  40.0 |
+| `/unlocks`               | Comp avg |          4.3 |          4.0 |  1.3 |            3.0 |            4.0 |        3.7 | 1.3 |     2.0 |   3.3 |     2.7 |   4.3 |  66.5 |
+| `/unlocks`               | Best     |            5 |            5 |    3 |              5 |              4 |          5 |   2 |       5 |     4 |       3 |     5 |  76.8 |
+| `/protocol/rhea-finance` | Ours     |            2 |            3 |    3 |              4 |              3 |          3 |   4 |       0 |     3 |       4 |     4 |  60.0 |
+| `/protocol/rhea-finance` | Comp avg |          3.7 |          3.3 |  2.3 |            1.0 |            3.0 |        3.3 | 1.3 |     0.3 |   2.3 |     2.7 |   3.3 |  50.0 |
+| `/protocol/rhea-finance` | Best     |            5 |            4 |    4 |              2 |              4 |          5 |   2 |       1 |     4 |       3 |     4 |  62.4 |
+| `/protocol/pons`         | Ours     |            2 |            2 |    3 |              4 |              3 |          4 |   4 |       0 |     2 |       3 |     4 |  57.6 |
+| `/protocol/pons`         | Comp avg |          3.7 |          4.0 |  1.3 |            2.3 |            3.7 |        3.7 | 2.3 |     2.7 |   3.7 |     3.3 |   4.0 |  64.0 |
+| `/protocol/pons`         | Best     |            5 |            5 |    4 |              3 |              4 |          5 |   3 |       4 |     5 |       5 |     4 |  79.6 |
+| `/protocol/vest-markets` | Ours     |            2 |            2 |    4 |              4 |              3 |          4 |   3 |       0 |     2 |       4 |     4 |  58.8 |
+| `/protocol/vest-markets` | Comp avg |          4.0 |          3.0 |  3.0 |            2.0 |            2.3 |        3.7 | 1.0 |     1.7 |   2.0 |     3.3 |   4.3 |  55.7 |
+| `/protocol/vest-markets` | Best     |            5 |            4 |    5 |              2 |              3 |          5 |   3 |       5 |     2 |       4 |     5 |  62.0 |
 
 Reading the matrix:
 
@@ -158,21 +158,21 @@ Reading the matrix:
 
 Ordered by our weighted total against the best cited page. The point gap is that difference. The fix is the change that moves the criteria where that page scores below the best cited page. Figures below are the ones in the HTML on 14 Oct 2026. Render them from the same props as the table. Do not paste the literals.
 
-| # | Page | Ours | Best cited | Gap | What to ship |
-| --- | --- | ---: | ---: | ---: | --- |
-| 1 | `/yields` | 16.4 | 72.4 CoinGecko | 56.0 | Put the pool rows in the server HTML, then one definition sentence. |
-| 2 | `/stablecoins` | 37.6 | 87.6 CoinGecko | 50.0 | One sentence: 60.12% is stablecoin-market share, dated, and it is not USDT.D. |
-| 3 | `/dex-aggregators` | 34.8 | 82.4 Eco | 47.6 | One “a DEX aggregator is” sentence under the H1, naming Jupiter, DFlow, and 0x. |
-| 4 | `/rwa` | 42.4 | 88.0 CoinGecko | 45.6 | One sentence with Active AUM and what an RWA is. Change the dashboard H1. |
-| 5 | `/chains` | 25.2 | 68.8 CMC Academy | 43.6 | One “TVL is” sentence and an H1. The table can stay first after that sentence. |
-| 6 | `/perps` | 36.4 | 80.0 CoinGecko | 43.6 | One sentence that says what a perp DEX is and names the top row. |
-| 7 | `/unlocks` | 40.0 | 76.8 Tokenomist | 36.8 | One sentence: what a token unlock is, plus the next large unlock already in the table. |
-| 8 | `/data-definitions` | 43.6 | 69.6 Chainnarrative | 26.0 | Phrase the TVL heading as the question and add the date. The definition is already the opening. |
-| 9 | `/categories` | 39.6 | 62.0 CoinTracker | 22.4 | One ranking sentence above the table. The description column can stay. |
-| 10 | `/protocol/pons` | 57.6 | 79.6 Datawallet | 22.0 | Move “Pons is a token launchpad…” to the first sentence and the first FAQ. |
-| 11 | `/protocols/lending` | 39.2 | 56.8 Chainlink | 17.6 | Render the lending sentence that already exists, under the H1. |
-| 12 | `/protocol/vest-markets` | 58.8 | 62.0 Vest docs | 3.2 | The stored description is already the right sentence. It has to be the first thing on the page. |
-| 13 | `/protocol/rhea-finance` | 60.0 | 62.4 White paper | 2.4 | Same as Vest. The white paper’s “What is RHEA Finance” is the sentence we bury. |
+| #   | Page                     | Ours |          Best cited |  Gap | What to ship                                                                                    |
+| --- | ------------------------ | ---: | ------------------: | ---: | ----------------------------------------------------------------------------------------------- |
+| 1   | `/yields`                | 16.4 |      72.4 CoinGecko | 56.0 | Put the pool rows in the server HTML, then one definition sentence.                             |
+| 2   | `/stablecoins`           | 37.6 |      87.6 CoinGecko | 50.0 | One sentence: 60.12% is stablecoin-market share, dated, and it is not USDT.D.                   |
+| 3   | `/dex-aggregators`       | 34.8 |            82.4 Eco | 47.6 | One “a DEX aggregator is” sentence under the H1, naming Jupiter, DFlow, and 0x.                 |
+| 4   | `/rwa`                   | 42.4 |      88.0 CoinGecko | 45.6 | One sentence with Active AUM and what an RWA is. Change the dashboard H1.                       |
+| 5   | `/chains`                | 25.2 |    68.8 CMC Academy | 43.6 | One “TVL is” sentence and an H1. The table can stay first after that sentence.                  |
+| 6   | `/perps`                 | 36.4 |      80.0 CoinGecko | 43.6 | One sentence that says what a perp DEX is and names the top row.                                |
+| 7   | `/unlocks`               | 40.0 |     76.8 Tokenomist | 36.8 | One sentence: what a token unlock is, plus the next large unlock already in the table.          |
+| 8   | `/data-definitions`      | 43.6 | 69.6 Chainnarrative | 26.0 | Phrase the TVL heading as the question and add the date. The definition is already the opening. |
+| 9   | `/categories`            | 39.6 |    62.0 CoinTracker | 22.4 | One ranking sentence above the table. The description column can stay.                          |
+| 10  | `/protocol/pons`         | 57.6 |     79.6 Datawallet | 22.0 | Move “Pons is a token launchpad…” to the first sentence and the first FAQ.                      |
+| 11  | `/protocols/lending`     | 39.2 |      56.8 Chainlink | 17.6 | Render the lending sentence that already exists, under the H1.                                  |
+| 12  | `/protocol/vest-markets` | 58.8 |      62.0 Vest docs |  3.2 | The stored description is already the right sentence. It has to be the first thing on the page. |
+| 13  | `/protocol/rhea-finance` | 60.0 |    62.4 White paper |  2.4 | Same as Vest. The white paper’s “What is RHEA Finance” is the sentence we bury.                 |
 
 Pons’s 22-point gap is against a 4,000-word Datawallet explainer. The mechanism is the same move as Vest: put the stored sentence first. The five that change a citation are 1 through 5.
 
