@@ -55,6 +55,17 @@ export function useYieldsServerTable<TRow>(options: YieldsServerTableOptions<TRo
 			}),
 		[defaultSorting, extraQuery]
 	)
+	// GSSP marks the router ready on the server, while isClient is still false. Compare that
+	// query to the seed's view before hydration. An unready router has no query yet.
+	const requestedQueryString = React.useMemo(() => {
+		if (!router.isReady) return null
+		return buildYieldsTableQueryString({
+			query,
+			pagination: requestedPagination,
+			sorting,
+			...(extraQuery === undefined ? {} : { extraQuery })
+		})
+	}, [extraQuery, query, requestedPagination, router.isReady, sorting])
 	const seed = options.initialSeed && queryString === defaultQueryString ? options.initialSeed : undefined
 	const rowsQuery = useYieldsPaginatedTable<TRow>(endpoint, queryString, seed, privateEndpoint)
 	const { isDenied } = useVerifiedAccess()
@@ -62,14 +73,11 @@ export function useYieldsServerTable<TRow>(options: YieldsServerTableOptions<TRo
 	// client CONFIRMS the reader is not paid, a paid seed goes: verified rows must not outlive access.
 	// `userLoading` is not a denial and must not cause a locked flash or a speculative public fetch.
 	const seedTierOk = !((options.initialSeed?.verifiedAccess ?? false) && isDenied)
-	// The seed renders during SSR/pre-hydration (the HTML contains it, so dropping it before the
-	// router resolves would be a hydration mismatch) and for the default view. A URL known to carry
-	// filters must NOT show it - the seeded rows don't match the URL - and neither must a failed fetch.
-	const seedVisible = (!ready || queryString === defaultQueryString) && !rowsQuery.isError && seedTierOk
-	// `enabled` is false only while a saved preference or a legacy rewrite still has a replace
-	// pending. A canonical server render has no replace target, so the gate is open and this seed
-	// is the document. Dropping it whenever `enabled` is false would strip the pool table from
-	// the HTML again, including on the canonical URL.
+	// The seed is the default view. A ready router, including the server render, must not paint it
+	// under minApy, protocol, or page. An unready router still ships it: static HTML has no query.
+	const seedVisible =
+		(requestedQueryString == null || requestedQueryString === defaultQueryString) && !rowsQuery.isError && seedTierOk
+	// `enabled` stays false while a saved preference or a legacy rewrite is still pending.
 	const data = enabled ? (rowsQuery.data ?? (seedVisible ? options.initialSeed?.initialData : undefined)) : undefined
 	const rows = data?.rows ?? []
 	const total = data?.total ?? 0

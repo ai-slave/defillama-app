@@ -7,6 +7,7 @@ const PRO_DASHBOARD_SITEMAP_FETCH_TIMEOUT_MS = 10_000
 
 type ProDashboardSearchItem = {
 	id?: string
+	slug?: string
 	editedAt?: string
 	updated?: string
 	created?: string
@@ -54,10 +55,13 @@ export async function getProDashboardSitemapEntries(): Promise<Array<SitemapUrlE
 			const dashboards = Array.isArray(data.items) ? data.items : []
 
 			for (const dashboard of dashboards) {
-				if (!dashboard.id || seen.has(dashboard.id)) continue
-				seen.add(dashboard.id)
+				// The view 301s /pro/{id} to /pro/{slug} when they differ. Listing the id is the
+				// Search Console error on every URL in this file (the cap is 1,000).
+				const pathId = dashboard.slug || dashboard.id
+				if (!pathId || seen.has(pathId)) continue
+				seen.add(pathId)
 				entries.push({
-					path: `pro/${dashboard.id}`,
+					path: `pro/${pathId}`,
 					lastmod: dashboard.editedAt || dashboard.updated || dashboard.created
 				})
 				if (entries.length >= PRO_DASHBOARD_SITEMAP_LIMIT) break

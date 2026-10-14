@@ -181,6 +181,23 @@ describe('useYieldsServerTable ISR seed', () => {
 		}
 	)
 
+	test.each([
+		{ label: 'minApy', query: { minApy: '5' } },
+		{ label: 'protocol', query: { protocol: 'Aave' } },
+		{ label: 'page', query: { page: '2' } }
+	])('server HTML for $label stays on the loading state before the client is ready', ({ query }) => {
+		routerMock.isReady = true
+		routerMock.query = query
+		const html = renderToString(
+			<Providers client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+				<StickyHarness onRender={() => {}} />
+			</Providers>
+		)
+		expect(html).toContain('Loading pools')
+		expect(html).not.toContain('seeded-1')
+		expect(fetchJson).not.toHaveBeenCalled()
+	})
+
 	test('keeps a legacy project URL on the loading state in the server HTML', () => {
 		routerMock.query = { project: 'Lido' }
 		const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })

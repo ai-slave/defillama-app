@@ -16,7 +16,8 @@ import { getProtocolListingSlugsFromMetadata } from '~/containers/ProtocolTaxono
 import { getRaisesSitemapRoutes } from '~/containers/Raises/server/routes'
 import { getRWASitemapRoutes } from '~/containers/RWA/server/routes'
 import { getStablecoinSitemapRoutes } from '~/containers/Stablecoins/server/routes'
-import { getYieldsSitemapRoutes } from '~/containers/Yields/server/routes'
+import { isPoolId } from '~/containers/Yields/poolDetail/fetch'
+import { acquireYieldsSnapshot, readBorrowMarkets, readEarn } from '~/containers/Yields/server/dataset.server'
 import defillamaPages from '~/public/pages.json'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
 import { normalizeSitemapRoute, type SitemapUrlEntry } from '~/utils/sitemapXml'
@@ -52,6 +53,35 @@ type BaseSitemapSectionId = (typeof SITEMAP_SECTION_IDS)[number]
 export type SitemapSection = {
 	id: SitemapSectionId
 	entries: Array<SitemapUrlEntry>
+}
+
+// Google fetched this pool as a 404 on 2026-10-13. It stays out even if a snapshot still lists it.
+const EXCLUDED_YIELD_POOL_ID = '790dea85-6c21-55d6-89f8-810be03209b0'
+
+function yieldPoolSitemapPaths(
+	earnRows: ReadonlyArray<{ id: string; tvl_usd: number | null }>,
+	borrowRows: ReadonlyArray<{ id: string; total_supply_usd: number | null }>
+): Array<string> {
+	const ranked: Array<{ id: string; tvl: number }> = []
+	const seen = new Set<string>()
+	const add = (id: string, tvl: number | null) => {
+		if (id === EXCLUDED_YIELD_POOL_ID || !isPoolId(id) || seen.has(id)) return
+		seen.add(id)
+		ranked.push({ id, tvl: tvl ?? 0 })
+	}
+	for (const row of earnRows) add(row.id, row.tvl_usd)
+	// Borrow-only markets have no earn row. The pool page serves them from the borrow detail.
+	for (const row of borrowRows) add(row.id, row.total_supply_usd)
+	ranked.sort((left, right) => right.tvl - left.tvl || (left.id < right.id ? -1 : left.id > right.id ? 1 : 0))
+	const paths: Array<string> = []
+	for (const row of ranked) paths.push(`yields/pool/${row.id}`)
+	return paths
+}
+
+async function getYieldsSitemapRoutes(): Promise<Array<string>> {
+	const snapshot = await acquireYieldsSnapshot('background')
+	const [earn, borrow] = await Promise.all([readEarn(snapshot), readBorrowMarkets(snapshot)])
+	return yieldPoolSitemapPaths(earn, borrow)
 }
 
 const MAX_SITEMAP_URLS = 49_000

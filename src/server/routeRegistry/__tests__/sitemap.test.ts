@@ -121,10 +121,17 @@ vi.mock('~/containers/Raises/server/dataset.server', () => ({
 const yieldsEarn = vi.hoisted(() => ({
 	rows: [
 		{ id: 'not-a-pool', tvl_usd: 9_000_000_000 },
+		{ id: '790dea85-6c21-55d6-89f8-810be03209b0', tvl_usd: 9_000_000_000 },
 		{ id: 'aa70268e-4b52-42bf-a116-608b370f9501', tvl_usd: 2_400_000_000 },
 		{ id: 'aa70268e-4b52-42bf-a116-608b370f9501', tvl_usd: 1 },
 		{ id: '66985a81-9c1e-4b0a-9c1e-4b0a9c1e4b0a', tvl_usd: 1_000_000_000 },
 		{ id: '665dc8bc-1111-4111-8111-111111111111', tvl_usd: null }
+	],
+	borrow: [
+		{ id: 'aa70268e-4b52-42bf-a116-608b370f9501', total_supply_usd: 1 },
+		{ id: 'b0b0b0b0-b0b0-4b0b-8b0b-b0b0b0b0b0b0', total_supply_usd: 500 },
+		{ id: '790dea85-6c21-55d6-89f8-810be03209b0', total_supply_usd: 9_000_000_000 },
+		{ id: 'not-a-market', total_supply_usd: 10 }
 	]
 }))
 
@@ -133,7 +140,8 @@ vi.mock('~/containers/Yields/server/dataset.server', async (importOriginal) => {
 	const { yieldsSnapshot } = await import('~/utils/testing/yieldsSnapshotFixture')
 	return {
 		...actual,
-		acquireYieldsSnapshot: async () => yieldsSnapshot({ earn: yieldsEarn.rows as never })
+		acquireYieldsSnapshot: async () =>
+			yieldsSnapshot({ earn: yieldsEarn.rows as never, borrowMarkets: yieldsEarn.borrow as never })
 	}
 })
 
@@ -165,7 +173,12 @@ beforeEach(async () => {
 		[`${FEATURES_SERVER}/dashboards/search`]: {
 			items: [
 				{ id: 'empty-public-dashboard', visibility: 'public', updated: '2026-01-02T00:00:00.000Z' },
-				{ id: 'rich-public-dashboard', visibility: 'public', editedAt: '2026-01-03T00:00:00.000Z' }
+				{
+					id: '11111111-1111-4111-8111-111111111111',
+					slug: 'rich-public-dashboard',
+					visibility: 'public',
+					editedAt: '2026-01-03T00:00:00.000Z'
+				}
 			],
 			totalPages: 1
 		}
@@ -222,8 +235,10 @@ describe('cache-backed sitemap sections', () => {
 		expect(entriesBySection.get('yields')).toEqual([
 			'yields/pool/aa70268e-4b52-42bf-a116-608b370f9501',
 			'yields/pool/66985a81-9c1e-4b0a-9c1e-4b0a9c1e4b0a',
+			'yields/pool/b0b0b0b0-b0b0-4b0b-8b0b-b0b0b0b0b0b0',
 			'yields/pool/665dc8bc-1111-4111-8111-111111111111'
 		])
+		expect(entriesBySection.get('yields')).not.toContain('yields/pool/790dea85-6c21-55d6-89f8-810be03209b0')
 		expect(entriesBySection.get('chains')).toEqual(expect.arrayContaining(['chain/ethereum', 'fees/chain/ethereum']))
 		expect(entriesBySection.get('stablecoins')).toEqual(
 			expect.arrayContaining(['stablecoin/tether', 'stablecoins/ethereum'])
@@ -275,6 +290,7 @@ describe('cache-backed sitemap sections', () => {
 		expect(entriesBySection.get('pro-dashboards')).toEqual(
 			expect.arrayContaining(['pro/empty-public-dashboard', 'pro/rich-public-dashboard'])
 		)
+		expect(allEntryPaths).not.toContain('pro/11111111-1111-4111-8111-111111111111')
 		expect(sections.find((section) => section.id === 'pro-dashboards')?.entries).toEqual(
 			expect.arrayContaining([
 				expect.objectContaining({
