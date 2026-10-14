@@ -42,6 +42,7 @@
 		"*.tsbuildinfo",
 		"next-env.d.ts",
 		"/public/",
+		"/seo-audit",
 		".cache",
 		".agents"
 	]
