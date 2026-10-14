@@ -41,9 +41,9 @@ import { oracleProtocols } from './constants'
 import { buildAvailableCharts, buildDefaultToggledCharts } from './defaultCharts'
 import { buildProtocolFaq, buildProtocolFaqRelationship } from './faq'
 import { formatAdapterData } from './formatAdapterData'
+import { buildProtocolMetaDescription } from './layoutSeo'
 import { selectOpenInterestProtocols } from './openInterestSplit'
 import { getProtocolPrimaryMetricOverride } from './primaryMetricOverrides'
-import { buildProtocolMetaDescription, protocolMetaMetricClause } from './protocolSeo'
 import { fetchProtocolRwaAumChart } from './rwa'
 import type { IProtocolOverviewPageData, IProtocolPageMetrics } from './types'
 import { getProtocolWarningBanners } from './utils'
@@ -882,17 +882,15 @@ export const getProtocolOverviewPageData = async ({
 	seoDescription = buildProtocolMetaDescription({
 		description: protocolData.description,
 		fallback: seoDescription,
-		metricClause: protocolMetaMetricClause({
-			tvl: tvlSummary.current,
-			tvlIsHero:
-				!isCEX &&
-				!isOracleProtocol &&
-				currentTvlByChain !== null &&
-				primaryMetricOverride == null &&
-				tvlSummary.current != null,
-			volume30d: dexVolumeData?.total30d ?? perpVolumeData?.total30d ?? null,
-			fees30d: feesData?.total30d ?? null
-		})
+		tvl: tvlSummary.current,
+		tvlIsHero:
+			!isCEX &&
+			!isOracleProtocol &&
+			currentTvlByChain !== null &&
+			primaryMetricOverride == null &&
+			tvlSummary.current != null,
+		volume30d: dexVolumeData?.total30d ?? perpVolumeData?.total30d ?? null,
+		fees30d: feesData?.total30d ?? null
 	})
 
 	const titleMetricSegment =

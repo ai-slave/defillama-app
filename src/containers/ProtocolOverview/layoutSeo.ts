@@ -5,6 +5,7 @@ import {
 	type MainSiteIrDashboard
 } from '~/containers/Investors/mainSiteDashboards'
 import { slug } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 
 export const protocolTabs = {
 	information: { id: 'information', name: 'Information', route: '/protocol' },
@@ -76,6 +77,65 @@ export function getProtocolLayoutSeo({
 		canonicalUrl,
 		noIndex: !standaloneRoute || noIndexProtocolSlugs.has(entitySlug)
 	}
+}
+
+const META_DESCRIPTION_LIMIT = 155
+const COMPACT_USD = { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' } as const
+
+function compactUsd(value: number | null): string | null {
+	if (value == null) return null
+	return formatUsd(value, COMPACT_USD)
+}
+
+/** First sentence of the stored description. Later sentences stay in Protocol Information. */
+export function protocolDescriptionSentence(description: string | null | undefined): string {
+	const collapsed = description?.replace(/\s+/g, ' ').trim() ?? ''
+	if (!collapsed) return ''
+	const end = /[.!?](?=\s|$)/.exec(collapsed)
+	return end ? collapsed.slice(0, end.index + 1) : collapsed
+}
+
+/**
+ * The sentence under the H1. A sentence of 120 characters or less also gets one metric clause when both fit in 155.
+ * An empty description keeps the chart-list fallback.
+ */
+export function buildProtocolMetaDescription(input: {
+	description: string | null | undefined
+	fallback: string
+	tvl: number | null
+	tvlIsHero: boolean
+	volume30d: number | null
+	fees30d: number | null
+}): string {
+	const sentence = protocolDescriptionSentence(input.description)
+	if (!sentence) return input.fallback
+
+	let clause: string | null = null
+	if (sentence.length <= 120) {
+		if (input.tvlIsHero) {
+			const tvl = compactUsd(input.tvl)
+			clause = tvl ? ` TVL is ${tvl}.` : null
+		} else {
+			const volume = compactUsd(input.volume30d)
+			clause = volume ? ` 30-day volume is ${volume}.` : null
+			if (!clause) {
+				const fees = compactUsd(input.fees30d)
+				clause = fees ? ` Fees were ${fees} in the last 30 days.` : null
+			}
+		}
+	}
+
+	if (clause) {
+		const lead = /[.!?]$/.test(sentence) ? sentence : `${sentence}.`
+		const withMetric = `${lead}${clause}`
+		if (withMetric.length <= META_DESCRIPTION_LIMIT) return withMetric
+	}
+
+	if (sentence.length <= META_DESCRIPTION_LIMIT) return sentence
+	const boundary = sentence.lastIndexOf(' ', META_DESCRIPTION_LIMIT)
+	return (boundary > 0 ? sentence.slice(0, boundary) : sentence.slice(0, META_DESCRIPTION_LIMIT))
+		.trimEnd()
+		.replace(/[,:;]+$/, '')
 }
 
 // The Active Loans tab shows loans itself, so only the other tabs explain how to add them to TVL.

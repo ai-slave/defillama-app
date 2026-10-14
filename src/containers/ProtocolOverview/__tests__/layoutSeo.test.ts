@@ -1,6 +1,12 @@
 import { expect, test } from 'vitest'
 import { getMainSiteIrBaseHref } from '~/containers/Investors/mainSiteDashboards'
-import { getProtocolLayoutSeo, resolveProtocolDashboards, showsActiveLoansTvlNotice } from '../layoutSeo'
+import {
+	buildProtocolMetaDescription,
+	getProtocolLayoutSeo,
+	protocolDescriptionSentence,
+	resolveProtocolDashboards,
+	showsActiveLoansTvlNotice
+} from '../layoutSeo'
 
 test.each([
 	{ behavior: 'the information tab is indexable', name: 'Aave', tab: 'information', canonicalUrl: '/protocol/aave' },
@@ -39,6 +45,49 @@ test('configured protocols stay noindex while keeping their canonical', () => {
 		canonicalUrl: '/protocol/defi-swap',
 		noIndex: true
 	})
+})
+
+test('the meta description is the stored sentence, plus one metric when both fit', () => {
+	const aave = 'Aave is an Open Source and Non-Custodial protocol to earn interest on deposits and borrow assets'
+	const vest =
+		'Vest Exchange is a next generation Perps DEX that ensures the most capital efficient liquidity, and fairest pricing for traders and LPs.'
+	const fallback = 'Track Aave on DefiLlama. Including TVL, Fees'
+	const metrics = { tvl: 18_600_000_000, tvlIsHero: true, volume30d: 4_200_000_000, fees30d: 89_100_000 }
+	expect(buildProtocolMetaDescription({ description: aave, fallback, ...metrics })).toBe(`${aave}. TVL is $18.6b.`)
+	expect(buildProtocolMetaDescription({ description: vest, fallback, ...metrics })).toBe(vest)
+	expect(buildProtocolMetaDescription({ description: null, fallback, ...metrics })).toBe(fallback)
+	expect(buildProtocolMetaDescription({ description: '  ', fallback, ...metrics })).toBe(fallback)
+	expect(
+		protocolDescriptionSentence(
+			'Hyperliquid is a Layer 1 blockchain best known for perpetual futures and spot trading. Beyond its flagship exchange.'
+		)
+	).toBe('Hyperliquid is a Layer 1 blockchain best known for perpetual futures and spot trading.')
+	expect(
+		buildProtocolMetaDescription({
+			description:
+				'Hyperliquid is a Layer 1 blockchain best known for perpetual futures and spot trading. Beyond its flagship exchange.',
+			fallback,
+			...metrics,
+			tvlIsHero: false
+		})
+	).toBe(
+		'Hyperliquid is a Layer 1 blockchain best known for perpetual futures and spot trading. 30-day volume is $4.2b.'
+	)
+	expect(
+		buildProtocolMetaDescription({
+			description: aave,
+			fallback,
+			tvl: null,
+			tvlIsHero: false,
+			volume30d: null,
+			fees30d: 89_100_000
+		})
+	).toBe(`${aave}. Fees were $89.1m in the last 30 days.`)
+	const long = `${'Word '.repeat(40).trim()}.`
+	const cut = buildProtocolMetaDescription({ description: long, fallback, ...metrics })
+	expect(cut.length).toBeLessThanOrEqual(155)
+	expect(long.startsWith(cut)).toBe(true)
+	expect(cut.includes('TVL')).toBe(false)
 })
 
 test('empty SEO strings fall back to the protocol title and description', () => {

@@ -1,7 +1,7 @@
 import { slug } from '~/utils'
 import { formatDate } from '~/utils/dateFormat'
 import { formatUsd, formatCompactNumber, formatNumber, formatPercent } from '~/utils/numberFormat'
-import { protocolDescriptionSentence } from './protocolSeo'
+import { protocolDescriptionSentence } from './layoutSeo'
 import type { IProtocolFaqAnswerPart, IProtocolFaqItem } from './types'
 
 const MAX_LINKED_CHAINS = 5
@@ -241,38 +241,23 @@ export function buildProtocolFaqRelationship({
 }
 
 export function buildProtocolFaq(context: ProtocolFaqContext): Array<IProtocolFaqItem> {
-	const whatIs = buildWhatIsQuestion(context)
-	const tvl = buildTvlQuestion(context)
-	const fees = buildFeesQuestion(context)
 	const metric = buildMetricSpecificQuestion(context)
-	const volumeLeads = context.volumeLeads && (metric?.id === 'dex-volume' || metric?.id === 'perp-volume')
-	// Search quotes the open answers in order. The definition and the dollar figures lead;
-	// chains and token price stay later so they are not the default quote.
-	const candidates = volumeLeads
-		? [
-				whatIs,
-				metric,
-				tvl,
-				fees,
-				buildRelationshipQuestion(context),
-				buildChainsQuestion(context),
-				buildTokenValuationQuestion(context),
-				buildTokenPerformanceQuestion(context),
-				buildTreasuryQuestion(context),
-				buildSecurityQuestion(context)
-			]
-		: [
-				whatIs,
-				tvl,
-				fees,
-				metric,
-				buildRelationshipQuestion(context),
-				buildChainsQuestion(context),
-				buildTokenValuationQuestion(context),
-				buildTokenPerformanceQuestion(context),
-				buildTreasuryQuestion(context),
-				buildSecurityQuestion(context)
-			]
+	// Search quotes the open answers. The definition and dollar figures lead, and a volume-led title
+	// puts that volume answer next. Chains and token price stay later.
+	const volumeFirst = context.volumeLeads && (metric?.id === 'dex-volume' || metric?.id === 'perp-volume')
+	const candidates = [
+		buildWhatIsQuestion(context),
+		volumeFirst ? metric : null,
+		buildTvlQuestion(context),
+		buildFeesQuestion(context),
+		volumeFirst ? null : metric,
+		buildRelationshipQuestion(context),
+		buildChainsQuestion(context),
+		buildTokenValuationQuestion(context),
+		buildTokenPerformanceQuestion(context),
+		buildTreasuryQuestion(context),
+		buildSecurityQuestion(context)
+	]
 
 	return candidates.filter((item): item is IProtocolFaqItem => item != null)
 }

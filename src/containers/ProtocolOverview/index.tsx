@@ -22,10 +22,10 @@ import { getPrimaryValueLabelType, useFinalTVL } from './helpers'
 import { InviteBanner } from './InviteBanner'
 import { KeyMetrics } from './KeyMetrics'
 import { ProtocolOverviewLayout } from './Layout'
+import { protocolDescriptionSentence } from './layoutSeo'
 import { getProtocolPrimaryMetricOverride } from './primaryMetricOverrides'
 import { ProtocolChartPanel } from './ProtocolChartPanel'
 import { ProtocolFaq } from './ProtocolFaq'
-import { protocolDescriptionSentence } from './protocolSeo'
 import type { IProtocolOverviewPageData } from './types'
 
 const IncomeStatement = lazy(() => import('./IncomeStatement').then((module) => ({ default: module.IncomeStatement })))
