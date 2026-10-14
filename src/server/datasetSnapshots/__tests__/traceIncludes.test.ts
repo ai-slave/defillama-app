@@ -20,7 +20,7 @@ const SNAPSHOT_ENTRY_IMPORTS: Array<{ importPath: string; domains: Array<Dataset
 	{ importPath: '~/containers/Tokens/queries.server', domains: ['markets', 'token-rights'] },
 	{ importPath: '~/containers/Tokens/server/api', domains: ['markets', 'token-rights'] },
 	{ importPath: '~/containers/ProDashboard/server/stream/index', domains: ['yields'] },
-	{ importPath: '~/server/routeRegistry/sitemap', domains: ['markets', 'liquidations', 'raises'] }
+	{ importPath: '~/server/routeRegistry/sitemap', domains: ['markets', 'liquidations', 'raises', 'yields'] }
 ]
 
 async function collectPageFiles(rootDir: string): Promise<Array<string>> {

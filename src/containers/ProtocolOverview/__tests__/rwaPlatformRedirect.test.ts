@@ -66,13 +66,14 @@ describe('RWA platform tab and TVL retirement', () => {
 		).toBeNull()
 	})
 
-	test('lists RWA tab routes in the sitemap and omits the retired TVL route', () => {
+	test('lists the protocol page and omits noindex RWA and TVL tabs', () => {
 		const routes = getProtocolSitemapRoutes(metadataCache)
-		expect(routes).toContain('protocol/rwa/xstocks')
-		expect(routes).toContain('protocol/rwa/okx')
+		expect(routes).toEqual(expect.arrayContaining(['protocol/xstocks', 'protocol/okx', 'protocol/spiko']))
+		expect(routes).not.toContain('protocol/rwa/xstocks')
+		expect(routes).not.toContain('protocol/rwa/okx')
 		expect(routes).not.toContain('protocol/rwa/spiko')
 		expect(routes).not.toContain('protocol/tvl/xstocks')
-		expect(routes).toContain('protocol/tvl/okx')
+		expect(routes).not.toContain('protocol/tvl/okx')
 	})
 })
 
@@ -115,11 +116,14 @@ describe('child protocols of a declared RWA platform', () => {
 		expect(resolveChildTvl('openeden-usdo')).toMatchObject({ type: 'route' })
 	})
 
-	test('keeps the child out of the RWA sitemap while redirecting its retired TVL route', () => {
+	test('keeps noindex RWA and TVL tabs out of the sitemap', () => {
 		const routes = getProtocolSitemapRoutes(openEdenCache)
-		expect(routes).toContain('protocol/rwa/openeden')
+		expect(routes).toEqual(
+			expect.arrayContaining(['protocol/openeden', 'protocol/openeden-usdo', 'protocol/openeden-tbill'])
+		)
+		expect(routes).not.toContain('protocol/rwa/openeden')
 		expect(routes).not.toContain('protocol/rwa/openeden-tbill')
 		expect(routes).not.toContain('protocol/tvl/openeden-tbill')
-		expect(routes).toContain('protocol/tvl/openeden-usdo')
+		expect(routes).not.toContain('protocol/tvl/openeden-usdo')
 	})
 })

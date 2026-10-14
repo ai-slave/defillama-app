@@ -3,6 +3,7 @@ import type * as React from 'react'
 import { EntityQuestionsStrip } from '~/components/EntityQuestionsStrip'
 import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
 import { useEntityQuestions } from '~/containers/LlamaAI/hooks/useEntityQuestions'
+import { useIsClient } from '~/hooks/useIsClient'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { fetchJson, handleSimpleFetchResponse } from '~/utils/async'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
@@ -66,6 +67,7 @@ function EarnView({
 	intro
 }: EarnViewProps) {
 	const router = useRouter()
+	const isClient = useIsClient()
 	const { authorizedFetch, hasAccess: paidYields, isDenied } = useVerifiedAccess()
 
 	// Rewrite legacy bookmark params to canonical before the first fetch (gates `enabled`).
@@ -214,7 +216,7 @@ function EarnView({
 				defaultColumns={defaultColumns}
 				apyControls={
 					<>
-						<ApyViewControls ready={normalized} />
+						<ApyViewControls ready={isClient && normalized} />
 						<span className="mx-0.5 hidden h-5 w-px bg-border-medium sm:block" aria-hidden />
 						<span className="hidden sm:block">
 							<VerifiedFilterToggle />

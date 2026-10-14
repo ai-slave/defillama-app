@@ -3,6 +3,7 @@ import { getMetadataCache } from '~/server/routeRegistry/common'
 import { slug } from '~/utils'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
 import type { IProtocolMetadata } from '~/utils/metadata/types'
+import { getProtocolLayoutSeo } from '../layoutSeo'
 
 const EXCLUDED_OVERVIEW_CATEGORIES = new Set(['Bridge', 'Canonical Bridge', 'Staking Pool'])
 
@@ -40,53 +41,6 @@ type ProtocolMetric =
 	| 'emissions'
 	| 'forks'
 	| 'raises'
-
-const protocolTabRoutes = [
-	{ prefix: 'protocol/tvl', hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => Boolean(meta.tvl) },
-	{
-		prefix: 'protocol/rwa',
-		hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => Boolean(meta.rwaPlatformSlug)
-	},
-	{
-		prefix: 'protocol/stablecoins',
-		hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => Boolean(meta.stablecoins)
-	},
-	{ prefix: 'protocol/bridges', hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => Boolean(meta.bridge) },
-	{
-		prefix: 'protocol/treasury',
-		hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => Boolean(meta.treasury)
-	},
-	{ prefix: 'protocol/yields', hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => Boolean(meta.yields) },
-	{ prefix: 'protocol/fees', hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => Boolean(meta.fees) },
-	{ prefix: 'protocol/dexs', hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => Boolean(meta.dexs) },
-	{ prefix: 'protocol/perps', hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => Boolean(meta.perps) },
-	{
-		prefix: 'protocol/dex-aggregators',
-		hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => Boolean(meta.dexAggregators)
-	},
-	{
-		prefix: 'protocol/perps-aggregators',
-		hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => Boolean(meta.perpsAggregators)
-	},
-	{
-		prefix: 'protocol/bridge-aggregators',
-		hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => Boolean(meta.bridgeAggregators)
-	},
-	{
-		prefix: 'protocol/options',
-		hasMetric: (meta: MetadataCache['protocolMetadata'][string]) =>
-			Boolean(meta.optionsPremiumVolume || meta.optionsNotionalVolume)
-	},
-	{
-		prefix: 'protocol/token-rights',
-		hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => Boolean(meta.tokenRights)
-	},
-	{
-		prefix: 'protocol/unlocks',
-		hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => Boolean(meta.emissions)
-	},
-	{ prefix: 'protocol/forks', hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => Boolean(meta.forks) }
-]
 
 const standaloneProtocolRoutes: Array<{
 	prefix: 'unlocks' | 'forks'
@@ -230,6 +184,14 @@ export function getProtocolMetricSlugsFromMetadata(
 	return getProtocolFeatureSlugsFromMetadata(metadataCache, (metadata) => Boolean(metadata[metric]))
 }
 
+function pushIndexableProtocolRoute(routes: Array<string>, name: string, tab: 'information' | 'borrowed') {
+	const seo = getProtocolLayoutSeo({ name, tab })
+	// noIndex tabs (fees, TVL, DEX volume, the protocol unlocks alias, …) stay out.
+	// canonicalUrl is the path crawlers should request, including /protocol/active-loans.
+	if (seo.noIndex || seo.canonicalUrl == null) return
+	routes.push(seo.canonicalUrl.replace(/^\//, ''))
+}
+
 export function getProtocolSitemapRoutes(metadataCache: MetadataCache): Array<string> {
 	const routes: Array<string> = []
 
@@ -237,16 +199,11 @@ export function getProtocolSitemapRoutes(metadataCache: MetadataCache): Array<st
 		const metadata = metadataCache.protocolMetadata[protocolId]
 		if (!metadata) continue
 		if (!isProtocolRouteMetadata(metadata)) continue
-		if (!metadata.displayName && !metadata.name) continue
-		const protocolSlug = getProtocolSlug(metadata, protocolId)
+		const name = metadata.displayName || metadata.name
+		if (!name) continue
 
-		routes.push(`protocol/${protocolSlug}`)
-	}
-
-	for (const routeDef of protocolTabRoutes) {
-		for (const protocolSlug of getProtocolFeatureSlugsFromMetadata(metadataCache, routeDef.hasMetric)) {
-			routes.push(`${routeDef.prefix}/${protocolSlug}`)
-		}
+		pushIndexableProtocolRoute(routes, name, 'information')
+		if (metadata.borrowed) pushIndexableProtocolRoute(routes, name, 'borrowed')
 	}
 
 	return routes

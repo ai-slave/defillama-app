@@ -23,6 +23,7 @@ vi.mock('next/router', () => ({ useRouter: () => routerMock }))
 const fetchJson = vi.hoisted(() => vi.fn())
 vi.mock('~/utils/async', () => ({ fetchJson }))
 
+import { useIsClient } from '~/hooks/useIsClient'
 import { ApyViewControls } from '../Filters/ApyViewControls'
 import { APY_COMPONENTS_PREF, APY_WINDOW_PREF, TABLE_PAGE_SIZE_PREF } from '../stickyQueryPrefs'
 import { useLegacyYieldsUrlNormalizer } from '../useLegacyYieldsUrlNormalizer'
@@ -65,6 +66,7 @@ function Harness({ onRender }: { onRender: (result: HookResult) => void }) {
 
 function StickyHarness({ onRender }: { onRender: (result: HookResult) => void }) {
 	const enabled = useLegacyYieldsUrlNormalizer({ page: 'earn', tokens: [] })
+	const isClient = useIsClient()
 	const result = useYieldsServerTable<Row>({
 		endpoint: '/api/public/yields/earn',
 		enabled,
@@ -73,7 +75,7 @@ function StickyHarness({ onRender }: { onRender: (result: HookResult) => void })
 	onRender(result)
 	return (
 		<>
-			<ApyViewControls ready={enabled} />
+			<ApyViewControls ready={isClient && enabled} />
 			<span>{result.isLoading ? 'Loading pools' : result.rows.map((row) => row.id).join(',')}</span>
 		</>
 	)
@@ -140,41 +142,73 @@ describe('useYieldsServerTable ISR seed', () => {
 		expect(localStorage.getItem(APY_COMPONENTS_PREF.storageKey)).toBe(expected ?? null)
 	})
 
-	test.each([true, false])('hydrates without flashing default controls or seeded rows (saved: %s)', async (saved) => {
-		const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-		const renders: Array<HookResult> = []
-		const element = () => (
-			<Providers client={client}>
-				<StickyHarness onRender={(value) => renders.push(value)} />
+	test.each([true, false])(
+		'serves the seeded pools in the server HTML and restores a saved preference after hydration (saved: %s)',
+		async (saved) => {
+			const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+			const element = () => (
+				<Providers client={client}>
+					<StickyHarness onRender={() => {}} />
+				</Providers>
+			)
+			const html = renderToString(element())
+			expect(html).toContain('seeded-1')
+			expect(html).not.toContain('Loading pools')
+			expect(html).toContain('Loading APY preferences')
+			expect(html).not.toContain('role="radio"')
+			if (saved) window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_7d')
+			await act(async () => root.unmount())
+			container.innerHTML = html
+			const onRecoverableError = vi.fn()
+			await act(async () => {
+				root = hydrateRoot(container, element(), { onRecoverableError })
+			})
+			expect(onRecoverableError).not.toHaveBeenCalled()
+			expect(fetchJson).not.toHaveBeenCalled()
+			expect(container.textContent.includes('Loading pools')).toBe(saved)
+			expect(container.textContent.includes('seeded-1')).toBe(!saved)
+			if (saved) {
+				fetchJson.mockResolvedValue({ ...initialData, rows: [{ id: 'saved-pool', tvl: 42 }] })
+				routerMock.query = { apyWindow: 'avg_7d' }
+				await act(async () => root.render(element()))
+			}
+			await waitForUi(async () => {
+				await act(async () => {})
+				expect(container.textContent).toContain(saved ? 'saved-pool' : 'seeded-1')
+			})
+			expect(fetchJson).toHaveBeenCalledTimes(saved ? 1 : 0)
+			client.clear()
+		}
+	)
+
+	test.each([
+		{ label: 'minApy', query: { minApy: '5' } },
+		{ label: 'protocol', query: { protocol: 'Aave' } },
+		{ label: 'page', query: { page: '2' } }
+	])('server HTML for $label stays on the loading state before the client is ready', ({ query }) => {
+		routerMock.isReady = true
+		routerMock.query = query
+		const html = renderToString(
+			<Providers client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+				<StickyHarness onRender={() => {}} />
 			</Providers>
 		)
-		const html = renderToString(element())
 		expect(html).toContain('Loading pools')
-		expect(html).toContain('Loading APY preferences')
 		expect(html).not.toContain('seeded-1')
-		expect(html).not.toContain('role="radio"')
-		if (saved) window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_7d')
-		await act(async () => root.unmount())
-		container.innerHTML = html
-		const onRecoverableError = vi.fn()
-		await act(async () => {
-			root = hydrateRoot(container, element(), { onRecoverableError })
-		})
-		expect(onRecoverableError).not.toHaveBeenCalled()
 		expect(fetchJson).not.toHaveBeenCalled()
-		expect(renders.every((value) => value.rows.length === 0)).toBe(saved)
-		expect(container.textContent.includes('Loading pools')).toBe(saved)
-		if (saved) {
-			fetchJson.mockResolvedValue({ ...initialData, rows: [{ id: 'saved-pool', tvl: 42 }] })
-			routerMock.query = { apyWindow: 'avg_7d' }
-			await act(async () => root.render(element()))
-		}
-		await waitForUi(async () => {
-			await act(async () => {})
-			expect(container.textContent).toContain(saved ? 'saved-pool' : 'seeded-1')
-		})
-		expect(renders.some((value) => value.rows.some((row) => row.id === 'seeded-1'))).toBe(!saved)
-		client.clear()
+	})
+
+	test('keeps a legacy project URL on the loading state in the server HTML', () => {
+		routerMock.query = { project: 'Lido' }
+		const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+		const html = renderToString(
+			<Providers client={client}>
+				<StickyHarness onRender={() => {}} />
+			</Providers>
+		)
+		expect(html).toContain('Loading pools')
+		expect(html).not.toContain('seeded-1')
+		expect(fetchJson).not.toHaveBeenCalled()
 	})
 
 	test('restores a canceled preference navigation before fetching the matching rows', async () => {
