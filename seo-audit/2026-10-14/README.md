@@ -1,6 +1,6 @@
 # SEO audit 2026-10-14
 
-The nine reports below are the heads of PRs #1–#9, unchanged. This file is the index. Click figures are missed clicks per 28 days at a 3% floor, `max(0, 0.03 × impressions − clicks)`, after brand queries and bare protocol-name queries are removed. Where the reports disagree, [SYNTHESIS.md](SYNTHESIS.md) is the resolution. A page-level total that the synthesis marks as brand is not used.
+The ten reports below are the heads of PRs #1–#10, unchanged. This file is the index. Click figures are missed clicks per 28 days at a 3% floor, `max(0, 0.03 × impressions − clicks)`, after brand queries and bare protocol-name queries are removed. Where the reports disagree, [SYNTHESIS.md](SYNTHESIS.md) is the resolution. A page-level total that the synthesis marks as brand is not used.
 
 `{date}`, `{leader}`, and the other braces render from the same props as the table. The 14 Oct 2026 numbers are the fetch the reports measured. They show the shape of the sentence. They are not strings to paste into source.
 
@@ -17,10 +17,11 @@ The yields definition (12) sits inside the server-render estimate (~940). The pr
 7. [SYNTHESIS.md](SYNTHESIS.md) (PR #7) — Cross-read of the first four reports: one copy string and one click total wherever they disagreed.
 8. [round2-aio-citations.md](round2-aio-citations.md) (PR #8) — AI Overviews cite DefiLlama on 3 of 40 queries and never for the answer sentence; the pages they quote open with “X is …” or a dated number.
 9. [round2-striking-distance.md](round2-striking-distance.md) (PR #9) — Queries at positions 5–20 need one sentence that repeats the query, and yield pools and active-loans are indexable URLs the sitemap does not list.
+10. [round2-citation-scorecard.md](round2-citation-scorecard.md) (PR #10) — Our 13 pages average 40.9/100 and the 39 pages cited for the same queries average 65.1/100. The gap is the opening sentence. Row scores are in [round2-citation-scorecard.csv](round2-citation-scorecard.csv).
 
 ## A. Hub copy
 
-Answer-first dated one-liners, plus the title and H1, on the hubs below.
+Answer-first dated one-liners, plus the title and H1, on the hubs below. PR #10 scores those pages inside a set of 13: ours average **40.9/100**, the 39 cited pages average **65.1/100**. Answer-first is 5.7 points against 13.6, and the definition is 2.6 against 6.9. The server table is already level (10.8 against 10.3). `/yields` is the low score at 16.4, against a best cited page of 72.4.
 
 ### `/chains`
 
@@ -101,12 +102,12 @@ Answer-first dated one-liners, plus the title and H1, on the hubs below.
 
 ## B. Protocol template
 
-One definition sentence in three places on `/protocol/{slug}`. The metric title stays, with TVL first. Do not hardcode a Vest or Axiom sentence in `queries.tsx`. The stored description is the sentence, and this repo already renders it in Protocol Information.
+One definition sentence in three places on `/protocol/{slug}`. The metric title stays, with TVL first. Do not hardcode a Vest or Axiom sentence in `queries.tsx`. The stored description is the sentence, and this repo already renders it in Protocol Information. On the scorecard, `/protocol/rhea-finance` is 60.0 and `/protocol/vest-markets` is 58.8, both above the average of the pages cited against them, and both still open with the TVL stat.
 
 - **Copy.** Under the H1, one paragraph: `protocolData.description`, only when it is non-empty. Empty renders nothing, and the hero number stays. Stored examples, forwarded as they are: `Aave is an Open Source and Non-Custodial protocol to earn interest on deposits and borrow assets.` and `Vest Exchange is a next generation Perps DEX that ensures the most capital efficient liquidity, and fairest pricing for traders and LPs.` Meta description, capped at 155 characters: the first sentence of that description, whitespace collapsed, cut at the last word that fits inside 120 characters when the sentence is longer, then one metric clause when it fits (` TVL is {compact}.`, or ` 30-day volume is {compact}.`, or ` Fees were {compact} in the last 30 days.`). Aave renders as `Aave is an Open Source and Non-Custodial protocol to earn interest on deposits and borrow assets. TVL is $18.6b.` When the description is empty, keep `Track ${name} on DefiLlama…`. FAQ order, with the first five left open: (1) `What is {name}?` answered with that description, (2) TVL, (3) fees and revenue, (4) the single metric question (DEX volume, perp volume, active loans, open interest, or yields), (5) comparison, (6) chains, (7) token valuation, (8) token performance, (9) treasury, (10) security. Title stays `` `${name} ${titleMetricSegment}` ``.
 - **File.** `src/containers/ProtocolOverview/index.tsx` (`ProtocolHeader`, the paragraph between the title row and `HeroMetric`). `src/containers/ProtocolOverview/queries.tsx` (meta description; the title assignment stays). `src/containers/ProtocolOverview/faq.ts` (`buildProtocolFaq`, which needs the description on its context). `src/containers/ProtocolOverview/ProtocolFaq.tsx` renders that list.
 - **Missed clicks.** 300–500 on non-brand, non-name queries, the part the snippet controls. The 3% name-query pool is a different set: the raw missed@3% on the eight named queries is 2,040, and the synthesis caps that pool at about 170 because the official site keeps the click. That 170 is not added to the 300–500. The template’s 29,093 page-level missed clicks are mostly bare names.
-- **Sources.** PR #6 for the sentence, the meta formula, the FAQ order, and the 300–500. PR #3 for the description and the first FAQ. PR #1 and PR #4 exclude bare names. PR #7 caps the name-query math at about 170 and keeps the metric title. PR #8 confirms the first visible sentence is the product description.
+- **Sources.** PR #6 for the sentence, the meta formula, the FAQ order, and the 300–500. PR #3 for the description and the first FAQ. PR #1 and PR #4 exclude bare names. PR #7 caps the name-query math at about 170 and keeps the metric title. PR #8 confirms the first visible sentence is the product description. PR #10 scores the three protocol pages.
 
 ## C. Yields HTML and the sitemap
 

@@ -1,0 +1,53 @@
+group,side,name,url,total,answer,h1,date,number,ssr,defin,faq,jsonld,depth,eeat,nojs,note
+chains,ours,/chains,https://defillama.com/chains,25.2,0,2,0,1,4,0,1,0,0,1,3,"Server HTML is the chain table. No H1, no sentence, no definition. Ethereum $51.11b is a cell."
+stable,ours,/stablecoins,https://defillama.com/stablecoins,37.6,2,3,0,2,4,0,1,0,1,1,3,"H1 is the market-cap stat $306.019b. USDT Dominance 60.12% is a label. No sentence, no date."
+cats,ours,/categories,https://defillama.com/categories,39.6,1,3,0,1,4,3,1,0,3,2,3,Opens with TVL by category and Loading chart. Sector definitions sit in the description column.
+dex,ours,/dex-aggregators,https://defillama.com/dex-aggregators,34.8,2,2,0,2,4,0,1,0,0,1,3,"H1 is 24h volume $2.464b. Jupiter, DFlow, 0x are table rows. No definition."
+yields,ours,/yields,https://defillama.com/yields,16.4,0,2,0,2,1,0,1,0,0,1,1,"Server HTML: Tracking 0 pools, Loading pools. A browser render has the table; the server document does not."
+lend,ours,/protocols/lending,https://defillama.com/protocols/lending,39.2,2,3,0,2,4,1,1,0,1,1,3,H1 Lending and TVL $52.949b. The category sentence is not on this page.
+defs,ours,/data-definitions,https://defillama.com/data-definitions,43.6,4,2,0,0,2,5,0,0,4,3,4,"Opens with the TVL definition. H1 is Data definitions, not the question. No current figure, no JSON-LD."
+rwa,ours,/rwa,https://defillama.com/rwa,42.4,2,2,3,2,4,1,1,0,1,2,3,H1 Total RWA Active AUM $32.113b. Listing dates in Sep-Oct 2026. No definition sentence.
+perps,ours,/perps,https://defillama.com/perps,36.4,2,3,0,2,4,0,1,0,0,1,3,H1 Perp Volume (24h) $22.548b. Hyperliquid leads the table. No definition of a perp DEX.
+unlocks,ours,/unlocks,https://defillama.com/unlocks,40.0,2,3,0,2,4,0,1,0,2,2,3,H1 Unlock statistics. 7d unlocks $228.87m is a label. The upcoming-unlock table is in the HTML.
+rhea,ours,/protocol/rhea-finance,https://defillama.com/protocol/rhea-finance,60.0,2,3,3,4,3,3,4,0,3,4,4,"Opens with TVL $280.46m. The description is in Protocol Information. The FAQ answers TVL, not what Rhea is."
+pons,ours,/protocol/pons,https://defillama.com/protocol/pons,57.6,2,2,3,4,3,4,4,0,2,3,4,Opens with fees. The launchpad sentence is in Protocol Information. The price FAQ states $0.34 and $228.35m.
+vest,ours,/protocol/vest-markets,https://defillama.com/protocol/vest-markets,58.8,2,2,4,4,3,4,3,0,2,4,4,"Opens with TVL $214,448. The perps-DEX sentence is in Protocol Information. The first FAQ is the TVL question."
+chains,comp,CMC Academy TVL,https://coinmarketcap.com/academy/glossary/total-value-locked-tvl,68.8,5,5,1,1,3,5,3,4,3,4,5,First sentence defines TVL. H1 is the term. Published 2021-08-21. Article JSON-LD. No current ranking.
+chains,comp,Investopedia TVL,https://www.investopedia.com/total-value-locked-7486821,66.0,5,4,1,1,3,5,3,2,4,5,4,"What Is TVL, then the definition. Kevin George, 2023-10-31. No current chain ranking."
+chains,comp,Token Terminal TVL,https://tokenterminal.com/explorer/metrics/tvl,58.4,5,4,0,1,4,5,0,0,2,4,4,"TVL measures on-chain deposits, then a top-10 table. No date, no JSON-LD. 333 words."
+stable,comp,TradingView USDT.D,https://www.tradingview.com/symbols/USDT.D/,84.0,4,5,5,5,3,4,4,5,4,3,5,"USDT.D about 6.52% on Oct 7 2026, share of the whole crypto market. Dataset and FinancialProduct JSON-LD."
+stable,comp,CoinGecko stablecoins,https://www.coingecko.com/en/categories/stablecoins,87.6,5,4,4,5,5,5,4,1,5,3,4,"Market cap today is $300 billion, then a definition. Table plus a what-are FAQ. Breadcrumb JSON-LD only."
+stable,comp,CMC stablecoins,https://coinmarketcap.com/view/stablecoin/,75.2,4,4,0,4,4,4,4,5,3,3,5,"Lists the most valuable stablecoins, then the market-cap figure. Visible FAQ and FAQPage JSON-LD."
+cats,comp,1inch DeFi platform types,https://1inch.com/blog/post/what-are-the-main-types-of-defi-platforms,60.4,3,4,2,1,3,4,2,4,4,5,4,"Opens on DeFi activities, then takeaways that name lending and DEXs. Vladimir Kozlov, Feb 2024. BlogPosting."
+cats,comp,Coinmonks categories,https://medium.com/coinmonks/defi-protocol-categories-you-never-knew-existed-d0d2c0b08e7c,49.6,2,4,1,1,3,3,0,3,4,4,4,"H1 names categories. Opening is a scene-setter, not the ranking. Patience Igwe, Apr 2023."
+cats,comp,CoinTracker TVL,https://www.cointracker.com/blog/tvl-in-crypto,62.0,4,5,3,2,2,5,0,3,4,3,4,H1 is the question. TVL reflects how much value is held in DeFi. Metadata date 2025-07-01. No category table.
+dex,comp,Eco DEX aggregator,https://eco.com/support/en/articles/15284400-what-is-a-dex-aggregator,82.4,5,5,4,2,4,5,3,4,5,5,5,H1 is the question. First sentence routes a swap and names five aggregators. Updated over a week ago. Article JSON-LD.
+dex,comp,1inch Learn DEX aggregator,https://1inch.com/learn/dex-aggregator,75.6,5,5,4,2,3,5,4,3,4,4,4,"A DEX aggregator compares swap prices. Updated July 2026. Visible FAQ. WebPage JSON-LD, no FAQPage."
+dex,comp,Chainlink DEX aggregator,https://chain.link/article/what-is-dex-aggregator,58.8,5,4,0,1,3,5,2,0,4,3,4,"Labeled DEFINITION, then the sentence. No date, no JSON-LD. Cited anyway."
+yields,comp,CoinGecko yield farming,https://www.coingecko.com/learn/what-is-yield-farming,72.4,5,5,2,1,3,5,3,4,5,5,4,H1 is the question. Yield farming is depositing crypto to earn returns. Updated November 12 2024. Stacy Kew. Article JSON-LD.
+yields,comp,Kraken yield farming,https://www.kraken.com/learn/what-is-yield-farming,72.0,5,5,2,2,3,5,3,2,5,4,4,"H1 is the question. Key takeaway defines yield farming. Kraken Learn team, April 22 2025."
+yields,comp,Investopedia yield farming,https://www.investopedia.com/what-is-yield-farming-7098519,69.2,5,4,1,2,3,5,3,2,4,5,4,"What Is Yield Farming, then the definition. Michelle Lodge, 2023-09-23."
+lend,comp,Stellar lending,https://stellar.org/learn/lending-and-borrowing-markets,54.0,4,4,0,1,3,4,2,0,4,3,4,"Explains lending, then DeFi. H1 Lending and borrowing markets. No JSON-LD."
+lend,comp,Chainlink lending,https://chain.link/article/decentralized-lending-protocol,56.8,5,4,0,1,2,5,2,0,5,3,4,"DEFINITION of a decentralized lending protocol. No date, no JSON-LD. First source in the overview."
+lend,comp,Aave introduction,https://aave.com/help/aave-101/introduction-to-aave,48.0,4,3,0,1,2,4,2,0,3,3,4,"Aave V3 facilitates overcollateralised borrowing. Product docs, not the category ranking."
+defs,comp,docs.llama.fi definitions,https://docs.llama.fi/analysts/data-definitions,52.8,4,2,4,0,3,5,0,0,5,3,4,Same TVL sentences as our glossary. Updated 2026-09-02. Markdown view. Sonar cites this URL for what is TVL.
+defs,comp,Chainnarrative fees vs revenue,https://chainnarrative.com/analysis/protocol-revenue-vs-total-fees-in-defi-explained,69.6,5,5,0,2,3,5,2,4,4,3,5,Title is the comparison. First paragraph separates fees from what the protocol keeps. Article JSON-LD.
+defs,comp,CMC Academy TVL,https://coinmarketcap.com/academy/glossary/total-value-locked-tvl,68.8,5,5,1,1,3,5,3,4,3,4,5,The glossary the tvl overview cites. /data-definitions is not that URL.
+rwa,comp,RWA.xyz,https://app.rwa.xyz/,62.0,2,3,4,4,4,3,0,2,4,3,4,Tokenized-treasury dashboard with live sizes. H1 Global Market Overview. WebPage JSON-LD.
+rwa,comp,CoinGecko RWA category,https://www.coingecko.com/en/categories/real-world-assets-rwa,88.0,5,5,4,5,5,5,3,1,5,3,4,"Market cap today is $76 billion, then a definition. Table is in the HTML."
+rwa,comp,CoinGecko RWA guide,https://www.coingecko.com/learn/what-are-real-world-assets-exploring-rwa-protocols,76.8,5,5,4,2,3,5,3,4,5,4,4,H1 is the question. RWA are tokens of physical or traditional assets. Updated July 13 2026.
+perps,comp,CoinGecko perp DEX growth,https://www.coingecko.com/learn/decentralized-derivatives-perpetual-future-dexs,66.4,4,4,1,1,3,5,3,4,5,5,4,Defines a perp DEX in the first section. Updated May 23 2023. Overview URL for the definition.
+perps,comp,CoinGecko perpetuals,https://www.coingecko.com/learn/what-are-crypto-perpetuals-perp-dexs,80.0,5,5,3,2,4,5,3,4,5,5,4,"H1 is the question. Perps are defined up front, with tables. Updated November 21 2025."
+perps,comp,crypto.news perp DEX,https://crypto.news/what-is-a-perp-dex/,66.4,4,4,4,1,3,5,2,2,5,5,4,"States what a perp DEX is, then three architectures. Olivia Stephanie, July 28 2026."
+unlocks,comp,Tokenomist,https://tokenomist.ai/,76.8,4,4,3,5,4,3,2,5,2,3,5,Organic #1. Opens with an ARB unlock of 92.65M ARB. FAQPage JSON-LD. Alert date shown is 15 Jul 2026.
+unlocks,comp,CoinGecko token unlocks,https://www.coingecko.com/en/highlights/incoming-token-unlocks,54.8,4,3,0,2,4,3,0,1,4,2,4,"Lead introduces upcoming unlocks, then the table."
+unlocks,comp,Streamflow token unlock,https://streamflow.finance/blog/what-is-token-unlock,68.0,5,5,1,2,4,5,2,0,4,3,4,H1 is the question. Token unlocks are release events. Sep 17 2023. Has a table.
+rhea,comp,Rhea docs intro,https://guide.rhea.finance/,43.6,4,3,4,0,2,4,0,0,1,3,3,Rhea is the vision of borderless liquidity on NEAR. Updated 2026-04-13. Short page.
+rhea,comp,Rhea white paper,https://guide.rhea.finance/docs/rhea-finance-white-paper,62.4,5,4,3,1,3,5,2,0,4,3,4,What is RHEA Finance: the merger of Ref Finance and Burrow. The overview's definition source.
+rhea,comp,CMC RHEA,https://coinmarketcap.com/currencies/rhea-finance/,44.0,2,3,0,2,4,1,2,1,2,2,3,Price page. $0.08066 and $33.23M market cap are stats. Chart says Loading Data.
+pons,comp,Messari Pons,https://messari.io/project/pons-launchpad/profile,62.0,5,4,0,2,3,5,2,1,3,3,4,Pons is a non-custodial token launchpad built for Robinhood Chain. The overview's definition.
+pons,comp,Datawallet Pons,https://www.datawallet.com/crypto/pons-explained,79.6,4,5,4,3,4,4,3,4,5,5,4,"H1 matches the explainer. Datawallet Team, audited September 3 2026. Tables."
+pons,comp,CoinGecko Pons,https://www.coingecko.com/en/coins/pons,50.4,2,3,0,2,4,2,2,3,3,2,4,Price page. $0.3269 in the header. Product JSON-LD. Not a definition.
+vest,comp,Vest docs about,https://docs.vestmarkets.com/welcome/about-vest-markets,62.0,5,4,4,2,3,5,0,0,2,3,4,"First sentence: Vest Markets is a perpetual futures platform for equity, crypto, commodity, and FX. Metadata 2026-10-01."
+vest,comp,vestmarkets.com,https://www.vestmarkets.com/,51.6,3,2,0,2,2,2,3,5,2,4,5,Funded-account pitch. FAQPage and ItemList JSON-LD. Not the stored protocol description.
+vest,comp,Vest docs home,https://docs.vestmarkets.com/,53.6,4,3,5,2,2,4,0,0,2,3,4,"Offers perpetual futures and a funded program, up to 100x. Metadata 2026-10-05."
