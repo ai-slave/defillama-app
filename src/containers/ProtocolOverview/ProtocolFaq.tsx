@@ -5,6 +5,9 @@ import { DisclosureChevron } from '~/ui/DisclosureChevron'
 import type { IProtocolFaqItem } from './types'
 
 const DEFAULT_OPEN_COUNT = 5
+// Chains and token price stay closed even when earlier answers are missing. Search stitches
+// the open answers, and those two were the quote on name and fee queries.
+const CLOSED_BY_DEFAULT = new Set(['chains', 'token-valuation', 'token-performance'])
 
 export function ProtocolFaq({ items }: { items: Array<IProtocolFaqItem> }) {
 	if (items.length === 0) return null
@@ -18,7 +21,7 @@ export function ProtocolFaq({ items }: { items: Array<IProtocolFaqItem> }) {
 				{items.map((item, index) => (
 					<details
 						key={item.id}
-						open={index < DEFAULT_OPEN_COUNT}
+						open={index < DEFAULT_OPEN_COUNT && !CLOSED_BY_DEFAULT.has(item.id)}
 						className="group smooth-disclosure border-b border-subtle last:border-b-0"
 					>
 						<summary className="flex min-h-12 cursor-pointer list-none items-center gap-3 px-3 py-3.5 transition-colors group-open:pb-2.5 marker:hidden hover:bg-hover-row sm:px-4">

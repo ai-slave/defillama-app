@@ -22,6 +22,7 @@ import { getPrimaryValueLabelType, useFinalTVL } from './helpers'
 import { InviteBanner } from './InviteBanner'
 import { KeyMetrics } from './KeyMetrics'
 import { ProtocolOverviewLayout } from './Layout'
+import { protocolDescriptionSentence } from './layoutSeo'
 import { getProtocolPrimaryMetricOverride } from './primaryMetricOverrides'
 import { ProtocolChartPanel } from './ProtocolChartPanel'
 import { ProtocolFaq } from './ProtocolFaq'
@@ -149,6 +150,7 @@ function ProtocolHeader({
 	headingAs?: 'h1' | 'div'
 }) {
 	const primaryMetricOverride = getProtocolPrimaryMetricOverride(props)
+	const descriptionSentence = protocolDescriptionSentence(props.description)
 
 	return (
 		<>
@@ -181,6 +183,10 @@ function ProtocolHeader({
 				<Button as={BasicLink} href={props.exchangeProfileRoute} variant="link" className="-mt-4 w-fit label-md">
 					View exchange stats
 				</Button>
+			) : null}
+			{descriptionSentence ? (
+				// The first sentence under the name is what search quotes. The hero number stays beneath it.
+				<p className="max-w-3xl body-md text-secondary">{descriptionSentence}</p>
 			) : null}
 			{primaryMetricOverride ? (
 				<PrimaryValue

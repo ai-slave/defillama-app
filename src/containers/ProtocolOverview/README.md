@@ -26,6 +26,7 @@ ProtocolOverview owns the pages about one protocol or one CEX: the overview, the
 - `useFinalTVL` reads the shared `tvl` settings namespace, and its toggles come only from the TVL keys present in the protocol's data. See `docs/metrics.md` → "TVL models".
 - `dcAndLsOverlap` is chain overlap data, never a protocol toggle.
 - A chart request URL change is a behavior change; test the exact URL or descriptor before changing it.
+- The overview leads with the stored description's first sentence, under the name and as the meta description. "What is {name}?" is the first FAQ and starts open. When the title leads with volume, that volume answer is the next open one. Chains and token-price answers stay collapsed.
 
 ## Not here
 

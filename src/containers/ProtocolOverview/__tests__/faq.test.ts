@@ -67,6 +67,8 @@ function createContext(overrides: Partial<ProtocolFaqContext> = {}): ProtocolFaq
 			yieldPoolCount: null,
 			averageApy: null
 		},
+		description: null,
+		volumeLeads: false,
 		...overrides
 	}
 }
@@ -77,12 +79,12 @@ describe('buildProtocolFaq', () => {
 
 		expect(items.map((item) => item.id)).toEqual([
 			'tvl',
-			'chains',
 			'fees-revenue',
+			'active-loans',
+			'comparison',
+			'chains',
 			'token-valuation',
 			'token-performance',
-			'comparison',
-			'active-loans',
 			'treasury',
 			'security'
 		])
@@ -125,6 +127,42 @@ describe('buildProtocolFaq', () => {
 		)
 
 		expect(items.map((item) => item.id)).toEqual(['chains'])
+	})
+
+	test('asks what the protocol is first, and opens volume next when volume leads the title', () => {
+		const described = buildProtocolFaq(
+			createContext({
+				description: 'Aave is an Open Source and Non-Custodial protocol to earn interest on deposits and borrow assets'
+			})
+		)
+		expect(described[0]).toMatchObject({
+			id: 'what-is',
+			question: 'What is Aave?',
+			answer: [
+				{
+					text: 'Aave is an Open Source and Non-Custodial protocol to earn interest on deposits and borrow assets'
+				}
+			]
+		})
+
+		const volumeLed = buildProtocolFaq(
+			createContext({
+				name: 'Variational',
+				description: 'Variational is a protocol that provides infrastructure for peer-to-peer trading.',
+				tvl: { current: null, change30d: null },
+				fees: { fees30d: null, revenue30d: null, annualizedFees: null, annualizedRevenue: null },
+				volumeLeads: true,
+				metrics: {
+					borrowed: null,
+					dexVolume30d: null,
+					perpVolume30d: 4_200_000_000,
+					openInterest: null,
+					yieldPoolCount: null,
+					averageApy: null
+				}
+			})
+		)
+		expect(volumeLed.map((item) => item.id).slice(0, 2)).toEqual(['what-is', 'perp-volume'])
 	})
 })
 
