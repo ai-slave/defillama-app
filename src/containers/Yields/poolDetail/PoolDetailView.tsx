@@ -1,5 +1,6 @@
 import { useRouter } from 'next/router'
 import { useMemo } from 'react'
+import { useIsClient } from '~/hooks/useIsClient'
 import { usePageClockSec } from '~/hooks/usePageClock'
 import { Card } from '~/ui/Card'
 import { ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
@@ -294,11 +295,14 @@ export function PoolDetailView({
 
 	// Fill the APY charts' range / windows the URL lacks from the sticky per-browser preferences,
 	// once for both so two replaces can never race; mount them only once resolved so neither default
-	// controls nor default history can flash.
+	// controls nor default history can flash. The server cannot see stored prefs, so a canonical
+	// URL must not mount the charts either.
 	const router = useRouter()
-	const preferencesReady = useStickyQueryReplace(
+	const isClient = useIsClient()
+	const stickyReady = useStickyQueryReplace(
 		useStickyPrefsOverlay(router.isReady ? router.query : null, POOL_CHART_PREFS)
 	)
+	const preferencesReady = isClient && stickyReady
 
 	// Prefix for the holders donut's PNG/CSV export filename.
 	const exportTitle =

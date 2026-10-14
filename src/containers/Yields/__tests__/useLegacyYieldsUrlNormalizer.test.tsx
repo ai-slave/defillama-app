@@ -245,13 +245,13 @@ describe('useLegacyYieldsUrlNormalizer hydration', () => {
 	test('the hydration render ignores storage so it matches the server, then applies it', async () => {
 		routerMock.query = {}
 		routerMock.replace.mockClear()
-		// Server pass: storage is unknown, so dependent UI stays in its placeholder.
+		// Server pass: a canonical URL has no replace target, so the gate is open and the seeded
+		// document can render. Storage is still unknown, and the first client render matches.
 		const html = renderToString(<HydrationHarness />)
-		expect(html).toContain('false')
+		expect(html).toContain('true')
 
-		// The browser has a stored window the server could not know about. On a static page with
-		// a bare URL the router is already ready during hydration, so the first client render
-		// must still match the server HTML; storage is applied on the next render.
+		// The browser has a stored window the server could not know about. After hydration that
+		// window is a replace target, so the gate closes until the replace lands.
 		window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_7d')
 		const container = document.createElement('div')
 		document.body.appendChild(container)

@@ -16,6 +16,7 @@ import { getProtocolListingSlugsFromMetadata } from '~/containers/ProtocolTaxono
 import { getRaisesSitemapRoutes } from '~/containers/Raises/server/routes'
 import { getRWASitemapRoutes } from '~/containers/RWA/server/routes'
 import { getStablecoinSitemapRoutes } from '~/containers/Stablecoins/server/routes'
+import { getYieldsSitemapRoutes } from '~/containers/Yields/server/routes'
 import defillamaPages from '~/public/pages.json'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
 import { normalizeSitemapRoute, type SitemapUrlEntry } from '~/utils/sitemapXml'
@@ -23,6 +24,7 @@ import { getMetadataCache } from './common'
 
 export const SITEMAP_SECTION_IDS = [
 	'static',
+	'yields',
 	'chains',
 	'protocols',
 	'protocols-by-category',
@@ -126,6 +128,8 @@ async function buildBaseSitemapSection(
 	switch (sectionId) {
 		case 'static':
 			return { id: sectionId, entries: toEntries(getNavRoutes()) }
+		case 'yields':
+			return { id: sectionId, entries: toEntries(await getYieldsSitemapRoutes()) }
 		case 'chains':
 			return { id: sectionId, entries: toEntries(getChainSitemapRoutes(metadataCache)) }
 		case 'protocols':

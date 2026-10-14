@@ -37,8 +37,8 @@ export const DATASET_SNAPSHOT_ROUTE_DOMAINS = {
 	'/api/private/liquidations': ['liquidations'],
 	'/api/private/liquidations/**': ['liquidations'],
 	'/api/private/token-liquidations/*': ['liquidations'],
-	'/sitemap.xml': ['markets', 'liquidations', 'raises'],
-	'/sitemap/*': ['markets', 'liquidations', 'raises']
+	'/sitemap.xml': ['markets', 'liquidations', 'raises', 'yields'],
+	'/sitemap/*': ['markets', 'liquidations', 'raises', 'yields']
 } as const satisfies Record<string, ReadonlyArray<DatasetSnapshotDomain>>
 
 function getDomainTraceIncludes(domain: DatasetSnapshotDomain): Array<string> {

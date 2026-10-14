@@ -66,7 +66,10 @@ export function useYieldsServerTable<TRow>(options: YieldsServerTableOptions<TRo
 	// router resolves would be a hydration mismatch) and for the default view. A URL known to carry
 	// filters must NOT show it - the seeded rows don't match the URL - and neither must a failed fetch.
 	const seedVisible = (!ready || queryString === defaultQueryString) && !rowsQuery.isError && seedTierOk
-	// Hide stale/default rows while preferences restore.
+	// `enabled` is false only while a saved preference or a legacy rewrite still has a replace
+	// pending. A canonical server render has no replace target, so the gate is open and this seed
+	// is the document. Dropping it whenever `enabled` is false would strip the pool table from
+	// the HTML again, including on the canonical URL.
 	const data = enabled ? (rowsQuery.data ?? (seedVisible ? options.initialSeed?.initialData : undefined)) : undefined
 	const rows = data?.rows ?? []
 	const total = data?.total ?? 0

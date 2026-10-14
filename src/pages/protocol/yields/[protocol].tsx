@@ -15,6 +15,7 @@ import type { IYieldTableRow } from '~/containers/Yields/Tables/types'
 import { useStickyPrefsOverlay, useStickyQueryReplace } from '~/containers/Yields/useStickyQueryReplace'
 import { useVerifiedAccess } from '~/containers/Yields/useVerifiedAccess'
 import { useYieldsServerTable } from '~/containers/Yields/useYieldsServerTable'
+import { useIsClient } from '~/hooks/useIsClient'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { sluggifyProtocol } from '~/utils/cache-client'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -159,10 +160,14 @@ function ProtocolYieldsTab({
 	const hasProtocols = protocolNames.length > 0
 
 	const router = useRouter()
+	const isClient = useIsClient()
 	const resolvedPathname = router.asPath.split('?')[0]
-	const preferencesReady = useStickyQueryReplace(
+	// No server seed on this tab. Stay on the placeholder until the client has read storage,
+	// or a saved APY window would fetch the default view first.
+	const stickyReady = useStickyQueryReplace(
 		useStickyPrefsOverlay(hasProtocols && router.isReady ? router.query : null, YIELDS_TABLE_PREFS)
 	)
+	const preferencesReady = isClient && stickyReady
 
 	// The fixed protocol filter rides the earn table's server query. The chain picker's keys, the
 	// TVL/APY ranges and the `column=` param flow through the URL query untouched: the earn route

@@ -15,8 +15,9 @@ const METADATA: MetadataCache = {
 		ethereum: 'ethereum'
 	},
 	protocolMetadata: {
-		aave: { name: 'aave', displayName: 'Aave', tvl: true, fees: true, emissions: true },
+		aave: { name: 'aave', displayName: 'Aave', tvl: true, fees: true, emissions: true, borrowed: true },
 		uniswap: { name: 'uniswap', displayName: 'Uniswap', dexs: true },
+		'defi-swap': { name: 'Defi Swap', displayName: 'Defi Swap', tvl: true, fees: true, dexs: true, borrowed: true },
 		binance: { name: 'binance-cex', displayName: 'Binance CEX', tvl: true, stablecoins: true, cex: true },
 		'no-markets': { name: 'no-markets-cex', displayName: 'No Markets CEX', tvl: true, cex: true }
 	},
@@ -117,6 +118,25 @@ vi.mock('~/containers/Raises/server/dataset.server', () => ({
 	}
 }))
 
+const yieldsEarn = vi.hoisted(() => ({
+	rows: [
+		{ id: 'not-a-pool', tvl_usd: 9_000_000_000 },
+		{ id: 'aa70268e-4b52-42bf-a116-608b370f9501', tvl_usd: 2_400_000_000 },
+		{ id: 'aa70268e-4b52-42bf-a116-608b370f9501', tvl_usd: 1 },
+		{ id: '66985a81-9c1e-4b0a-9c1e-4b0a9c1e4b0a', tvl_usd: 1_000_000_000 },
+		{ id: '665dc8bc-1111-4111-8111-111111111111', tvl_usd: null }
+	]
+}))
+
+vi.mock('~/containers/Yields/server/dataset.server', async (importOriginal) => {
+	const actual = await importOriginal<typeof import('~/containers/Yields/server/dataset.server')>()
+	const { yieldsSnapshot } = await import('~/utils/testing/yieldsSnapshotFixture')
+	return {
+		...actual,
+		acquireYieldsSnapshot: async () => yieldsSnapshot({ earn: yieldsEarn.rows as never })
+	}
+})
+
 vi.mock('~/containers/Markets/server/dataset.server', () => ({
 	fetchExchangeDirectory: async () => ({ venues: [{ slug: 'binance' }, { slug: 'coinbase' }] }),
 	fetchCexExchangeSlugIndex: async () => ({
@@ -158,7 +178,7 @@ afterEach(() => {
 })
 
 describe('cache-backed sitemap sections', () => {
-	test('omits governance routes from legacy metadata while retaining token rights and unlocks', () => {
+	test('omits governance and noindex protocol tabs while retaining standalone unlocks', () => {
 		// A cache written before governance routes were removed still carries the flag.
 		const legacyAave = { ...METADATA.protocolMetadata.aave, tokenRights: true, governance: true }
 		const legacy: MetadataCache = {
@@ -170,7 +190,13 @@ describe('cache-backed sitemap sections', () => {
 
 		expect(standaloneRoutes).not.toHaveProperty('governance')
 		expect(paths.some((path) => /^(?:protocol\/)?governance(?:\/|$)/.test(path))).toBe(false)
-		expect(paths).toEqual(expect.arrayContaining(['protocol/token-rights/aave', 'protocol/tvl/aave', 'unlocks/aave']))
+		expect(paths).toContain('unlocks/aave')
+		expect(paths).toContain('protocol/aave')
+		expect(paths).toContain('protocol/active-loans/aave')
+		expect(paths).not.toContain('protocol/token-rights/aave')
+		expect(paths).not.toContain('protocol/tvl/aave')
+		expect(paths).not.toContain('protocol/unlocks/aave')
+		expect(paths).not.toContain('protocol/forks/aave')
 	})
 
 	test('builds grouped public routes from metadata and dataset snapshots only', async () => {
@@ -183,8 +209,21 @@ describe('cache-backed sitemap sections', () => {
 		expect(sections.map((section) => String(section.id))).not.toContain('governance')
 		expect(allEntryPaths).not.toContain('governance')
 		expect(allEntryPaths).toContain('token-rights')
-		expect(entriesBySection.get('protocols')).toEqual(expect.arrayContaining(['protocol/aave', 'protocol/fees/aave']))
+		expect(entriesBySection.get('protocols')).toEqual(
+			expect.arrayContaining(['protocol/aave', 'protocol/active-loans/aave', 'protocol/uniswap'])
+		)
+		expect(entriesBySection.get('protocols')).not.toContain('protocol/fees/aave')
+		expect(entriesBySection.get('protocols')).not.toContain('protocol/tvl/aave')
+		expect(entriesBySection.get('protocols')).not.toContain('protocol/dexs/uniswap')
+		expect(entriesBySection.get('protocols')).not.toContain('protocol/unlocks/aave')
+		expect(entriesBySection.get('protocols')).not.toContain('protocol/defi-swap')
+		expect(entriesBySection.get('protocols')).not.toContain('protocol/active-loans/defi-swap')
 		expect(entriesBySection.get('protocols')).not.toContain('protocol/binance-cex')
+		expect(entriesBySection.get('yields')).toEqual([
+			'yields/pool/aa70268e-4b52-42bf-a116-608b370f9501',
+			'yields/pool/66985a81-9c1e-4b0a-9c1e-4b0a9c1e4b0a',
+			'yields/pool/665dc8bc-1111-4111-8111-111111111111'
+		])
 		expect(entriesBySection.get('chains')).toEqual(expect.arrayContaining(['chain/ethereum', 'fees/chain/ethereum']))
 		expect(entriesBySection.get('stablecoins')).toEqual(
 			expect.arrayContaining(['stablecoin/tether', 'stablecoins/ethereum'])

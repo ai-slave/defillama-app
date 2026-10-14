@@ -96,6 +96,10 @@ export function useStickyQueryReplace(target: QueryRecord | null): boolean {
 			}, onFailure)
 	}, [router, target, key, failures, exhausted])
 
-	// Keep placeholders until hydration and restoration settle.
-	return isClient && router.isReady && (target == null || exhausted)
+	// Stored prefs are invisible here. A canonical URL (no replace target) is the seeded document
+	// crawlers receive; a legacy query still has a target, so it keeps waiting. GSSP marks the
+	// router ready on the server and during hydration, so this matches the first client render.
+	if (!isClient) return target == null
+	// Keep placeholders until restoration settles.
+	return router.isReady && (target == null || exhausted)
 }

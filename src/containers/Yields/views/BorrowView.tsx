@@ -1,4 +1,5 @@
 import { useRouter } from 'next/router'
+import { useIsClient } from '~/hooks/useIsClient'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { fetchJson } from '~/utils/async'
 import { formatNumber } from '~/utils/numberFormat'
@@ -42,6 +43,7 @@ function BorrowView({
 	attributeIds?: Array<AttributeId>
 }) {
 	const router = useRouter()
+	const isClient = useIsClient()
 
 	// Routes mode is entered as soon as either token picker has a selection.
 	const routesMode = Boolean(router.query.collateralToken || router.query.borrowToken)
@@ -117,7 +119,7 @@ function BorrowView({
 				categoriesLabel="Categories"
 				attributeIds={attributeIds}
 				availableRange={data?.availableQuickPicks ?? []}
-				apyControls={<ApyViewControls ready={normalized} />}
+				apyControls={<ApyViewControls ready={isClient && normalized} />}
 				resetFilters
 				prepareCsv={prepareCsv}
 			/>

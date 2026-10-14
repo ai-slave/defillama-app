@@ -1,3 +1,4 @@
+import { useIsClient } from '~/hooks/useIsClient'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { fetchJson } from '~/utils/async'
 import { formatNumber } from '~/utils/numberFormat'
@@ -35,6 +36,7 @@ function LoopView({
 	tokens?: Array<TokenOption>
 	attributeIds?: Array<AttributeId>
 }) {
+	const isClient = useIsClient()
 	// Rewrite legacy bookmark params to canonical before the first fetch (gates `enabled`).
 	const normalized = useLegacyYieldsUrlNormalizer({ page: 'loop', tokens })
 
@@ -95,7 +97,7 @@ function LoopView({
 				availableRange={data?.availableQuickPicks ?? []}
 				apyControls={
 					<>
-						<ApyViewControls ready={normalized} />
+						<ApyViewControls ready={isClient && normalized} />
 						<span className="mx-1 hidden h-5 w-px bg-border-medium sm:block" aria-hidden />
 						<LoopCountSelect />
 					</>
